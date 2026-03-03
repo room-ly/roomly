@@ -5,8 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   Search,
   Bell,
-  Sun,
-  Moon,
   ChevronRight,
   LogOut,
   User,
@@ -117,10 +115,15 @@ export default function Header() {
 
         <button
           onClick={toggleTheme}
-          className="p-2 rounded text-text-muted hover:text-text hover:bg-bg-secondary transition-colors"
+          className="relative w-9 h-5 rounded-full transition-colors"
+          style={{ background: theme === "dark" ? "var(--accent)" : "var(--border)" }}
           title={theme === "dark" ? "ライトモード" : "ダークモード"}
+          aria-label="テーマ切り替え"
         >
-          {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+          <span
+            className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200"
+            style={{ transform: theme === "dark" ? "translateX(16px)" : "translateX(0)" }}
+          />
         </button>
 
         {/* 通知 */}
