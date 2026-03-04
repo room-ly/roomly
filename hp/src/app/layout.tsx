@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/lib/theme-provider";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
@@ -33,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja">
+    <html lang="ja" suppressHydrationWarning>
       <head>
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
@@ -44,9 +45,11 @@ export default function RootLayout({
         </Script>
       </head>
       <body className={`${notoSansJP.className} antialiased`}>
-        <Header />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
+        <ThemeProvider>
+          <Header />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   );

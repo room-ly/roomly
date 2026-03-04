@@ -75,7 +75,7 @@ export default function Home() {
   return (
     <>
       {/* ヒーロー */}
-      <section className="bg-rm-primary px-4 py-28 text-center text-white sm:py-36">
+      <section className="bg-rm-hero px-4 py-28 text-center text-white sm:py-36">
         <div className="mx-auto max-w-3xl animate-slide-up">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
             賃貸管理を、
@@ -203,7 +203,7 @@ export default function Home() {
           <p className="mx-auto mt-4 max-w-xl text-center text-[14px] text-rm-text-secondary">
             10区画まで無料。それ以上は区画数に応じたシンプルな料金体系です。
           </p>
-          <div className="mt-14 rounded bg-white p-8 shadow-sm border-t-3 border-t-rm-accent">
+          <div className="mt-14 rounded bg-rm-surface p-8 shadow-sm border-t-3 border-t-rm-accent">
             <div className="text-center">
               <p className="text-[11px] font-medium uppercase tracking-wider text-rm-accent">全機能利用可能</p>
               <div className="mt-3">

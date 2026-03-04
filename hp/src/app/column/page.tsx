@@ -14,7 +14,7 @@ export default function BlogIndex() {
   return (
     <>
       {/* ページヘッダー */}
-      <section className="bg-rm-primary px-4 py-16 text-center text-white sm:py-20">
+      <section className="bg-rm-hero px-4 py-16 text-center text-white sm:py-20">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           コラム
         </h1>

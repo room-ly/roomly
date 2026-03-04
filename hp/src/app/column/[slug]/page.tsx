@@ -100,7 +100,7 @@ export default async function BlogPostPage({
           />
 
           {/* CTA */}
-          <div className="mt-16 rounded bg-rm-primary p-8 text-center text-white sm:p-12">
+          <div className="mt-16 rounded bg-rm-hero p-8 text-center text-white sm:p-12">
             <h2 className="text-lg font-semibold sm:text-xl">
               Roomlyで賃貸管理をもっとシンプルに
             </h2>
