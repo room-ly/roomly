@@ -16,21 +16,21 @@
 ## Phase 1: バックエンド基盤（動くプロダクトにする）
 
 ### 1.1 Supabase デプロイ & RLS有効化
-- [ ] `supabase db push` でマイグレーション実行（既存Supabaseプロジェクトに対して）
-- [ ] 全テーブルのRLSを有効化（`ALTER TABLE ... ENABLE ROW LEVEL SECURITY`）
-- [ ] 各テーブルに `company_id = auth.jwt()->>'company_id'` のSELECT/INSERT/UPDATE/DELETEポリシー作成
-- [ ] JWT Hook（00002_custom_access_token_hook.sql）をSupabase Dashboardで有効化
-- [ ] シードデータ投入確認
+- [x] `supabase db push` でマイグレーション実行（既存Supabaseプロジェクトに対して）
+- [x] 全テーブルのRLSを有効化（`ALTER TABLE ... ENABLE ROW LEVEL SECURITY`）
+- [x] 各テーブルに `company_id = auth.jwt()->>'company_id'` のSELECT/INSERT/UPDATE/DELETEポリシー作成
+- [x] JWT Hook（00002_custom_access_token_hook.sql）をSupabase Dashboardで有効化
+- [x] シードデータ投入確認
 - **検証**: Supabase Dashboard でテーブル一覧が表示 + RLSポリシーが各テーブルに存在
 - **注意**: Supabase無料プラン上限（2アクティブ）のため、Luna HPのSupabaseを使用。新規プロジェクト作成不可
 
 ### 1.2 認証の本番化
-- [ ] LoginPage で `supabase.auth.signInWithPassword()` を呼び出す
-- [ ] サインアップフロー実装（会社名 + メール + パスワード）
-- [ ] サインアップ時に `companies` テーブルにレコード作成 + `users` テーブルに紐付け
-- [ ] `auth-context.tsx` のモック部分を実際のSupabase Auth に置き換え
-- [ ] ログアウト処理の実装
-- [ ] パスワードリセットフロー（メール送信）
+- [x] LoginPage で `supabase.auth.signInWithPassword()` を呼び出す
+- [x] サインアップフロー実装（会社名 + メール + パスワード）
+- [x] サインアップ時に `companies` テーブルにレコード作成 + `users` テーブルに紐付け
+- [x] `auth-context.tsx` のモック部分を実際のSupabase Auth に置き換え
+- [x] ログアウト処理の実装
+- [x] パスワードリセットフロー（メール送信）
 - **検証**: `npm run build` 成功 + LoginPage にsupabase.auth呼び出しが存在
 
 ### 1.3 バリデーションライブラリ導入

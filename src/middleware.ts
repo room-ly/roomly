@@ -33,6 +33,9 @@ export async function middleware(request: NextRequest) {
   if (
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
+    !request.nextUrl.pathname.startsWith("/signup") &&
+    !request.nextUrl.pathname.startsWith("/reset-password") &&
+    !request.nextUrl.pathname.startsWith("/update-password") &&
     !request.nextUrl.pathname.startsWith("/_next") &&
     !request.nextUrl.pathname.startsWith("/api") &&
     !request.nextUrl.pathname.includes(".")
@@ -43,7 +46,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // 認証済みで /login にアクセスしたらトップへ
-  if (user && request.nextUrl.pathname.startsWith("/login")) {
+  const authPaths = ["/login", "/signup", "/reset-password"];
+  if (user && authPaths.some((p) => request.nextUrl.pathname.startsWith(p))) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

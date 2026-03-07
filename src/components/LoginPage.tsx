@@ -133,6 +133,21 @@ export default function LoginPage() {
               {loading ? "ログイン中..." : "ログイン"}
             </button>
           </form>
+
+          <div className="mt-4 text-center space-y-2">
+            <a
+              href="/reset-password"
+              className="block text-[13px] text-text-muted hover:text-accent transition-colors"
+            >
+              パスワードをお忘れですか？
+            </a>
+            <p className="text-[13px] text-text-muted">
+              アカウントをお持ちでない方は{" "}
+              <a href="/signup" className="text-accent hover:underline">
+                新規登録
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </div>

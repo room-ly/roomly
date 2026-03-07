@@ -9,8 +9,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { isLoading } = useAuth();
   const pathname = usePathname();
 
-  // /login はレイアウトなしでそのまま表示
-  if (pathname === "/login") {
+  // 認証ページはレイアウトなしでそのまま表示
+  const authPaths = ["/login", "/signup", "/reset-password", "/update-password"];
+  if (authPaths.some((p) => pathname.startsWith(p))) {
     return <>{children}</>;
   }
 
