@@ -26,11 +26,25 @@ const breadcrumbMap: Record<string, string> = {
   "/settings": "設定",
 };
 
-const notifications = [
-  { id: 1, title: "家賃滞納: 田中太郎", time: "5分前", type: "danger" as const },
-  { id: 2, title: "修繕依頼: エアコン故障", time: "30分前", type: "warning" as const },
-  { id: 3, title: "契約更新: 佐藤花子", time: "1時間前", type: "info" as const },
-];
+interface Notification {
+  id: string;
+  title: string;
+  type: string;
+  is_read: boolean;
+  created_at: string;
+  link?: string;
+}
+
+function formatTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "たった今";
+  if (minutes < 60) return `${minutes}分前`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}時間前`;
+  const days = Math.floor(hours / 24);
+  return `${days}日前`;
+}
 
 export default function Header() {
   const pathname = usePathname();
@@ -39,6 +53,29 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/notifications")
+      .then((res) => res.json())
+      .then((data) => {
+        setNotifications(data.notifications ?? []);
+        setUnreadCount(data.unreadCount ?? 0);
+      })
+      .catch(() => {});
+  }, [pathname]);
+
+  const markAllRead = () => {
+    fetch("/api/notifications", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    }).then(() => {
+      setUnreadCount(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    });
+  };
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
 
@@ -134,40 +171,52 @@ export default function Header() {
             title="通知"
           >
             <Bell size={16} />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-danger rounded-full" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 min-w-[14px] h-[14px] flex items-center justify-center px-0.5 text-[9px] font-medium rounded-full bg-danger text-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </button>
 
           {notifOpen && (
             <div className="absolute right-0 top-full mt-1.5 w-72 bg-card rounded border border-border shadow-md overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-border">
+              <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
                 <h3 className="font-medium text-[13px]">通知</h3>
+                {unreadCount > 0 && (
+                  <button onClick={markAllRead} className="text-[11px] text-accent hover:underline">
+                    全て既読
+                  </button>
+                )}
               </div>
               <div className="max-h-56 overflow-y-auto">
-                {notifications.map((n) => (
-                  <div
-                    key={n.id}
-                    className="px-4 py-2.5 hover:bg-bg-secondary transition-colors border-b border-border-light cursor-pointer"
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <span
-                        className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${
-                          n.type === "danger"
-                            ? "bg-danger"
-                            : n.type === "warning"
-                            ? "bg-warning"
-                            : "bg-accent"
-                        }`}
-                      />
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-medium truncate">{n.title}</p>
-                        <p className="text-[11px] text-text-muted mt-0.5">{n.time}</p>
+                {notifications.length === 0 ? (
+                  <p className="px-4 py-6 text-center text-[13px] text-text-muted">通知はありません</p>
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`px-4 py-2.5 hover:bg-bg-secondary transition-colors border-b border-border-light cursor-pointer ${
+                        !n.is_read ? "bg-accent-subtle/30" : ""
+                      }`}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <span
+                          className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${
+                            n.type === "danger"
+                              ? "bg-danger"
+                              : n.type === "warning"
+                              ? "bg-warning"
+                              : "bg-accent"
+                          }`}
+                        />
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-medium truncate">{n.title}</p>
+                          <p className="text-[11px] text-text-muted mt-0.5">{formatTimeAgo(n.created_at)}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-              <div className="px-4 py-2 text-center">
-                <button className="text-[11px] text-accent hover:underline">すべて見る</button>
+                  ))
+                )}
               </div>
             </div>
           )}
