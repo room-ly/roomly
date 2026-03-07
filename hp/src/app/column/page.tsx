@@ -28,41 +28,36 @@ export default function BlogIndex() {
         <div className="mx-auto max-w-4xl">
           <div className="space-y-4">
             {posts.map((post) => (
-              <article
+              <Link
                 key={post.slug}
-                className="rounded bg-rm-surface p-6 shadow-sm transition-shadow hover:shadow-md sm:p-8"
+                href={`/column/${post.slug}`}
+                className="block rounded bg-rm-surface p-6 shadow-sm transition-shadow hover:shadow-md sm:p-8"
               >
-                <div className="flex flex-wrap items-center gap-3 text-[12px] text-rm-text-muted">
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-rm-accent" />
-                    {post.category}
-                  </span>
-                  <time dateTime={post.date}>
-                    {new Date(post.date).toLocaleDateString("ja-JP", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </time>
-                </div>
-                <h2 className="mt-3 text-[15px] font-semibold text-rm-primary sm:text-base">
-                  <Link
-                    href={`/column/${post.slug}`}
-                    className="transition-colors hover:text-rm-accent"
-                  >
+                <article>
+                  <div className="flex flex-wrap items-center gap-3 text-[12px] text-rm-text-muted">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-rm-accent" />
+                      {post.category}
+                    </span>
+                    <time dateTime={post.date}>
+                      {new Date(post.date).toLocaleDateString("ja-JP", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </time>
+                  </div>
+                  <h2 className="mt-3 text-[15px] font-semibold text-rm-primary sm:text-base">
                     {post.title}
-                  </Link>
-                </h2>
-                <p className="mt-2 text-[13px] leading-relaxed text-rm-text-secondary">
-                  {post.description}
-                </p>
-                <Link
-                  href={`/column/${post.slug}`}
-                  className="mt-4 inline-block text-[13px] font-medium text-rm-accent transition-colors hover:text-rm-primary"
-                >
-                  続きを読む →
-                </Link>
-              </article>
+                  </h2>
+                  <p className="mt-2 text-[13px] leading-relaxed text-rm-text-secondary">
+                    {post.description}
+                  </p>
+                  <span className="mt-4 inline-block text-[13px] font-medium text-rm-accent">
+                    続きを読む →
+                  </span>
+                </article>
+              </Link>
             ))}
           </div>
         </div>

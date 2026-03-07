@@ -1,10 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { createClient } from "@supabase/supabase-js";
 
 function getResend() {
   const key = process.env.RESEND_API_KEY;
   if (!key) throw new Error("RESEND_API_KEY が設定されていません");
   return new Resend(key);
+}
+
+function getSupabase() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
 
 export async function POST(request: NextRequest) {
@@ -15,11 +33,25 @@ export async function POST(request: NextRequest) {
     if (!name || !email || !message) {
       return NextResponse.json(
         { error: "お名前・メールアドレス・お問い合わせ内容は必須です" },
-        { status: 400 }
+        { status: 400, headers: CORS_HEADERS }
       );
     }
 
     const typeLabel = type || "一般的なお問い合わせ";
+
+    // Supabase inquiriesテーブルに保存（設定されている場合のみ）
+    const supabase = getSupabase();
+    if (supabase) {
+      await supabase.from("inquiries").insert({
+        project: "roomly",
+        type: typeLabel,
+        name,
+        email,
+        company: company || null,
+        message,
+        status: "new",
+      });
+    }
 
     // 自動返信 + CC で自分にも届く（1通で完結）
     await resend.emails.send({
@@ -27,7 +59,7 @@ export async function POST(request: NextRequest) {
       replyTo: "contact@roomly.jp",
       to: [email],
       cc: ["contact@roomly.jp"],
-      subject: `【Roomly HP】お問い合わせを受け付けました（${typeLabel}）`,
+      subject: `【Roomly】お問い合わせを受け付けました（${typeLabel}）`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #1a365d; padding: 20px; text-align: center;">
@@ -49,11 +81,14 @@ export async function POST(request: NextRequest) {
       `,
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: CORS_HEADERS });
   } catch (error) {
     console.error("お問い合わせメール送信エラー:", error);
     const message =
       error instanceof Error ? error.message : "送信に失敗しました";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: message },
+      { status: 500, headers: CORS_HEADERS }
+    );
   }
 }

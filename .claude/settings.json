@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Bash(*)",
       "Bash(npx next build)",
       "Bash(grep -c \"Roomops\" /Users/ryuichiueda/works/roomops/marketing/articles/*.md)",
       "Bash(for f in marketing/articles/01_transparent_pricing.md marketing/articles/03_no_hidden_fees.md marketing/articles/04_all_inclusive_service.md marketing/articles/05_scalable_pricing.md marketing/articles/08_subsidy_usage.md marketing/articles/09_case_study_small_companies.md marketing/articles/10_migration_guide.md)",
@@ -33,7 +34,9 @@
       "Bash(curl -s -X POST \"http://localhost:3001/api/contact\" -H \"Content-Type: application/json\" -d '{\"\"name\"\":\"\"テスト太郎\"\",\"\"email\"\":\"\"contact@roomly.jp\"\",\"\"company\"\":\"\"テスト株式会社\"\",\"\"type\"\":\"\"サービスについて\"\",\"\"message\"\":\"\"Roomlyのお問い合わせフォームからのテスト送信です。\"\"}')",
       "Bash(curl -s -X POST \"http://localhost:3001/api/contact\" -H \"Content-Type: application/json\" -d '{\"\"name\"\":\"\"テスト太郎\"\",\"\"email\"\":\"\"contact@roomly.jp\"\",\"\"company\"\":\"\"テスト株式会社\"\",\"\"type\"\":\"\"導入のご相談\"\",\"\"message\"\":\"\"お問い合わせフォームのテスト送信です。\"\"}')",
       "Bash(grep -l \"use client\" /Users/ryuichiueda/works/zh/roomly/roomly/src/app/**/*.tsx)",
-      "Bash(head -5 /Users/ryuichiueda/works/zh/roomly/roomly/src/app/properties/page.tsx /Users/ryuichiueda/works/zh/roomly/roomly/src/app/page.tsx /Users/ryuichiueda/works/zh/roomly/roomly/src/app/properties/[id]/page.tsx)"
+      "Bash(head -5 /Users/ryuichiueda/works/zh/roomly/roomly/src/app/properties/page.tsx /Users/ryuichiueda/works/zh/roomly/roomly/src/app/page.tsx /Users/ryuichiueda/works/zh/roomly/roomly/src/app/properties/[id]/page.tsx)",
+      "WebSearch",
+      "WebFetch"
     ],
     "additionalDirectories": [
       "/Users/ryuichiueda/works/zh/roomly/app",

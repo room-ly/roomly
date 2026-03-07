@@ -19,6 +19,9 @@ export async function generateMetadata({
   return {
     title: `${post.title} | コラム`,
     description: post.description,
+    alternates: {
+      canonical: `https://hp.roomly.jp/column/${slug}`,
+    },
     openGraph: {
       title: post.title,
       description: post.description,
@@ -50,13 +53,77 @@ export default async function BlogPostPage({
       if (line.startsWith("## ")) return `<h2>${line.slice(3)}</h2>`;
       if (line.startsWith("**") && line.endsWith("**"))
         return `<p><strong>${line.slice(2, -2)}</strong></p>`;
+      if (line.startsWith("- ")) {
+        const item = line.slice(2)
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+        return `<p class="ml-4">・${item}</p>`;
+      }
       if (line.trim() === "") return "";
-      return `<p>${line}</p>`;
+      const formatted = line
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+      return `<p>${formatted}</p>`;
     })
     .join("\n");
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    author: {
+      "@type": "Organization",
+      name: "Roomly",
+      url: "https://hp.roomly.jp",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Roomly",
+      url: "https://hp.roomly.jp",
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://hp.roomly.jp/column/${slug}`,
+    },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "トップ",
+        item: "https://hp.roomly.jp",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "コラム",
+        item: "https://hp.roomly.jp/column",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: post.title,
+        item: `https://hp.roomly.jp/column/${slug}`,
+      },
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       {/* 記事 */}
       <article className="px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-3xl">

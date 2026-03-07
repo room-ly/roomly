@@ -1,10 +1,20 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const APP_URL = "https://roomly.jp";
 const HP_URL = "https://hp.roomly.jp";
+const CONTACT_API = `${HP_URL}/api/contact`;
 
 function App() {
   const fadeRefs = useRef<(HTMLElement | null)[]>([]);
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    company: "",
+    message: "",
+  });
+  const [contactStatus, setContactStatus] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -27,6 +37,26 @@ function App() {
 
   const setFadeRef = (index: number) => (el: HTMLElement | null) => {
     fadeRefs.current[index] = el;
+  };
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setContactStatus("sending");
+    try {
+      const res = await fetch(CONTACT_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...contactForm,
+          type: "LPからのお問い合わせ",
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setContactStatus("sent");
+      setContactForm({ name: "", email: "", company: "", message: "" });
+    } catch {
+      setContactStatus("error");
+    }
   };
 
   return (
@@ -163,6 +193,96 @@ function App() {
               まずは無料で試してみる
             </a>
           </div>
+        </div>
+      </section>
+
+      {/* お問い合わせフォーム */}
+      <section className="section section-alt" id="contact" ref={setFadeRef(6)}>
+        <div className="container fade-in" ref={setFadeRef(7)}>
+          <h2 className="section-title">お問い合わせ・資料請求</h2>
+          {contactStatus === "sent" ? (
+            <div className="contact-done">
+              <p className="contact-done-title">送信しました</p>
+              <p className="contact-done-desc">
+                お問い合わせありがとうございます。担当者より折り返しご連絡いたします。
+              </p>
+              <button
+                className="btn-cta-accent"
+                onClick={() => setContactStatus("idle")}
+              >
+                続けてお問い合わせする
+              </button>
+            </div>
+          ) : (
+            <form className="contact-form" onSubmit={handleContactSubmit}>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>
+                    お名前 <span className="required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={contactForm.name}
+                    onChange={(e) =>
+                      setContactForm({ ...contactForm, name: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="form-group">
+                  <label>会社名</label>
+                  <input
+                    type="text"
+                    value={contactForm.company}
+                    onChange={(e) =>
+                      setContactForm({
+                        ...contactForm,
+                        company: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>
+                  メールアドレス <span className="required">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={contactForm.email}
+                  onChange={(e) =>
+                    setContactForm({ ...contactForm, email: e.target.value })
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label>
+                  お問い合わせ内容 <span className="required">*</span>
+                </label>
+                <textarea
+                  required
+                  rows={5}
+                  value={contactForm.message}
+                  onChange={(e) =>
+                    setContactForm({ ...contactForm, message: e.target.value })
+                  }
+                />
+              </div>
+              {contactStatus === "error" && (
+                <p className="form-error">
+                  送信に失敗しました。時間をおいて再度お試しください。
+                </p>
+              )}
+              <button
+                type="submit"
+                className="btn-cta-accent btn-submit"
+                disabled={contactStatus === "sending"}
+              >
+                {contactStatus === "sending" ? "送信中..." : "送信する"}
+              </button>
+            </form>
+          )}
         </div>
       </section>
 

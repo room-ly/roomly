@@ -9,7 +9,8 @@ import {
   UserPlus,
   Rocket,
 } from "lucide-react";
-import ContactForm from "@/components/ContactForm";
+import Link from "next/link";
+import { getAllPosts } from "@/lib/column";
 
 const features = [
   {
@@ -72,8 +73,26 @@ const steps = [
 ];
 
 export default function Home() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Roomly",
+    url: "https://hp.roomly.jp",
+    description:
+      "賃貸管理会社向けSaaS。物件・入居者・契約・家賃・修繕・オーナー送金を一つの画面で一元管理。10区画まで無料。",
+    publisher: {
+      "@type": "Organization",
+      name: "Roomly",
+      url: "https://hp.roomly.jp",
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* ヒーロー */}
       <section className="bg-rm-hero px-4 py-28 text-center text-white sm:py-36">
         <div className="mx-auto max-w-3xl animate-slide-up">
@@ -252,18 +271,69 @@ export default function Home() {
         </div>
       </section>
 
-      {/* お問い合わせ */}
-      <section id="contact" className="px-4 py-16 sm:py-24">
-        <div className="mx-auto max-w-2xl">
+      {/* 最新コラム */}
+      <section className="px-4 py-16 sm:py-24">
+        <div className="mx-auto max-w-4xl">
           <h2 className="text-center text-xl font-semibold text-rm-primary sm:text-2xl">
+            コラム
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-center text-[14px] text-rm-text-secondary">
+            賃貸管理の業務改善に役立つ情報をお届けします
+          </p>
+          <div className="mt-10 space-y-3">
+            {getAllPosts()
+              .slice(0, 3)
+              .map((post) => (
+                <Link
+                  key={post.slug}
+                  href={`/column/${post.slug}`}
+                  className="block rounded bg-rm-surface p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6"
+                >
+                  <div className="flex flex-wrap items-center gap-3 text-[12px] text-rm-text-muted">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-rm-accent" />
+                      {post.category}
+                    </span>
+                    <time dateTime={post.date}>
+                      {new Date(post.date).toLocaleDateString("ja-JP", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </time>
+                  </div>
+                  <p className="mt-2 text-[14px] font-semibold text-rm-primary">
+                    {post.title}
+                  </p>
+                </Link>
+              ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Link
+              href="/column"
+              className="text-[14px] font-medium text-rm-accent transition-colors hover:text-rm-accent-light"
+            >
+              コラム一覧を見る →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* お問い合わせ導線 */}
+      <section className="px-4 py-16 sm:py-24">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-xl font-semibold text-rm-primary sm:text-2xl">
             お気軽にご相談ください
           </h2>
-          <p className="mt-4 text-center text-[14px] text-rm-text-secondary">
+          <p className="mt-4 text-[14px] text-rm-text-secondary">
             導入のご検討・ご不明点・協業のご相談など、お気軽にお問い合わせください。
           </p>
-          <div className="mt-10">
-            <ContactForm />
-          </div>
+          <Link
+            href="/contact"
+            className="mt-8 inline-block rounded bg-rm-accent px-10 py-3.5 text-[15px] font-medium text-white transition-colors hover:bg-rm-accent-light"
+          >
+            お問い合わせはこちら
+          </Link>
         </div>
       </section>
     </>

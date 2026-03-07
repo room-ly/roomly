@@ -30,7 +30,7 @@ export function Footer() {
           </nav>
         </div>
         <div className="mt-8 pt-6 border-t border-rm-border">
-          <p className="text-xs text-rm-text-muted mb-2">zh運営サイト</p>
+          <p className="text-xs text-rm-text-muted mb-2 text-center sm:text-left">zh グループ</p>
           <div className="flex flex-wrap justify-center sm:justify-start gap-x-5 gap-y-1">
             {ZH_SITES.map((s) => (
               <a
