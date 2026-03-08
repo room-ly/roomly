@@ -1,0 +1,64 @@
+[
+  {
+    "id": "market_007",
+    "category": "energy_dependency",
+    "label": "日本の原油中東依存度",
+    "middle_east_import_ratio_percent": 94,
+    "hormuz_strait_ratio_percent": 80,
+    "note": "原油の94%を中東から輸入、そのタンカーの8割がホルムズ海峡を通過",
+    "source_article": "iran-war-real-estate-impact.md",
+    "estimated": false,
+    "last_verified": "2026-03-08"
+  },
+  {
+    "id": "market_009",
+    "category": "oil_crisis_scenario",
+    "label": "野村総合研究所試算：ホルムズ海峡長期閉鎖シナリオ",
+    "source": "野村総合研究所",
+    "crude_oil_price_usd": 140,
+    "crude_oil_price_multiplier": 1.8,
+    "cpi_increase_percent": 1.14,
+    "gdp_decrease_percent": 0.65,
+    "note": "海峡が長期閉鎖された場合の試算",
+    "source_article": "iran-war-real-estate-impact.md",
+    "estimated": true,
+    "last_verified": "2026-03-08"
+  },
+  {
+    "id": "market_011",
+    "category": "oil_crisis_historical",
+    "label": "第一次オイルショック（1973年）の影響",
+    "year": 1973,
+    "event": "第一次オイルショック",
+    "crude_oil_price_multiplier": 4,
+    "cpi_increase_yoy_percent": 20,
+    "description": "原油価格が4倍に跳ね上がり、消費者物価は前年比20%超の上昇。狂乱物価と呼ばれた",
+    "source_article": "iran-war-real-estate-impact.md",
+    "estimated": false,
+    "last_verified": "2026-03-08"
+  },
+  {
+    "id": "market_014",
+    "category": "energy_structure",
+    "label": "サウジアラビア東西パイプライン輸送能力",
+    "pipeline_capacity_barrels_per_day": 5000000,
+    "description": "ホルムズ海峡を迂回する東西パイプライン。日量500万バレルの輸送能力",
+    "source_article": "iran-war-real-estate-impact.md",
+    "estimated": false,
+    "last_verified": "2026-03-08"
+  },
+  {
+    "id": "market_015",
+    "category": "hormuz_crisis_2026",
+    "label": "ホルムズ海峡封鎖時の市場反応（2026年3月）",
+    "event_date": "2026-03-02",
+    "crude_oil_futures_increase_percent_min": 10,
+    "japan_stock_drop_percent": 3,
+    "japan_stock_drop_date": "2026-03-04",
+    "ships_stranded": 44,
+    "ships_stranded_note": "日本関係船44隻がペルシャ湾内で足止め",
+    "source_article": "iran-war-real-estate-impact.md",
+    "estimated": false,
+    "last_verified": "2026-03-08"
+  }
+]

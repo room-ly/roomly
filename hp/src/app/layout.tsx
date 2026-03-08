@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 const GA_ID = "G-Y2943F8G2J";
 
@@ -55,6 +56,7 @@ export default function RootLayout({
         </Script>
       </head>
       <body className={`${notoSansJP.className} antialiased`}>
+        <GoogleAnalytics />
         <ThemeProvider>
           <Header />
           <main className="min-h-screen">{children}</main>

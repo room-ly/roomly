@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPostBySlug, getAllPosts, posts } from "@/lib/column";
+import Comments from "@/components/Comments";
 
 export function generateStaticParams() {
   return posts.map((post) => ({ slug: post.slug }));
@@ -181,6 +182,9 @@ export default async function BlogPostPage({
               無料で始める
             </a>
           </div>
+
+          {/* コメント */}
+          <Comments project="roomly" articleSlug={slug} />
 
           {/* 関連記事 */}
           {relatedPosts.length > 0 && (
