@@ -1,11 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPostBySlug, getAllPosts, posts } from "@/lib/column";
+import { MDXRemote } from "next-mdx-remote/rsc";
+import remarkGfm from "remark-gfm";
+import { getArticle, getAllSlugs, getAllArticles } from "@/lib/media";
+import { BarChartMDX, LineChartMDX, PieChartMDX } from "@/components/charts";
 import Comments from "@/components/Comments";
 
+const mdxComponents = {
+  BarChart: BarChartMDX,
+  LineChart: LineChartMDX,
+  PieChart: PieChartMDX,
+};
+
 export function generateStaticParams() {
-  return posts.map((post) => ({ slug: post.slug }));
+  return getAllSlugs().map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
@@ -14,21 +23,22 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
-  if (!post) return {};
+  const article = getArticle(slug);
+  if (!article) return {};
 
   return {
-    title: `${post.title} | コラム`,
-    description: post.description,
+    title: `${article.title} | コラム`,
+    description: article.description,
     alternates: {
       canonical: `https://hp.roomly.jp/column/${slug}`,
     },
     openGraph: {
-      title: post.title,
-      description: post.description,
+      title: article.title,
+      description: article.description,
       type: "article",
-      publishedTime: post.date,
-      url: `https://hp.roomly.jp/column/${post.slug}`,
+      publishedTime: article.date,
+      modifiedTime: article.lastModified || article.date,
+      url: `https://hp.roomly.jp/column/${slug}`,
       siteName: "Roomly",
       locale: "ja_JP",
     },
@@ -41,39 +51,19 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
-  if (!post) notFound();
+  const article = getArticle(slug);
+  if (!article) notFound();
 
-  const allPosts = getAllPosts().filter((p) => p.slug !== slug);
-  const relatedPosts = allPosts.slice(0, 3);
-
-  const contentHtml = post.content
-    .split("\n")
-    .map((line) => {
-      if (line.startsWith("### ")) return `<h3>${line.slice(4)}</h3>`;
-      if (line.startsWith("## ")) return `<h2>${line.slice(3)}</h2>`;
-      if (line.startsWith("**") && line.endsWith("**"))
-        return `<p><strong>${line.slice(2, -2)}</strong></p>`;
-      if (line.startsWith("- ")) {
-        const item = line.slice(2)
-          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-        return `<p class="ml-4">・${item}</p>`;
-      }
-      if (line.trim() === "") return "";
-      const formatted = line
-        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-      return `<p>${formatted}</p>`;
-    })
-    .join("\n");
+  const allArticles = getAllArticles().filter((a) => a.slug !== slug);
+  const relatedPosts = allArticles.slice(0, 3);
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: post.title,
-    description: post.description,
-    datePublished: post.date,
+    headline: article.title,
+    description: article.description,
+    datePublished: article.date,
+    dateModified: article.lastModified || article.date,
     author: {
       "@type": "Organization",
       name: "Roomly",
@@ -88,6 +78,9 @@ export default async function BlogPostPage({
       "@type": "WebPage",
       "@id": `https://hp.roomly.jp/column/${slug}`,
     },
+    ...(article.tags.length > 0
+      ? { keywords: article.tags.join(", ") }
+      : {}),
   };
 
   const breadcrumbJsonLd = {
@@ -109,7 +102,7 @@ export default async function BlogPostPage({
       {
         "@type": "ListItem",
         position: 3,
-        name: post.title,
+        name: article.title,
         item: `https://hp.roomly.jp/column/${slug}`,
       },
     ],
@@ -138,34 +131,56 @@ export default async function BlogPostPage({
               コラム
             </Link>
             <span className="mx-2">/</span>
-            <span className="text-rm-text-secondary">{post.title}</span>
+            <span className="text-rm-text-secondary">{article.title}</span>
           </nav>
 
           {/* メタ情報 */}
           <div className="flex flex-wrap items-center gap-3 text-[12px] text-rm-text-muted">
             <span className="inline-flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-rm-accent" />
-              {post.category}
+              {article.category}
             </span>
-            <time dateTime={post.date}>
-              {new Date(post.date).toLocaleDateString("ja-JP", {
+            <time dateTime={article.date}>
+              {new Date(article.date).toLocaleDateString("ja-JP", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
               })}
             </time>
+            {article.lastModified && article.lastModified !== article.date && (
+              <span className="text-rm-text-muted">
+                （更新: {article.lastModified}）
+              </span>
+            )}
           </div>
 
           {/* タイトル */}
           <h1 className="mt-4 text-xl font-semibold leading-snug text-rm-primary sm:text-2xl">
-            {post.title}
+            {article.title}
           </h1>
 
+          {/* タグ */}
+          {article.tags.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {article.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-[11px] px-2 py-0.5 rounded bg-rm-surface border border-rm-border text-rm-text-muted"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* 本文 */}
-          <div
-            className="prose-rm mt-10"
-            dangerouslySetInnerHTML={{ __html: contentHtml }}
-          />
+          <div className="prose-rm mt-10">
+            <MDXRemote
+              source={article.content}
+              options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
+              components={mdxComponents}
+            />
+          </div>
 
           {/* CTA */}
           <div className="mt-16 rounded bg-rm-hero p-8 text-center text-white sm:p-12">

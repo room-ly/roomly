@@ -1,7 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 
 const SUPABASE_URL = process.env.INQUIRY_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const SUPABASE_KEY = process.env.INQUIRY_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
+function sendCommentNotification(project: string, slug: string, author: string, content: string) {
+  const key = process.env.RESEND_API_KEY;
+  const to = process.env.COMMENT_NOTIFICATION_EMAIL;
+  if (!key || !to) return;
+  const resend = new Resend(key);
+  resend.emails.send({
+    from: "Roomly <noreply@roomly.jp>",
+    to: [to],
+    subject: `[コメント] ${project} - ${slug}`,
+    text: `新しいコメントが投稿されました。\n\nプロジェクト: ${project}\n記事: ${slug}\n投稿者: ${author}\n\n${content}\n\n※承認前のコメントです。`,
+  }).catch(() => {});
+}
 
 export async function GET(req: NextRequest) {
   const project = req.nextUrl.searchParams.get("project");
@@ -61,6 +75,8 @@ export async function POST(req: NextRequest) {
     if (!res.ok) {
       return NextResponse.json({ error: "保存に失敗しました" }, { status: 500 });
     }
+
+    sendCommentNotification(project, article_slug, author_name.trim(), content.trim());
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch {

@@ -10,7 +10,7 @@ import {
   Rocket,
 } from "lucide-react";
 import Link from "next/link";
-import { getAllPosts } from "@/lib/column";
+import { getAllArticles } from "@/lib/media";
 
 const features = [
   {
@@ -281,7 +281,7 @@ export default function Home() {
             賃貸管理の業務改善に役立つ情報をお届けします
           </p>
           <div className="mt-10 space-y-3">
-            {getAllPosts()
+            {getAllArticles()
               .slice(0, 3)
               .map((post) => (
                 <Link

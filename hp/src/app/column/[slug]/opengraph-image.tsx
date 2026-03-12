@@ -1,12 +1,12 @@
 import { ImageResponse } from "next/og";
-import { getPostBySlug, posts } from "@/lib/column";
+import { getArticle, getAllSlugs } from "@/lib/media";
 
 export const alt = "Roomly コラム";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export function generateStaticParams() {
-  return posts.map((post) => ({ slug: post.slug }));
+  return getAllSlugs().map((slug) => ({ slug }));
 }
 
 export default async function Image({
@@ -15,12 +15,12 @@ export default async function Image({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const article = getArticle(slug);
 
-  const title = post?.title ?? "Roomly コラム";
-  const category = post?.category ?? "";
-  const date = post?.date
-    ? new Date(post.date).toLocaleDateString("ja-JP", {
+  const title = article?.title ?? "Roomly コラム";
+  const category = article?.category ?? "";
+  const date = article?.date
+    ? new Date(article.date).toLocaleDateString("ja-JP", {
         year: "numeric",
         month: "long",
         day: "numeric",
