@@ -6,6 +6,18 @@ export const metadata: Metadata = {
   title: "導入事例",
   description:
     "Roomlyを導入いただいた賃貸管理会社の事例をご紹介。導入効果・業務改善の実績をご覧ください。",
+  alternates: {
+    canonical: "/case-studies",
+  },
+  openGraph: {
+    title: "導入事例 | Roomly",
+    description:
+      "Roomlyを導入いただいた賃貸管理会社の事例をご紹介。導入効果・業務改善の実績をご覧ください。",
+    type: "website",
+    url: "https://hp.roomly.jp/case-studies",
+    siteName: "Roomly",
+    locale: "ja_JP",
+  },
 };
 
 // 事例テンプレート（今後実際の事例データで置き換える）

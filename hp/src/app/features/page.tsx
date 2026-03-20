@@ -20,6 +20,18 @@ export const metadata: Metadata = {
   title: "機能紹介",
   description:
     "Roomlyの全機能を紹介。物件管理・契約管理・家賃管理・修繕管理・オーナー送金・レポートなど、賃貸管理に必要な機能をすべて備えています。",
+  alternates: {
+    canonical: "/features",
+  },
+  openGraph: {
+    title: "機能紹介 | Roomly",
+    description:
+      "Roomlyの全機能を紹介。物件管理・契約管理・家賃管理・修繕管理・オーナー送金・レポートなど、賃貸管理に必要な機能をすべて備えています。",
+    type: "website",
+    url: "https://hp.roomly.jp/features",
+    siteName: "Roomly",
+    locale: "ja_JP",
+  },
 };
 
 const mainFeatures = [

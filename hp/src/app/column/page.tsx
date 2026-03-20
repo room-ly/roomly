@@ -6,6 +6,18 @@ export const metadata: Metadata = {
   title: "コラム",
   description:
     "賃貸管理の業務改善に役立つコラムをお届けします。物件管理・家賃管理・オーナー対応・修繕管理のノウハウを紹介。",
+  alternates: {
+    canonical: "/column",
+  },
+  openGraph: {
+    title: "コラム | Roomly",
+    description:
+      "賃貸管理の業務改善に役立つコラムをお届けします。物件管理・家賃管理・オーナー対応・修繕管理のノウハウを紹介。",
+    type: "website",
+    url: "https://hp.roomly.jp/column",
+    siteName: "Roomly",
+    locale: "ja_JP",
+  },
 };
 
 export default function BlogIndex() {

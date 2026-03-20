@@ -55,7 +55,10 @@ export default async function BlogPostPage({
   if (!article) notFound();
 
   const allArticles = getAllArticles().filter((a) => a.slug !== slug);
-  const relatedPosts = allArticles.slice(0, 3);
+  // 同カテゴリの記事を優先し、足りなければ他カテゴリで補完
+  const sameCategoryPosts = allArticles.filter((a) => a.category === article.category);
+  const otherPosts = allArticles.filter((a) => a.category !== article.category);
+  const relatedPosts = [...sameCategoryPosts, ...otherPosts].slice(0, 3);
 
   const jsonLd = {
     "@context": "https://schema.org",

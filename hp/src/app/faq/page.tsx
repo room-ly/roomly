@@ -5,6 +5,18 @@ export const metadata: Metadata = {
   title: "よくある質問（FAQ）",
   description:
     "Roomlyに関するよくある質問と回答。料金・機能・セキュリティ・導入方法などについて回答しています。",
+  alternates: {
+    canonical: "/faq",
+  },
+  openGraph: {
+    title: "よくある質問（FAQ） | Roomly",
+    description:
+      "Roomlyに関するよくある質問と回答。料金・機能・セキュリティ・導入方法などについて回答しています。",
+    type: "website",
+    url: "https://hp.roomly.jp/faq",
+    siteName: "Roomly",
+    locale: "ja_JP",
+  },
 };
 
 const faqCategories = [
