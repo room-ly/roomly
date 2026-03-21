@@ -1,7 +1,5 @@
 import type { MetadataRoute } from "next";
 import { getAllArticles } from "@/lib/media";
-import { getPageCount } from "@/components/ArticleList";
-
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://hp.roomly.jp";
   const posts = getAllArticles();
@@ -12,18 +10,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
-
-  // ページネーション（2ページ目以降）
-  const totalPages = getPageCount(posts.length);
-  const paginationPages = Array.from(
-    { length: totalPages - 1 },
-    (_, i) => ({
-      url: `${baseUrl}/column/page/${i + 2}`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.5,
-    })
-  );
 
   return [
     {
@@ -69,6 +55,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.5,
     },
     ...columnPages,
-    ...paginationPages,
   ];
 }
