@@ -96,7 +96,7 @@ estate/
 ### ワークフロー
 
 - **「リリースして」= push まで含む**: コミット → push まで一気にやる
-- **記事リリース**: draft から `hp/content/{date}/` に MDX 変換して配置 → コミット → push（contentが唯一の正。released フォルダは廃止済み）
+- **記事リリース**: draft から `hp/content/{date}/` に MDX 変換して配置 → リリース後draftファイルは削除 → コミット → push（contentが唯一の正）
 - **HP 開発ニュース**: 開発アップデートは `hp/` にも反映
 
 ### 文体・トーン（マーケティング・記事・SNS）
