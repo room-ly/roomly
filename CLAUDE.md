@@ -99,6 +99,16 @@ estate/
 - **記事リリース**: draft から `hp/content/{date}/` に MDX 変換して配置 → リリース後draftファイルは削除 → コミット → push（contentが唯一の正）
 - **HP 開発ニュース**: 開発アップデートは `hp/` にも反映
 
+### テーマ一括draft化フロー
+
+`marketing/article/draft/themes.md` のチェックボックスを使って記事を量産するフロー:
+
+1. ユーザーが `themes.md` の記事化したいテーマに `- [x]` をつける（不要なものは削除してもOK）
+2. 「チェックしたやつdraft化して」と伝える
+3. Claudeがチェック済みの全テーマについて、切り口案をそのまま使い、具体↔抽象の設計 → 執筆 の順で全draftを生成する
+4. 全draft生成後、`themes.md` のチェックを `- [ ]` に戻す（draftファイルは残す）
+5. ユーザーが各draftを確認 → 「リリースして」でMDX変換 → `hp/content/column/{date}/` へ配置 → push
+
 ### 文体・トーン（マーケティング・記事・SNS）
 
 - 同じ目線で語るトーンを使う
