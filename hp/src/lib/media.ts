@@ -15,6 +15,19 @@ export interface Article {
 
 const CONTENT_DIR = path.join(process.cwd(), "content", "column");
 
+function collectMdxFiles(dir: string): string[] {
+  if (!fs.existsSync(dir)) return [];
+  const results: string[] = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      results.push(...collectMdxFiles(path.join(dir, entry.name)));
+    } else if (entry.name.endsWith(".mdx")) {
+      results.push(path.join(dir, entry.name));
+    }
+  }
+  return results;
+}
+
 // 公開済みかどうか（dateが今日以前ならtrue）
 function isPublished(date: string): boolean {
   const today = new Date();
@@ -23,11 +36,10 @@ function isPublished(date: string): boolean {
 }
 
 export function getAllArticles(): Article[] {
-  if (!fs.existsSync(CONTENT_DIR)) return [];
-  const files = fs.readdirSync(CONTENT_DIR).filter((f) => f.endsWith(".mdx"));
-  const articles = files.map((file) => {
-    const slug = file.replace(/\.mdx$/, "");
-    const raw = fs.readFileSync(path.join(CONTENT_DIR, file), "utf-8");
+  const files = collectMdxFiles(CONTENT_DIR);
+  const articles = files.map((filePath) => {
+    const slug = path.basename(filePath).replace(/\.mdx$/, "");
+    const raw = fs.readFileSync(filePath, "utf-8");
     const { data, content } = matter(raw);
     return {
       slug,
@@ -48,8 +60,9 @@ export function getAllArticles(): Article[] {
 }
 
 export function getArticle(slug: string): Article | undefined {
-  const filePath = path.join(CONTENT_DIR, `${slug}.mdx`);
-  if (!fs.existsSync(filePath)) return undefined;
+  const files = collectMdxFiles(CONTENT_DIR);
+  const filePath = files.find((f) => path.basename(f) === `${slug}.mdx`);
+  if (!filePath) return undefined;
   const raw = fs.readFileSync(filePath, "utf-8");
   const { data, content } = matter(raw);
   if (!isPublished(data.date || "")) return undefined;
