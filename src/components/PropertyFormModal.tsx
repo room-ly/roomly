@@ -61,7 +61,7 @@ export default function PropertyFormModal({
 
       if (!res.ok) {
         const err = await res.json();
-        setApiError(err.error || "エラーが発生しました");
+        setApiError(err.details ? `${err.error}: ${err.details}` : err.error || "エラーが発生しました");
         return;
       }
 

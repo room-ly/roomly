@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(property, { status: 201 });
-  } catch {
+  } catch (e) {
     return NextResponse.json(
-      { error: "リクエストの処理に失敗しました" },
+      { error: "リクエストの処理に失敗しました", details: e instanceof Error ? e.message : String(e) },
       { status: 500 }
     );
   }
