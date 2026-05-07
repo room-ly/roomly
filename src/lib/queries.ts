@@ -392,7 +392,7 @@ export async function getBadgeCounts() {
         .from("inquiries")
         .select("id", { count: "exact", head: true })
         .in("status", ["open", "in_progress"]),
-      supabase.from("companies").select("usage_type").single(),
+      supabase.from("companies").select("name, usage_type").single(),
     ]);
 
   return {
@@ -401,5 +401,6 @@ export async function getBadgeCounts() {
     "/inquiries": inquiriesRes.count ?? 0,
     usage_type:
       (companyRes.data?.usage_type as string) ?? "management_company",
+    company_name: (companyRes.data?.name as string) ?? "",
   };
 }

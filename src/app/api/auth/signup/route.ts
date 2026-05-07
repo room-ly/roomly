@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
 
-// サービスロールキーでAdmin APIを使用（サインアップ時にcompany+userを作成するため）
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -53,12 +53,11 @@ export async function POST(request: NextRequest) {
       await admin.auth.admin.createUser({
         email,
         password,
-        email_confirm: true, // メール確認をスキップ（開発時）
+        email_confirm: true,
         user_metadata: { name, company_id: company.id },
       });
 
     if (authError) {
-      // 会社をロールバック
       await admin.from("companies").delete().eq("id", company.id);
 
       if (authError.message.includes("already been registered")) {
@@ -81,11 +80,10 @@ export async function POST(request: NextRequest) {
       company_id: company.id,
       name,
       email,
-      role: "admin", // 最初のユーザーはadmin
+      role: "admin",
     });
 
     if (profileError) {
-      // ロールバック
       await admin.auth.admin.deleteUser(authData.user.id);
       await admin.from("companies").delete().eq("id", company.id);
 
@@ -96,13 +94,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      {
-        message: "アカウントを作成しました",
-        requiresEmailConfirmation: false,
-      },
+    // 4. サーバー側でログインしてセッションCookieをレスポンスに含める
+    let response = NextResponse.json(
+      { message: "アカウントを作成しました", requiresEmailConfirmation: false },
       { status: 201 }
     );
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name: cookieName, value, options }) => {
+              response.cookies.set(cookieName, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    await supabase.auth.signInWithPassword({ email, password });
+
+    return response;
   } catch {
     return NextResponse.json(
       { error: "リクエストの処理に失敗しました" },

@@ -36,11 +36,10 @@ export default function SignupPage() {
         return;
       }
 
-      // サインアップ成功 → メール確認待ち or 自動ログイン
       if (data.requiresEmailConfirmation) {
         setSuccess(true);
       } else {
-        // 自動ログイン
+        // クライアント側でもログインしてAuthProviderのセッションを確立
         const supabase = createClient();
         await supabase.auth.signInWithPassword({ email, password });
         router.push("/");

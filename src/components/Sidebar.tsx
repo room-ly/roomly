@@ -39,14 +39,16 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
   const [usageType, setUsageType] = useState<string>("management_company");
+  const [companyName, setCompanyName] = useState<string>("");
 
   useEffect(() => {
     fetch("/api/badge-counts")
       .then((res) => res.json())
       .then((data) => {
-        const { usage_type, ...counts } = data;
+        const { usage_type, company_name, ...counts } = data;
         setBadgeCounts(counts);
         if (usage_type) setUsageType(usage_type);
+        if (company_name) setCompanyName(company_name);
       })
       .catch(() => {});
   }, [pathname]);
@@ -151,20 +153,20 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
             </>
           )}
         </button>
-        {!collapsed && (
+        {!collapsed && companyName && (
           <div className="px-4 py-2.5 text-[11px] text-text-muted border-t border-border-light">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 rounded bg-accent/10 flex items-center justify-center text-[9px] font-semibold text-accent">
-                S
+                {companyName[0]}
               </div>
-              <span>サンプル不動産管理</span>
+              <span>{companyName}</span>
             </div>
           </div>
         )}
-        {collapsed && (
+        {collapsed && companyName && (
           <div className="py-2.5 flex justify-center border-t border-border-light">
             <div className="w-5 h-5 rounded bg-accent/10 flex items-center justify-center text-[9px] font-semibold text-accent">
-              S
+              {companyName[0]}
             </div>
           </div>
         )}

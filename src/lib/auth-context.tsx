@@ -51,22 +51,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // 初回: 既存セッションを確認
-    supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
-      if (authUser) {
-        const profile = await fetchProfile(authUser);
-        setUser(profile);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      try {
+        if (session?.user) {
+          const profile = await fetchProfile(session.user);
+          setUser(profile);
+        }
+      } catch {
+        // fetchProfile失敗時もローディングを終了
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
-    // Auth 状態変更を購読
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
-        const profile = await fetchProfile(session.user);
-        setUser(profile);
+        try {
+          const profile = await fetchProfile(session.user);
+          setUser(profile);
+        } catch {
+          // プロフィール取得失敗
+        }
+        setIsLoading(false);
       } else if (event === "SIGNED_OUT") {
         setUser(null);
       }
