@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { unitSchema } from "@/lib/schemas";
 
 export async function POST(request: NextRequest) {
@@ -23,9 +23,10 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
+    const company_id = await getCompanyId();
     const { data: unit, error } = await supabase
       .from("units")
-      .insert({ ...parsed.data, property_id })
+      .insert({ ...parsed.data, property_id, company_id })
       .select()
       .single();
 

@@ -25,3 +25,11 @@ export async function createClient() {
     }
   );
 }
+
+export async function getCompanyId(): Promise<string> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const companyId = user?.user_metadata?.company_id;
+  if (!companyId) throw new Error("company_id が取得できません");
+  return companyId;
+}

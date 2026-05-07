@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 
 // GET: 送金一覧
 export async function GET() {
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     );
     const netAmount = totalRent - managementFeeDeducted - expenseDeducted;
 
-    // 送金レコード作成
+    const company_id = await getCompanyId();
     const { data: remittance, error: remError } = await supabase
       .from("owner_remittances")
       .insert({
@@ -115,6 +115,7 @@ export async function POST(request: NextRequest) {
         expense_deducted: expenseDeducted,
         net_amount: netAmount,
         status: "draft",
+        company_id,
       })
       .select()
       .single();

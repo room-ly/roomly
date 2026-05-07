@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { maintenanceSchema } from "@/lib/schemas";
 
 export async function POST(request: NextRequest) {
@@ -15,10 +15,12 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
+    const company_id = await getCompanyId();
     const data = {
       ...parsed.data,
       unit_id: parsed.data.unit_id || null,
       reported_date: new Date().toISOString().slice(0, 10),
+      company_id,
     };
 
     const { data: maintenance, error } = await supabase

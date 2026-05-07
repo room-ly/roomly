@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { tenantSchema } from "@/lib/schemas";
 
 export async function POST(request: NextRequest) {
@@ -15,14 +15,14 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
-    // 空文字をnullに変換
+    const company_id = await getCompanyId();
     const data = Object.fromEntries(
       Object.entries(parsed.data).map(([k, v]) => [k, v === "" ? null : v])
     );
 
     const { data: tenant, error } = await supabase
       .from("tenants")
-      .insert(data)
+      .insert({ ...data, company_id })
       .select()
       .single();
 

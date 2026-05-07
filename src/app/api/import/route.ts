@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 import {
   parseCsv,
   mapRowToDb,
@@ -77,13 +77,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Supabaseに一括挿入
     const supabase = await createClient();
+    const company_id = await getCompanyId();
     const tableName = type === "properties" ? "properties" : "tenants";
+    const rowsWithCompany = validRows.map((row) => ({ ...row, company_id }));
 
     const { data: inserted, error: dbError } = await supabase
       .from(tableName)
-      .insert(validRows)
+      .insert(rowsWithCompany)
       .select();
 
     if (dbError) {

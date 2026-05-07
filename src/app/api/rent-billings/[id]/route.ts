@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { rentPaymentSchema } from "@/lib/schemas";
 
 // 入金登録（部分入金対応）
@@ -45,7 +45,7 @@ export async function PUT(
       const newTotal = existingPayments + parsed.data.amount;
       const totalAmount = Number(billing.total_amount);
 
-      // 入金レコードを作成
+      const company_id = await getCompanyId();
       const { error: paymentError } = await supabase
         .from("rent_payments")
         .insert({
@@ -54,6 +54,7 @@ export async function PUT(
           payment_method: parsed.data.payment_method,
           payment_date: parsed.data.payment_date,
           note: parsed.data.note || null,
+          company_id,
         });
 
       if (paymentError) {

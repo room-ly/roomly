@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { contractSchema } from "@/lib/schemas";
 
 export async function POST(request: NextRequest) {
@@ -15,9 +15,11 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
+    const company_id = await getCompanyId();
     const data = {
       ...parsed.data,
       end_date: parsed.data.end_date || null,
+      company_id,
     };
 
     const { data: contract, error } = await supabase
