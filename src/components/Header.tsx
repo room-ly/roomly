@@ -59,7 +59,6 @@ export default function Header() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const userBtnRef = useRef<HTMLButtonElement>(null);
-  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/notifications")
@@ -88,12 +87,6 @@ export default function Header() {
     function handleClick(e: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
-      }
-      if (
-        userRef.current && !userRef.current.contains(e.target as Node) &&
-        userMenuRef.current && !userMenuRef.current.contains(e.target as Node)
-      ) {
-        setUserOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClick);
@@ -250,41 +243,43 @@ export default function Header() {
           </button>
 
           {userOpen && createPortal(
-            <div
-              ref={userMenuRef}
-              className="fixed w-52 bg-card rounded border border-border shadow-md z-[9999]"
-              style={{ top: userMenuPos.top, left: userMenuPos.left }}
-            >
-              <div className="px-4 py-2.5 border-b border-border">
-                <p className="font-medium text-[13px]">{user?.name || "ユーザー"}</p>
-                <p className="text-[11px] text-text-muted mt-0.5">{user?.email || ""}</p>
+            <>
+              <div className="fixed inset-0 z-[9998]" onClick={() => setUserOpen(false)} />
+              <div
+                className="fixed w-52 bg-card rounded border border-border shadow-md z-[9999]"
+                style={{ top: userMenuPos.top, left: userMenuPos.left }}
+              >
+                <div className="px-4 py-2.5 border-b border-border">
+                  <p className="font-medium text-[13px]">{user?.name || "ユーザー"}</p>
+                  <p className="text-[11px] text-text-muted mt-0.5">{user?.email || ""}</p>
+                </div>
+                <div className="py-0.5">
+                  <button
+                    onMouseDown={(e) => { e.stopPropagation(); setUserOpen(false); router.push("/settings"); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors"
+                  >
+                    <User size={14} />
+                    プロフィール
+                  </button>
+                  <button
+                    onMouseDown={(e) => { e.stopPropagation(); setUserOpen(false); router.push("/settings"); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors"
+                  >
+                    <Settings size={14} />
+                    設定
+                  </button>
+                </div>
+                <div className="border-t border-border py-0.5">
+                  <button
+                    onMouseDown={(e) => { e.stopPropagation(); setUserOpen(false); logout(); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-danger hover:bg-danger-bg transition-colors"
+                  >
+                    <LogOut size={14} />
+                    ログアウト
+                  </button>
+                </div>
               </div>
-              <div className="py-0.5">
-                <button
-                  onClick={() => { setUserOpen(false); router.push("/settings"); }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors"
-                >
-                  <User size={14} />
-                  プロフィール
-                </button>
-                <button
-                  onClick={() => { setUserOpen(false); router.push("/settings"); }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors"
-                >
-                  <Settings size={14} />
-                  設定
-                </button>
-              </div>
-              <div className="border-t border-border py-0.5">
-                <button
-                  onClick={() => { setUserOpen(false); logout(); }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-danger hover:bg-danger-bg transition-colors"
-                >
-                  <LogOut size={14} />
-                  ログアウト
-                </button>
-              </div>
-            </div>,
+            </>,
             document.body
           )}
         </div>
