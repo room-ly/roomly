@@ -16,14 +16,14 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
   login: async () => ({}),
-  logout: () => {},
+  logout: async () => {},
 });
 
 const supabase = createClient();
@@ -97,9 +97,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return {};
   };
 
-  const logout = () => {
-    supabase.auth.signOut().catch(() => {});
+  const logout = async () => {
     setUser(null);
+    try {
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000)),
+      ]);
+    } catch {
+      // タイムアウトまたはエラーでもリダイレクト
+    }
     window.location.href = "/login";
   };
 
