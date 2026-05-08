@@ -8,7 +8,7 @@ import { useTheme } from "@/lib/theme-provider";
 const NAV_ITEMS = [
   { label: "ホーム", href: "/" },
   { label: "機能", href: "/features" },
-  { label: "料金", href: "/pricing" },
+  { label: "料金", href: "/#pricing" },
   { label: "導入事例", href: "/case-studies" },
   { label: "FAQ", href: "/faq" },
   { label: "コラム", href: "/column" },
