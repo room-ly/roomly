@@ -15,16 +15,6 @@ export default function ContractsTable({ data }: ContractsTableProps) {
       searchPlaceholder="入居者・物件名で検索..."
       filters={[
         {
-          key: "status",
-          label: "状態",
-          options: [
-            { value: "active", label: "有効" },
-            { value: "expired", label: "満了" },
-            { value: "terminated", label: "解約" },
-            { value: "pending", label: "準備中" },
-          ],
-        },
-        {
           key: "contract_type",
           label: "契約種別",
           options: [
@@ -76,7 +66,6 @@ export default function ContractsTable({ data }: ContractsTableProps) {
           align: "right" as const,
           render: (item) => <span className="tabular-nums">¥{Number(item.management_fee).toLocaleString()}</span>,
         },
-        { key: "status", label: "状態", render: (item) => <StatusBadge status={item.status} /> },
       ]}
       rowClassName={(item) => {
         const remainingDays = item.end_date
