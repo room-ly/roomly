@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Search,
@@ -55,10 +54,8 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
-  const [userMenuPos, setUserMenuPos] = useState({ top: 0, left: 0 });
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const userBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     fetch("/api/notifications")
@@ -88,6 +85,9 @@ export default function Header() {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
       }
+      if (userRef.current && !userRef.current.contains(e.target as Node)) {
+        setUserOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -104,7 +104,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="h-14 bg-card border-b border-border sticky top-0 z-30 flex items-center justify-between px-4 md:px-6">
+    <header className="h-14 bg-card border-b border-border sticky top-0 z-40 flex items-center justify-between px-4 md:px-6">
       {/* パンくず */}
       <nav className="flex items-center gap-1 text-[13px] min-w-0 ml-10 md:ml-0">
         {breadcrumbs.map((crumb, i) => (
@@ -180,7 +180,7 @@ export default function Header() {
           </button>
 
           {notifOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-72 bg-card rounded border border-border shadow-md overflow-hidden">
+            <div className="absolute right-0 top-full mt-1.5 w-72 bg-card rounded border border-border shadow-md overflow-hidden z-50">
               <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
                 <h3 className="font-medium text-[13px]">通知</h3>
                 {unreadCount > 0 && (
@@ -226,15 +226,7 @@ export default function Header() {
         {/* ユーザー */}
         <div ref={userRef} className="relative ml-1">
           <button
-            ref={userBtnRef}
-            onClick={() => {
-              if (!userOpen && userBtnRef.current) {
-                const rect = userBtnRef.current.getBoundingClientRect();
-                setUserMenuPos({ top: rect.bottom + 6, left: rect.right - 208 });
-              }
-              setUserOpen(!userOpen);
-              setNotifOpen(false);
-            }}
+            onClick={() => { setUserOpen(!userOpen); setNotifOpen(false); }}
             className="flex items-center gap-2 p-1 rounded hover:bg-bg-secondary transition-colors"
           >
             <div className="w-7 h-7 rounded bg-accent/10 flex items-center justify-center text-accent text-[12px] font-semibold">
@@ -242,45 +234,38 @@ export default function Header() {
             </div>
           </button>
 
-          {userOpen && createPortal(
-            <>
-              <div className="fixed inset-0 z-[9998]" onClick={() => setUserOpen(false)} />
-              <div
-                className="fixed w-52 bg-card rounded border border-border shadow-md z-[9999]"
-                style={{ top: userMenuPos.top, left: userMenuPos.left }}
-              >
-                <div className="px-4 py-2.5 border-b border-border">
-                  <p className="font-medium text-[13px]">{user?.name || "ユーザー"}</p>
-                  <p className="text-[11px] text-text-muted mt-0.5">{user?.email || ""}</p>
-                </div>
-                <div className="py-0.5">
-                  <button
-                    onMouseDown={(e) => { e.stopPropagation(); setUserOpen(false); router.push("/settings"); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors"
-                  >
-                    <User size={14} />
-                    プロフィール
-                  </button>
-                  <button
-                    onMouseDown={(e) => { e.stopPropagation(); setUserOpen(false); router.push("/settings"); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors"
-                  >
-                    <Settings size={14} />
-                    設定
-                  </button>
-                </div>
-                <div className="border-t border-border py-0.5">
-                  <button
-                    onMouseDown={(e) => { e.stopPropagation(); setUserOpen(false); logout(); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-danger hover:bg-danger-bg transition-colors"
-                  >
-                    <LogOut size={14} />
-                    ログアウト
-                  </button>
-                </div>
+          {userOpen && (
+            <div className="absolute right-0 top-full mt-1.5 w-52 bg-card rounded border border-border shadow-md z-50">
+              <div className="px-4 py-2.5 border-b border-border">
+                <p className="font-medium text-[13px]">{user?.name || "ユーザー"}</p>
+                <p className="text-[11px] text-text-muted mt-0.5">{user?.email || ""}</p>
               </div>
-            </>,
-            document.body
+              <div className="py-0.5">
+                <button
+                  onClick={() => { setUserOpen(false); router.push("/settings"); }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors cursor-pointer"
+                >
+                  <User size={14} />
+                  プロフィール
+                </button>
+                <button
+                  onClick={() => { setUserOpen(false); router.push("/settings"); }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-text-secondary hover:bg-bg-secondary transition-colors cursor-pointer"
+                >
+                  <Settings size={14} />
+                  設定
+                </button>
+              </div>
+              <div className="border-t border-border py-0.5">
+                <button
+                  onClick={() => { logout(); }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-danger hover:bg-danger-bg transition-colors cursor-pointer"
+                >
+                  <LogOut size={14} />
+                  ログアウト
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>

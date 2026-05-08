@@ -17,7 +17,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <Sidebar>
       <Header />
-      <main className="p-4 md:p-8">
+      <main className="p-4 md:p-8 relative z-0">
         {children}
       </main>
     </Sidebar>
