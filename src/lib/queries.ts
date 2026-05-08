@@ -151,6 +151,16 @@ export async function getCompany() {
   return data as Row;
 }
 
+export async function getUsers() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, name, email, role, is_active, created_at")
+    .order("created_at");
+  if (error) throw error;
+  return (data ?? []) as Row[];
+}
+
 // ダッシュボード用データ
 export async function getDashboardData() {
   const supabase = await createClient();
