@@ -103,7 +103,7 @@ export default function FilterableTable({
     <>
       {/* 検索バー + フィルタ */}
       {(searchFields.length > 0 || filters.length > 0) && (
-        <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 mb-4">
           {searchFields.length > 0 && (
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -124,7 +124,7 @@ export default function FilterableTable({
                 setFilterValues((prev) => ({ ...prev, [f.key]: e.target.value }));
                 setPage(1);
               }}
-              className="input py-1.5 text-[13px] w-auto min-w-[120px]"
+              className="input py-1.5 text-[13px] w-40"
             >
               <option value="all">{f.label}</option>
               {f.options.map((opt) => (
