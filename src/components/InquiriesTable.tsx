@@ -33,7 +33,6 @@ export default function InquiriesTable({ inquiries }: InquiriesTableProps) {
             { value: "open", label: "未対応" },
             { value: "in_progress", label: "対応中" },
             { value: "resolved", label: "対応済み" },
-            { value: "closed", label: "完了" },
           ],
         },
         {
@@ -48,9 +47,6 @@ export default function InquiriesTable({ inquiries }: InquiriesTableProps) {
         },
       ]}
       columns={[
-        { key: "title", label: "件名", render: (item) => <span className="font-medium">{item.title}</span> },
-        { key: "inquiry_type", label: "種別", render: (item) => <StatusBadge status={item.inquiry_type} /> },
-        { key: "priority", label: "優先度", render: (item) => <StatusBadge status={item.priority} /> },
         {
           key: "status",
           label: "状態",
@@ -64,10 +60,12 @@ export default function InquiriesTable({ inquiries }: InquiriesTableProps) {
               <option value="open">未対応</option>
               <option value="in_progress">対応中</option>
               <option value="resolved">対応済み</option>
-              <option value="closed">完了</option>
             </select>
           ),
         },
+        { key: "title", label: "件名", render: (item) => <span className="font-medium">{item.title}</span> },
+        { key: "inquiry_type", label: "種別", render: (item) => <StatusBadge status={item.inquiry_type} /> },
+        { key: "priority", label: "優先度", render: (item) => <StatusBadge status={item.priority} /> },
         { key: "created_at", label: "登録日", sortable: true, render: (item) => item.created_at?.slice(0, 10) },
       ]}
     />
