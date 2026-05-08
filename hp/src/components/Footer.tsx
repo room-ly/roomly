@@ -2,6 +2,7 @@ import Link from "next/link";
 
 const ZH_SITES = [
   { name: "LunaPos", url: "https://lunapos.jp", desc: "ナイト業界向けPOS" },
+  { name: "Kaigaijin", url: "https://kaigaijin.jp", desc: "海外在住日本人メディア" },
   { name: "Casinohub", url: "https://casinohub.jp", desc: "カジノ向け管理SaaS" },
   { name: "Wattly", url: "https://wattly.jp", desc: "電力メディア" },
 ];
