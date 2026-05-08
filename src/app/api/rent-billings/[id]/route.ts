@@ -49,11 +49,11 @@ export async function PUT(
       const { error: paymentError } = await supabase
         .from("rent_payments")
         .insert({
-          rent_billing_id: id,
+          billing_id: id,
           amount: parsed.data.amount,
           payment_method: parsed.data.payment_method,
           payment_date: parsed.data.payment_date,
-          note: parsed.data.note || null,
+          notes: parsed.data.note || null,
           company_id,
         });
 
