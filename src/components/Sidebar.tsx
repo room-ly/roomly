@@ -13,6 +13,7 @@ import {
   MessageSquare,
   UserCircle,
   Receipt,
+  Send,
   Settings,
   ChevronsLeft,
   ChevronsRight,
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/inquiries", label: "問い合わせ", icon: MessageSquare },
   { href: "/expenses", label: "経費管理", icon: Receipt },
   { href: "/owners", label: "オーナー管理", icon: UserCircle, managementOnly: true as const },
+  { href: "/remittances", label: "送金管理", icon: Send, managementOnly: true as const },
   { href: "/settings", label: "設定", icon: Settings },
 ];
 
