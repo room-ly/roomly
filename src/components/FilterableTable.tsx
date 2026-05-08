@@ -105,14 +105,14 @@ export default function FilterableTable({
       {(searchFields.length > 0 || filters.length > 0) && (
         <div className="flex flex-wrap items-center gap-2 mb-4">
           {searchFields.length > 0 && (
-            <div className="relative" style={{ width: "16rem" }}>
+            <div className="relative w-64">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder={searchPlaceholder}
-                className="input pl-9 py-1.5 text-[13px]"
+                className="w-full border border-[var(--border)] rounded-[var(--radius)] bg-[var(--card)] text-[var(--text)] pl-9 py-1.5 text-[13px] transition-all focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_2px_var(--accent-subtle)]"
               />
             </div>
           )}
@@ -124,8 +124,7 @@ export default function FilterableTable({
                 setFilterValues((prev) => ({ ...prev, [f.key]: e.target.value }));
                 setPage(1);
               }}
-              className="input py-1.5 text-[13px]"
-              style={{ width: "10rem" }}
+              className="w-40 border border-[var(--border)] rounded-[var(--radius)] bg-[var(--card)] text-[var(--text)] px-3 py-1.5 text-[13px] transition-all focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_2px_var(--accent-subtle)]"
             >
               <option value="all">{f.label}</option>
               {f.options.map((opt) => (

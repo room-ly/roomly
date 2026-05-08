@@ -98,7 +98,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // signOutに失敗してもリダイレクトする
+    }
     setUser(null);
     window.location.href = "/login";
   };
