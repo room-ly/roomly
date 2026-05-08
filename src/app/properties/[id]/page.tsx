@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
-import { getPropertyDetail, getOwners } from "@/lib/queries";
+import { getPropertyDetail } from "@/lib/queries";
 import PropertyDetailClient from "@/components/PropertyDetailClient";
 import UnitTable from "@/components/UnitTable";
 
@@ -11,15 +11,11 @@ export default async function PropertyDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [result, owners] = await Promise.all([
-    getPropertyDetail(id),
-    getOwners(),
-  ]);
+  const result = await getPropertyDetail(id);
   if (!result) notFound();
 
   const { property, units, contracts } = result;
   const occupied = units.filter((u: any) => u.status === "occupied").length;
-  const ownerOptions = owners.map((o: Record<string, any>) => ({ id: o.id, name: o.name }));
 
   return (
     <>
@@ -36,11 +32,7 @@ export default async function PropertyDetailPage({
               {property.address}
             </p>
           </div>
-          <PropertyDetailClient
-            propertyId={id}
-            property={property}
-            owners={ownerOptions}
-          />
+          <PropertyDetailClient propertyId={id} />
         </div>
       </div>
 

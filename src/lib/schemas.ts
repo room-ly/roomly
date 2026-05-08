@@ -187,3 +187,21 @@ export const inquirySchema = z.object({
 });
 
 export type InquiryFormData = z.infer<typeof inquirySchema>;
+
+// オーナースキーマ
+export const ownerSchema = z.object({
+  name: z.string().min(1, "氏名は必須です"),
+  phone: z.string().optional().or(z.literal("")),
+  email: z.string().email("メールアドレスの形式が正しくありません").optional().or(z.literal("")),
+  postal_code: z.string().optional().or(z.literal("")),
+  address: z.string().optional().or(z.literal("")),
+  bank_name: z.string().optional().or(z.literal("")),
+  bank_branch: z.string().optional().or(z.literal("")),
+  bank_account_type: z.string().optional().or(z.literal("")),
+  bank_account_number: z.string().optional().or(z.literal("")),
+  bank_account_holder: z.string().optional().or(z.literal("")),
+  management_fee_rate: z.coerce.number().min(0, "0以上を入力してください").max(100, "100以下を入力してください"),
+  notes: z.string().optional().or(z.literal("")),
+});
+
+export type OwnerFormData = z.infer<typeof ownerSchema>;

@@ -1,7 +1,8 @@
-import { Plus } from "lucide-react";
 import { getOwners, getExpenses, getRemittances } from "@/lib/queries";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
+import OwnersPageClient from "@/components/OwnersPageClient";
+import OwnerCard from "@/components/OwnerCard";
 
 export default async function OwnersPage() {
   const [owners, expenses, remittances] = await Promise.all([getOwners(), getExpenses(), getRemittances()]);
@@ -65,70 +66,12 @@ export default async function OwnersPage() {
       <PageHeader
         title="オーナー管理"
         description={`${owners.length}名のオーナー`}
-        action={
-          <button className="btn-primary">
-            <Plus size={14} />
-            オーナーを追加
-          </button>
-        }
+        action={<OwnersPageClient />}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
         {ownersWithInfo.map((o: Record<string, any>) => (
-          <div key={o.id} className="card card-interactive p-4 cursor-pointer">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded bg-accent/10 flex items-center justify-center text-accent text-[13px] font-semibold">
-                {o.name.charAt(0)}
-              </div>
-              <div className="flex-1">
-                <h3 className="text-[14px] font-semibold">{o.name}</h3>
-                <span className="text-[11px] text-text-muted">手数料 {Number(o.management_fee_rate)}%</span>
-              </div>
-            </div>
-
-            <div className="flex gap-2 text-center mb-4">
-              <div className="flex-1 py-1.5 rounded bg-bg-secondary">
-                <p className="text-[10px] text-text-muted">物件数</p>
-                <p className="text-[15px] font-semibold tabular-nums">{o.propertyCount}</p>
-              </div>
-              <div className="flex-1 py-1.5 rounded bg-bg-secondary">
-                <p className="text-[10px] text-text-muted">総戸数</p>
-                <p className="text-[15px] font-semibold tabular-nums">{o.unitCount}</p>
-              </div>
-              <div className="flex-1 py-1.5 rounded bg-bg-secondary">
-                <p className="text-[10px] text-text-muted">入居</p>
-                <p className="text-[15px] font-semibold text-success tabular-nums">{o.occupiedCount}</p>
-              </div>
-            </div>
-
-            <div className="border-t border-border-light pt-3 space-y-1.5 text-[13px]">
-              <div className="flex justify-between">
-                <span className="text-text-muted">家賃収入</span>
-                <span className="font-medium tabular-nums">¥{o.totalRent.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-text-muted">管理手数料</span>
-                <span className="text-danger font-medium tabular-nums">-¥{o.managementFee.toLocaleString()}</span>
-              </div>
-              {o.expenseDeducted > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-text-muted">経費控除</span>
-                  <span className="text-warning font-medium tabular-nums">-¥{o.expenseDeducted.toLocaleString()}</span>
-                </div>
-              )}
-              <div className="flex justify-between pt-2 border-t border-border-light">
-                <span className="font-medium">送金額</span>
-                <span className="font-semibold text-accent text-[15px] tabular-nums">¥{o.netAmount.toLocaleString()}</span>
-              </div>
-            </div>
-
-            {(o.phone || o.email) && (
-              <div className="mt-3 flex items-center gap-3 text-[11px] text-text-muted">
-                {o.phone && <span>{o.phone}</span>}
-                {o.email && <span>{o.email}</span>}
-              </div>
-            )}
-          </div>
+          <OwnerCard key={o.id} owner={o} />
         ))}
       </div>
 

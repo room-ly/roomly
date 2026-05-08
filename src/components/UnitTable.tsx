@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { createPortal } from "react-dom";
 import UnitFormModal from "./UnitFormModal";
 
 interface UnitTableProps {
@@ -11,9 +12,90 @@ interface UnitTableProps {
   contracts: Record<string, any>[];
 }
 
+function UnitMenu({
+  unit,
+  onEdit,
+  onDelete,
+  deleting,
+}: {
+  unit: Record<string, any>;
+  onEdit: () => void;
+  onDelete: () => void;
+  deleting: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  function toggle() {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + 4, left: rect.right - 112 });
+    }
+    setOpen(!open);
+  }
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={toggle}
+        className="p-1 rounded text-text-muted hover:text-text hover:bg-bg-secondary transition-colors"
+      >
+        <MoreVertical size={14} />
+      </button>
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className="fixed w-28 bg-card rounded border border-border shadow-md z-50 overflow-hidden"
+            style={{ top: pos.top, left: pos.left }}
+          >
+            <button
+              onClick={() => {
+                setOpen(false);
+                onEdit();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-text-secondary hover:bg-bg-secondary transition-colors"
+            >
+              <Pencil size={12} />
+              編集
+            </button>
+            <button
+              onClick={() => {
+                setOpen(false);
+                onDelete();
+              }}
+              disabled={deleting}
+              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-danger hover:bg-danger-bg transition-colors"
+            >
+              <Trash2 size={12} />
+              {deleting ? "削除中..." : "削除"}
+            </button>
+          </div>,
+          document.body
+        )}
+    </>
+  );
+}
+
 export default function UnitTable({ propertyId, units, contracts }: UnitTableProps) {
   const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [editUnit, setEditUnit] = useState<Record<string, any> | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -73,43 +155,15 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
                     </td>
                     <td className="px-5 py-2.5 text-text-secondary">{contract?.tenant?.name || "—"}</td>
                     <td className="px-5 py-2.5">
-                      <div className="relative">
-                        <button
-                          onClick={() => setMenuOpen(menuOpen === unit.id ? null : unit.id)}
-                          className="p-1 rounded text-text-muted hover:text-text hover:bg-bg-secondary transition-colors"
-                        >
-                          <MoreVertical size={14} />
-                        </button>
-                        {menuOpen === unit.id && (
-                          <>
-                            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
-                            <div className="absolute right-0 top-full mt-1 w-28 bg-card rounded border border-border shadow-md z-50 overflow-hidden">
-                              <button
-                                onClick={() => {
-                                  setEditUnit(unit);
-                                  setModalOpen(true);
-                                  setMenuOpen(null);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-text-secondary hover:bg-bg-secondary transition-colors"
-                              >
-                                <Pencil size={12} />
-                                編集
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setMenuOpen(null);
-                                  deleteUnit(unit.id);
-                                }}
-                                disabled={deleting === unit.id}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-danger hover:bg-danger-bg transition-colors"
-                              >
-                                <Trash2 size={12} />
-                                {deleting === unit.id ? "削除中..." : "削除"}
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
+                      <UnitMenu
+                        unit={unit}
+                        onEdit={() => {
+                          setEditUnit(unit);
+                          setModalOpen(true);
+                        }}
+                        onDelete={() => deleteUnit(unit.id)}
+                        deleting={deleting === unit.id}
+                      />
                     </td>
                   </tr>
                 );
