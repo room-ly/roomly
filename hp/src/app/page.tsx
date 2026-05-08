@@ -12,6 +12,8 @@ import {
 import Link from "next/link";
 import { getAllArticles } from "@/lib/media";
 
+export const revalidate = 3600;
+
 const features = [
   {
     icon: Building2,
@@ -236,16 +238,32 @@ export default function Home() {
                 <span className="font-semibold text-rm-accent">無料</span>
               </div>
               <div className="flex items-center justify-between rounded bg-rm-bg p-3">
-                <span>11〜50区画</span>
-                <span className="font-semibold text-rm-text">¥5,000/月</span>
+                <span>〜50区画</span>
+                <span className="font-semibold text-rm-text">¥5,000（税込）/月</span>
               </div>
               <div className="flex items-center justify-between rounded bg-rm-bg p-3">
-                <span>51〜100区画</span>
-                <span className="font-semibold text-rm-text">¥10,000/月</span>
+                <span>〜100区画</span>
+                <span className="font-semibold text-rm-text">¥10,000（税込）/月</span>
               </div>
               <div className="flex items-center justify-between rounded bg-rm-bg p-3">
-                <span>101区画〜</span>
-                <span className="font-semibold text-rm-text">お問い合わせ</span>
+                <span>〜300区画</span>
+                <span className="font-semibold text-rm-text">¥15,000（税込）/月</span>
+              </div>
+              <div className="flex items-center justify-between rounded bg-rm-bg p-3">
+                <span>〜500区画</span>
+                <span className="font-semibold text-rm-text">¥20,000（税込）/月</span>
+              </div>
+              <div className="flex items-center justify-between rounded bg-rm-bg p-3">
+                <span>〜1,000区画</span>
+                <span className="font-semibold text-rm-text">¥25,000（税込）/月</span>
+              </div>
+              <div className="flex items-center justify-between rounded bg-rm-bg p-3">
+                <span>〜2,000区画</span>
+                <span className="font-semibold text-rm-text">¥30,000（税込）/月</span>
+              </div>
+              <div className="flex items-center justify-between rounded bg-rm-bg p-3">
+                <span>2,000区画〜</span>
+                <span className="font-semibold text-rm-text">要相談</span>
               </div>
             </div>
             <ul className="mt-6 space-y-2 text-[13px] text-rm-text-secondary">

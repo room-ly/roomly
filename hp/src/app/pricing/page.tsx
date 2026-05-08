@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { CheckCircle2, HelpCircle } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -20,52 +19,15 @@ export const metadata: Metadata = {
   },
 };
 
-const plans = [
-  {
-    name: "フリー",
-    price: "¥0",
-    unit: "/ 月",
-    description: "小規模物件の管理に最適",
-    quota: "10区画まで",
-    highlight: false,
-    features: [
-      "全機能利用可能",
-      "メールサポート",
-      "CSVエクスポート",
-      "PDF報告書生成",
-    ],
-  },
-  {
-    name: "スタンダード",
-    price: "¥5,000",
-    unit: "（税込）/ 月",
-    description: "成長中の管理会社に",
-    quota: "11〜50区画",
-    highlight: true,
-    features: [
-      "全機能利用可能",
-      "優先メールサポート",
-      "CSVエクスポート",
-      "PDF報告書生成",
-      "複数ユーザー管理",
-    ],
-  },
-  {
-    name: "プロ",
-    price: "¥10,000",
-    unit: "（税込）/ 月",
-    description: "中規模管理会社向け",
-    quota: "51〜100区画",
-    highlight: false,
-    features: [
-      "全機能利用可能",
-      "優先メールサポート",
-      "CSVエクスポート",
-      "PDF報告書生成",
-      "複数ユーザー管理",
-      "RBAC権限管理",
-    ],
-  },
+const tiers = [
+  { range: "〜10区画", price: "無料", highlight: false },
+  { range: "〜50区画", price: "¥5,000（税込）/月", highlight: true },
+  { range: "〜100区画", price: "¥10,000（税込）/月", highlight: false },
+  { range: "〜300区画", price: "¥15,000（税込）/月", highlight: false },
+  { range: "〜500区画", price: "¥20,000（税込）/月", highlight: false },
+  { range: "〜1,000区画", price: "¥25,000（税込）/月", highlight: false },
+  { range: "〜2,000区画", price: "¥30,000（税込）/月", highlight: false },
+  { range: "2,000区画〜", price: "要相談", highlight: false },
 ];
 
 const faqs = [
@@ -78,7 +40,7 @@ const faqs = [
     a: "はい。区画数の増減に応じて、いつでもプランを変更できます。日割り計算で精算されます。",
   },
   {
-    q: "101区画以上の場合はどうなりますか？",
+    q: "2,000区画を超える場合はどうなりますか？",
     a: "個別にお見積りいたします。お問い合わせフォームからご連絡ください。",
   },
   {
@@ -108,65 +70,37 @@ export default function PricingPage() {
 
       {/* 料金プラン */}
       <section className="px-4 py-16 sm:py-24">
-        <div className="mx-auto max-w-5xl">
-          <div className="grid gap-6 sm:grid-cols-3">
-            {plans.map((plan) => (
-              <div
-                key={plan.name}
-                className={`relative rounded-lg p-6 shadow-sm ${
-                  plan.highlight
-                    ? "border-2 border-rm-accent bg-rm-surface"
-                    : "border border-rm-border bg-rm-surface"
-                }`}
-              >
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-rm-accent px-4 py-0.5 text-[11px] font-medium text-white">
-                    おすすめ
-                  </div>
-                )}
-                <div className="text-center">
-                  <p className="text-[13px] font-medium text-rm-text-muted">{plan.name}</p>
-                  <div className="mt-2">
-                    <span className="text-3xl font-semibold tabular-nums text-rm-primary">{plan.price}</span>
-                    <span className="ml-1 text-[13px] text-rm-text-muted">{plan.unit}</span>
-                  </div>
-                  <p className="mt-1 text-[12px] text-rm-text-muted">{plan.quota}</p>
-                  <p className="mt-3 text-[13px] text-rm-text-secondary">{plan.description}</p>
-                </div>
-                <ul className="mt-6 space-y-2.5">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2.5 text-[13px] text-rm-text-secondary">
-                      <CheckCircle2 size={14} className="shrink-0 text-rm-accent" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href="https://roomly.jp"
-                  className={`mt-6 block rounded py-2.5 text-center text-[13px] font-medium transition-colors ${
-                    plan.highlight
-                      ? "bg-rm-accent text-white hover:bg-rm-accent-light"
-                      : "border border-rm-border text-rm-text-secondary hover:bg-rm-bg"
+        <div className="mx-auto max-w-2xl">
+          <div className="rounded-lg border border-rm-border bg-rm-surface p-8 shadow-sm">
+            <div className="text-center">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-rm-accent">全プラン全機能利用可能</p>
+              <p className="mt-3 text-[13px] text-rm-text-secondary">
+                区画数に応じたシンプルな従量制。機能差はありません。
+              </p>
+            </div>
+            <div className="mt-8 space-y-2">
+              {tiers.map((tier) => (
+                <div
+                  key={tier.range}
+                  className={`flex items-center justify-between rounded p-3 text-[13px] ${
+                    tier.highlight
+                      ? "bg-rm-accent/5 border border-rm-accent/20"
+                      : "bg-rm-bg"
                   }`}
                 >
-                  {plan.price === "¥0" ? "無料で始める" : "プランを選択"}
-                </a>
-              </div>
-            ))}
-          </div>
-
-          {/* 101区画以上 */}
-          <div className="mt-8 rounded-lg border border-rm-border bg-rm-surface p-6 text-center">
-            <p className="text-[14px] font-medium text-rm-primary">101区画以上をお持ちの方</p>
-            <p className="mt-2 text-[13px] text-rm-text-secondary">
-              個別にお見積りいたします。まずはお気軽にご相談ください。
-            </p>
-            <Link
-              href="/contact"
-              className="mt-4 inline-block rounded border border-rm-border px-6 py-2 text-[13px] font-medium text-rm-text-secondary transition-colors hover:bg-rm-bg"
+                  <span className="text-rm-text-secondary">{tier.range}</span>
+                  <span className={`font-semibold ${tier.price === "無料" ? "text-rm-accent" : "text-rm-text"}`}>
+                    {tier.price}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <a
+              href="https://roomly.jp"
+              className="mt-8 block rounded bg-rm-accent py-3 text-center text-[13px] font-medium text-white transition-colors hover:bg-rm-accent-light"
             >
-              お問い合わせ
-            </Link>
+              無料で始める
+            </a>
           </div>
         </div>
       </section>
