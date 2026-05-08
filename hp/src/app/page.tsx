@@ -262,8 +262,8 @@ export default function Home() {
                 <span className="font-semibold text-rm-text">¥30,000（税込）/月</span>
               </div>
               <div className="flex items-center justify-between rounded bg-rm-bg p-3">
-                <span>2,000区画〜</span>
-                <span className="font-semibold text-rm-text">要相談</span>
+                <span>2,001区画〜</span>
+                <span className="font-semibold text-rm-text">1,000区画ごとに+¥5,000（税込）/月</span>
               </div>
             </div>
             <ul className="mt-6 space-y-2 text-[13px] text-rm-text-secondary">
