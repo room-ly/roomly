@@ -99,14 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     setUser(null);
-    try {
-      await Promise.race([
-        supabase.auth.signOut(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000)),
-      ]);
-    } catch {
-      // タイムアウトまたはエラーでもリダイレクト
-    }
+    await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/login";
   };
 
