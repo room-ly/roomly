@@ -1,17 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
+  const supabase = createClient();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+        setReady(true);
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setReady(true);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +46,10 @@ export default function UpdatePasswordPage() {
     setLoading(true);
 
     try {
-      const supabase = createClient();
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
-        setError("パスワードの更新に失敗しました");
+        setError("パスワードの更新に失敗しました: " + error.message);
         return;
       }
 
@@ -45,6 +60,19 @@ export default function UpdatePasswordPage() {
       setLoading(false);
     }
   };
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center px-6">
+        <div className="w-full max-w-sm text-center">
+          <div className="mb-6">
+            <h1 className="text-xl font-semibold text-text tracking-wide">Roomly</h1>
+          </div>
+          <p className="text-[13px] text-text-muted">セッションを確認中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center px-6">
