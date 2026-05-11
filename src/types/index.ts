@@ -162,6 +162,16 @@ export interface Inquiry {
   tenant?: Tenant;
 }
 
+export interface PropertyImage {
+  id: string;
+  file_name: string;
+  file_path: string;
+  url: string;
+  mime_type: string;
+  file_size: number;
+  created_at: string;
+}
+
 // ダッシュボード用
 export interface DashboardStats {
   total_properties: number;

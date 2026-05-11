@@ -24,6 +24,20 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
     const company_id = await getCompanyId();
+
+    const [companyRes, unitsRes] = await Promise.all([
+      supabase.from("companies").select("plan, max_units").single(),
+      supabase.from("units").select("id", { count: "exact", head: true }),
+    ]);
+    const maxUnits = companyRes.data?.max_units ?? 10;
+    const currentUnits = unitsRes.count ?? 0;
+    if (currentUnits >= maxUnits) {
+      return NextResponse.json(
+        { error: "区画数の上限に達しています。プロプランにアップグレードしてください。" },
+        { status: 403 }
+      );
+    }
+
     const { data: unit, error } = await supabase
       .from("units")
       .insert({ ...parsed.data, property_id, company_id })

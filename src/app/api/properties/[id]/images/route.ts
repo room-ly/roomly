@@ -1,0 +1,198 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGES_PER_PROPERTY = 10;
+
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: propertyId } = await params;
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from("documents")
+      .select("id, file_name, file_path, file_size, mime_type, created_at")
+      .eq("property_id", propertyId)
+      .eq("document_type", "photo")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const images = (data ?? []).map((doc) => ({
+      ...doc,
+      url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/property-images/${doc.file_path}`,
+    }));
+
+    return NextResponse.json(images);
+  } catch {
+    return NextResponse.json(
+      { error: "画像一覧の取得に失敗しました" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: propertyId } = await params;
+    const supabase = await createClient();
+    const companyId = await getCompanyId();
+
+    const { count } = await supabase
+      .from("documents")
+      .select("id", { count: "exact", head: true })
+      .eq("property_id", propertyId)
+      .eq("document_type", "photo");
+
+    if ((count ?? 0) >= MAX_IMAGES_PER_PROPERTY) {
+      return NextResponse.json(
+        { error: `画像は${MAX_IMAGES_PER_PROPERTY}枚までです` },
+        { status: 400 }
+      );
+    }
+
+    const formData = await request.formData();
+    const files = formData.getAll("files") as File[];
+
+    if (files.length === 0) {
+      return NextResponse.json(
+        { error: "ファイルが選択されていません" },
+        { status: 400 }
+      );
+    }
+
+    const remaining = MAX_IMAGES_PER_PROPERTY - (count ?? 0);
+    if (files.length > remaining) {
+      return NextResponse.json(
+        { error: `あと${remaining}枚までアップロードできます` },
+        { status: 400 }
+      );
+    }
+
+    const uploaded = [];
+
+    for (const file of files) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        return NextResponse.json(
+          { error: `${file.name}: JPEG、PNG、WebPのみ対応しています` },
+          { status: 400 }
+        );
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `${file.name}: 5MB以下のファイルのみアップロードできます` },
+          { status: 400 }
+        );
+      }
+
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const storagePath = `${companyId}/${propertyId}/${crypto.randomUUID()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("property-images")
+        .upload(storagePath, file, { contentType: file.type });
+
+      if (uploadError) {
+        return NextResponse.json(
+          { error: `${file.name}: アップロードに失敗しました` },
+          { status: 500 }
+        );
+      }
+
+      const { data: doc, error: insertError } = await supabase
+        .from("documents")
+        .insert({
+          company_id: companyId,
+          property_id: propertyId,
+          document_type: "photo",
+          file_name: file.name,
+          file_path: storagePath,
+          file_size: file.size,
+          mime_type: file.type,
+        })
+        .select("id, file_name, file_path, file_size, mime_type, created_at")
+        .single();
+
+      if (insertError) {
+        await supabase.storage.from("property-images").remove([storagePath]);
+        return NextResponse.json(
+          { error: "画像情報の保存に失敗しました" },
+          { status: 500 }
+        );
+      }
+
+      uploaded.push({
+        ...doc,
+        url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/property-images/${storagePath}`,
+      });
+    }
+
+    return NextResponse.json(uploaded, { status: 201 });
+  } catch {
+    return NextResponse.json(
+      { error: "アップロードに失敗しました" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await params;
+    const supabase = await createClient();
+    const { imageId } = await request.json();
+
+    if (!imageId) {
+      return NextResponse.json(
+        { error: "画像IDが必要です" },
+        { status: 400 }
+      );
+    }
+
+    const { data: doc, error: fetchError } = await supabase
+      .from("documents")
+      .select("id, file_path")
+      .eq("id", imageId)
+      .single();
+
+    if (fetchError || !doc) {
+      return NextResponse.json(
+        { error: "画像が見つかりません" },
+        { status: 404 }
+      );
+    }
+
+    await supabase.storage.from("property-images").remove([doc.file_path]);
+
+    const { error: deleteError } = await supabase
+      .from("documents")
+      .delete()
+      .eq("id", imageId);
+
+    if (deleteError) {
+      return NextResponse.json(
+        { error: "画像の削除に失敗しました" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json(
+      { error: "削除に失敗しました" },
+      { status: 500 }
+    );
+  }
+}

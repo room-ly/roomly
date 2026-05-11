@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { getPropertyDetail } from "@/lib/queries";
 import PropertyDetailClient from "@/components/PropertyDetailClient";
+import PropertyImages from "@/components/PropertyImages";
 import UnitTable from "@/components/UnitTable";
 
 export default async function PropertyDetailPage({
@@ -49,6 +50,8 @@ export default async function PropertyDetailPage({
           </div>
         ))}
       </div>
+
+      <PropertyImages propertyId={id} />
 
       <UnitTable propertyId={id} units={units} contracts={contracts} />
     </>
