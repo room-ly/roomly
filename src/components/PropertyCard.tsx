@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MapPin, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Building2, MapPin, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import PropertyFormModal from "./PropertyFormModal";
 
 interface Owner {
@@ -35,9 +35,24 @@ export default function PropertyCard({ property: prop, owners }: PropertyCardPro
 
   return (
     <>
-      <div className="card card-interactive p-4 relative">
+      <div className="card card-interactive relative overflow-hidden">
         <Link href={`/properties/${prop.id}`} className="absolute inset-0 z-0" />
 
+        {prop.thumbnail_url ? (
+          <div className="h-36 bg-bg-secondary">
+            <img
+              src={prop.thumbnail_url}
+              alt={prop.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="h-20 bg-bg-secondary flex items-center justify-center">
+            <Building2 size={24} className="text-text-muted/30" />
+          </div>
+        )}
+
+        <div className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div>
             <h3 className="text-[14px] font-semibold text-text">{prop.name}</h3>
@@ -122,6 +137,7 @@ export default function PropertyCard({ property: prop, owners }: PropertyCardPro
             <span>{prop.nearest_station} 徒歩{prop.walk_minutes}分</span>
             <span className="ml-auto font-medium text-text-secondary">{prop.owner?.name}</span>
           </div>
+        </div>
         </div>
       </div>
 

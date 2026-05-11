@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase-server";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Row = any;
 
-// 物件一覧（オーナー名・部屋情報付き）
+// 物件一覧（オーナー名・部屋情報・代表画像付き）
 export async function getProperties() {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -11,7 +11,32 @@ export async function getProperties() {
     .select("*, owner:owners(id, name), units(id, status, rent)")
     .order("name");
   if (error) throw error;
-  return (data ?? []) as Row[];
+
+  const properties = (data ?? []) as Row[];
+  if (properties.length === 0) return properties;
+
+  const propertyIds = properties.map((p: Row) => p.id);
+  const { data: images } = await supabase
+    .from("documents")
+    .select("property_id, file_path")
+    .in("property_id", propertyIds)
+    .eq("document_type", "photo")
+    .order("created_at", { ascending: true });
+
+  const thumbnailMap = new Map<string, string>();
+  for (const img of images ?? []) {
+    if (!thumbnailMap.has(img.property_id)) {
+      thumbnailMap.set(
+        img.property_id,
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/property-images/${img.file_path}`
+      );
+    }
+  }
+
+  return properties.map((p: Row) => ({
+    ...p,
+    thumbnail_url: thumbnailMap.get(p.id) ?? null,
+  }));
 }
 
 // 物件詳細（部屋一覧 + アクティブ契約付き）
