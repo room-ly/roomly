@@ -63,12 +63,24 @@ export default function ContractsTable({ data, units, tenants }: ContractsTableP
               const remainingDays = item.end_date
                 ? Math.ceil((new Date(item.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
                 : null;
-              const isExpiring = remainingDays !== null && remainingDays > 0 && remainingDays <= 90;
+              const isExpired = remainingDays !== null && remainingDays <= 0;
+              const isUrgent = remainingDays !== null && remainingDays > 0 && remainingDays <= 30;
+              const isWarning = remainingDays !== null && remainingDays > 30 && remainingDays <= 90;
               return (
-                <div>
-                  <div>{item.end_date || "—"}</div>
-                  {isExpiring && (
-                    <span className={`text-[11px] font-medium ${remainingDays! <= 30 ? "text-danger" : "text-warn"}`}>
+                <div className="flex items-center gap-2">
+                  <span>{item.end_date || "—"}</span>
+                  {isExpired && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-danger/15 text-danger">
+                      期限切れ
+                    </span>
+                  )}
+                  {isUrgent && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-danger/15 text-danger">
+                      あと{remainingDays}日
+                    </span>
+                  )}
+                  {isWarning && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-warn/15 text-warn">
                       あと{remainingDays}日
                     </span>
                   )}
