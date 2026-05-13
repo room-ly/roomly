@@ -229,97 +229,111 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
           </div>
 
           {/* 料金テーブル */}
-          {company?.plan !== "pro" && plans.length > 0 && (
-            <div>
-              <p className="text-[13px] text-ink-2 mb-3">
-                区画数に応じた月額料金です。全プランで全機能が使えます。
-              </p>
-              <div className="rounded-lg border border-line overflow-hidden">
-                <table className="w-full text-[13px]">
-                  <thead>
-                    <tr className="bg-bg-2 text-ink-3 text-[11px] uppercase tracking-wider">
-                      <th className="px-4 py-2.5 text-left font-medium">区画数</th>
-                      <th className="px-4 py-2.5 text-right font-medium">月額（税込）</th>
-                      <th className="px-4 py-2.5 text-right font-medium">区画単価</th>
-                      <th className="px-4 py-2.5 w-28"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-t border-line bg-accent-tint/30">
-                      <td className="px-4 py-3 font-medium">〜10区画</td>
-                      <td className="px-4 py-3 text-right font-semibold">¥0</td>
-                      <td className="px-4 py-3 text-right text-ink-3">—</td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="text-[12px] text-accent-deep font-medium">利用中</span>
-                      </td>
-                    </tr>
-                    {plans.map((plan) => {
-                      const unitPrice = Math.round(plan.price / plan.maxUnits);
-                      const isRecommended = planInfo.currentUnits > 10 && planInfo.currentUnits <= plan.maxUnits
-                        && !plans.some((p) => p.maxUnits < plan.maxUnits && p.maxUnits >= planInfo.currentUnits);
-                      return (
-                        <tr
-                          key={plan.priceId}
-                          className={`border-t border-line transition-colors hover:bg-bg-2/50 ${
-                            isRecommended ? "bg-accent-tint/20" : ""
-                          }`}
-                        >
-                          <td className="px-4 py-3 font-medium">
-                            〜{plan.maxUnits.toLocaleString()}区画
-                            {isRecommended && (
-                              <span className="ml-2 text-[10px] bg-accent text-white px-1.5 py-0.5 rounded-full font-semibold">
-                                おすすめ
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-right font-semibold tabular-nums">
-                            ¥{plan.price.toLocaleString()}
-                          </td>
-                          <td className="px-4 py-3 text-right text-ink-3 tabular-nums">
-                            ¥{unitPrice.toLocaleString()}/区画
-                          </td>
+          {plans.length > 0 && (() => {
+            const isCurrent = (maxUnits: number) =>
+              planInfo.isSubscriptionActive && planInfo.maxUnits === maxUnits;
+            const isFreeCurrent = !planInfo.isSubscriptionActive;
+            const upgradePlans = planInfo.isSubscriptionActive
+              ? plans.filter((p) => p.maxUnits > planInfo.maxUnits)
+              : plans;
+            const hasUpgrade = upgradePlans.length > 0;
+
+            return hasUpgrade ? (
+              <div>
+                <p className="text-[13px] text-ink-2 mb-3">
+                  区画数に応じた月額料金です。全プランで全機能が使えます。
+                </p>
+                <div className="rounded-lg border border-line overflow-hidden">
+                  <table className="w-full text-[13px]">
+                    <thead>
+                      <tr className="bg-bg-2 text-ink-3 text-[11px] uppercase tracking-wider">
+                        <th className="px-4 py-2.5 text-left font-medium">区画数</th>
+                        <th className="px-4 py-2.5 text-right font-medium">月額（税込）</th>
+                        <th className="px-4 py-2.5 text-right font-medium">区画単価</th>
+                        <th className="px-4 py-2.5 w-28"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* 現在のプラン行 */}
+                      {isFreeCurrent && (
+                        <tr className="border-t border-line bg-accent-tint/30">
+                          <td className="px-4 py-3 font-medium">〜10区画</td>
+                          <td className="px-4 py-3 text-right font-semibold">¥0</td>
+                          <td className="px-4 py-3 text-right text-ink-3">—</td>
                           <td className="px-4 py-3 text-right">
-                            <button
-                              type="button"
-                              disabled={checkingOut !== null}
-                              onClick={async () => {
-                                setCheckingOut(plan.priceId);
-                                const res = await fetch("/api/stripe/checkout", {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ priceId: plan.priceId }),
-                                });
-                                const data = await res.json();
-                                if (data.url) {
-                                  window.location.href = data.url;
-                                } else {
-                                  alert(data.detail || data.error || "エラーが発生しました");
-                                  setCheckingOut(null);
-                                }
-                              }}
-                              className="text-[12px] font-medium text-white bg-accent hover:bg-accent-deep rounded-md px-3 py-1.5 transition-colors disabled:opacity-50"
-                            >
-                              {checkingOut === plan.priceId ? "処理中..." : "選択"}
-                            </button>
+                            <span className="text-[12px] text-accent-deep font-medium">利用中</span>
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      )}
+                      {planInfo.isSubscriptionActive && plans.filter((p) => p.maxUnits === planInfo.maxUnits).map((plan) => (
+                        <tr key={plan.priceId} className="border-t border-line bg-accent-tint/30">
+                          <td className="px-4 py-3 font-medium">〜{plan.maxUnits.toLocaleString()}区画</td>
+                          <td className="px-4 py-3 text-right font-semibold tabular-nums">¥{plan.price.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right text-ink-3 tabular-nums">¥{Math.round(plan.price / plan.maxUnits).toLocaleString()}/区画</td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="text-[12px] text-accent-deep font-medium">利用中</span>
+                          </td>
+                        </tr>
+                      ))}
+                      {/* アップグレード候補 */}
+                      {upgradePlans.map((plan) => {
+                        const unitPrice = Math.round(plan.price / plan.maxUnits);
+                        return (
+                          <tr key={plan.priceId} className="border-t border-line transition-colors hover:bg-bg-2/50">
+                            <td className="px-4 py-3 font-medium">
+                              〜{plan.maxUnits.toLocaleString()}区画
+                            </td>
+                            <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                              ¥{plan.price.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-right text-ink-3 tabular-nums">
+                              ¥{unitPrice.toLocaleString()}/区画
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                type="button"
+                                disabled={checkingOut !== null}
+                                onClick={async () => {
+                                  setCheckingOut(plan.priceId);
+                                  const res = await fetch("/api/stripe/checkout", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ priceId: plan.priceId }),
+                                  });
+                                  const data = await res.json();
+                                  if (data.url) {
+                                    window.location.href = data.url;
+                                  } else {
+                                    alert(data.detail || data.error || "エラーが発生しました");
+                                    setCheckingOut(null);
+                                  }
+                                }}
+                                className="text-[12px] font-medium text-white bg-accent hover:bg-accent-deep rounded-md px-3 py-1.5 transition-colors disabled:opacity-50"
+                              >
+                                {checkingOut === plan.priceId ? "処理中..." : "選択"}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[11px] text-ink-3 mt-2">
+                  2,001区画以上は1,000区画ごとに+¥5,000（税込）/月。お問い合わせください。
+                </p>
+                {planInfo.hasStripeCustomer && (
+                  <p className="text-[11px] text-ink-3 mt-1">
+                    現在のプランの変更・解約は「請求管理」から行えます。
+                  </p>
+                )}
               </div>
-              <p className="text-[11px] text-ink-3 mt-2">
-                2,001区画以上は1,000区画ごとに+¥5,000（税込）/月。お問い合わせください。
+            ) : planInfo.hasStripeCustomer ? (
+              <p className="text-[12px] text-ink-3">
+                最上位プランをご利用中です。プランの変更・解約は「請求管理」から行えます。
               </p>
-            </div>
-          )}
-
-          {/* プロプラン契約中: プラン変更はStripe Portalで */}
-          {company?.plan === "pro" && planInfo.hasStripeCustomer && (
-            <p className="text-[12px] text-ink-3">
-              プランの変更・解約は「請求管理」から行えます。
-            </p>
-          )}
+            ) : null;
+          })()}
         </div>
 
         {/* 通知設定 */}
