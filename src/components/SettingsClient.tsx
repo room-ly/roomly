@@ -35,6 +35,7 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
       phone: fd.get("phone"),
       email: fd.get("email"),
       address: fd.get("address"),
+      contract_alert_days: fd.get("contract_alert_days"),
     };
 
     const res = await fetch("/api/settings", {
@@ -119,6 +120,27 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
               <p className="text-[13px] font-medium">{company?.plan === "pro" ? "プロプラン" : "フリープラン"}</p>
               <p className="text-[12px] text-ink-3 mt-0.5">管理区画数 {company?.max_units || 10}区画まで</p>
             </div>
+          </div>
+        </div>
+
+        {/* 通知設定 */}
+        <div className="card p-5 mb-4">
+          <h2 className="text-[14px] font-semibold mb-4">通知設定</h2>
+          <div>
+            <label className="block text-[13px] font-medium text-ink-2 mb-1">契約満了アラート</label>
+            <p className="text-[12px] text-ink-3 mb-2">契約終了日までの残り日数がこの値以下になるとバッジを表示します</p>
+            <select
+              name="contract_alert_days"
+              defaultValue={company?.contract_alert_days ?? 90}
+              className="input"
+              style={{ width: "12rem" }}
+            >
+              <option value="30">30日前</option>
+              <option value="60">60日前</option>
+              <option value="90">90日前（デフォルト）</option>
+              <option value="120">120日前</option>
+              <option value="180">180日前（半年前）</option>
+            </select>
           </div>
         </div>
 

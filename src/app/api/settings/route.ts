@@ -7,10 +7,13 @@ export async function PUT(request: NextRequest) {
     const supabase = await createClient();
     const companyId = await getCompanyId();
 
-    const allowed = ["name", "phone", "email", "address", "usage_type"];
+    const allowed = ["name", "phone", "email", "address", "usage_type", "contract_alert_days"];
     const update: Record<string, any> = {};
     for (const key of allowed) {
       if (key in body) update[key] = body[key];
+    }
+    if (update.contract_alert_days !== undefined) {
+      update.contract_alert_days = Number(update.contract_alert_days);
     }
 
     const { error } = await supabase

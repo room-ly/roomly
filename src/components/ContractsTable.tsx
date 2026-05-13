@@ -16,9 +16,10 @@ interface ContractsTableProps {
   data: Record<string, any>[];
   units: SelectOption[];
   tenants: SelectOption[];
+  alertDays?: number;
 }
 
-export default function ContractsTable({ data, units, tenants }: ContractsTableProps) {
+export default function ContractsTable({ data, units, tenants, alertDays = 90 }: ContractsTableProps) {
   const router = useRouter();
   const [editData, setEditData] = useState<Record<string, any> | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -65,7 +66,7 @@ export default function ContractsTable({ data, units, tenants }: ContractsTableP
                 : null;
               const isExpired = remainingDays !== null && remainingDays <= 0;
               const isUrgent = remainingDays !== null && remainingDays > 0 && remainingDays <= 30;
-              const isWarning = remainingDays !== null && remainingDays > 30 && remainingDays <= 90;
+              const isWarning = remainingDays !== null && remainingDays > 30 && remainingDays <= alertDays;
               return (
                 <div className="flex items-center gap-2">
                   <span>{item.end_date || "—"}</span>

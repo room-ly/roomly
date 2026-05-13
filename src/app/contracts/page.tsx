@@ -1,14 +1,17 @@
-import { getContracts, getUnitsForSelect, getTenantsForSelect } from "@/lib/queries";
+import { getContracts, getUnitsForSelect, getTenantsForSelect, getCompany } from "@/lib/queries";
 import PageHeader from "@/components/PageHeader";
 import ContractsPageClient from "@/components/ContractsPageClient";
 import ContractsTable from "@/components/ContractsTable";
 
 export default async function ContractsPage() {
-  const [contracts, units, tenants] = await Promise.all([
+  const [contracts, units, tenants, company] = await Promise.all([
     getContracts(),
     getUnitsForSelect(),
     getTenantsForSelect(),
+    getCompany(),
   ]);
+
+  const alertDays = (company as any).contract_alert_days ?? 90;
 
   return (
     <>
@@ -18,7 +21,7 @@ export default async function ContractsPage() {
         action={<ContractsPageClient units={units} tenants={tenants} />}
       />
 
-      <ContractsTable data={contracts} units={units} tenants={tenants} />
+      <ContractsTable data={contracts} units={units} tenants={tenants} alertDays={alertDays} />
     </>
   );
 }

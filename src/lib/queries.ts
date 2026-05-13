@@ -429,13 +429,28 @@ export async function getBadgeCounts() {
         .from("inquiries")
         .select("id", { count: "exact", head: true })
         .in("status", ["open", "in_progress"]),
-      supabase.from("companies").select("name").single(),
+      supabase.from("companies").select("name, contract_alert_days").single(),
     ]);
+
+  const alertDays = (companyRes.data?.contract_alert_days as number) ?? 90;
+  const alertDate = new Date();
+  alertDate.setDate(alertDate.getDate() + alertDays);
+  const today = new Date().toISOString().slice(0, 10);
+  const alertDateStr = alertDate.toISOString().slice(0, 10);
+
+  const contractsRes = await supabase
+    .from("contracts")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "active")
+    .gte("end_date", today)
+    .lte("end_date", alertDateStr);
 
   return {
     "/rent": overdueRes.count ?? 0,
     "/maintenance": maintenanceRes.count ?? 0,
     "/inquiries": inquiriesRes.count ?? 0,
+    "/contracts": contractsRes.count ?? 0,
     company_name: (companyRes.data?.name as string) ?? "",
+    contract_alert_days: alertDays,
   };
 }
