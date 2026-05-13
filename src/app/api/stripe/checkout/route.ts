@@ -64,10 +64,11 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Checkout error:", err);
+    const detail = err?.message || String(err);
     return NextResponse.json(
-      { error: "チェックアウトの作成に失敗しました" },
+      { error: "チェックアウトの作成に失敗しました", detail },
       { status: 500 }
     );
   }

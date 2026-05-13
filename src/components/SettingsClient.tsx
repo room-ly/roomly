@@ -169,7 +169,7 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                       if (data.url) {
                         window.location.href = data.url;
                       } else {
-                        alert(data.error || "エラーが発生しました");
+                        alert(data.detail || data.error || "エラーが発生しました");
                         setCheckingOut(null);
                       }
                     }}
