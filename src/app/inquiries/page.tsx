@@ -1,20 +1,25 @@
-import { getInquiries } from "@/lib/queries";
+import { getInquiries, getPropertiesForSelect, getUnitsForSelect, getTenantsForSelect } from "@/lib/queries";
 import PageHeader from "@/components/PageHeader";
 import InquiriesPageClient from "@/components/InquiriesPageClient";
 import InquiriesTable from "@/components/InquiriesTable";
 
 export default async function InquiriesPage() {
-  const inquiries = await getInquiries();
+  const [inquiries, properties, units, tenants] = await Promise.all([
+    getInquiries(),
+    getPropertiesForSelect(),
+    getUnitsForSelect(),
+    getTenantsForSelect(),
+  ]);
 
   return (
     <>
       <PageHeader
         title="問い合わせ管理"
         description={`${inquiries.length}件の問い合わせ`}
-        action={<InquiriesPageClient />}
+        action={<InquiriesPageClient properties={properties} units={units} tenants={tenants} />}
       />
 
-      <InquiriesTable inquiries={inquiries} />
+      <InquiriesTable inquiries={inquiries} properties={properties} units={units} tenants={tenants} />
     </>
   );
 }

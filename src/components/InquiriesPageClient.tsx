@@ -4,7 +4,18 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import InquiryFormModal from "./InquiryFormModal";
 
-export default function InquiriesPageClient() {
+interface SelectOption {
+  id: string;
+  label: string;
+}
+
+interface InquiriesPageClientProps {
+  properties: SelectOption[];
+  units: SelectOption[];
+  tenants: SelectOption[];
+}
+
+export default function InquiriesPageClient({ properties, units, tenants }: InquiriesPageClientProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -13,7 +24,13 @@ export default function InquiriesPageClient() {
         <Plus size={14} />
         問い合わせを登録
       </button>
-      <InquiryFormModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <InquiryFormModal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        properties={properties}
+        units={units}
+        tenants={tenants}
+      />
     </>
   );
 }

@@ -173,7 +173,7 @@ export const inquirySchema = z.object({
   unit_id: z.string().optional().or(z.literal("")),
   tenant_id: z.string().optional().or(z.literal("")),
   inquiry_type: z.enum(
-    ["general", "complaint", "noise", "facility", "move_out", "other"],
+    ["move_out", "complaint", "other"],
     {
       message: "種別を選択してください",
     }

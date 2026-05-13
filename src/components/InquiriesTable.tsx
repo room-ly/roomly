@@ -3,12 +3,19 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import FilterableTable from "./FilterableTable";
-import StatusBadge from "./StatusBadge";
 import RowMenu from "./RowMenu";
 import InquiryFormModal from "./InquiryFormModal";
 
+interface SelectOption {
+  id: string;
+  label: string;
+}
+
 interface InquiriesTableProps {
   inquiries: Record<string, any>[];
+  properties: SelectOption[];
+  units: SelectOption[];
+  tenants: SelectOption[];
 }
 
 function InlineEditTitle({ item, onSave }: { item: Record<string, any>; onSave: (id: string, field: string, value: string) => void }) {
@@ -58,7 +65,16 @@ function InlineEditTitle({ item, onSave }: { item: Record<string, any>; onSave: 
   );
 }
 
-export default function InquiriesTable({ inquiries }: InquiriesTableProps) {
+const TYPE_LABELS: Record<string, string> = {
+  move_out: "退去",
+  complaint: "クレーム",
+  other: "その他",
+  general: "その他",
+  noise: "クレーム",
+  facility: "その他",
+};
+
+export default function InquiriesTable({ inquiries, properties, units, tenants }: InquiriesTableProps) {
   const router = useRouter();
   const [editData, setEditData] = useState<Record<string, any> | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -83,8 +99,8 @@ export default function InquiriesTable({ inquiries }: InquiriesTableProps) {
     <>
       <FilterableTable
         data={inquiries}
-        searchFields={["title"]}
-        searchPlaceholder="件名で検索..."
+        searchFields={["title", "property.name", "tenant.name"]}
+        searchPlaceholder="件名・物件名・入居者名で検索..."
         filters={[
           {
             key: "status",
@@ -129,6 +145,25 @@ export default function InquiriesTable({ inquiries }: InquiriesTableProps) {
             render: (item) => <InlineEditTitle item={item} onSave={updateField} />,
           },
           {
+            key: "property.name",
+            label: "物件・部屋",
+            render: (item) => {
+              const propName = item.property?.name;
+              const unitNum = item.unit?.unit_number;
+              if (!propName && !unitNum) return <span className="text-ink-3">—</span>;
+              return <span>{propName}{unitNum ? ` ${unitNum}` : ""}</span>;
+            },
+          },
+          {
+            key: "tenant.name",
+            label: "入居者",
+            render: (item) => {
+              const name = item.tenant?.name;
+              if (!name) return <span className="text-ink-3">—</span>;
+              return <span>{name}</span>;
+            },
+          },
+          {
             key: "inquiry_type",
             label: "種別",
             render: (item) => (
@@ -138,11 +173,8 @@ export default function InquiriesTable({ inquiries }: InquiriesTableProps) {
                 onClick={(e) => e.stopPropagation()}
                 className="text-[12px] rounded border border-line px-2 py-1 bg-surface"
               >
-                <option value="general">一般</option>
-                <option value="complaint">クレーム</option>
-                <option value="noise">騒音</option>
-                <option value="facility">設備</option>
                 <option value="move_out">退去</option>
+                <option value="complaint">クレーム</option>
                 <option value="other">その他</option>
               </select>
             ),
@@ -179,6 +211,9 @@ export default function InquiriesTable({ inquiries }: InquiriesTableProps) {
         isOpen={modalOpen}
         onClose={() => { setModalOpen(false); setEditData(null); }}
         editData={editData}
+        properties={properties}
+        units={units}
+        tenants={tenants}
       />
     </>
   );

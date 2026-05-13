@@ -1,26 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { inquirySchema, type InquiryFormData } from "@/lib/schemas";
 import type { ZodError } from "zod";
 
+interface SelectOption {
+  id: string;
+  label: string;
+}
+
 interface InquiryFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   editData?: Record<string, any> | null;
+  properties?: SelectOption[];
+  units?: SelectOption[];
+  tenants?: SelectOption[];
 }
 
 export default function InquiryFormModal({
   isOpen,
   onClose,
   editData,
+  properties = [],
+  units = [],
+  tenants = [],
 }: InquiryFormModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
+  const [selectedPropertyId, setSelectedPropertyId] = useState(editData?.property_id || "");
+
+  const filteredUnits = useMemo(() => {
+    if (!selectedPropertyId) return units;
+    return units.filter((u) => u.label.startsWith(
+      properties.find((p) => p.id === selectedPropertyId)?.label || ""
+    ));
+  }, [selectedPropertyId, units, properties]);
 
   if (!isOpen) return null;
 
@@ -110,6 +129,55 @@ export default function InquiryFormModal({
             )}
           </div>
 
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                物件
+              </label>
+              <select
+                name="property_id"
+                defaultValue={editData?.property_id || ""}
+                onChange={(e) => setSelectedPropertyId(e.target.value)}
+                className="input"
+              >
+                <option value="">未選択</option>
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                部屋
+              </label>
+              <select
+                name="unit_id"
+                defaultValue={editData?.unit_id || ""}
+                className="input"
+              >
+                <option value="">未選択</option>
+                {filteredUnits.map((u) => (
+                  <option key={u.id} value={u.id}>{u.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                入居者
+              </label>
+              <select
+                name="tenant_id"
+                defaultValue={editData?.tenant_id || ""}
+                className="input"
+              >
+                <option value="">未選択</option>
+                {tenants.map((t) => (
+                  <option key={t.id} value={t.id}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
@@ -117,14 +185,11 @@ export default function InquiryFormModal({
               </label>
               <select
                 name="inquiry_type"
-                defaultValue={editData?.inquiry_type || "general"}
+                defaultValue={editData?.inquiry_type || "other"}
                 className="input"
               >
-                <option value="general">一般</option>
-                <option value="complaint">クレーム</option>
-                <option value="noise">騒音</option>
-                <option value="facility">設備</option>
                 <option value="move_out">退去</option>
+                <option value="complaint">クレーム</option>
                 <option value="other">その他</option>
               </select>
               {errors.inquiry_type && (

@@ -3,6 +3,47 @@ import { createClient } from "@/lib/supabase-server";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Row = any;
 
+// 課金状態を取得し、表示可能な区画IDセットを返す
+// 課金中 → null（制限なし）、課金切れで11区画以上 → 古い順10件のIDセット
+async function getVisibleUnitIds(): Promise<Set<string> | null> {
+  const supabase = await createClient();
+  const { data: company } = await supabase
+    .from("companies")
+    .select("subscription_status, subscription_current_period_end, max_units")
+    .single();
+
+  const isActive =
+    company?.subscription_status === "active" &&
+    (!company.subscription_current_period_end ||
+      new Date(company.subscription_current_period_end) > new Date());
+
+  if (isActive) return null; // 制限なし
+
+  // フリープラン上限（デフォルト10）
+  const freeLimit = 10;
+
+  const { data: allUnits } = await supabase
+    .from("units")
+    .select("id")
+    .order("created_at", { ascending: true });
+
+  const units = allUnits ?? [];
+  if (units.length <= freeLimit) return null; // 制限不要
+
+  // 古い順にfreeLimit件だけ表示
+  const visibleIds = new Set(units.slice(0, freeLimit).map((u: Row) => u.id as string));
+  return visibleIds;
+}
+
+// 区画リストにvisibility情報を付与
+function applyUnitVisibility(units: Row[], visibleIds: Set<string> | null): Row[] {
+  if (!visibleIds) return units.map((u: Row) => ({ ...u, _hidden: false }));
+  return units.map((u: Row) => ({
+    ...u,
+    _hidden: !visibleIds.has(u.id),
+  }));
+}
+
 // 物件一覧（オーナー名・部屋情報・代表画像付き）
 export async function getProperties() {
   const supabase = await createClient();
@@ -67,7 +108,10 @@ export async function getPropertyDetail(id: string) {
     contracts = data ?? [];
   }
 
-  return { property, units: units ?? [], contracts };
+  const visibleIds = await getVisibleUnitIds();
+  const visibleUnits = applyUnitVisibility(units ?? [], visibleIds);
+
+  return { property, units: visibleUnits, contracts };
 }
 
 // 入居者一覧（アクティブ契約・部屋・物件情報付き）
@@ -130,12 +174,12 @@ export async function getMaintenanceRequests() {
   return (data ?? []) as Row[];
 }
 
-// 問い合わせ一覧
+// 問い合わせ一覧（物件・部屋・入居者付き）
 export async function getInquiries() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("inquiries")
-    .select("*")
+    .select("*, property:properties(name), unit:units(unit_number), tenant:tenants(name)")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as Row[];
