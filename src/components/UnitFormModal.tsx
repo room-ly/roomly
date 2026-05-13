@@ -95,7 +95,7 @@ export default function UnitFormModal({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 部屋番号 <span className="text-danger">*</span>
@@ -126,7 +126,7 @@ export default function UnitFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 間取り
@@ -153,7 +153,7 @@ export default function UnitFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 賃料 <span className="text-danger">*</span>

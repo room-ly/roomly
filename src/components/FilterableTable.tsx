@@ -110,7 +110,7 @@ export default function FilterableTable({
       {(searchFields.length > 0 || filters.length > 0) && (
         <div className="flex flex-wrap items-center gap-2 mb-4">
           {searchFields.length > 0 && (
-            <div className="relative w-64">
+            <div className="relative w-full sm:w-64">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
               <input
                 type="text"
@@ -130,8 +130,7 @@ export default function FilterableTable({
                 setFilterValues((prev) => ({ ...prev, [f.key]: e.target.value }));
                 setPage(1);
               }}
-              className="input"
-              style={{ width: "10rem" }}
+              className="input flex-1 sm:flex-none sm:w-40"
             >
               <option value="all">{f.label}: すべて</option>
               {f.options.map((opt) => (
@@ -156,7 +155,7 @@ export default function FilterableTable({
                 {columns.map((col) => (
                   <th
                     key={col.key}
-                    className={`px-5 py-2.5 font-medium ${
+                    className={`px-3 sm:px-5 py-2.5 font-medium ${
                       col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : ""
                     } ${col.sortable ? "cursor-pointer select-none hover:text-ink transition-colors" : ""}`}
                     onClick={col.sortable ? () => toggleSort(col.key) : undefined}
@@ -191,7 +190,7 @@ export default function FilterableTable({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-5 py-2.5 ${
+                        className={`px-3 sm:px-5 py-2.5 ${
                           col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : ""
                         }`}
                       >
@@ -213,9 +212,12 @@ export default function FilterableTable({
 
       {/* ページネーション */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4 text-[13px]">
-          <span className="text-ink-3">
+        <div className="flex items-center justify-between mt-4 text-[12px] sm:text-[13px]">
+          <span className="text-ink-3 hidden sm:inline">
             {filtered.length}件中 {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, filtered.length)}件
+          </span>
+          <span className="text-ink-3 sm:hidden">
+            {page}/{totalPages}
           </span>
           <div className="flex items-center gap-1">
             <button

@@ -73,7 +73,7 @@ export default async function RemittancesPage() {
       />
 
       {/* サマリー */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <div className="card p-4">
           <p className="text-[11px] text-ink-3 mb-1">家賃収入合計</p>
           <p className="text-[17px] font-semibold tabular-nums">¥{totalRent.toLocaleString()}</p>

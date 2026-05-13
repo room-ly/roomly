@@ -119,7 +119,7 @@ export default function ExpensesTable({ data, properties, owners }: ExpensesTabl
       <MonthSelector selectedMonth={selectedMonth} availableMonths={availableMonths} onChange={setSelectedMonth} />
 
       {/* サマリー */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <div className="card p-4">
           <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-2">経費総額</p>
           <p className="text-xl font-semibold tabular-nums">¥{totalAmount.toLocaleString()}</p>

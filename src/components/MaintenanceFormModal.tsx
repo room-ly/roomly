@@ -129,7 +129,7 @@ export default function MaintenanceFormModal({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 物件 <span className="text-danger">*</span>
@@ -199,7 +199,7 @@ export default function MaintenanceFormModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 カテゴリ <span className="text-danger">*</span>
@@ -258,7 +258,7 @@ export default function MaintenanceFormModal({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 業者名

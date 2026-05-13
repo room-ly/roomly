@@ -108,7 +108,7 @@ export default function OwnerFormModal({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 電話番号
@@ -137,7 +137,7 @@ export default function OwnerFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 郵便番号
@@ -164,7 +164,7 @@ export default function OwnerFormModal({
 
           <div className="border-t border-line pt-4">
             <h3 className="text-[13px] font-medium text-ink-2 mb-3">振込先情報</h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">
                   銀行名
@@ -188,7 +188,7 @@ export default function OwnerFormModal({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3 mt-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">
                   口座種別

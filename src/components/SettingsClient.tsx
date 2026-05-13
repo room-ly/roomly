@@ -152,7 +152,7 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
               <label className="block text-[13px] font-medium text-ink-2 mb-1">会社名 / 氏名</label>
               <input name="name" type="text" defaultValue={company?.name || ""} className="input" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[13px] font-medium text-ink-2 mb-1">電話番号</label>
                 <input name="phone" type="text" defaultValue={company?.phone || ""} className="input" />

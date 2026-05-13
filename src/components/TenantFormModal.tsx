@@ -93,7 +93,7 @@ export default function TenantFormModal({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 氏名 <span className="text-danger">*</span>
@@ -121,7 +121,7 @@ export default function TenantFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 電話番号
@@ -165,7 +165,7 @@ export default function TenantFormModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 緊急連絡先（氏名）

@@ -44,7 +44,7 @@ export default async function DashboardPage() {
       />
 
       {/* KPI */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-7">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-7">
         <div className="card p-5 relative overflow-hidden">
           <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-3">管理戸数</p>
           <div className="mt-3.5 flex items-baseline gap-1.5">
@@ -92,7 +92,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* アラートストリップ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 mb-7">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 mb-7">
         <div className="card p-4 flex items-center gap-3.5">
           <div className="w-[38px] h-[38px] rounded-[10px] bg-danger-tint text-danger grid place-items-center shrink-0">
             <Banknote size={18} />
@@ -237,7 +237,7 @@ export default async function DashboardPage() {
       )}
 
       {/* テーブル2列 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-line">
             <h2 className="text-[14px] font-semibold">滞納一覧</h2>

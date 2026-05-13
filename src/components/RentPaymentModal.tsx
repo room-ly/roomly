@@ -147,7 +147,7 @@ export default function RentPaymentModal({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 支払方法 <span className="text-danger">*</span>

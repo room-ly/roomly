@@ -95,7 +95,7 @@ export default function Header() {
 
   return (
     <header
-      className="h-[var(--header-h)] flex items-center gap-4 px-7 border-b border-line sticky top-0 z-30"
+      className="h-[var(--header-h)] flex items-center gap-4 px-4 sm:px-6 md:px-7 border-b border-line sticky top-0 z-30"
       style={{
         background: "color-mix(in srgb, var(--bg) 92%, transparent)",
         backdropFilter: "blur(12px)",
@@ -138,7 +138,7 @@ export default function Header() {
           </button>
 
           {notifOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-72 bg-surface rounded-[var(--r-lg)] border border-line shadow-lg overflow-hidden z-50">
+            <div className="absolute right-0 top-full mt-1.5 w-[min(288px,calc(100vw-2rem))] bg-surface rounded-[var(--r-lg)] border border-line shadow-lg overflow-hidden z-50">
               <div className="px-4 py-2.5 border-b border-line flex items-center justify-between">
                 <h3 className="font-medium text-[13px]">通知</h3>
                 {unreadCount > 0 && (

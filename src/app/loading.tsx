@@ -8,7 +8,7 @@ export default function Loading() {
       </div>
 
       {/* KPIカードスケルトン */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="card p-5">
             <div className="skeleton h-10 w-10 rounded-xl mb-4" />

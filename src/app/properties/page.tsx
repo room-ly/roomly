@@ -22,7 +22,7 @@ export default async function PropertiesPage() {
         action={<PropertiesPageClient owners={ownerOptions} />}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {properties.map((prop: Record<string, any>) => (
           <PropertyCard key={prop.id} property={prop} owners={ownerOptions} />
         ))}

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { getPropertyDetail } from "@/lib/queries";
+import { formatBuiltYear } from "@/lib/wareki";
 import PropertyDetailClient from "@/components/PropertyDetailClient";
 import PropertyImages from "@/components/PropertyImages";
 import UnitTable from "@/components/UnitTable";
@@ -37,10 +38,10 @@ export default async function PropertyDetailPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {[
           { label: "構造", value: `${property.structure || "—"} ${property.floors ? property.floors + "F" : ""}` },
-          { label: "築年", value: property.built_year ? `${property.built_year}年（築${new Date().getFullYear() - property.built_year}年）` : "—" },
+          { label: "築年", value: property.built_year ? formatBuiltYear(property.built_year) : "—" },
           { label: "入居率", value: `${units.length > 0 ? Math.round((occupied / units.length) * 100) : 0}%` },
           { label: "オーナー", value: property.owner?.name || "—" },
         ].map((item) => (

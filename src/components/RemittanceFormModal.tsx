@@ -152,7 +152,7 @@ export default function RemittanceFormModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isEdit ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">
                   オーナー <span className="text-danger">*</span>
@@ -188,7 +188,7 @@ export default function RemittanceFormModal({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">オーナー</label>
                 <p className="text-sm py-2 px-3 bg-bg-2 rounded-lg">{editData?.owner?.name ?? "—"}</p>
@@ -238,7 +238,7 @@ export default function RemittanceFormModal({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">送金方法</label>
               <select

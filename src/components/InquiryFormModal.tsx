@@ -129,7 +129,7 @@ export default function InquiryFormModal({
             )}
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 物件
@@ -178,7 +178,7 @@ export default function InquiryFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 種別 <span className="text-danger">*</span>

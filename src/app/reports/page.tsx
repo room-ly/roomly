@@ -19,7 +19,7 @@ export default async function ReportsPage() {
       />
 
       {/* サマリー */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-7">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-7">
         <div className="card p-5">
           <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-3">家賃収入</p>
           <p className="text-[24px] font-semibold tracking-tight mt-2 tabular-nums">
@@ -118,7 +118,7 @@ export default async function ReportsPage() {
       )}
 
       {/* 稼働状況 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="card p-5">
           <h2 className="text-[14px] font-semibold mb-4">運用状況</h2>
           <div className="space-y-3">

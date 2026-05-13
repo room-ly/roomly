@@ -22,7 +22,7 @@ export default function AppShell({ children, sidebarData }: { children: React.Re
   return (
     <Sidebar initialData={sidebarData}>
       <Header />
-      <main className="px-8 py-7 max-w-[1320px] relative z-0">
+      <main className="px-4 sm:px-6 md:px-8 py-4 sm:py-7 max-w-[1320px] relative z-0">
         {children}
       </main>
     </Sidebar>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { propertySchema, type PropertyFormData } from "@/lib/schemas";
+import { toWareki } from "@/lib/wareki";
 import type { ZodError } from "zod";
 
 interface Owner {
@@ -28,6 +29,10 @@ export default function PropertyFormModal({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
+  const [builtYearWareki, setBuiltYearWareki] = useState(() => {
+    const y = editData?.built_year;
+    return y ? toWareki(y) : "";
+  });
 
   if (!isOpen) return null;
 
@@ -132,7 +137,7 @@ export default function PropertyFormModal({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 物件種別 <span className="text-danger">*</span>
@@ -173,7 +178,7 @@ export default function PropertyFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 構造
@@ -195,7 +200,14 @@ export default function PropertyFormModal({
                 defaultValue={editData?.built_year || ""}
                 className="input"
                 placeholder="例: 2020"
+                onChange={(e) => {
+                  const y = parseInt(e.target.value, 10);
+                  setBuiltYearWareki(y >= 1868 ? toWareki(y) : "");
+                }}
               />
+              {builtYearWareki && (
+                <p className="text-ink-3 text-xs mt-1">{builtYearWareki}</p>
+              )}
               {errors.built_year && (
                 <p className="text-danger text-sm mt-1">
                   {errors.built_year[0]}
@@ -204,7 +216,7 @@ export default function PropertyFormModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 階数
