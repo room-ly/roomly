@@ -192,15 +192,34 @@ export default function ExpenseFormModal({
           </div>
 
           <div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isOwnerCharge}
-                onChange={(e) => setIsOwnerCharge(e.target.checked)}
-                className="rounded"
-              />
-              <span className="text-sm text-ink-2">オーナー負担（送金時に控除）</span>
-            </label>
+            <label className="text-sm font-medium text-ink-2 block mb-1.5">負担区分</label>
+            <div className="flex rounded-lg border border-line overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setIsOwnerCharge(false)}
+                className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                  !isOwnerCharge
+                    ? "bg-accent text-white"
+                    : "bg-surface text-ink-3 hover:bg-bg-2"
+                }`}
+              >
+                管理会社負担
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsOwnerCharge(true)}
+                className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                  isOwnerCharge
+                    ? "bg-warn text-white"
+                    : "bg-surface text-ink-3 hover:bg-bg-2"
+                }`}
+              >
+                オーナー負担
+              </button>
+            </div>
+            {isOwnerCharge && (
+              <p className="text-[11px] text-warn mt-1">送金時にオーナーへの送金額から控除されます</p>
+            )}
           </div>
 
           <div>

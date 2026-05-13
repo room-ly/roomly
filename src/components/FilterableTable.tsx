@@ -69,7 +69,10 @@ export default function FilterableTable({
     // フィルタ
     for (const [key, value] of Object.entries(filterValues)) {
       if (value && value !== "all") {
-        result = result.filter((item) => getNestedValue(item, key) === value);
+        result = result.filter((item) => {
+          const v = getNestedValue(item, key);
+          return String(v) === value;
+        });
       }
     }
 

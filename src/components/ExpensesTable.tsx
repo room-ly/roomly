@@ -50,6 +50,14 @@ export default function ExpensesTable({ data, properties, owners }: ExpensesTabl
               { value: "other", label: "その他" },
             ],
           },
+          {
+            key: "is_owner_charge",
+            label: "負担区分",
+            options: [
+              { value: "true", label: "オーナー負担" },
+              { value: "false", label: "管理会社負担" },
+            ],
+          },
         ]}
         columns={[
           { key: "expense_date", label: "日付", sortable: true },
