@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Building2,
@@ -14,13 +14,12 @@ import {
   UserCircle,
   Receipt,
   Send,
-  Settings,
   BarChart3,
   Menu,
   X,
   LogOut,
-  Trash2,
   MoreHorizontal,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -61,14 +60,11 @@ const navGroups = [
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
   const [companyName, setCompanyName] = useState<string>("");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -226,22 +222,6 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           <div className="absolute left-4 right-4 bottom-full mb-1.5 bg-surface rounded-[var(--r-lg)] border border-line shadow-lg z-50">
             <div className="py-0.5">
               <button
-                onClick={() => { setUserMenuOpen(false); router.push("/settings"); }}
-                className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-ink-2 hover:bg-surface-2 transition-colors cursor-pointer"
-              >
-                <Settings size={14} />
-                設定
-              </button>
-              <button
-                onClick={() => { setUserMenuOpen(false); setDeleteConfirm(true); }}
-                className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-ink-2 hover:bg-surface-2 transition-colors cursor-pointer"
-              >
-                <Trash2 size={14} />
-                アカウント削除
-              </button>
-            </div>
-            <div className="border-t border-line py-0.5">
-              <button
                 onClick={() => { logout(); }}
                 className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-danger hover:bg-danger-tint transition-colors cursor-pointer"
               >
@@ -253,51 +233,6 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
         )}
       </div>
 
-      {/* アカウント削除確認モーダル */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4" onClick={(e) => e.target === e.currentTarget && setDeleteConfirm(false)}>
-          <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-sm w-full">
-            <h2 className="text-[15px] font-semibold mb-3">アカウントの削除</h2>
-            <p className="text-[13px] text-ink-2 mb-2">
-              自分のアカウントを削除しますか？<br />
-              ログアウトされ、以後このアカウントではログインできなくなります。
-            </p>
-            <p className="text-[12px] text-ink-3 mb-5">
-              データは保持されます。復元が必要な場合はお問い合わせください。
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setDeleteConfirm(false)}
-                className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-bg-2 transition-colors"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={async () => {
-                  if (!user) return;
-                  setDeleting(true);
-                  const res = await fetch("/api/users", {
-                    method: "DELETE",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId: user.id }),
-                  });
-                  if (res.ok) {
-                    logout();
-                  } else {
-                    const err = await res.json();
-                    alert(err.error || "削除に失敗しました");
-                    setDeleting(false);
-                  }
-                }}
-                disabled={deleting}
-                className="bg-danger text-white rounded-lg px-4 py-2 text-sm hover:bg-danger/90 transition-colors disabled:opacity-50"
-              >
-                {deleting ? "削除中..." : "削除する"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 
