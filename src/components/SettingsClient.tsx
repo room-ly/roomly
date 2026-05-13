@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Check, Crown, ArrowRight, ExternalLink } from "lucide-react";
 
 interface SettingsClientProps {
   company: Record<string, any>;
@@ -33,11 +33,27 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
   const [inviteError, setInviteError] = useState("");
   const [plans, setPlans] = useState<PlanOption[]>([]);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [planInfo, setPlanInfo] = useState<{
+    currentUnits: number;
+    isSubscriptionActive: boolean;
+    currentPlanName: string | null;
+    periodEnd: string | null;
+    hasStripeCustomer: boolean;
+  }>({ currentUnits: 0, isSubscriptionActive: false, currentPlanName: null, periodEnd: null, hasStripeCustomer: false });
 
   useEffect(() => {
     fetch("/api/plan-check")
       .then((res) => res.json())
-      .then((data) => setPlans(data.plans ?? []))
+      .then((data) => {
+        setPlans(data.plans ?? []);
+        setPlanInfo({
+          currentUnits: data.currentUnits ?? 0,
+          isSubscriptionActive: data.isSubscriptionActive ?? false,
+          currentPlanName: data.currentPlanName ?? null,
+          periodEnd: data.periodEnd ?? null,
+          hasStripeCustomer: data.hasStripeCustomer ?? false,
+        });
+      })
       .catch(() => {});
   }, []);
 
@@ -132,62 +148,150 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
         {/* プラン */}
         <div className="card p-5 mb-4">
           <h2 className="text-[14px] font-semibold mb-4">プラン</h2>
-          <div className="flex items-center justify-between p-3.5 rounded bg-bg-2 mb-4">
-            <div>
-              <p className="text-[13px] font-medium">{company?.plan === "pro" ? "プロプラン" : "フリープラン"}</p>
-              <p className="text-[12px] text-ink-3 mt-0.5">管理区画数 {company?.max_units || 10}区画まで</p>
+
+          {/* 現在のプラン状況 */}
+          <div className="p-4 rounded-lg bg-bg-2 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                {planInfo.isSubscriptionActive ? (
+                  <div className="w-8 h-8 rounded-full bg-accent-tint flex items-center justify-center">
+                    <Crown size={15} className="text-accent-deep" />
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-bg-2 border border-line flex items-center justify-center">
+                    <span className="text-[11px] text-ink-3 font-medium">Free</span>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[13px] font-semibold">
+                    {planInfo.isSubscriptionActive
+                      ? `${planInfo.currentPlanName || "プロ"}プラン`
+                      : "フリープラン"}
+                  </p>
+                  <p className="text-[12px] text-ink-3 mt-0.5">
+                    {planInfo.currentUnits}区画 / {company?.max_units || 10}区画
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {planInfo.isSubscriptionActive && planInfo.periodEnd && (
+                  <p className="text-[11px] text-ink-3">
+                    次回更新 {new Date(planInfo.periodEnd).toLocaleDateString("ja-JP")}
+                  </p>
+                )}
+                {planInfo.hasStripeCustomer && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const res = await fetch("/api/stripe/portal", { method: "POST" });
+                      const data = await res.json();
+                      if (data.url) window.location.href = data.url;
+                    }}
+                    className="flex items-center gap-1 text-[12px] text-accent-deep hover:underline"
+                  >
+                    請求管理 <ExternalLink size={11} />
+                  </button>
+                )}
+              </div>
             </div>
-            {company?.stripe_customer_id && (
-              <button
-                onClick={async () => {
-                  const res = await fetch("/api/stripe/portal", { method: "POST" });
-                  const data = await res.json();
-                  if (data.url) window.location.href = data.url;
-                }}
-                className="text-[12px] text-accent-deep hover:underline"
-              >
-                請求管理
-              </button>
-            )}
+            {/* 使用量バー */}
+            <div className="mt-3">
+              <div className="w-full h-1.5 rounded-full bg-line overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-accent transition-all duration-500"
+                  style={{ width: `${Math.min((planInfo.currentUnits / (company?.max_units || 10)) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
           </div>
+
+          {/* プラン選択カード */}
           {company?.plan !== "pro" && plans.length > 0 && (
             <div>
               <p className="text-[13px] text-ink-2 mb-3">アップグレードすると、より多くの区画を管理できます。</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {plans.map((plan) => (
-                  <button
-                    key={plan.priceId}
-                    disabled={checkingOut !== null}
-                    onClick={async () => {
-                      setCheckingOut(plan.priceId);
-                      const res = await fetch("/api/stripe/checkout", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ priceId: plan.priceId }),
-                      });
-                      const data = await res.json();
-                      if (data.url) {
-                        window.location.href = data.url;
-                      } else {
-                        alert(data.detail || data.error || "エラーが発生しました");
-                        setCheckingOut(null);
-                      }
-                    }}
-                    className="p-3 rounded border border-line hover:border-accent hover:bg-accent-tint transition-colors text-left disabled:opacity-50"
-                  >
-                    <p className="text-[13px] font-medium">{plan.name}</p>
-                    <p className="text-[11px] text-ink-3 mt-0.5">〜{plan.maxUnits.toLocaleString()}区画</p>
-                    <p className="text-[13px] font-semibold text-accent-deep mt-2">
-                      ¥{plan.price.toLocaleString()}
-                      <span className="text-[11px] font-normal text-ink-3">（税込）/ 月</span>
-                    </p>
-                    {checkingOut === plan.priceId && (
-                      <p className="text-[11px] text-ink-3 mt-1">リダイレクト中...</p>
-                    )}
-                  </button>
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {plans.map((plan, i) => {
+                  const unitPrice = Math.round(plan.price / plan.maxUnits);
+                  const isPopular = i === 1;
+                  return (
+                    <div
+                      key={plan.priceId}
+                      className={`relative rounded-xl border-2 p-4 transition-all ${
+                        isPopular
+                          ? "border-accent bg-accent-tint/50 shadow-sm"
+                          : "border-line hover:border-accent-soft"
+                      }`}
+                    >
+                      {isPopular && (
+                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-accent text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-full">
+                          人気
+                        </span>
+                      )}
+                      <p className="text-[14px] font-semibold mt-1">{plan.name}</p>
+                      <p className="text-[12px] text-ink-3 mt-1">
+                        最大 {plan.maxUnits.toLocaleString()} 区画
+                      </p>
+                      <div className="mt-3 mb-3">
+                        <span className="text-[20px] font-bold text-ink">
+                          ¥{plan.price.toLocaleString()}
+                        </span>
+                        <span className="text-[11px] text-ink-3 ml-0.5">（税込）/ 月</span>
+                      </div>
+                      <p className="text-[11px] text-ink-3 mb-3">
+                        1区画あたり ¥{unitPrice.toLocaleString()}/月
+                      </p>
+                      <ul className="space-y-1.5 mb-4">
+                        <li className="flex items-center gap-1.5 text-[12px] text-ink-2">
+                          <Check size={13} className="text-accent shrink-0" />
+                          {plan.maxUnits.toLocaleString()}区画まで登録可
+                        </li>
+                        <li className="flex items-center gap-1.5 text-[12px] text-ink-2">
+                          <Check size={13} className="text-accent shrink-0" />
+                          全機能利用可能
+                        </li>
+                      </ul>
+                      <button
+                        type="button"
+                        disabled={checkingOut !== null}
+                        onClick={async () => {
+                          setCheckingOut(plan.priceId);
+                          const res = await fetch("/api/stripe/checkout", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ priceId: plan.priceId }),
+                          });
+                          const data = await res.json();
+                          if (data.url) {
+                            window.location.href = data.url;
+                          } else {
+                            alert(data.detail || data.error || "エラーが発生しました");
+                            setCheckingOut(null);
+                          }
+                        }}
+                        className={`w-full flex items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-medium transition-colors disabled:opacity-50 ${
+                          isPopular
+                            ? "bg-accent text-white hover:bg-accent-deep"
+                            : "bg-bg-2 text-ink hover:bg-line"
+                        }`}
+                      >
+                        {checkingOut === plan.priceId ? (
+                          "リダイレクト中..."
+                        ) : (
+                          <>アップグレード <ArrowRight size={13} /></>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
+          )}
+
+          {/* プロプラン契約中: プラン変更はStripe Portalで */}
+          {company?.plan === "pro" && planInfo.hasStripeCustomer && (
+            <p className="text-[12px] text-ink-3">
+              プランの変更・解約は「請求管理」から行えます。
+            </p>
           )}
         </div>
 
