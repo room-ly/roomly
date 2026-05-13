@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getCompanyId } from "@/lib/supabase-server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 function getAdmin() {
   return createAdminClient(
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     const origin = request.headers.get("origin") || "http://localhost:3001";
 
-    const session = await stripe.billingPortal.sessions.create({
+    const session = await getStripe().billingPortal.sessions.create({
       customer: company.stripe_customer_id,
       return_url: `${origin}/settings`,
     });

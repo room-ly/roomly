@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
-import { stripe, PLANS, calcCustomPrice } from "@/lib/stripe";
+import { getStripe, PLANS, calcCustomPrice } from "@/lib/stripe";
 
 function getAdmin() {
   return createAdminClient(
@@ -32,9 +32,9 @@ export async function POST(request: NextRequest) {
       if (!amount) {
         return NextResponse.json({ error: "無効な区画数です" }, { status: 400 });
       }
-      const price = await stripe.prices.create({
-        product: (await stripe.products.list({ limit: 1 })).data[0]?.id
-          || (await stripe.products.create({ name: "Roomly プラン" })).id,
+      const price = await getStripe().prices.create({
+        product: (await getStripe().products.list({ limit: 1 })).data[0]?.id
+          || (await getStripe().products.create({ name: "Roomly プラン" })).id,
         unit_amount: amount,
         currency: "jpy",
         recurring: { interval: "month" },
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     let customerId = company?.stripe_customer_id;
 
     if (!customerId) {
-      const customer = await stripe.customers.create({
+      const customer = await getStripe().customers.create({
         email: company?.email || user.email || undefined,
         name: company?.name || undefined,
         metadata: { company_id: companyId },
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     const origin = request.headers.get("origin") || "http://localhost:3001";
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       line_items: [{ price: checkoutPriceId, quantity: 1 }],

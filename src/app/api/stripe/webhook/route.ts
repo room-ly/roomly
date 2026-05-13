@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { stripe, getPlanByPriceId } from "@/lib/stripe";
+import { getStripe, getPlanByPriceId } from "@/lib/stripe";
 import type Stripe from "stripe";
 
 function getAdmin() {
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
   if (webhookSecret && signature) {
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      event = getStripe().webhooks.constructEvent(body, signature, webhookSecret);
     } catch {
       return NextResponse.json({ error: "署名検証失敗" }, { status: 400 });
     }
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       if (session.subscription) {
-        const subscription = await stripe.subscriptions.retrieve(
+        const subscription = await getStripe().subscriptions.retrieve(
           session.subscription as string
         );
         await updateCompanySubscription(subscription);
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       const invoice = event.data.object as any;
       const subId = invoice.subscription;
       if (subId) {
-        const subscription = await stripe.subscriptions.retrieve(
+        const subscription = await getStripe().subscriptions.retrieve(
           typeof subId === "string" ? subId : subId.id
         );
         await updateCompanySubscription(subscription);
