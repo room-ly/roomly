@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import MonthSelector from "./MonthSelector";
 import FilterableTable from "./FilterableTable";
 import StatusBadge from "./StatusBadge";
@@ -24,6 +25,7 @@ function getCurrentMonth() {
 }
 
 export default function RentTable({ data }: RentTableProps) {
+  const router = useRouter();
   const availableMonths = useMemo(() => getAvailableMonths(data), [data]);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const current = getCurrentMonth();
@@ -140,6 +142,7 @@ export default function RentTable({ data }: RentTableProps) {
               ) : null,
           },
         ]}
+        onRowClick={(item) => router.push(`/rent/${item.id}`)}
         rowClassName={(item) => (item.status === "overdue" ? "bg-danger-tint" : "")}
       />
     </>

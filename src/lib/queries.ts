@@ -156,11 +156,25 @@ export async function getRentBillings() {
   const { data, error } = await supabase
     .from("rent_billings")
     .select(
-      "*, contract:contracts(id, tenant:tenants(name), unit:units(unit_number, property:properties(name)))"
+      "*, contract:contracts(id, tenant:tenants(name, phone), unit:units(unit_number, property:properties(name)))"
     )
     .order("billing_month", { ascending: false });
   if (error) throw error;
   return (data ?? []) as Row[];
+}
+
+// 家賃請求詳細（入金履歴・入居者情報付き）
+export async function getRentBillingDetail(id: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("rent_billings")
+    .select(
+      "*, contract:contracts(id, tenant:tenants(name, phone, email), unit:units(unit_number, property:properties(name, address))), rent_payments(id, amount, payment_date, payment_method, notes, created_at)"
+    )
+    .eq("id", id)
+    .single();
+  if (error) return null;
+  return data;
 }
 
 // 修繕依頼一覧（物件・部屋付き）
