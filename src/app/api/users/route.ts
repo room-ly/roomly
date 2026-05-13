@@ -10,12 +10,31 @@ function getAdmin() {
   );
 }
 
+async function getCurrentUserId() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id;
+}
+
+async function getCurrentUserRole() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  return data?.role;
+}
+
 export async function GET() {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("users")
       .select("id, name, email, role, is_active, created_at")
+      .eq("is_active", true)
       .order("created_at");
 
     if (error) {
@@ -91,6 +110,109 @@ export async function POST(request: NextRequest) {
       { id: authData.user.id, name, email, role: userRole },
       { status: 201 }
     );
+  } catch {
+    return NextResponse.json(
+      { error: "リクエストの処理に失敗しました" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { userId } = await request.json();
+    if (!userId) {
+      return NextResponse.json(
+        { error: "削除対象のユーザーIDが必要です" },
+        { status: 400 }
+      );
+    }
+
+    const currentUserId = await getCurrentUserId();
+    const currentRole = await getCurrentUserRole();
+    if (!currentUserId || !currentRole) {
+      return NextResponse.json(
+        { error: "認証が必要です" },
+        { status: 401 }
+      );
+    }
+
+    // 自分自身 or admin のみ削除可能
+    if (userId !== currentUserId && currentRole !== "admin") {
+      return NextResponse.json(
+        { error: "権限がありません" },
+        { status: 403 }
+      );
+    }
+
+    const companyId = await getCompanyId();
+    const admin = getAdmin();
+
+    // 対象ユーザーが同じ会社に属しているか確認
+    const { data: targetUser, error: fetchError } = await admin
+      .from("users")
+      .select("id, role, is_active, company_id")
+      .eq("id", userId)
+      .single();
+
+    if (fetchError || !targetUser) {
+      return NextResponse.json(
+        { error: "ユーザーが見つかりません" },
+        { status: 404 }
+      );
+    }
+
+    if (targetUser.company_id !== companyId) {
+      return NextResponse.json(
+        { error: "権限がありません" },
+        { status: 403 }
+      );
+    }
+
+    if (!targetUser.is_active) {
+      return NextResponse.json(
+        { error: "このユーザーは既に削除されています" },
+        { status: 400 }
+      );
+    }
+
+    // 会社の最後のadminは削除不可
+    if (targetUser.role === "admin") {
+      const { count } = await admin
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", companyId)
+        .eq("role", "admin")
+        .eq("is_active", true);
+
+      if ((count ?? 0) <= 1) {
+        return NextResponse.json(
+          { error: "最後の管理者は削除できません" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 論理削除: is_active=false, deleted_at を設定
+    const { error: updateError } = await admin
+      .from("users")
+      .update({
+        is_active: false,
+        deleted_at: new Date().toISOString(),
+      })
+      .eq("id", userId);
+
+    if (updateError) {
+      return NextResponse.json(
+        { error: "削除に失敗しました", details: updateError.message },
+        { status: 500 }
+      );
+    }
+
+    // Supabase Auth ユーザーを ban（ログイン不可にする）
+    await admin.auth.admin.updateUserById(userId, { ban_duration: "876600h" });
+
+    return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
       { error: "リクエストの処理に失敗しました" },

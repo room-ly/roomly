@@ -1,28 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2 } from "lucide-react";
-
-const INQUIRY_TYPES = [
-  "サービスについて",
-  "導入のご相談",
-  "料金について",
-  "協業・パートナーシップ",
-  "投資・事業提携",
-  "その他",
-];
 
 export default function ContactForm() {
   const [form, setForm] = useState({
     name: "",
     email: "",
     company: "",
-    type: INQUIRY_TYPES[0],
     message: "",
   });
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle"
-  );
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +24,7 @@ export default function ContactForm() {
 
       if (!res.ok) throw new Error();
       setStatus("sent");
-      setForm({ name: "", email: "", company: "", type: INQUIRY_TYPES[0], message: "" });
+      setForm({ name: "", email: "", company: "", message: "" });
     } catch {
       setStatus("error");
     }
@@ -45,19 +32,19 @@ export default function ContactForm() {
 
   if (status === "sent") {
     return (
-      <div className="mx-auto max-w-xl rounded bg-rm-surface p-10 text-center shadow-sm">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rm-accent/10">
-          <CheckCircle2 size={24} className="text-rm-accent" />
+      <div className="mx-auto max-w-xl rounded-2xl border border-rm-border bg-rm-surface p-10 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rm-accent-tint">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" className="text-rm-accent-deep">
+            <path d="M4 12l5 5L20 6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
-        <h3 className="mt-4 text-lg font-semibold text-rm-primary">
-          送信しました
-        </h3>
-        <p className="mt-2 text-[13px] text-rm-text-secondary">
+        <h3 className="mt-4 text-[18px] font-medium text-rm-primary">送信しました</h3>
+        <p className="mt-2 text-[14px] text-rm-text-secondary">
           お問い合わせありがとうございます。担当者より折り返しご連絡いたします。
         </p>
         <button
           onClick={() => setStatus("idle")}
-          className="mt-6 text-[13px] text-rm-accent underline hover:no-underline"
+          className="mt-6 text-[14px] text-rm-accent-deep underline hover:no-underline"
         >
           続けてお問い合わせする
         </button>
@@ -66,31 +53,14 @@ export default function ContactForm() {
   }
 
   const inputClass =
-    "mt-1 w-full rounded border border-rm-border px-4 py-2.5 text-[13px] transition-all focus:border-rm-accent focus:outline-none focus:ring-1 focus:ring-rm-accent/20";
+    "mt-1 w-full rounded-xl border border-rm-border bg-rm-bg px-4 py-3 text-[14px] transition-all focus:border-rm-accent-deep focus:outline-none focus:ring-2 focus:ring-rm-accent-soft";
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto max-w-xl rounded bg-rm-surface p-8 shadow-sm"
+      className="mx-auto max-w-xl rounded-2xl border border-rm-border bg-rm-surface p-8 sm:p-10"
     >
       <div className="space-y-5">
-        <div>
-          <label className="block text-[13px] font-medium text-rm-text">
-            お問い合わせ種別
-          </label>
-          <select
-            value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-            className={inputClass}
-          >
-            {INQUIRY_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label className="block text-[13px] font-medium text-rm-text">
@@ -153,7 +123,7 @@ export default function ContactForm() {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="mt-6 w-full rounded bg-rm-accent py-3 text-[13px] font-medium text-white transition-colors hover:bg-rm-accent-light disabled:opacity-50"
+        className="mt-6 w-full rounded-full bg-rm-primary py-3.5 text-[14px] font-medium text-rm-bg transition-colors hover:bg-rm-accent-deep hover:text-white disabled:opacity-50"
       >
         {status === "sending" ? "送信中..." : "送信する"}
       </button>

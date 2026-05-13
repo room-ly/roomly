@@ -24,13 +24,13 @@ export default function PropertiesPageClient({
     <>
       <div className="flex gap-2">
         <button
-          className="btn-secondary"
+          className="btn btn-secondary"
           onClick={() => setIsImportOpen(true)}
         >
           <Upload size={14} />
           CSVインポート
         </button>
-        <button className="btn-primary" onClick={() => setIsOpen(true)}>
+        <button className="btn btn-primary" onClick={() => setIsOpen(true)}>
           <Plus size={14} />
           物件を追加
         </button>

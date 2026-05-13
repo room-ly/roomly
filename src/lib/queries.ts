@@ -181,6 +181,7 @@ export async function getUsers() {
   const { data, error } = await supabase
     .from("users")
     .select("id, name, email, role, is_active, created_at")
+    .eq("is_active", true)
     .order("created_at");
   if (error) throw error;
   return (data ?? []) as Row[];
@@ -375,12 +376,13 @@ export async function getPropertiesForSelect() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("properties")
-    .select("id, name")
+    .select("id, name, owner_id")
     .order("name");
   if (error) throw error;
   return (data ?? []).map((p: Row) => ({
     id: p.id,
     label: p.name,
+    owner_id: p.owner_id,
   }));
 }
 
@@ -427,15 +429,13 @@ export async function getBadgeCounts() {
         .from("inquiries")
         .select("id", { count: "exact", head: true })
         .in("status", ["open", "in_progress"]),
-      supabase.from("companies").select("name, usage_type").single(),
+      supabase.from("companies").select("name").single(),
     ]);
 
   return {
     "/rent": overdueRes.count ?? 0,
     "/maintenance": maintenanceRes.count ?? 0,
     "/inquiries": inquiriesRes.count ?? 0,
-    usage_type:
-      (companyRes.data?.usage_type as string) ?? "management_company",
     company_name: (companyRes.data?.name as string) ?? "",
   };
 }

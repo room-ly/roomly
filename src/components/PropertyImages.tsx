@@ -109,12 +109,12 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
       <div className="mb-6">
         <div
           onClick={() => fileInputRef.current?.click()}
-          className="inline-flex items-center gap-3 rounded-lg border-2 border-dashed border-border-light hover:border-accent px-5 py-4 cursor-pointer transition-colors hover:bg-accent-subtle/50"
+          className="inline-flex items-center gap-3 rounded-lg border-2 border-dashed border-line hover:border-accent px-5 py-4 cursor-pointer transition-colors hover:bg-accent-tint/50"
         >
-          <Building2 size={28} className="text-text-muted/40" />
+          <Building2 size={28} className="text-ink-3/40" />
           <div>
-            <p className="text-[12px] text-text-secondary">物件画像を追加</p>
-            <p className="text-[11px] text-text-muted">JPEG / PNG / WebP</p>
+            <p className="text-[12px] text-ink-2">物件画像を追加</p>
+            <p className="text-[11px] text-ink-3">JPEG / PNG / WebP</p>
           </div>
         </div>
         <input
@@ -142,7 +142,7 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
       <div className="flex gap-3 items-start">
         {/* メイン画像 */}
         <div
-          className="relative w-48 h-32 shrink-0 rounded-lg overflow-hidden bg-bg-secondary cursor-pointer group"
+          className="relative w-48 h-32 shrink-0 rounded-lg overflow-hidden bg-bg-2 cursor-pointer group"
           onClick={() => setPreviewImage(mainImage)}
         >
           <img
@@ -199,7 +199,7 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
             {images.length > 8 && (
               <div
                 onClick={() => setManaging(true)}
-                className="w-[38px] h-[38px] rounded bg-bg-secondary flex items-center justify-center cursor-pointer text-[10px] font-medium text-text-muted hover:bg-border-light transition-colors"
+                className="w-[38px] h-[38px] rounded bg-bg-2 flex items-center justify-center cursor-pointer text-[10px] font-medium text-ink-3 hover:bg-bg-2 transition-colors"
               >
                 +{images.length - 8}
               </div>
@@ -207,7 +207,7 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
           </div>
           <button
             onClick={() => setManaging(true)}
-            className="text-[11px] text-text-muted hover:text-accent transition-colors text-left"
+            className="text-[11px] text-ink-3 hover:text-accent transition-colors text-left"
           >
             画像を管理
           </button>
@@ -246,13 +246,13 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
           onClick={() => setManaging(false)}
         >
           <div
-            className="bg-card rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            className="bg-surface rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[15px] font-semibold">
                 画像管理
-                <span className="text-text-muted font-normal ml-2">
+                <span className="text-ink-3 font-normal ml-2">
                   {images.length}/10
                 </span>
               </h2>
@@ -261,7 +261,7 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
-                    className="btn-secondary text-[12px] py-1.5 px-3"
+                    className="btn btn-secondary text-[12px] py-1.5 px-3"
                   >
                     <Upload size={13} />
                     {uploading ? "アップロード中..." : "追加"}
@@ -269,7 +269,7 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
                 )}
                 <button
                   onClick={() => setManaging(false)}
-                  className="text-text-muted hover:text-text transition-colors"
+                  className="text-ink-3 hover:text-ink transition-colors"
                 >
                   <X size={18} />
                 </button>
@@ -277,7 +277,7 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
             </div>
 
             {error && (
-              <div className="bg-danger-bg text-danger text-[12px] rounded-lg px-3 py-2 mb-4">
+              <div className="bg-danger-tint text-danger text-[12px] rounded-lg px-3 py-2 mb-4">
                 {error}
               </div>
             )}
@@ -286,7 +286,7 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
               {images.map((img) => (
                 <div
                   key={img.id}
-                  className="group relative aspect-[4/3] rounded-lg overflow-hidden bg-bg-secondary cursor-pointer"
+                  className="group relative aspect-[4/3] rounded-lg overflow-hidden bg-bg-2 cursor-pointer"
                   onClick={() => {
                     setPreviewImage(img);
                     setManaging(false);
@@ -311,10 +311,10 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
               {images.length < 10 && (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="aspect-[4/3] rounded-lg border-2 border-dashed border-border-light hover:border-accent flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-accent-subtle/50"
+                  className="aspect-[4/3] rounded-lg border-2 border-dashed border-line hover:border-accent flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-accent-tint/50"
                 >
-                  <ImagePlus size={18} className="text-text-muted mb-1" />
-                  <span className="text-[10px] text-text-muted">追加</span>
+                  <ImagePlus size={18} className="text-ink-3 mb-1" />
+                  <span className="text-[10px] text-ink-3">追加</span>
                 </div>
               )}
             </div>

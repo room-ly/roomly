@@ -23,7 +23,7 @@ export function RentPaymentButton({ billing }: RentPaymentButtonProps) {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="btn-primary text-[11px] px-2 py-1"
+        className="btn btn-primary text-[11px] px-2 py-1"
       >
         入金登録
       </button>

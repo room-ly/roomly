@@ -22,7 +22,7 @@ export default function ExpensesPageClient({
 
   return (
     <>
-      <button className="btn-primary" onClick={() => setIsOpen(true)}>
+      <button className="btn btn-primary" onClick={() => setIsOpen(true)}>
         <Plus size={14} />
         経費を登録
       </button>

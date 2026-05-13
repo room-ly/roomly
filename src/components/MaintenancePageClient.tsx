@@ -20,7 +20,7 @@ export default function MaintenancePageClient({
 
   return (
     <>
-      <button className="btn-primary" onClick={() => setIsOpen(true)}>
+      <button className="btn btn-primary" onClick={() => setIsOpen(true)}>
         <Plus size={14} />
         依頼を登録
       </button>

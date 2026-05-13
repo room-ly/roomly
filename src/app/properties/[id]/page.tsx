@@ -21,14 +21,14 @@ export default async function PropertyDetailPage({
   return (
     <>
       <div className="mb-6">
-        <Link href="/properties" className="inline-flex items-center gap-1 text-[13px] text-text-muted hover:text-accent mb-3 transition-colors">
+        <Link href="/properties" className="inline-flex items-center gap-1 text-[13px] text-ink-3 hover:text-accent mb-3 transition-colors">
           <ArrowLeft size={13} />
           物件一覧に戻る
         </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-lg font-semibold">{property.name}</h1>
-            <p className="flex items-center gap-1 text-[13px] text-text-muted mt-0.5">
+            <p className="flex items-center gap-1 text-[13px] text-ink-3 mt-0.5">
               <MapPin size={12} />
               {property.address}
             </p>
@@ -45,7 +45,7 @@ export default async function PropertyDetailPage({
           { label: "オーナー", value: property.owner?.name || "—" },
         ].map((item) => (
           <div key={item.label} className="card p-4">
-            <p className="text-[11px] text-text-muted uppercase tracking-wider mb-1">{item.label}</p>
+            <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">{item.label}</p>
             <p className="text-[14px] font-medium">{item.value}</p>
           </div>
         ))}

@@ -27,6 +27,7 @@ interface FilterableTableProps {
   rowClassName?: (item: Record<string, any>) => string;
   onRowClick?: (item: Record<string, any>) => void;
   emptyMessage?: string;
+  actions?: (item: Record<string, any>) => React.ReactNode;
 }
 
 function getNestedValue(obj: Record<string, any>, path: string): any {
@@ -43,6 +44,7 @@ export default function FilterableTable({
   rowClassName,
   onRowClick,
   emptyMessage = "データがありません",
+  actions,
 }: FilterableTableProps) {
   const [search, setSearch] = useState("");
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
@@ -106,13 +108,14 @@ export default function FilterableTable({
         <div className="flex flex-wrap items-center gap-2 mb-4">
           {searchFields.length > 0 && (
             <div className="relative w-64">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder={searchPlaceholder}
-                className="w-full border border-[var(--border)] rounded-[var(--radius)] bg-[var(--card)] text-[var(--text)] pl-9 py-1.5 text-[13px] transition-all focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_2px_var(--accent-subtle)]"
+                className="input w-full"
+                style={{ paddingLeft: "2.25rem" }}
               />
             </div>
           )}
@@ -124,16 +127,17 @@ export default function FilterableTable({
                 setFilterValues((prev) => ({ ...prev, [f.key]: e.target.value }));
                 setPage(1);
               }}
-              className="w-40 border border-[var(--border)] rounded-[var(--radius)] bg-[var(--card)] text-[var(--text)] px-3 py-1.5 text-[13px] transition-all focus:outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_2px_var(--accent-subtle)]"
+              className="input"
+              style={{ width: "10rem" }}
             >
-              <option value="all">{f.label}</option>
+              <option value="all">{f.label}: すべて</option>
               {f.options.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
           ))}
           {search || Object.values(filterValues).some((v) => v && v !== "all") ? (
-            <span className="text-[12px] text-text-muted">
+            <span className="text-[12px] text-ink-3">
               {filtered.length}件
             </span>
           ) : null}
@@ -145,13 +149,13 @@ export default function FilterableTable({
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="text-left text-text-muted border-b border-border-light">
+              <tr className="text-left text-ink-3 border-b border-line">
                 {columns.map((col) => (
                   <th
                     key={col.key}
                     className={`px-5 py-2.5 font-medium ${
                       col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : ""
-                    } ${col.sortable ? "cursor-pointer select-none hover:text-text transition-colors" : ""}`}
+                    } ${col.sortable ? "cursor-pointer select-none hover:text-ink transition-colors" : ""}`}
                     onClick={col.sortable ? () => toggleSort(col.key) : undefined}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -162,12 +166,13 @@ export default function FilterableTable({
                     </span>
                   </th>
                 ))}
+                {actions && <th className="px-3 py-2.5 font-medium w-12 sticky right-0 bg-surface"></th>}
               </tr>
             </thead>
             <tbody>
               {paged.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="px-5 py-8 text-center text-text-muted">
+                  <td colSpan={columns.length + (actions ? 1 : 0)} className="px-5 py-8 text-center text-ink-3">
                     {emptyMessage}
                   </td>
                 </tr>
@@ -175,7 +180,7 @@ export default function FilterableTable({
                 paged.map((item, idx) => (
                   <tr
                     key={item.id || idx}
-                    className={`border-b border-border-light last:border-0 hover:bg-bg-secondary/30 transition-colors ${
+                    className={`border-b border-line last:border-0 hover:bg-bg-2/30 transition-colors ${
                       onRowClick ? "cursor-pointer" : ""
                     } ${rowClassName?.(item) || ""}`}
                     onClick={onRowClick ? () => onRowClick(item) : undefined}
@@ -190,6 +195,11 @@ export default function FilterableTable({
                         {col.render ? col.render(item) : getNestedValue(item, col.key) ?? "—"}
                       </td>
                     ))}
+                    {actions && (
+                      <td className="px-3 py-2.5 sticky right-0 bg-surface" onClick={(e) => e.stopPropagation()}>
+                        {actions(item)}
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
@@ -201,14 +211,14 @@ export default function FilterableTable({
       {/* ページネーション */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 text-[13px]">
-          <span className="text-text-muted">
+          <span className="text-ink-3">
             {filtered.length}件中 {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, filtered.length)}件
           </span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage(page - 1)}
               disabled={page <= 1}
-              className="p-1.5 rounded hover:bg-bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded hover:bg-bg-2 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft size={14} />
             </button>
@@ -228,7 +238,7 @@ export default function FilterableTable({
                   key={pageNum}
                   onClick={() => setPage(pageNum)}
                   className={`w-7 h-7 rounded text-[12px] transition-colors ${
-                    pageNum === page ? "bg-accent text-white" : "hover:bg-bg-secondary text-text-secondary"
+                    pageNum === page ? "bg-accent text-white" : "hover:bg-bg-2 text-ink-2"
                   }`}
                 >
                   {pageNum}
@@ -238,7 +248,7 @@ export default function FilterableTable({
             <button
               onClick={() => setPage(page + 1)}
               disabled={page >= totalPages}
-              className="p-1.5 rounded hover:bg-bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded hover:bg-bg-2 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight size={14} />
             </button>

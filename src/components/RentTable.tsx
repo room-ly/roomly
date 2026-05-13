@@ -30,7 +30,7 @@ export default function RentTable({ data }: RentTableProps) {
         {
           key: "contract.unit.property.name",
           label: "物件",
-          render: (item) => <span className="text-text-secondary">{item.contract?.unit?.property?.name || "—"}</span>,
+          render: (item) => <span className="text-ink-2">{item.contract?.unit?.property?.name || "—"}</span>,
         },
         { key: "contract.unit.unit_number", label: "部屋", render: (item) => item.contract?.unit?.unit_number || "—" },
         {
@@ -79,7 +79,7 @@ export default function RentTable({ data }: RentTableProps) {
             ) : null,
         },
       ]}
-      rowClassName={(item) => (item.status === "overdue" ? "bg-danger/5" : "")}
+      rowClassName={(item) => (item.status === "overdue" ? "bg-danger-tint" : "")}
     />
   );
 }

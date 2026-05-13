@@ -55,7 +55,6 @@ export default async function BlogPostPage({
   if (!article) notFound();
 
   const allArticles = getAllArticles().filter((a) => a.slug !== slug);
-  // 同カテゴリの記事を優先し、足りなければ他カテゴリで補完
   const sameCategoryPosts = allArticles.filter((a) => a.category === article.category);
   const otherPosts = allArticles.filter((a) => a.category !== article.category);
   const relatedPosts = [...sameCategoryPosts, ...otherPosts].slice(0, 3);
@@ -81,9 +80,7 @@ export default async function BlogPostPage({
       "@type": "WebPage",
       "@id": `https://hp.roomly.jp/column/${slug}`,
     },
-    ...(article.tags.length > 0
-      ? { keywords: article.tags.join(", ") }
-      : {}),
+    ...(article.tags.length > 0 ? { keywords: article.tags.join(", ") } : {}),
   };
 
   const breadcrumbJsonLd = {
@@ -121,26 +118,21 @@ export default async function BlogPostPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      {/* 記事 */}
-      <article className="px-4 py-12 sm:px-6 sm:py-16">
+
+      <article className="px-7 py-12 sm:py-16">
         <div className="mx-auto max-w-3xl">
           {/* パンくず */}
           <nav className="mb-8 text-[13px] text-rm-text-muted">
-            <Link href="/" className="transition-colors hover:text-rm-accent">
-              トップ
-            </Link>
+            <Link href="/" className="transition-colors hover:text-rm-accent-deep">トップ</Link>
             <span className="mx-2">/</span>
-            <Link href="/column" className="transition-colors hover:text-rm-accent">
-              コラム
-            </Link>
+            <Link href="/column" className="transition-colors hover:text-rm-accent-deep">コラム</Link>
             <span className="mx-2">/</span>
             <span className="text-rm-text-secondary">{article.title}</span>
           </nav>
 
           {/* メタ情報 */}
           <div className="flex flex-wrap items-center gap-3 text-[12px] text-rm-text-muted">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-rm-accent" />
+            <span className="inline-flex items-center rounded-full bg-rm-accent-tint px-2.5 py-0.5 text-rm-accent-deep">
               {article.category}
             </span>
             <time dateTime={article.date}>
@@ -158,7 +150,7 @@ export default async function BlogPostPage({
           </div>
 
           {/* タイトル */}
-          <h1 className="mt-4 text-xl font-semibold leading-snug text-rm-primary sm:text-2xl">
+          <h1 className="mt-4 text-[22px] font-medium leading-snug text-rm-primary sm:text-[26px]">
             {article.title}
           </h1>
 
@@ -168,7 +160,7 @@ export default async function BlogPostPage({
               {article.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-[11px] px-2 py-0.5 rounded bg-rm-surface border border-rm-border text-rm-text-muted"
+                  className="text-[11px] px-2.5 py-0.5 rounded-full border border-rm-border text-rm-text-muted"
                 >
                   {tag}
                 </span>
@@ -186,16 +178,16 @@ export default async function BlogPostPage({
           </div>
 
           {/* CTA */}
-          <div className="mt-16 rounded bg-rm-hero p-8 text-center text-white sm:p-12">
-            <h2 className="text-lg font-semibold sm:text-xl">
+          <div className="mt-16 rounded-2xl bg-rm-primary p-8 text-center sm:p-12">
+            <h2 className="text-[18px] font-medium text-rm-bg sm:text-[20px]">
               Roomlyで賃貸管理をもっとシンプルに
             </h2>
-            <p className="mx-auto mt-3 max-w-md text-[13px] text-white/50">
+            <p className="mx-auto mt-3 max-w-md text-[14px] text-rm-bg/60">
               10区画まで無料。クレジットカード不要で、今すぐ始められます。
             </p>
             <a
               href="https://roomly.jp"
-              className="mt-6 inline-block rounded bg-rm-accent px-8 py-3 text-[13px] font-medium text-white transition-colors hover:bg-rm-accent-light"
+              className="mt-6 inline-flex h-11 items-center rounded-full bg-rm-bg px-[20px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-accent-tint"
             >
               無料で始める
             </a>
@@ -207,19 +199,19 @@ export default async function BlogPostPage({
           {/* 関連記事 */}
           {relatedPosts.length > 0 && (
             <div className="mt-16">
-              <h2 className="text-[15px] font-semibold text-rm-primary">関連コラム</h2>
+              <h2 className="text-[16px] font-medium text-rm-primary">関連コラム</h2>
               <div className="mt-6 space-y-3">
                 {relatedPosts.map((p) => (
                   <Link
                     key={p.slug}
                     href={`/column/${p.slug}`}
-                    className="block rounded bg-rm-surface p-4 shadow-sm transition-shadow hover:shadow-md"
+                    className="block rounded-2xl border border-rm-border bg-rm-surface p-5 transition-all hover:border-rm-border-strong hover:shadow-sm"
                   >
                     <p className="text-[11px] text-rm-text-muted">
                       {p.category} ・{" "}
                       {new Date(p.date).toLocaleDateString("ja-JP")}
                     </p>
-                    <p className="mt-1 text-[13px] font-medium text-rm-primary">{p.title}</p>
+                    <p className="mt-1 text-[14px] font-medium text-rm-primary">{p.title}</p>
                   </Link>
                 ))}
               </div>

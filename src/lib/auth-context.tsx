@@ -32,11 +32,11 @@ const supabase = createClient();
 async function fetchProfile(authUser: SupabaseUser): Promise<User | null> {
   const { data } = await supabase
     .from("users")
-    .select("id, name, email, role, company_id")
+    .select("id, name, email, role, company_id, is_active")
     .eq("id", authUser.id)
     .single();
 
-  if (!data) return null;
+  if (!data || data.is_active === false) return null;
   return {
     id: data.id,
     name: data.name,

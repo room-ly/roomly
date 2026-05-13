@@ -51,7 +51,7 @@ function OwnerMenu({
       <button
         ref={btnRef}
         onClick={toggle}
-        className="p-1 rounded text-text-muted hover:text-text hover:bg-bg-secondary transition-colors"
+        className="p-1 rounded text-ink-3 hover:text-ink hover:bg-bg-2 transition-colors"
       >
         <MoreVertical size={14} />
       </button>
@@ -59,18 +59,18 @@ function OwnerMenu({
         createPortal(
           <div
             ref={menuRef}
-            className="fixed w-28 bg-card rounded border border-border shadow-md z-50 overflow-hidden"
+            className="fixed w-28 bg-surface rounded border border-line shadow-md z-50 overflow-hidden"
             style={{ top: pos.top, left: pos.left }}
           >
             <button
               onClick={() => { setOpen(false); onEdit(); }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-text-secondary hover:bg-bg-secondary transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-ink-2 hover:bg-bg-2 transition-colors"
             >
               <Pencil size={12} /> 編集
             </button>
             <button
               onClick={() => { setOpen(false); onDelete(); }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-danger hover:bg-danger-bg transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-danger hover:bg-danger-tint transition-colors"
             >
               <Trash2 size={12} /> 削除
             </button>
@@ -99,7 +99,7 @@ export default function OwnersTable({ owners }: OwnersTableProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="text-left text-text-muted border-b border-border-light">
+              <tr className="text-left text-ink-3 border-b border-line">
                 <th className="px-5 py-2.5 font-medium">オーナー名</th>
                 <th className="px-5 py-2.5 font-medium">電話番号</th>
                 <th className="px-5 py-2.5 font-medium">メール</th>
@@ -112,20 +112,20 @@ export default function OwnersTable({ owners }: OwnersTableProps) {
             </thead>
             <tbody>
               {owners.map((o) => (
-                <tr key={o.id} className="border-b border-border-light last:border-0 hover:bg-bg-secondary/30 transition-colors">
+                <tr key={o.id} className="border-b border-line last:border-0 hover:bg-bg-2/30 transition-colors">
                   <td className="px-5 py-2.5">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded bg-accent/10 flex items-center justify-center text-accent text-[11px] font-semibold shrink-0">
+                      <div className="w-7 h-7 rounded bg-accent-tint flex items-center justify-center text-accent text-[11px] font-semibold shrink-0">
                         {o.name?.charAt(0)}
                       </div>
                       <span className="font-medium">{o.name}</span>
                     </div>
                   </td>
-                  <td className="px-5 py-2.5 text-text-secondary">{o.phone || "—"}</td>
-                  <td className="px-5 py-2.5 text-text-secondary">{o.email || "—"}</td>
+                  <td className="px-5 py-2.5 text-ink-2">{o.phone || "—"}</td>
+                  <td className="px-5 py-2.5 text-ink-2">{o.email || "—"}</td>
                   <td className="px-5 py-2.5 text-center tabular-nums">{o.propertyCount}</td>
                   <td className="px-5 py-2.5 text-center tabular-nums">{o.unitCount}</td>
-                  <td className="px-5 py-2.5 text-center tabular-nums text-success">{o.occupiedCount}</td>
+                  <td className="px-5 py-2.5 text-center tabular-nums text-accent-deep">{o.occupiedCount}</td>
                   <td className="px-5 py-2.5 text-right tabular-nums">{Number(o.management_fee_rate)}%</td>
                   <td className="px-5 py-2.5">
                     <OwnerMenu
@@ -138,7 +138,7 @@ export default function OwnersTable({ owners }: OwnersTableProps) {
               ))}
               {owners.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-5 py-8 text-center text-text-muted">
+                  <td colSpan={8} className="px-5 py-8 text-center text-ink-3">
                     オーナーが登録されていません
                   </td>
                 </tr>

@@ -73,21 +73,21 @@ export default function TenantFormModal({
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-card rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">
             {isEdit ? "入居者を編集" : "入居者を追加"}
           </h2>
           <button
             onClick={onClose}
-            className="text-text-muted hover:text-text transition-colors"
+            className="text-ink-3 hover:text-ink transition-colors"
           >
             <X size={18} />
           </button>
         </div>
 
         {apiError && (
-          <div className="bg-danger-bg text-danger text-sm rounded-lg px-3 py-2 mb-4">
+          <div className="bg-danger-tint text-danger text-sm rounded-lg px-3 py-2 mb-4">
             {apiError}
           </div>
         )}
@@ -95,7 +95,7 @@ export default function TenantFormModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 氏名 <span className="text-danger">*</span>
               </label>
               <input
@@ -109,7 +109,7 @@ export default function TenantFormModal({
               )}
             </div>
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 フリガナ
               </label>
               <input
@@ -123,7 +123,7 @@ export default function TenantFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 電話番号
               </label>
               <input
@@ -137,7 +137,7 @@ export default function TenantFormModal({
               )}
             </div>
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 メール
               </label>
               <input
@@ -154,7 +154,7 @@ export default function TenantFormModal({
           </div>
 
           <div>
-            <label className="text-sm font-medium text-text-secondary block mb-1">
+            <label className="text-sm font-medium text-ink-2 block mb-1">
               勤務先
             </label>
             <input
@@ -167,7 +167,7 @@ export default function TenantFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 緊急連絡先（氏名）
               </label>
               <input
@@ -178,7 +178,7 @@ export default function TenantFormModal({
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 緊急連絡先（電話）
               </label>
               <input
@@ -199,14 +199,14 @@ export default function TenantFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="bg-bg-secondary text-text-secondary rounded-lg px-4 py-2 text-sm hover:bg-border-light transition-colors"
+              className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-bg-2 transition-colors"
             >
               キャンセル
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary disabled:opacity-50"
+              className="btn btn-primary disabled:opacity-50"
             >
               {loading ? "保存中..." : isEdit ? "更新する" : "追加する"}
             </button>

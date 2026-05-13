@@ -73,28 +73,28 @@ export default function OwnerFormModal({
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-card rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">
             {isEdit ? "オーナーを編集" : "オーナーを追加"}
           </h2>
           <button
             onClick={onClose}
-            className="text-text-muted hover:text-text transition-colors"
+            className="text-ink-3 hover:text-ink transition-colors"
           >
             <X size={18} />
           </button>
         </div>
 
         {apiError && (
-          <div className="bg-danger-bg text-danger text-sm rounded-lg px-3 py-2 mb-4">
+          <div className="bg-danger-tint text-danger text-sm rounded-lg px-3 py-2 mb-4">
             {apiError}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-text-secondary block mb-1">
+            <label className="text-sm font-medium text-ink-2 block mb-1">
               氏名 <span className="text-danger">*</span>
             </label>
             <input
@@ -110,7 +110,7 @@ export default function OwnerFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 電話番号
               </label>
               <input
@@ -121,7 +121,7 @@ export default function OwnerFormModal({
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 メールアドレス
               </label>
               <input
@@ -139,7 +139,7 @@ export default function OwnerFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 郵便番号
               </label>
               <input
@@ -150,7 +150,7 @@ export default function OwnerFormModal({
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 住所
               </label>
               <input
@@ -162,11 +162,11 @@ export default function OwnerFormModal({
             </div>
           </div>
 
-          <div className="border-t border-border-light pt-4">
-            <h3 className="text-[13px] font-medium text-text-secondary mb-3">振込先情報</h3>
+          <div className="border-t border-line pt-4">
+            <h3 className="text-[13px] font-medium text-ink-2 mb-3">振込先情報</h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium text-text-secondary block mb-1">
+                <label className="text-sm font-medium text-ink-2 block mb-1">
                   銀行名
                 </label>
                 <input
@@ -177,7 +177,7 @@ export default function OwnerFormModal({
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-text-secondary block mb-1">
+                <label className="text-sm font-medium text-ink-2 block mb-1">
                   支店名
                 </label>
                 <input
@@ -190,7 +190,7 @@ export default function OwnerFormModal({
             </div>
             <div className="grid grid-cols-3 gap-3 mt-3">
               <div>
-                <label className="text-sm font-medium text-text-secondary block mb-1">
+                <label className="text-sm font-medium text-ink-2 block mb-1">
                   口座種別
                 </label>
                 <select
@@ -204,7 +204,7 @@ export default function OwnerFormModal({
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-text-secondary block mb-1">
+                <label className="text-sm font-medium text-ink-2 block mb-1">
                   口座番号
                 </label>
                 <input
@@ -215,7 +215,7 @@ export default function OwnerFormModal({
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-text-secondary block mb-1">
+                <label className="text-sm font-medium text-ink-2 block mb-1">
                   口座名義
                 </label>
                 <input
@@ -229,7 +229,7 @@ export default function OwnerFormModal({
           </div>
 
           <div>
-            <label className="text-sm font-medium text-text-secondary block mb-1">
+            <label className="text-sm font-medium text-ink-2 block mb-1">
               管理手数料率 (%) <span className="text-danger">*</span>
             </label>
             <input
@@ -246,7 +246,7 @@ export default function OwnerFormModal({
           </div>
 
           <div>
-            <label className="text-sm font-medium text-text-secondary block mb-1">
+            <label className="text-sm font-medium text-ink-2 block mb-1">
               備考
             </label>
             <textarea
@@ -262,14 +262,14 @@ export default function OwnerFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="bg-bg-secondary text-text-secondary rounded-lg px-4 py-2 text-sm hover:bg-border-light transition-colors"
+              className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-bg-2 transition-colors"
             >
               キャンセル
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary disabled:opacity-50"
+              className="btn btn-primary disabled:opacity-50"
             >
               {loading ? "保存中..." : isEdit ? "更新する" : "追加する"}
             </button>

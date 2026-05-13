@@ -9,7 +9,7 @@ export default function InquiriesPageClient() {
 
   return (
     <>
-      <button className="btn-primary" onClick={() => setIsOpen(true)}>
+      <button className="btn btn-primary" onClick={() => setIsOpen(true)}>
         <Plus size={14} />
         問い合わせを登録
       </button>

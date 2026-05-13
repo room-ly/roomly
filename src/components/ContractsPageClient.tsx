@@ -22,7 +22,7 @@ export default function ContractsPageClient({
 
   return (
     <>
-      <button className="btn-primary" onClick={() => setIsOpen(true)}>
+      <button className="btn btn-primary" onClick={() => setIsOpen(true)}>
         <Plus size={14} />
         新規契約
       </button>

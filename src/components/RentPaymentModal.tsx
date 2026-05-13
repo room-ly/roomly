@@ -77,46 +77,46 @@ export default function RentPaymentModal({
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-card rounded-2xl shadow-xl p-6 max-w-md w-full">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-md w-full">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">入金登録</h2>
           <button
             onClick={onClose}
-            className="text-text-muted hover:text-text transition-colors"
+            className="text-ink-3 hover:text-ink transition-colors"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* 請求情報サマリー */}
-        <div className="bg-bg-secondary rounded-lg p-3 mb-4 text-[13px]">
+        <div className="bg-bg-2 rounded-lg p-3 mb-4 text-[13px]">
           <div className="flex justify-between mb-1">
-            <span className="text-text-muted">入居者</span>
+            <span className="text-ink-3">入居者</span>
             <span className="font-medium">{billing.tenant_name}</span>
           </div>
           <div className="flex justify-between mb-1">
-            <span className="text-text-muted">部屋</span>
+            <span className="text-ink-3">部屋</span>
             <span>{billing.unit_label}</span>
           </div>
           <div className="flex justify-between mb-1">
-            <span className="text-text-muted">対象月</span>
+            <span className="text-ink-3">対象月</span>
             <span>{billing.billing_month}</span>
           </div>
           <div className="flex justify-between mb-1">
-            <span className="text-text-muted">請求額</span>
+            <span className="text-ink-3">請求額</span>
             <span className="tabular-nums">
               ¥{billing.total_amount.toLocaleString()}
             </span>
           </div>
           {billing.paid_amount > 0 && (
             <div className="flex justify-between mb-1">
-              <span className="text-text-muted">入金済</span>
-              <span className="text-success tabular-nums">
+              <span className="text-ink-3">入金済</span>
+              <span className="text-accent-deep tabular-nums">
                 ¥{billing.paid_amount.toLocaleString()}
               </span>
             </div>
           )}
-          <div className="flex justify-between pt-1 border-t border-border-light">
+          <div className="flex justify-between pt-1 border-t border-line">
             <span className="font-medium">未入金額</span>
             <span className="font-semibold text-accent tabular-nums">
               ¥{remaining.toLocaleString()}
@@ -125,14 +125,14 @@ export default function RentPaymentModal({
         </div>
 
         {apiError && (
-          <div className="bg-danger-bg text-danger text-sm rounded-lg px-3 py-2 mb-4">
+          <div className="bg-danger-tint text-danger text-sm rounded-lg px-3 py-2 mb-4">
             {apiError}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-text-secondary block mb-1">
+            <label className="text-sm font-medium text-ink-2 block mb-1">
               入金額 <span className="text-danger">*</span>
             </label>
             <input
@@ -149,7 +149,7 @@ export default function RentPaymentModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 支払方法 <span className="text-danger">*</span>
               </label>
               <select name="payment_method" defaultValue="transfer" className="input">
@@ -165,7 +165,7 @@ export default function RentPaymentModal({
               )}
             </div>
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 入金日 <span className="text-danger">*</span>
               </label>
               <input
@@ -183,7 +183,7 @@ export default function RentPaymentModal({
           </div>
 
           <div>
-            <label className="text-sm font-medium text-text-secondary block mb-1">
+            <label className="text-sm font-medium text-ink-2 block mb-1">
               備考
             </label>
             <input
@@ -197,14 +197,14 @@ export default function RentPaymentModal({
             <button
               type="button"
               onClick={onClose}
-              className="bg-bg-secondary text-text-secondary rounded-lg px-4 py-2 text-sm hover:bg-border-light transition-colors"
+              className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-bg-2 transition-colors"
             >
               キャンセル
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary disabled:opacity-50"
+              className="btn btn-primary disabled:opacity-50"
             >
               {loading ? "登録中..." : "入金を登録"}
             </button>

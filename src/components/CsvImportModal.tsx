@@ -128,15 +128,15 @@ export default function CsvImportModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+      <div className="bg-surface rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
         {/* ヘッダー */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line">
+          <h2 className="text-lg font-semibold text-ink">
             {label}をCSVインポート
           </h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-ink-3 hover:text-ink"
           >
             <X size={20} />
           </button>
@@ -148,17 +148,17 @@ export default function CsvImportModal({
           {state === "select" && (
             <div className="space-y-6">
               <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors"
+                className="border-2 border-dashed border-line-2 rounded-lg p-8 text-center cursor-pointer hover:border-accent hover:bg-accent-tint/50 transition-colors"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload
                   size={40}
-                  className="mx-auto text-gray-400 mb-3"
+                  className="mx-auto text-ink-4 mb-3"
                 />
-                <p className="text-sm text-gray-600 mb-1">
+                <p className="text-sm text-ink-2 mb-1">
                   CSVファイルをクリックして選択
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-ink-3">
                   UTF-8エンコーディング推奨
                 </p>
                 <input
@@ -170,11 +170,11 @@ export default function CsvImportModal({
                 />
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">
+              <div className="bg-surface-2 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-ink-2 mb-2">
                   CSVフォーマット
                 </h3>
-                <p className="text-xs text-gray-500 mb-3">
+                <p className="text-xs text-ink-3 mb-3">
                   以下のヘッダー名でCSVを作成してください。
                   サンプルCSVをダウンロードすると簡単です。
                 </p>
@@ -184,8 +184,8 @@ export default function CsvImportModal({
                       key={col.dbField}
                       className={`text-xs px-2 py-0.5 rounded ${
                         col.required
-                          ? "bg-blue-100 text-blue-700 font-medium"
-                          : "bg-gray-200 text-gray-600"
+                          ? "bg-accent-tint text-accent-deep font-medium"
+                          : "bg-bg-2 text-ink-2"
                       }`}
                     >
                       {col.csvHeader}
@@ -195,7 +195,7 @@ export default function CsvImportModal({
                 </div>
                 <button
                   onClick={handleDownloadSample}
-                  className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800"
+                  className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent-deep"
                 >
                   <Download size={14} />
                   サンプルCSVをダウンロード
@@ -209,20 +209,20 @@ export default function CsvImportModal({
             const { headers, rows, totalRows } = getPreviewData();
             return (
               <div className="space-y-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-ink-2">
                   <FileText size={16} />
                   <span>{fileName}</span>
-                  <span className="text-gray-400">（{totalRows}件）</span>
+                  <span className="text-ink-3">（{totalRows}件）</span>
                 </div>
 
-                <div className="overflow-x-auto border rounded-lg">
+                <div className="overflow-x-auto border border-line rounded-lg">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="bg-gray-50">
+                      <tr className="bg-surface-2">
                         {headers.map((h, i) => (
                           <th
                             key={i}
-                            className="px-3 py-2 text-left font-medium text-gray-700 whitespace-nowrap"
+                            className="px-3 py-2 text-left font-medium text-ink-2 whitespace-nowrap"
                           >
                             {h}
                           </th>
@@ -231,11 +231,11 @@ export default function CsvImportModal({
                     </thead>
                     <tbody>
                       {rows.map((row, i) => (
-                        <tr key={i} className="border-t">
+                        <tr key={i} className="border-t border-line">
                           {row.map((cell, j) => (
                             <td
                               key={j}
-                              className="px-3 py-2 text-gray-600 whitespace-nowrap"
+                              className="px-3 py-2 text-ink-2 whitespace-nowrap"
                             >
                               {cell || "-"}
                             </td>
@@ -246,7 +246,7 @@ export default function CsvImportModal({
                   </table>
                 </div>
                 {totalRows > 5 && (
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-ink-3">
                     先頭5件を表示しています（全{totalRows}件）
                   </p>
                 )}
@@ -257,19 +257,19 @@ export default function CsvImportModal({
           {/* インポート中 */}
           {state === "importing" && (
             <div className="py-12 text-center">
-              <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
-              <p className="text-sm text-gray-600">インポート中...</p>
+              <div className="animate-spin w-8 h-8 border-2 border-accent border-t-transparent rounded-full mx-auto mb-4" />
+              <p className="text-sm text-ink-2">インポート中...</p>
             </div>
           )}
 
           {/* 完了 */}
           {state === "done" && result && (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-green-700">
+              <div className="flex items-center gap-2 text-accent-deep">
                 <CheckCircle2 size={24} />
                 <span className="font-medium">インポートが完了しました</span>
               </div>
-              <div className="bg-green-50 rounded-lg p-4 text-sm">
+              <div className="bg-accent-tint rounded-lg p-4 text-sm">
                 <p>
                   <span className="font-medium">{result.inserted}件</span>
                   を登録しました
@@ -303,16 +303,16 @@ export default function CsvImportModal({
           {/* エラー */}
           {state === "error" && (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-red-700">
+              <div className="flex items-center gap-2 text-danger">
                 <AlertCircle size={24} />
                 <span className="font-medium">{error}</span>
               </div>
               {result?.rowErrors && result.rowErrors.length > 0 && (
-                <div className="bg-red-50 rounded-lg p-4">
-                  <p className="text-sm font-medium text-red-800 mb-2">
+                <div className="bg-danger-tint rounded-lg p-4">
+                  <p className="text-sm font-medium text-danger mb-2">
                     エラー詳細
                   </p>
-                  <ul className="text-xs text-red-700 space-y-1">
+                  <ul className="text-xs text-danger space-y-1">
                     {result.rowErrors.slice(0, 10).map((re, i) => (
                       <li key={i}>
                         {re.row}行目: {re.errors.join(", ")}
@@ -326,9 +326,9 @@ export default function CsvImportModal({
         </div>
 
         {/* フッター */}
-        <div className="px-6 py-4 border-t flex justify-end gap-3">
+        <div className="px-6 py-4 border-t border-line flex justify-end gap-3">
           {state === "select" && (
-            <button onClick={handleClose} className="btn-secondary">
+            <button onClick={handleClose} className="btn btn-secondary">
               閉じる
             </button>
           )}
@@ -340,18 +340,18 @@ export default function CsvImportModal({
                   setCsvText("");
                   setFileName("");
                 }}
-                className="btn-secondary"
+                className="btn btn-secondary"
               >
                 戻る
               </button>
-              <button onClick={handleImport} className="btn-primary">
+              <button onClick={handleImport} className="btn btn-primary">
                 <Upload size={14} />
                 {label}をインポート
               </button>
             </>
           )}
           {(state === "done" || state === "error") && (
-            <button onClick={handleClose} className="btn-primary">
+            <button onClick={handleClose} className="btn btn-primary">
               閉じる
             </button>
           )}

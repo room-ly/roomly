@@ -9,7 +9,7 @@ export default function OwnersPageClient() {
 
   return (
     <>
-      <button className="btn-primary" onClick={() => setIsOpen(true)}>
+      <button className="btn btn-primary" onClick={() => setIsOpen(true)}>
         <Plus size={14} />
         オーナーを追加
       </button>

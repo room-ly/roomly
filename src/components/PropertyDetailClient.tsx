@@ -15,7 +15,7 @@ export default function PropertyDetailClient({
 
   return (
     <>
-      <button className="btn-primary" onClick={() => setUnitModalOpen(true)}>
+      <button className="btn btn-primary" onClick={() => setUnitModalOpen(true)}>
         <Plus size={14} />
         部屋を追加
       </button>

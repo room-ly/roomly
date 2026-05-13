@@ -55,7 +55,7 @@ function UnitMenu({
       <button
         ref={btnRef}
         onClick={toggle}
-        className="p-1 rounded text-text-muted hover:text-text hover:bg-bg-secondary transition-colors"
+        className="p-1 rounded text-ink-3 hover:text-ink hover:bg-bg-2 transition-colors"
       >
         <MoreVertical size={14} />
       </button>
@@ -63,7 +63,7 @@ function UnitMenu({
         createPortal(
           <div
             ref={menuRef}
-            className="fixed w-28 bg-card rounded border border-border shadow-md z-50 overflow-hidden"
+            className="fixed w-28 bg-surface rounded border border-line shadow-md z-50 overflow-hidden"
             style={{ top: pos.top, left: pos.left }}
           >
             <button
@@ -71,7 +71,7 @@ function UnitMenu({
                 setOpen(false);
                 onEdit();
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-text-secondary hover:bg-bg-secondary transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-ink-2 hover:bg-bg-2 transition-colors"
             >
               <Pencil size={12} />
               編集
@@ -82,7 +82,7 @@ function UnitMenu({
                 onDelete();
               }}
               disabled={deleting}
-              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-danger hover:bg-danger-bg transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-danger hover:bg-danger-tint transition-colors"
             >
               <Trash2 size={12} />
               {deleting ? "削除中..." : "削除"}
@@ -109,22 +109,22 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
   }
 
   const statusLabel: Record<string, { text: string; cls: string }> = {
-    occupied: { text: "入居中", cls: "bg-success/10 text-success" },
-    vacant: { text: "空室", cls: "bg-accent/10 text-accent" },
-    reserved: { text: "申込中", cls: "bg-warning/10 text-warning" },
-    maintenance: { text: "メンテ中", cls: "bg-bg-secondary text-text-muted" },
+    occupied: { text: "入居中", cls: "bg-accent-tint text-accent-deep" },
+    vacant: { text: "空室", cls: "bg-accent-tint text-accent" },
+    reserved: { text: "申込中", cls: "bg-warn-tint text-warn" },
+    maintenance: { text: "メンテ中", cls: "bg-bg-2 text-ink-3" },
   };
 
   return (
     <>
       <div className="card overflow-hidden">
-        <div className="px-5 py-3 border-b border-border-light">
+        <div className="px-5 py-3 border-b border-line">
           <h2 className="text-[13px] font-semibold">部屋一覧（{units.length}戸）</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="text-left text-text-muted border-b border-border-light">
+              <tr className="text-left text-ink-3 border-b border-line">
                 <th className="px-5 py-2.5 font-medium">部屋番号</th>
                 <th className="px-5 py-2.5 font-medium">階</th>
                 <th className="px-5 py-2.5 font-medium">間取り</th>
@@ -141,7 +141,7 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
                 const contract = contracts.find((c) => c.unit_id === unit.id);
                 const s = statusLabel[unit.status] || statusLabel.maintenance;
                 return (
-                  <tr key={unit.id} className="border-b border-border-light last:border-0 hover:bg-bg-secondary/30 transition-colors">
+                  <tr key={unit.id} className="border-b border-line last:border-0 hover:bg-bg-2/30 transition-colors">
                     <td className="px-5 py-2.5 font-medium">{unit.unit_number}</td>
                     <td className="px-5 py-2.5">{unit.floor ? `${unit.floor}F` : "—"}</td>
                     <td className="px-5 py-2.5">{unit.layout || "—"}</td>
@@ -153,7 +153,7 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
                         {s.text}
                       </span>
                     </td>
-                    <td className="px-5 py-2.5 text-text-secondary">{contract?.tenant?.name || "—"}</td>
+                    <td className="px-5 py-2.5 text-ink-2">{contract?.tenant?.name || "—"}</td>
                     <td className="px-5 py-2.5">
                       <UnitMenu
                         unit={unit}
@@ -170,7 +170,7 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
               })}
               {units.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-5 py-8 text-center text-text-muted text-[13px]">
+                  <td colSpan={9} className="px-5 py-8 text-center text-ink-3 text-[13px]">
                     部屋が登録されていません
                   </td>
                 </tr>

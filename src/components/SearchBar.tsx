@@ -11,7 +11,7 @@ interface SearchBarProps {
 export default function SearchBar({ value, onChange, placeholder = "検索..." }: SearchBarProps) {
   return (
     <div className="relative">
-      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
       <input
         type="text"
         value={value}

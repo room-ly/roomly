@@ -37,15 +37,18 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-bg flex">
       {/* 左: ブランディング */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-ink relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-accent/8 blur-3xl" />
           <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-accent/5 blur-3xl" />
         </div>
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="mb-10">
-            <h1 className="text-2xl font-semibold tracking-wide">Roomly</h1>
-            <span className="text-[11px] text-white/40 tracking-wider uppercase">賃貸管理SaaS</span>
+            <div className="flex items-center gap-3">
+              <span className="w-9 h-9 rounded-lg bg-white/10 grid place-items-center text-[18px] font-semibold">R</span>
+              <h1 className="text-2xl font-semibold tracking-wide">Roomly</h1>
+            </div>
+            <span className="text-[11px] text-white/40 tracking-wider uppercase mt-2 block">賃貸管理SaaS</span>
           </div>
           <h2 className="text-xl font-medium leading-relaxed mb-4 text-white/90">
             物件管理を、
@@ -63,7 +66,7 @@ export default function LoginPage() {
               { label: "入居率改善", value: "15%" },
             ].map((stat) => (
               <div key={stat.label}>
-                <p className="text-xl font-semibold text-accent-light">{stat.value}</p>
+                <p className="text-xl font-semibold text-accent">{stat.value}</p>
                 <p className="text-[11px] text-white/30 mt-1 tracking-wider">{stat.label}</p>
               </div>
             ))}
@@ -75,17 +78,20 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-6">
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8 text-center">
-            <h1 className="text-xl font-semibold text-text tracking-wide">Roomly</h1>
+            <div className="flex items-center justify-center gap-2">
+              <span className="w-7 h-7 rounded-lg bg-ink text-bg grid place-items-center text-[15px] font-semibold">R</span>
+              <h1 className="text-xl font-semibold text-ink tracking-wide">Roomly</h1>
+            </div>
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-lg font-semibold text-text">ログイン</h2>
-            <p className="text-[13px] text-text-muted mt-1.5">アカウント情報を入力してください</p>
+            <h2 className="text-lg font-semibold text-ink">ログイン</h2>
+            <p className="text-[13px] text-ink-3 mt-1.5">アカウント情報を入力してください</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-[13px] font-medium text-text-secondary mb-1.5">
+              <label className="block text-[13px] font-medium text-ink-2 mb-1.5">
                 メールアドレス
               </label>
               <input
@@ -99,7 +105,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-[13px] font-medium text-text-secondary mb-1.5">
+              <label className="block text-[13px] font-medium text-ink-2 mb-1.5">
                 パスワード
               </label>
               <div className="relative">
@@ -114,7 +120,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink"
                 >
                   {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
@@ -122,7 +128,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="p-3 rounded bg-danger-bg text-danger text-[13px]">
+              <div className="p-3 rounded-lg bg-danger-tint text-danger text-[13px]">
                 {error}
               </div>
             )}
@@ -130,7 +136,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-accent text-white rounded font-medium text-[13px] transition-colors hover:bg-accent-light disabled:opacity-50"
+              className="w-full py-2.5 bg-accent text-white rounded-full font-medium text-[13px] transition-colors hover:bg-accent-deep disabled:opacity-50"
             >
               {loading ? "ログイン中..." : "ログイン"}
             </button>
@@ -139,11 +145,11 @@ export default function LoginPage() {
           <div className="mt-4 text-center space-y-2">
             <a
               href="/reset-password"
-              className="block text-[13px] text-text-muted hover:text-accent transition-colors"
+              className="block text-[13px] text-ink-3 hover:text-accent transition-colors"
             >
               パスワードをお忘れですか？
             </a>
-            <p className="text-[13px] text-text-muted">
+            <p className="text-[13px] text-ink-3">
               アカウントをお持ちでない方は{" "}
               <a href="/signup" className="text-accent hover:underline">
                 新規登録

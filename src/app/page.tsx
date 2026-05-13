@@ -6,6 +6,7 @@ import {
   LogOut,
   Hammer,
   Megaphone,
+  Banknote,
 } from "lucide-react";
 import { getDashboardData, getMonthlyTrend } from "@/lib/queries";
 import StatusBadge from "@/components/StatusBadge";
@@ -36,126 +37,162 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="ダッシュボード" description="物件管理の概況" />
+      <PageHeader
+        eyebrow="Dashboard"
+        title="本日の"
+        em="管理状況"
+      />
 
       {/* KPI */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <div className="card p-4">
-          <p className="text-[11px] text-text-muted uppercase tracking-wider mb-2">管理物件</p>
-          <p className="text-2xl font-semibold tabular-nums">{s.total_properties}</p>
-          <p className="text-[12px] text-text-muted mt-1">{s.total_units}戸を管理中</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-7">
+        <div className="card p-5 relative overflow-hidden">
+          <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-3">管理戸数</p>
+          <div className="mt-3.5 flex items-baseline gap-1.5">
+            <span className="text-[32px] leading-none tracking-tight font-semibold tabular-nums">{s.total_properties}</span>
+            <span className="text-[13px] text-ink-3">棟 / {s.total_units}戸</span>
+          </div>
+          <div className="mt-3 inline-flex items-center gap-1.5 text-[12px] text-ink-2">
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-accent-tint text-accent-deep">管理中</span>
+          </div>
         </div>
-        <div className="card p-4">
-          <p className="text-[11px] text-text-muted uppercase tracking-wider mb-2">入居率</p>
-          <p className="text-2xl font-semibold tabular-nums">{s.occupancy_rate}%</p>
-          <p className="text-[12px] text-text-muted mt-1">{s.occupied_units}/{s.total_units}戸</p>
+        <div className="card p-5 relative overflow-hidden">
+          <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-3">入居率</p>
+          <div className="mt-3.5 flex items-baseline gap-1.5">
+            <span className="text-[32px] leading-none tracking-tight font-semibold tabular-nums">{s.occupancy_rate}</span>
+            <span className="text-[13px] text-ink-3">%</span>
+          </div>
+          <div className="mt-3 inline-flex items-center gap-1.5 text-[12px] text-ink-2">
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-accent-tint text-accent-deep">
+              {s.occupied_units}/{s.total_units}戸
+            </span>
+          </div>
         </div>
-        <div className="card p-4">
-          <p className="text-[11px] text-text-muted uppercase tracking-wider mb-2">空室</p>
-          <p className="text-2xl font-semibold text-accent tabular-nums">{s.vacant_units}</p>
-          <p className="text-[12px] text-text-muted mt-1">募集可能</p>
+        <div className="card p-5 relative overflow-hidden">
+          <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-3">空室</p>
+          <div className="mt-3.5 flex items-baseline gap-1.5">
+            <span className="text-[32px] leading-none tracking-tight font-semibold tabular-nums">{s.vacant_units}</span>
+            <span className="text-[13px] text-ink-3">戸</span>
+          </div>
+          <div className="mt-3 inline-flex items-center gap-1.5 text-[12px] text-ink-2">
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-info-tint text-info">募集可能</span>
+          </div>
         </div>
-        <div className="card p-4">
-          <p className="text-[11px] text-text-muted uppercase tracking-wider mb-2">回収率</p>
-          <p className="text-2xl font-semibold tabular-nums">{s.collection_rate}%</p>
-          <p className="text-[12px] text-text-muted mt-1">¥{s.total_rent_received.toLocaleString()}</p>
+        <div className="card p-5 relative overflow-hidden">
+          <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-3">回収率</p>
+          <div className="mt-3.5 flex items-baseline gap-1.5">
+            <span className="text-[32px] leading-none tracking-tight font-semibold tabular-nums">{s.collection_rate}</span>
+            <span className="text-[13px] text-ink-3">%</span>
+          </div>
+          <div className="mt-3 inline-flex items-center gap-1.5 text-[12px] text-ink-2">
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-accent-tint text-accent-deep">
+              ¥{s.total_rent_received.toLocaleString()}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* アラート指標 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-8">
-        <div className="card p-4 border-l-3 border-l-danger">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[11px] text-text-muted uppercase tracking-wider mb-1">滞納件数</p>
-              <p className="text-xl font-semibold text-danger tabular-nums">{s.overdue_count}</p>
-            </div>
-            <p className="text-[13px] font-medium text-danger tabular-nums">¥{s.overdue_amount.toLocaleString()}</p>
+      {/* アラートストリップ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 mb-7">
+        <div className="card p-4 flex items-center gap-3.5">
+          <div className="w-[38px] h-[38px] rounded-[10px] bg-danger-tint text-danger grid place-items-center shrink-0">
+            <Banknote size={18} />
           </div>
+          <div>
+            <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-ink-3">滞納</p>
+            <p className="text-[22px] font-semibold tracking-tight leading-none mt-1">{s.overdue_count}
+              <span className="text-[13px] text-ink-3 ml-1">件</span>
+            </p>
+          </div>
+          <p className="ml-auto font-mono text-[12px] text-ink-3">¥{s.overdue_amount.toLocaleString()}</p>
         </div>
-        <div className="card p-4 border-l-3 border-l-warning">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[11px] text-text-muted uppercase tracking-wider mb-1">未対応修繕</p>
-              <p className="text-xl font-semibold tabular-nums">{s.open_maintenance}</p>
-            </div>
-            <p className="text-[13px] text-text-muted">件の対応待ち</p>
+        <div className="card p-4 flex items-center gap-3.5">
+          <div className="w-[38px] h-[38px] rounded-[10px] bg-warn-tint text-warn grid place-items-center shrink-0">
+            <Wrench size={18} />
           </div>
+          <div>
+            <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-ink-3">未対応修繕</p>
+            <p className="text-[22px] font-semibold tracking-tight leading-none mt-1">{s.open_maintenance}
+              <span className="text-[13px] text-ink-3 ml-1">件</span>
+            </p>
+          </div>
+          <p className="ml-auto text-[12px] text-ink-3">対応待ち</p>
         </div>
-        <div className="card p-4 border-l-3 border-l-accent">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[11px] text-text-muted uppercase tracking-wider mb-1">契約満了間近</p>
-              <p className="text-xl font-semibold tabular-nums">{s.expiring_contracts}</p>
-            </div>
-            <p className="text-[13px] text-text-muted">3ヶ月以内</p>
+        <div className="card p-4 flex items-center gap-3.5">
+          <div className="w-[38px] h-[38px] rounded-[10px] bg-info-tint text-info grid place-items-center shrink-0">
+            <FileText size={18} />
           </div>
+          <div>
+            <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-ink-3">契約満了間近</p>
+            <p className="text-[22px] font-semibold tracking-tight leading-none mt-1">{s.expiring_contracts}
+              <span className="text-[13px] text-ink-3 ml-1">件</span>
+            </p>
+          </div>
+          <p className="ml-auto text-[12px] text-ink-3">3ヶ月以内</p>
         </div>
       </div>
 
       {/* パイプライン */}
-      <div className="card overflow-hidden mb-8">
-        <div className="px-5 py-3 border-b border-border-light">
-          <h2 className="text-[13px] font-semibold">退去・空室パイプライン</h2>
+      <div className="card overflow-hidden mb-4">
+        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-line">
+          <h2 className="text-[14px] font-semibold tracking-tight">退去・空室
+            <span className="text-ink-3 text-[14px] font-normal ml-1.5" style={{ fontStyle: "italic" }}>パイプライン</span>
+          </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border-light">
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <LogOut size={13} className="text-warning" />
-              <span className="text-[12px] font-medium text-warning">退去予定</span>
-              <span className="ml-auto text-[11px] text-text-muted">{expiringWithDays.length}件</span>
+        <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: "1px", background: "var(--line)" }}>
+          <div className="bg-surface p-4">
+            <div className="flex items-center gap-2 mb-3.5">
+              <span className="font-mono text-[10px] tracking-[0.1em] uppercase px-2 py-0.5 rounded-full bg-warn-tint text-warn">退去予定</span>
+              <span className="ml-auto font-mono text-[11px] text-ink-4">{expiringWithDays.length}</span>
             </div>
             <div className="space-y-1.5">
               {expiringWithDays.length === 0 ? (
-                <p className="text-[12px] text-text-muted text-center py-3">該当なし</p>
+                <p className="text-[12px] text-ink-3 text-center py-3">該当なし</p>
               ) : (
                 expiringWithDays.map((c: Record<string, any>) => (
-                  <div key={c.id} className="p-2.5 rounded bg-bg-secondary/60 text-[12px]">
-                    <div className="font-medium">{c.unit?.property?.name} {c.unit?.unit_number}</div>
-                    <div className="text-text-muted mt-0.5">{c.tenant?.name}</div>
-                    <div className={`mt-1 font-medium ${c.remainingDays <= 30 ? "text-danger" : "text-warning"}`}>
-                      あと{c.remainingDays}日（{c.end_date}）
-                    </div>
+                  <div key={c.id} className="bg-bg-2 rounded-lg p-2.5 flex flex-col gap-0.5">
+                    <span className="text-[13px] font-medium">{c.unit?.property?.name} {c.unit?.unit_number}</span>
+                    <span className="text-[11px] text-ink-3">{c.tenant?.name}</span>
+                    <span className={`font-mono text-[11px] mt-1 ${c.remainingDays <= 30 ? "text-danger" : "text-warn"}`}>
+                      あと{c.remainingDays}日 · {c.end_date}
+                    </span>
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Hammer size={13} className="text-accent" />
-              <span className="text-[12px] font-medium text-accent">原状回復中</span>
-              <span className="ml-auto text-[11px] text-text-muted">{maintenanceUnits.length}件</span>
+          <div className="bg-surface p-4">
+            <div className="flex items-center gap-2 mb-3.5">
+              <span className="font-mono text-[10px] tracking-[0.1em] uppercase px-2 py-0.5 rounded-full bg-info-tint text-info">原状回復中</span>
+              <span className="ml-auto font-mono text-[11px] text-ink-4">{maintenanceUnits.length}</span>
             </div>
             <div className="space-y-1.5">
               {maintenanceUnits.length === 0 ? (
-                <p className="text-[12px] text-text-muted text-center py-3">該当なし</p>
+                <p className="text-[12px] text-ink-3 text-center py-3">該当なし</p>
               ) : (
                 maintenanceUnits.map((u: Record<string, any>) => (
-                  <div key={u.id} className="p-2.5 rounded bg-bg-secondary/60 text-[12px]">
-                    <div className="font-medium">{u.property?.name} {u.unit_number}</div>
-                    <div className="text-text-muted mt-0.5">¥{Number(u.rent).toLocaleString()}/月</div>
+                  <div key={u.id} className="bg-bg-2 rounded-lg p-2.5 flex flex-col gap-0.5">
+                    <span className="text-[13px] font-medium">{u.property?.name} {u.unit_number}</span>
+                    <span className="text-[11px] text-ink-3">¥{Number(u.rent).toLocaleString()}/月</span>
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Megaphone size={13} className="text-success" />
-              <span className="text-[12px] font-medium text-success">募集中</span>
-              <span className="ml-auto text-[11px] text-text-muted">{vacantUnits.length}件</span>
+          <div className="bg-surface p-4">
+            <div className="flex items-center gap-2 mb-3.5">
+              <span className="font-mono text-[10px] tracking-[0.1em] uppercase px-2 py-0.5 rounded-full bg-accent-tint text-accent-deep">募集中</span>
+              <span className="ml-auto font-mono text-[11px] text-ink-4">{vacantUnits.length}</span>
             </div>
             <div className="space-y-1.5">
               {vacantUnits.length === 0 ? (
-                <p className="text-[12px] text-text-muted text-center py-3">該当なし</p>
+                <p className="text-[12px] text-ink-3 text-center py-3">該当なし</p>
               ) : (
                 vacantUnits.map((u: Record<string, any>) => (
-                  <div key={u.id} className="p-2.5 rounded bg-bg-secondary/60 text-[12px]">
-                    <div className="font-medium">{u.property?.name} {u.unit_number}</div>
-                    <div className="text-text-muted mt-0.5">¥{Number(u.rent).toLocaleString()}/月</div>
+                  <div key={u.id} className="bg-bg-2 rounded-lg p-2.5 flex flex-col gap-0.5">
+                    <span className="text-[13px] font-medium">{u.property?.name} {u.unit_number}</span>
+                    <span className="text-[11px] text-ink-3">¥{Number(u.rent).toLocaleString()}/月</span>
                   </div>
                 ))
               )}
@@ -166,24 +203,34 @@ export default async function DashboardPage() {
 
       {/* 月次推移 */}
       {monthlyTrend.length > 0 && (
-        <div className="card overflow-hidden mb-8">
-          <div className="px-5 py-3 border-b border-border-light">
-            <h2 className="text-[13px] font-semibold">月次推移（家賃回収率）</h2>
+        <div className="card overflow-hidden mb-4">
+          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-line">
+            <h2 className="text-[14px] font-semibold tracking-tight">家賃回収率
+              <span className="text-ink-3 text-[14px] font-normal ml-1.5" style={{ fontStyle: "italic" }}>月次推移</span>
+            </h2>
+            <span className="ml-auto badge badge-neutral font-mono">直近{monthlyTrend.length}ヶ月</span>
           </div>
-          <div className="p-4">
-            <div className="flex items-end gap-2 h-32">
-              {monthlyTrend.map((m: Record<string, any>) => (
-                <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-[10px] text-text-muted tabular-nums">{m.collectionRate}%</span>
-                  <div className="w-full bg-bg-secondary rounded-t relative" style={{ height: "100px" }}>
-                    <div
-                      className="absolute bottom-0 w-full bg-accent rounded-t transition-all"
-                      style={{ height: `${m.collectionRate}%` }}
-                    />
+          <div className="p-5">
+            <div className="flex items-end gap-3 h-[180px]">
+              {monthlyTrend.map((m: Record<string, any>, i: number) => {
+                const isLast = i === monthlyTrend.length - 1;
+                return (
+                  <div key={m.month} className="flex-1 flex flex-col items-center gap-1.5">
+                    <span className={`font-mono text-[10px] tabular-nums ${isLast ? "text-ink font-semibold" : "text-ink-3"}`}>
+                      {m.collectionRate}%
+                    </span>
+                    <div className="w-full bg-bg-2 rounded-t relative" style={{ height: "140px" }}>
+                      <div
+                        className={`absolute bottom-0 w-full rounded-t transition-all ${isLast ? "bg-ink" : "bg-accent"}`}
+                        style={{ height: `${m.collectionRate}%` }}
+                      />
+                    </div>
+                    <span className={`font-mono text-[10px] ${isLast ? "text-ink font-semibold" : "text-ink-3"}`}>
+                      {m.label}
+                    </span>
                   </div>
-                  <span className="text-[10px] text-text-muted">{m.label}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -192,30 +239,34 @@ export default async function DashboardPage() {
       {/* テーブル2列 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card overflow-hidden">
-          <div className="px-5 py-3 border-b border-border-light flex items-center gap-2">
-            <AlertTriangle size={14} className="text-danger" />
-            <h2 className="text-[13px] font-semibold">滞納一覧</h2>
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-line">
+            <h2 className="text-[14px] font-semibold">滞納一覧</h2>
+            {s.overdue_count > 0 && (
+              <span className="badge badge-danger font-mono">{s.overdue_count}件 / ¥{s.overdue_amount.toLocaleString()}</span>
+            )}
           </div>
-          <div className="p-4">
+          <div className="overflow-x-auto">
             {overdueBillings.length === 0 ? (
-              <p className="text-[13px] text-text-muted py-4 text-center">滞納なし</p>
+              <p className="text-[13px] text-ink-3 py-6 text-center">滞納なし</p>
             ) : (
-              <table className="w-full text-[13px]">
+              <table className="tbl">
                 <thead>
-                  <tr className="text-left text-text-muted border-b border-border-light">
-                    <th className="pb-2 font-medium">入居者</th>
-                    <th className="pb-2 font-medium">対象月</th>
-                    <th className="pb-2 font-medium text-right">金額</th>
-                    <th className="pb-2 font-medium">状態</th>
+                  <tr>
+                    <th>入居者</th>
+                    <th>対象月</th>
+                    <th style={{ textAlign: "right" }}>金額</th>
+                    <th>状態</th>
                   </tr>
                 </thead>
                 <tbody>
                   {overdueBillings.map((b: Record<string, any>) => (
-                    <tr key={b.id} className="border-b border-border-light last:border-0">
-                      <td className="py-2.5">{b.contract?.tenant?.name || "—"}</td>
-                      <td className="py-2.5 text-text-secondary">{b.billing_month}</td>
-                      <td className="py-2.5 text-right font-medium tabular-nums">¥{Number(b.total_amount).toLocaleString()}</td>
-                      <td className="py-2.5"><StatusBadge status={b.status} /></td>
+                    <tr key={b.id} className="row-hover">
+                      <td>
+                        <div className="strong">{b.contract?.tenant?.name || "—"}</div>
+                      </td>
+                      <td className="font-mono text-[12px] text-ink-2">{b.billing_month}</td>
+                      <td className="num">¥{Number(b.total_amount).toLocaleString()}</td>
+                      <td><StatusBadge status={b.status} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -225,30 +276,27 @@ export default async function DashboardPage() {
         </div>
 
         <div className="card overflow-hidden">
-          <div className="px-5 py-3 border-b border-border-light flex items-center gap-2">
-            <Wrench size={14} className="text-warning" />
-            <h2 className="text-[13px] font-semibold">修繕対応中</h2>
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-line">
+            <h2 className="text-[14px] font-semibold">修繕対応中</h2>
+            {s.open_maintenance > 0 && (
+              <span className="badge badge-warn font-mono">{s.open_maintenance}件</span>
+            )}
           </div>
-          <div className="p-4">
+          <div className="overflow-x-auto">
             {activeMaintenance.length === 0 ? (
-              <p className="text-[13px] text-text-muted py-4 text-center">対応中の修繕なし</p>
+              <p className="text-[13px] text-ink-3 py-6 text-center">対応中の修繕なし</p>
             ) : (
-              <table className="w-full text-[13px]">
+              <table className="tbl">
                 <thead>
-                  <tr className="text-left text-text-muted border-b border-border-light">
-                    <th className="pb-2 font-medium">件名</th>
-                    <th className="pb-2 font-medium">物件</th>
-                    <th className="pb-2 font-medium">優先度</th>
-                    <th className="pb-2 font-medium">状態</th>
-                  </tr>
+                  <tr><th>件名</th><th>物件</th><th>優先度</th><th>状態</th></tr>
                 </thead>
                 <tbody>
                   {activeMaintenance.map((m: Record<string, any>) => (
-                    <tr key={m.id} className="border-b border-border-light last:border-0">
-                      <td className="py-2.5 font-medium">{m.title}</td>
-                      <td className="py-2.5 text-text-secondary">{m.property?.name}</td>
-                      <td className="py-2.5"><StatusBadge status={m.priority} /></td>
-                      <td className="py-2.5"><StatusBadge status={m.status} /></td>
+                    <tr key={m.id} className="row-hover">
+                      <td className="strong">{m.title}</td>
+                      <td className="text-[12px] text-ink-3">{m.property?.name}</td>
+                      <td><StatusBadge status={m.priority} /></td>
+                      <td><StatusBadge status={m.status} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -258,32 +306,31 @@ export default async function DashboardPage() {
         </div>
 
         <div className="card overflow-hidden">
-          <div className="px-5 py-3 border-b border-border-light flex items-center gap-2">
-            <FileText size={14} className="text-accent" />
-            <h2 className="text-[13px] font-semibold">契約満了間近（3ヶ月以内）</h2>
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-line">
+            <h2 className="text-[14px] font-semibold">契約満了間近（3ヶ月以内）</h2>
           </div>
-          <div className="p-4">
+          <div className="overflow-x-auto">
             {expiringContracts.length === 0 ? (
-              <p className="text-[13px] text-text-muted py-4 text-center">該当なし</p>
+              <p className="text-[13px] text-ink-3 py-6 text-center">該当なし</p>
             ) : (
-              <table className="w-full text-[13px]">
+              <table className="tbl">
                 <thead>
-                  <tr className="text-left text-text-muted border-b border-border-light">
-                    <th className="pb-2 font-medium">入居者</th>
-                    <th className="pb-2 font-medium">物件・部屋</th>
-                    <th className="pb-2 font-medium">満了日</th>
-                    <th className="pb-2 font-medium">種別</th>
+                  <tr>
+                    <th>入居者</th>
+                    <th>物件・部屋</th>
+                    <th>満了日</th>
+                    <th>種別</th>
                   </tr>
                 </thead>
                 <tbody>
                   {expiringContracts.map((c: Record<string, any>) => (
-                    <tr key={c.id} className="border-b border-border-light last:border-0">
-                      <td className="py-2.5 font-medium">{c.tenant?.name}</td>
-                      <td className="py-2.5 text-text-secondary">
+                    <tr key={c.id} className="row-hover">
+                      <td className="strong">{c.tenant?.name}</td>
+                      <td className="text-[12px] text-ink-3">
                         {c.unit?.property?.name} {c.unit?.unit_number}
                       </td>
-                      <td className="py-2.5">{c.end_date}</td>
-                      <td className="py-2.5"><StatusBadge status={c.contract_type} /></td>
+                      <td className="font-mono text-[12px]">{c.end_date}</td>
+                      <td><StatusBadge status={c.contract_type} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -293,28 +340,27 @@ export default async function DashboardPage() {
         </div>
 
         <div className="card overflow-hidden">
-          <div className="px-5 py-3 border-b border-border-light flex items-center gap-2">
-            <MessageSquare size={14} className="text-accent" />
-            <h2 className="text-[13px] font-semibold">最近の問い合わせ</h2>
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-line">
+            <h2 className="text-[14px] font-semibold">最近の問い合わせ</h2>
           </div>
-          <div className="p-4">
+          <div className="overflow-x-auto">
             {recentInquiries.length === 0 ? (
-              <p className="text-[13px] text-text-muted py-4 text-center">問い合わせなし</p>
+              <p className="text-[13px] text-ink-3 py-6 text-center">問い合わせなし</p>
             ) : (
-              <table className="w-full text-[13px]">
+              <table className="tbl">
                 <thead>
-                  <tr className="text-left text-text-muted border-b border-border-light">
-                    <th className="pb-2 font-medium">件名</th>
-                    <th className="pb-2 font-medium">種別</th>
-                    <th className="pb-2 font-medium">状態</th>
+                  <tr>
+                    <th>件名</th>
+                    <th>種別</th>
+                    <th>状態</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recentInquiries.map((inq: Record<string, any>) => (
-                    <tr key={inq.id} className="border-b border-border-light last:border-0">
-                      <td className="py-2.5 font-medium">{inq.title}</td>
-                      <td className="py-2.5"><StatusBadge status={inq.inquiry_type} /></td>
-                      <td className="py-2.5"><StatusBadge status={inq.status} /></td>
+                    <tr key={inq.id} className="row-hover">
+                      <td className="strong">{inq.title}</td>
+                      <td><StatusBadge status={inq.inquiry_type} /></td>
+                      <td><StatusBadge status={inq.status} /></td>
                     </tr>
                   ))}
                 </tbody>

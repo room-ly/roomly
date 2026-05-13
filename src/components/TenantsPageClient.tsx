@@ -13,13 +13,13 @@ export default function TenantsPageClient() {
     <>
       <div className="flex gap-2">
         <button
-          className="btn-secondary"
+          className="btn btn-secondary"
           onClick={() => setIsImportOpen(true)}
         >
           <Upload size={14} />
           CSVインポート
         </button>
-        <button className="btn-primary" onClick={() => setIsOpen(true)}>
+        <button className="btn btn-primary" onClick={() => setIsOpen(true)}>
           <Plus size={14} />
           入居者を追加
         </button>

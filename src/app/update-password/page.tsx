@@ -66,9 +66,9 @@ export default function UpdatePasswordPage() {
       <div className="min-h-screen bg-bg flex items-center justify-center px-6">
         <div className="w-full max-w-sm text-center">
           <div className="mb-6">
-            <h1 className="text-xl font-semibold text-text tracking-wide">Roomly</h1>
+            <h1 className="text-xl font-semibold text-ink tracking-wide">Roomly</h1>
           </div>
-          <p className="text-[13px] text-text-muted">セッションを確認中...</p>
+          <p className="text-[13px] text-ink-3">セッションを確認中...</p>
         </div>
       </div>
     );
@@ -78,19 +78,19 @@ export default function UpdatePasswordPage() {
     <div className="min-h-screen bg-bg flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-xl font-semibold text-text tracking-wide">Roomly</h1>
+          <h1 className="text-xl font-semibold text-ink tracking-wide">Roomly</h1>
         </div>
 
         <div className="text-center mb-8">
-          <h2 className="text-lg font-semibold text-text">パスワード再設定</h2>
-          <p className="text-[13px] text-text-muted mt-1.5">
+          <h2 className="text-lg font-semibold text-ink">パスワード再設定</h2>
+          <p className="text-[13px] text-ink-3 mt-1.5">
             新しいパスワードを入力してください
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[13px] font-medium text-text-secondary mb-1.5">
+            <label className="block text-[13px] font-medium text-ink-2 mb-1.5">
               新しいパスワード
             </label>
             <div className="relative">
@@ -106,7 +106,7 @@ export default function UpdatePasswordPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink"
               >
                 {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
@@ -114,7 +114,7 @@ export default function UpdatePasswordPage() {
           </div>
 
           <div>
-            <label className="block text-[13px] font-medium text-text-secondary mb-1.5">
+            <label className="block text-[13px] font-medium text-ink-2 mb-1.5">
               パスワード確認
             </label>
             <input
@@ -129,7 +129,7 @@ export default function UpdatePasswordPage() {
           </div>
 
           {error && (
-            <div className="p-3 rounded bg-danger-bg text-danger text-[13px]">
+            <div className="p-3 rounded bg-danger-tint text-danger text-[13px]">
               {error}
             </div>
           )}
@@ -137,7 +137,7 @@ export default function UpdatePasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-accent text-white rounded font-medium text-[13px] transition-colors hover:bg-accent-light disabled:opacity-50"
+            className="w-full py-2.5 bg-accent text-white rounded font-medium text-[13px] transition-colors hover:bg-accent-deep disabled:opacity-50"
           >
             {loading ? "更新中..." : "パスワードを更新"}
           </button>

@@ -84,21 +84,21 @@ export default function ContractFormModal({
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-card rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">
             {isEdit ? "契約を編集" : "新規契約"}
           </h2>
           <button
             onClick={onClose}
-            className="text-text-muted hover:text-text transition-colors"
+            className="text-ink-3 hover:text-ink transition-colors"
           >
             <X size={18} />
           </button>
         </div>
 
         {apiError && (
-          <div className="bg-danger-bg text-danger text-sm rounded-lg px-3 py-2 mb-4">
+          <div className="bg-danger-tint text-danger text-sm rounded-lg px-3 py-2 mb-4">
             {apiError}
           </div>
         )}
@@ -106,7 +106,7 @@ export default function ContractFormModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 部屋 <span className="text-danger">*</span>
               </label>
               <select
@@ -126,7 +126,7 @@ export default function ContractFormModal({
               )}
             </div>
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 入居者 <span className="text-danger">*</span>
               </label>
               <select
@@ -151,7 +151,7 @@ export default function ContractFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 契約種別 <span className="text-danger">*</span>
               </label>
               <select
@@ -164,7 +164,7 @@ export default function ContractFormModal({
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 状態 <span className="text-danger">*</span>
               </label>
               <select
@@ -182,7 +182,7 @@ export default function ContractFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 契約開始日 <span className="text-danger">*</span>
               </label>
               <input
@@ -198,7 +198,7 @@ export default function ContractFormModal({
               )}
             </div>
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 契約終了日
               </label>
               <input
@@ -217,7 +217,7 @@ export default function ContractFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 賃料 <span className="text-danger">*</span>
               </label>
               <input
@@ -232,7 +232,7 @@ export default function ContractFormModal({
               )}
             </div>
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 管理費
               </label>
               <input
@@ -254,14 +254,14 @@ export default function ContractFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="bg-bg-secondary text-text-secondary rounded-lg px-4 py-2 text-sm hover:bg-border-light transition-colors"
+              className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-bg-2 transition-colors"
             >
               キャンセル
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary disabled:opacity-50"
+              className="btn btn-primary disabled:opacity-50"
             >
               {loading ? "保存中..." : isEdit ? "更新する" : "作成する"}
             </button>

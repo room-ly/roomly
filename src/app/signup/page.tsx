@@ -56,14 +56,14 @@ export default function SignupPage() {
       <div className="min-h-screen bg-bg flex items-center justify-center px-6">
         <div className="w-full max-w-sm text-center">
           <div className="mb-6">
-            <h1 className="text-xl font-semibold text-text">Roomly</h1>
+            <h1 className="text-xl font-semibold text-ink">Roomly</h1>
           </div>
           <div className="card p-8">
-            <div className="w-12 h-12 rounded-full bg-success-bg flex items-center justify-center mx-auto mb-4">
-              <span className="text-success text-xl">&#10003;</span>
+            <div className="w-12 h-12 rounded-full bg-accent-tint flex items-center justify-center mx-auto mb-4">
+              <span className="text-accent-deep text-xl">&#10003;</span>
             </div>
-            <h2 className="text-lg font-semibold text-text mb-2">メールを確認してください</h2>
-            <p className="text-[13px] text-text-muted leading-relaxed">
+            <h2 className="text-lg font-semibold text-ink mb-2">メールを確認してください</h2>
+            <p className="text-[13px] text-ink-3 leading-relaxed">
               {email} に確認メールを送信しました。
               メール内のリンクをクリックしてアカウントを有効化してください。
             </p>
@@ -82,7 +82,7 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-bg flex">
       {/* 左: ブランディング */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-ink relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-accent/8 blur-3xl" />
           <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-accent/5 blur-3xl" />
@@ -108,17 +108,17 @@ export default function SignupPage() {
       <div className="flex-1 flex items-center justify-center px-6">
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8 text-center">
-            <h1 className="text-xl font-semibold text-text tracking-wide">Roomly</h1>
+            <h1 className="text-xl font-semibold text-ink tracking-wide">Roomly</h1>
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-lg font-semibold text-text">アカウント作成</h2>
-            <p className="text-[13px] text-text-muted mt-1.5">10区画まで無料で利用できます</p>
+            <h2 className="text-lg font-semibold text-ink">アカウント作成</h2>
+            <p className="text-[13px] text-ink-3 mt-1.5">10区画まで無料で利用できます</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-[13px] font-medium text-text-secondary mb-1.5">
+              <label className="block text-[13px] font-medium text-ink-2 mb-1.5">
                 会社名
               </label>
               <input
@@ -132,7 +132,7 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-[13px] font-medium text-text-secondary mb-1.5">
+              <label className="block text-[13px] font-medium text-ink-2 mb-1.5">
                 氏名
               </label>
               <input
@@ -146,7 +146,7 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-[13px] font-medium text-text-secondary mb-1.5">
+              <label className="block text-[13px] font-medium text-ink-2 mb-1.5">
                 メールアドレス
               </label>
               <input
@@ -160,7 +160,7 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-[13px] font-medium text-text-secondary mb-1.5">
+              <label className="block text-[13px] font-medium text-ink-2 mb-1.5">
                 パスワード
               </label>
               <div className="relative">
@@ -176,7 +176,7 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink"
                 >
                   {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
@@ -184,7 +184,7 @@ export default function SignupPage() {
             </div>
 
             {error && (
-              <div className="p-3 rounded bg-danger-bg text-danger text-[13px]">
+              <div className="p-3 rounded bg-danger-tint text-danger text-[13px]">
                 {error}
               </div>
             )}
@@ -192,13 +192,13 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-accent text-white rounded font-medium text-[13px] transition-colors hover:bg-accent-light disabled:opacity-50"
+              className="w-full py-2.5 bg-accent text-white rounded font-medium text-[13px] transition-colors hover:bg-accent-deep disabled:opacity-50"
             >
               {loading ? "作成中..." : "無料で始める"}
             </button>
           </form>
 
-          <p className="text-center text-[13px] text-text-muted mt-6">
+          <p className="text-center text-[13px] text-ink-3 mt-6">
             すでにアカウントをお持ちですか？{" "}
             <Link href="/login" className="text-accent hover:underline">
               ログイン

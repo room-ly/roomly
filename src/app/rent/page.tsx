@@ -22,24 +22,24 @@ export default async function RentPage() {
       {/* サマリー */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <div className="card p-4">
-          <p className="text-[11px] text-text-muted uppercase tracking-wider mb-2">請求総額</p>
+          <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-2">請求総額</p>
           <p className="text-xl font-semibold tabular-nums">¥{totalExpected.toLocaleString()}</p>
         </div>
         <div className="card p-4">
-          <p className="text-[11px] text-text-muted uppercase tracking-wider mb-2">入金済</p>
-          <p className="text-xl font-semibold text-success tabular-nums">¥{totalPaid.toLocaleString()}</p>
+          <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-2">入金済</p>
+          <p className="text-xl font-semibold text-accent-deep tabular-nums">¥{totalPaid.toLocaleString()}</p>
         </div>
         <div className="card p-4">
-          <p className="text-[11px] text-text-muted uppercase tracking-wider mb-2">回収率</p>
+          <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-2">回収率</p>
           <div className="flex items-end gap-2">
             <p className="text-xl font-semibold tabular-nums">{collectionRate}%</p>
-            <div className="flex-1 h-1 bg-bg-secondary rounded-full overflow-hidden mb-1.5">
+            <div className="flex-1 h-1 bg-bg-2 rounded-full overflow-hidden mb-1.5">
               <div className="h-full rounded-full bg-accent" style={{ width: `${collectionRate}%` }} />
             </div>
           </div>
         </div>
-        <div className="card p-4 border-l-3 border-l-danger">
-          <p className="text-[11px] text-text-muted uppercase tracking-wider mb-2">滞納</p>
+        <div className="card p-4 border-l-[3px] border-l-danger">
+          <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-2">滞納</p>
           <p className="text-xl font-semibold text-danger tabular-nums">{overdueCount}件</p>
           <p className="text-[12px] text-danger mt-0.5 tabular-nums">¥{overdueAmount.toLocaleString()}</p>
         </div>

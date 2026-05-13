@@ -9,6 +9,7 @@ import type { ZodError } from "zod";
 interface SelectOption {
   id: string;
   label: string;
+  owner_id?: string;
 }
 
 interface ExpenseFormModalProps {
@@ -31,6 +32,13 @@ export default function ExpenseFormModal({
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
   const [isOwnerCharge, setIsOwnerCharge] = useState(editData?.is_owner_charge ?? false);
+  const [selectedPropertyId, setSelectedPropertyId] = useState(editData?.property_id || "");
+
+  const selectedOwner = (() => {
+    const prop = properties.find((p) => p.id === selectedPropertyId);
+    if (!prop?.owner_id) return null;
+    return owners.find((o) => o.id === prop.owner_id) ?? null;
+  })();
 
   if (!isOpen) return null;
 
@@ -84,24 +92,24 @@ export default function ExpenseFormModal({
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-card rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">
             {isEdit ? "経費を編集" : "経費を登録"}
           </h2>
-          <button onClick={onClose} className="text-text-muted hover:text-text transition-colors">
+          <button onClick={onClose} className="text-ink-3 hover:text-ink transition-colors">
             <X size={18} />
           </button>
         </div>
 
         {apiError && (
-          <div className="bg-danger-bg text-danger text-sm rounded-lg px-3 py-2 mb-4">{apiError}</div>
+          <div className="bg-danger-tint text-danger text-sm rounded-lg px-3 py-2 mb-4">{apiError}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 カテゴリ <span className="text-danger">*</span>
               </label>
               <select name="category" defaultValue={editData?.category || ""} className="input">
@@ -116,7 +124,7 @@ export default function ExpenseFormModal({
               {errors.category && <p className="text-danger text-sm mt-1">{errors.category[0]}</p>}
             </div>
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">
+              <label className="text-sm font-medium text-ink-2 block mb-1">
                 日付 <span className="text-danger">*</span>
               </label>
               <input
@@ -130,7 +138,7 @@ export default function ExpenseFormModal({
           </div>
 
           <div>
-            <label className="text-sm font-medium text-text-secondary block mb-1">
+            <label className="text-sm font-medium text-ink-2 block mb-1">
               内容 <span className="text-danger">*</span>
             </label>
             <input
@@ -143,7 +151,7 @@ export default function ExpenseFormModal({
           </div>
 
           <div>
-            <label className="text-sm font-medium text-text-secondary block mb-1">
+            <label className="text-sm font-medium text-ink-2 block mb-1">
               金額 <span className="text-danger">*</span>
             </label>
             <input
@@ -158,8 +166,13 @@ export default function ExpenseFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">物件</label>
-              <select name="property_id" defaultValue={editData?.property_id || ""} className="input">
+              <label className="text-sm font-medium text-ink-2 block mb-1">物件</label>
+              <select
+                name="property_id"
+                value={selectedPropertyId}
+                onChange={(e) => setSelectedPropertyId(e.target.value)}
+                className="input"
+              >
                 <option value="">未指定</option>
                 {properties.map((p) => (
                   <option key={p.id} value={p.id}>{p.label}</option>
@@ -167,13 +180,14 @@ export default function ExpenseFormModal({
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium text-text-secondary block mb-1">オーナー</label>
-              <select name="owner_id" defaultValue={editData?.owner_id || ""} className="input">
-                <option value="">未指定</option>
-                {owners.map((o) => (
-                  <option key={o.id} value={o.id}>{o.label}</option>
-                ))}
-              </select>
+              <label className="text-sm font-medium text-ink-2 block mb-1">オーナー</label>
+              <input
+                type="text"
+                readOnly
+                value={selectedOwner?.label || "—"}
+                className="input bg-bg-2 text-ink-3 cursor-default"
+              />
+              <input type="hidden" name="owner_id" value={selectedOwner?.id || ""} />
             </div>
           </div>
 
@@ -185,12 +199,12 @@ export default function ExpenseFormModal({
                 onChange={(e) => setIsOwnerCharge(e.target.checked)}
                 className="rounded"
               />
-              <span className="text-sm text-text-secondary">オーナー負担（送金時に控除）</span>
+              <span className="text-sm text-ink-2">オーナー負担（送金時に控除）</span>
             </label>
           </div>
 
           <div>
-            <label className="text-sm font-medium text-text-secondary block mb-1">備考</label>
+            <label className="text-sm font-medium text-ink-2 block mb-1">備考</label>
             <textarea
               name="notes"
               defaultValue={editData?.notes || ""}
@@ -204,11 +218,11 @@ export default function ExpenseFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="bg-bg-secondary text-text-secondary rounded-lg px-4 py-2 text-sm hover:bg-border-light transition-colors"
+              className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-bg-2 transition-colors"
             >
               キャンセル
             </button>
-            <button type="submit" disabled={loading} className="btn-primary disabled:opacity-50">
+            <button type="submit" disabled={loading} className="btn btn-primary disabled:opacity-50">
               {loading ? "保存中..." : isEdit ? "更新する" : "登録する"}
             </button>
           </div>

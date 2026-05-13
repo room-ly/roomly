@@ -6,9 +6,7 @@ export const metadata: Metadata = {
   title: "コラム",
   description:
     "賃貸管理の業務改善に役立つコラムをお届けします。物件管理・家賃管理・オーナー対応・修繕管理のノウハウを紹介。",
-  alternates: {
-    canonical: "/column",
-  },
+  alternates: { canonical: "/column" },
   openGraph: {
     title: "コラム | Roomly",
     description:
@@ -20,19 +18,23 @@ export const metadata: Metadata = {
   },
 };
 
+export const revalidate = 3600;
+
 export default function BlogIndex() {
   const posts = getAllArticles();
 
   return (
     <>
-      {/* ページヘッダー */}
-      <section className="bg-rm-hero px-4 py-16 text-center text-white sm:py-20">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          コラム
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-[14px] text-white/50">
-          賃貸管理の業務改善に役立つ情報をお届けします
-        </p>
+      <section className="px-7 pt-20 pb-16 text-center sm:pt-28">
+        <div className="mx-auto max-w-3xl">
+          <span className="eyebrow">Column</span>
+          <h1 className="mt-6 text-[clamp(32px,5vw,56px)] font-medium leading-tight tracking-tight text-rm-primary">
+            コラム
+          </h1>
+          <p className="mt-5 text-[16px] text-rm-text-secondary">
+            賃貸管理の業務改善に役立つ情報をお届けします
+          </p>
+        </div>
       </section>
 
       <ArticleList articles={posts} currentPage={1} />

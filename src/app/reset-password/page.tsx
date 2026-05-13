@@ -39,14 +39,14 @@ export default function ResetPasswordPage() {
       <div className="min-h-screen bg-bg flex items-center justify-center px-6">
         <div className="w-full max-w-sm text-center">
           <div className="mb-6">
-            <h1 className="text-xl font-semibold text-text tracking-wide">Roomly</h1>
+            <h1 className="text-xl font-semibold text-ink tracking-wide">Roomly</h1>
           </div>
           <div className="card p-8">
-            <div className="w-12 h-12 rounded-full bg-success-bg flex items-center justify-center mx-auto mb-4">
-              <span className="text-success text-xl">&#10003;</span>
+            <div className="w-12 h-12 rounded-full bg-accent-tint flex items-center justify-center mx-auto mb-4">
+              <span className="text-accent-deep text-xl">&#10003;</span>
             </div>
-            <h2 className="text-lg font-semibold text-text mb-2">メールを送信しました</h2>
-            <p className="text-[13px] text-text-muted leading-relaxed">
+            <h2 className="text-lg font-semibold text-ink mb-2">メールを送信しました</h2>
+            <p className="text-[13px] text-ink-3 leading-relaxed">
               {email} にパスワードリセット用のリンクを送信しました。
               メール内のリンクからパスワードを再設定してください。
             </p>
@@ -66,19 +66,19 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-bg flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-xl font-semibold text-text tracking-wide">Roomly</h1>
+          <h1 className="text-xl font-semibold text-ink tracking-wide">Roomly</h1>
         </div>
 
         <div className="text-center mb-8">
-          <h2 className="text-lg font-semibold text-text">パスワードリセット</h2>
-          <p className="text-[13px] text-text-muted mt-1.5">
+          <h2 className="text-lg font-semibold text-ink">パスワードリセット</h2>
+          <p className="text-[13px] text-ink-3 mt-1.5">
             登録済みのメールアドレスを入力してください
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[13px] font-medium text-text-secondary mb-1.5">
+            <label className="block text-[13px] font-medium text-ink-2 mb-1.5">
               メールアドレス
             </label>
             <input
@@ -92,7 +92,7 @@ export default function ResetPasswordPage() {
           </div>
 
           {error && (
-            <div className="p-3 rounded bg-danger-bg text-danger text-[13px]">
+            <div className="p-3 rounded bg-danger-tint text-danger text-[13px]">
               {error}
             </div>
           )}
@@ -100,13 +100,13 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-accent text-white rounded font-medium text-[13px] transition-colors hover:bg-accent-light disabled:opacity-50"
+            className="w-full py-2.5 bg-accent text-white rounded font-medium text-[13px] transition-colors hover:bg-accent-deep disabled:opacity-50"
           >
             {loading ? "送信中..." : "リセットリンクを送信"}
           </button>
         </form>
 
-        <p className="text-center text-[13px] text-text-muted mt-6">
+        <p className="text-center text-[13px] text-ink-3 mt-6">
           <Link href="/login" className="text-accent hover:underline">
             ログインに戻る
           </Link>

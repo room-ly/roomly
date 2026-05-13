@@ -18,7 +18,7 @@ export default async function ContractsPage() {
         action={<ContractsPageClient units={units} tenants={tenants} />}
       />
 
-      <ContractsTable data={contracts} />
+      <ContractsTable data={contracts} units={units} tenants={tenants} />
     </>
   );
 }

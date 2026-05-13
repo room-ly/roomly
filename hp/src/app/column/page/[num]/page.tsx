@@ -21,7 +21,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export function generateStaticParams() {
   const posts = getAllArticles();
   const totalPages = getPageCount(posts.length);
-  // ページ2以降を生成（ページ1は /column）
   return Array.from({ length: totalPages - 1 }, (_, i) => ({
     num: String(i + 2),
   }));
@@ -32,7 +31,6 @@ export default async function ColumnPage({ params }: Props) {
   const page = parseInt(num, 10);
 
   if (isNaN(page) || page < 1) notFound();
-  // ページ1は /column にリダイレクト
   if (page === 1) redirect("/column");
 
   const posts = getAllArticles();
@@ -42,14 +40,16 @@ export default async function ColumnPage({ params }: Props) {
 
   return (
     <>
-      {/* ページヘッダー */}
-      <section className="bg-rm-hero px-4 py-16 text-center text-white sm:py-20">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          コラム
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-[14px] text-white/50">
-          賃貸管理の業務改善に役立つ情報をお届けします
-        </p>
+      <section className="px-7 pt-20 pb-16 text-center sm:pt-28">
+        <div className="mx-auto max-w-3xl">
+          <span className="eyebrow">Column</span>
+          <h1 className="mt-6 text-[clamp(32px,5vw,56px)] font-medium leading-tight tracking-tight text-rm-primary">
+            コラム
+          </h1>
+          <p className="mt-5 text-[16px] text-rm-text-secondary">
+            賃貸管理の業務改善に役立つ情報をお届けします
+          </p>
+        </div>
       </section>
 
       <ArticleList articles={posts} currentPage={page} />

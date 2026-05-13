@@ -14,12 +14,12 @@ export default function Pagination({ page, totalPages, totalItems, onPageChange 
 
   return (
     <div className="flex items-center justify-between mt-4 text-[13px]">
-      <span className="text-text-muted">{totalItems}件中 {(page - 1) * 20 + 1}-{Math.min(page * 20, totalItems)}件</span>
+      <span className="text-ink-3">{totalItems}件中 {(page - 1) * 20 + 1}-{Math.min(page * 20, totalItems)}件</span>
       <div className="flex items-center gap-1">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          className="p-1.5 rounded hover:bg-bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="p-1.5 rounded hover:bg-bg-2 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronLeft size={14} />
         </button>
@@ -41,7 +41,7 @@ export default function Pagination({ page, totalPages, totalItems, onPageChange 
               className={`w-7 h-7 rounded text-[12px] transition-colors ${
                 pageNum === page
                   ? "bg-accent text-white"
-                  : "hover:bg-bg-secondary text-text-secondary"
+                  : "hover:bg-bg-2 text-ink-2"
               }`}
             >
               {pageNum}
@@ -51,7 +51,7 @@ export default function Pagination({ page, totalPages, totalItems, onPageChange 
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
-          className="p-1.5 rounded hover:bg-bg-secondary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="p-1.5 rounded hover:bg-bg-2 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronRight size={14} />
         </button>

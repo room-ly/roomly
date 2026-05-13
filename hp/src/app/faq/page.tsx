@@ -5,9 +5,7 @@ export const metadata: Metadata = {
   title: "よくある質問（FAQ）",
   description:
     "Roomlyに関するよくある質問と回答。料金・機能・セキュリティ・導入方法などについて回答しています。",
-  alternates: {
-    canonical: "/faq",
-  },
+  alternates: { canonical: "/faq" },
   openGraph: {
     title: "よくある質問（FAQ） | Roomly",
     description:
@@ -47,6 +45,10 @@ const faqCategories = [
       {
         q: "無料プランに期限はありますか？",
         a: "いいえ。10区画以内であれば、期限なくずっと無料でお使いいただけます。機能制限もありません。",
+      },
+      {
+        q: "10区画を超えたら自動で課金されますか？",
+        a: "いいえ。10区画を超えても自動で課金されることはありません。有料プランへの移行は、クレジットカードを登録しご自身で切り替えるまで発生しません。無料プランではカード登録自体が不要です。",
       },
       {
         q: "有料プランの料金はいくらですか？",
@@ -117,7 +119,7 @@ const faqCategories = [
       },
       {
         q: "サポートの対応時間は？",
-        a: "メールサポートは平日10:00〜18:00に対応しています。お問い合わせから原則1営業日以内に返信いたします。",
+        a: "メールでのサポートに対応しています。お問い合わせフォームからお気軽にご連絡ください。",
       },
     ],
   },
@@ -147,41 +149,38 @@ export default function FaqPage() {
       />
 
       {/* ヒーロー */}
-      <section className="bg-rm-hero px-4 py-20 text-center text-white sm:py-28">
+      <section className="px-7 pt-20 pb-16 text-center sm:pt-28">
         <div className="mx-auto max-w-3xl">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">
-            よくある質問
+          <span className="eyebrow">FAQ</span>
+          <h1 className="mt-6 text-[clamp(32px,5vw,56px)] font-medium leading-tight tracking-tight text-rm-primary">
+            よくある<em className="font-serif-display italic text-rm-accent-deep font-normal">質問</em>
           </h1>
-          <p className="mt-5 text-[14px] leading-relaxed text-white/60 sm:text-base">
+          <p className="mt-5 text-[16px] text-rm-text-secondary">
             Roomlyについてお客様からよくいただくご質問をまとめました。
           </p>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="px-4 py-16 sm:py-24">
-        <div className="mx-auto max-w-3xl space-y-12">
+      <section className="px-7 pb-24">
+        <div className="mx-auto max-w-3xl space-y-14">
           {faqCategories.map((cat) => (
             <div key={cat.category}>
-              <h2 className="text-lg font-semibold text-rm-primary sm:text-xl">
-                {cat.category}
-              </h2>
-              <div className="mt-4 space-y-3">
+              <h2 className="text-[18px] font-medium text-rm-primary">{cat.category}</h2>
+              <div className="mt-5 space-y-3">
                 {cat.questions.map((faq) => (
                   <details
                     key={faq.q}
-                    className="group rounded-lg border border-rm-border bg-rm-surface"
+                    className="group rounded-2xl border border-rm-border bg-rm-surface"
                   >
-                    <summary className="flex cursor-pointer items-center justify-between p-5 text-[14px] font-medium text-rm-primary">
+                    <summary className="flex cursor-pointer items-center justify-between p-5 text-[15px] font-medium text-rm-primary">
                       {faq.q}
                       <span className="ml-4 shrink-0 text-rm-text-muted transition-transform group-open:rotate-180">
                         &#x25BC;
                       </span>
                     </summary>
                     <div className="border-t border-rm-border px-5 py-4">
-                      <p className="text-[13px] leading-relaxed text-rm-text-secondary">
-                        {faq.a}
-                      </p>
+                      <p className="text-[14px] leading-relaxed text-rm-text-secondary">{faq.a}</p>
                     </div>
                   </details>
                 ))}
@@ -191,21 +190,23 @@ export default function FaqPage() {
         </div>
       </section>
 
-      {/* お問い合わせ導線 */}
-      <section className="bg-rm-surface px-4 py-16 sm:py-24">
+      {/* CTA */}
+      <section className="bg-rm-surface-tint px-7 py-24">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-xl font-semibold text-rm-primary sm:text-2xl">
-            解決しない場合はお気軽にご相談ください
+          <h2 className="text-[clamp(24px,3vw,36px)] font-medium tracking-tight text-rm-primary">
+            まずは無料で試してみませんか？
           </h2>
-          <p className="mt-4 text-[14px] text-rm-text-secondary">
-            このページで解決しないご質問がございましたら、お問い合わせフォームからご連絡ください。
+          <p className="mt-4 text-[15px] text-rm-text-secondary">
+            10区画まで無料。クレジットカード不要で、すぐに始められます。
           </p>
-          <Link
-            href="/contact"
-            className="mt-8 inline-block rounded bg-rm-accent px-10 py-3.5 text-[15px] font-medium text-white transition-colors hover:bg-rm-accent-light"
-          >
-            お問い合わせはこちら
-          </Link>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <a href="https://roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full border border-rm-border-strong px-[22px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-surface">
+              デモを試す
+            </a>
+            <a href="https://roomly.jp/signup" className="inline-flex h-12 items-center rounded-full bg-rm-primary px-[22px] text-[15px] font-medium text-rm-bg transition-colors hover:bg-rm-accent-deep hover:text-white">
+              無料で始める
+            </a>
+          </div>
         </div>
       </section>
     </>

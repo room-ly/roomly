@@ -1,43 +1,45 @@
-const statusStyles: Record<string, { dot: string; text: string }> = {
-  // 部屋ステータス
-  occupied: { dot: "bg-success", text: "text-success" },
-  vacant: { dot: "bg-accent", text: "text-accent" },
-  reserved: { dot: "bg-warning", text: "text-warning" },
-  maintenance: { dot: "bg-text-muted", text: "text-text-muted" },
-  // 契約ステータス
-  active: { dot: "bg-success", text: "text-success" },
-  expired: { dot: "bg-text-muted", text: "text-text-muted" },
-  terminated: { dot: "bg-danger", text: "text-danger" },
-  pending: { dot: "bg-warning", text: "text-warning" },
-  // 請求ステータス
-  paid: { dot: "bg-success", text: "text-success" },
-  unpaid: { dot: "bg-text-muted", text: "text-text-muted" },
-  partial: { dot: "bg-warning", text: "text-warning" },
-  overdue: { dot: "bg-danger", text: "text-danger" },
-  // 修繕ステータス
-  open: { dot: "bg-accent", text: "text-accent" },
-  in_progress: { dot: "bg-warning", text: "text-warning" },
-  waiting_parts: { dot: "bg-warning", text: "text-warning" },
-  completed: { dot: "bg-success", text: "text-success" },
-  cancelled: { dot: "bg-text-muted", text: "text-text-muted" },
-  // 経費カテゴリ
-  repair: { dot: "bg-warning", text: "text-warning" },
-  cleaning: { dot: "bg-accent", text: "text-accent" },
-  insurance: { dot: "bg-success", text: "text-success" },
-  tax: { dot: "bg-danger", text: "text-danger" },
-  utility: { dot: "bg-text-muted", text: "text-text-muted" },
-  // 送金ステータス
-  draft: { dot: "bg-text-muted", text: "text-text-muted" },
-  confirmed: { dot: "bg-warning", text: "text-warning" },
-  sent: { dot: "bg-success", text: "text-success" },
-  // 問い合わせ
-  resolved: { dot: "bg-success", text: "text-success" },
-  closed: { dot: "bg-text-muted", text: "text-text-muted" },
-  // 優先度
-  low: { dot: "bg-text-muted", text: "text-text-muted" },
-  normal: { dot: "bg-accent", text: "text-accent" },
-  high: { dot: "bg-warning", text: "text-warning" },
-  urgent: { dot: "bg-danger", text: "text-danger" },
+type BadgeVariant = "accent" | "warn" | "danger" | "info" | "neutral";
+
+const variantClasses: Record<BadgeVariant, string> = {
+  accent: "bg-accent-tint text-accent-deep",
+  warn: "bg-warn-tint text-warn",
+  danger: "bg-danger-tint text-danger",
+  info: "bg-info-tint text-info",
+  neutral: "bg-bg-2 text-ink-2",
+};
+
+const statusVariant: Record<string, BadgeVariant> = {
+  occupied: "accent",
+  vacant: "info",
+  reserved: "warn",
+  maintenance: "neutral",
+  active: "accent",
+  expired: "neutral",
+  terminated: "danger",
+  pending: "warn",
+  paid: "accent",
+  unpaid: "neutral",
+  partial: "warn",
+  overdue: "danger",
+  open: "info",
+  in_progress: "warn",
+  waiting_parts: "warn",
+  completed: "accent",
+  cancelled: "neutral",
+  resolved: "accent",
+  closed: "neutral",
+  low: "neutral",
+  normal: "info",
+  high: "warn",
+  urgent: "danger",
+  draft: "neutral",
+  confirmed: "accent",
+  sent: "accent",
+  repair: "warn",
+  cleaning: "info",
+  insurance: "accent",
+  tax: "danger",
+  utility: "neutral",
 };
 
 const statusLabels: Record<string, string> = {
@@ -88,12 +90,13 @@ interface StatusBadgeProps {
 }
 
 export default function StatusBadge({ status, label }: StatusBadgeProps) {
-  const style = statusStyles[status] || { dot: "bg-text-muted", text: "text-text-muted" };
+  const variant = statusVariant[status] || "neutral";
+  const cls = variantClasses[variant];
   const text = label || statusLabels[status] || status;
 
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${style.text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+    <span className={`badge ${cls}`}>
+      <span className="dot" />
       {text}
     </span>
   );

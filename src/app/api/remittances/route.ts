@@ -29,7 +29,8 @@ export async function GET() {
 // POST: 送金明細を生成
 export async function POST(request: NextRequest) {
   try {
-    const { owner_id, remittance_month } = await request.json();
+    const body = await request.json();
+    const { owner_id, remittance_month, payment_method: reqPaymentMethod, manual_net_amount } = body;
 
     if (!owner_id || !remittance_month) {
       return NextResponse.json(
@@ -105,6 +106,9 @@ export async function POST(request: NextRequest) {
     const netAmount = totalRent - managementFeeDeducted - expenseDeducted;
 
     const company_id = await getCompanyId();
+    const payment_method = reqPaymentMethod || "transfer";
+    const isManual = manual_net_amount !== undefined && manual_net_amount !== null;
+
     const { data: remittance, error: remError } = await supabase
       .from("owner_remittances")
       .insert({
@@ -113,8 +117,11 @@ export async function POST(request: NextRequest) {
         total_rent: totalRent,
         management_fee_deducted: managementFeeDeducted,
         expense_deducted: expenseDeducted,
-        net_amount: netAmount,
+        net_amount: isManual ? Number(manual_net_amount) : netAmount,
         status: "draft",
+        payment_method,
+        manual_override: isManual,
+        manual_net_amount: isManual ? Number(manual_net_amount) : null,
         company_id,
       })
       .select()

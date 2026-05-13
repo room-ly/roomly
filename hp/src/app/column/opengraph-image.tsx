@@ -1,20 +1,15 @@
 import { ImageResponse } from "next/og";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 export const alt = "コラム — Roomly";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function Image() {
-  const fontData = await fetch(
-    "https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@600&display=swap"
-  )
-    .then((res) => res.text())
-    .then((css) => {
-      const match = css.match(/src: url\(([^)]+)\)/);
-      if (!match) throw new Error("Font URL not found");
-      return fetch(match[1]);
-    })
-    .then((res) => res.arrayBuffer());
+  const fontData = readFileSync(
+    join(process.cwd(), "src/assets/fonts/NotoSansJP-SemiBold.ttf")
+  );
 
   return new ImageResponse(
     (

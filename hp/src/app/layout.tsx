@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Noto_Sans_JP } from "next/font/google";
+import { Noto_Sans_JP, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { Header } from "@/components/Header";
@@ -9,6 +9,14 @@ import GoogleAnalytics from "@/components/GoogleAnalytics";
 const notoSansJP = Noto_Sans_JP({
   subsets: ["latin"],
   display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  display: "swap",
+  variable: "--font-instrument-serif",
 });
 
 export const metadata: Metadata = {
@@ -43,7 +51,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" suppressHydrationWarning>
-      <body className={`${notoSansJP.className} antialiased`}>
+      <body className={`${notoSansJP.className} ${instrumentSerif.variable} antialiased`}>
         <GoogleAnalytics />
         <ThemeProvider>
           <Header />
