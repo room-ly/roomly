@@ -186,7 +186,7 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
         {hiddenCount > 0 && (
           <div className="px-5 py-3 border-t border-line bg-warn/5 text-center">
             <span className="text-[12px] text-warn font-medium">
-              +{hiddenCount}戸が非表示（プランをアップグレードすると表示されます）
+              +{hiddenCount}戸はプラン制限中です（アップグレードすると閲覧・編集できます）
             </span>
           </div>
         )}
