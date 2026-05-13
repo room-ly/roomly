@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     const company_id = await getCompanyId();
 
     const [companyRes, unitsRes] = await Promise.all([
-      supabase.from("companies").select("plan, max_units, subscription_status, subscription_current_period_end").single(),
+      supabase.from("companies").select("plan, max_units, subscription_status, subscription_current_period_end").eq("id", company_id).single(),
       supabase.from("units").select("id", { count: "exact", head: true }),
     ]);
     const comp = companyRes.data;
