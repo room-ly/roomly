@@ -190,6 +190,15 @@ export default function ContractFormModal({
                 type="date"
                 defaultValue={editData?.start_date || ""}
                 className="input"
+                onChange={(e) => {
+                  const endInput = e.currentTarget.form?.elements.namedItem("end_date") as HTMLInputElement | null;
+                  if (endInput && !endInput.value && e.target.value) {
+                    const d = new Date(e.target.value);
+                    d.setFullYear(d.getFullYear() + 2);
+                    d.setDate(d.getDate() - 1);
+                    endInput.value = d.toISOString().slice(0, 10);
+                  }
+                }}
               />
               {errors.start_date && (
                 <p className="text-danger text-sm mt-1">
