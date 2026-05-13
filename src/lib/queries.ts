@@ -163,18 +163,33 @@ export async function getRentBillings() {
   return (data ?? []) as Row[];
 }
 
-// 家賃請求詳細（入金履歴・入居者情報付き）
+// 家賃請求詳細 — 指定IDの請求を起点に、同一契約の全請求を時系列で返す
 export async function getRentBillingDetail(id: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data: target, error: targetErr } = await supabase
     .from("rent_billings")
     .select(
       "*, contract:contracts(id, tenant:tenants(name, phone, email), unit:units(unit_number, property:properties(name, address))), rent_payments(id, amount, payment_date, payment_method, notes, created_at)"
     )
     .eq("id", id)
     .single();
-  if (error) return null;
-  return data;
+  if (targetErr || !target) return null;
+
+  const contractId = target.contract?.id;
+  if (!contractId) return { current: target, history: [target] };
+
+  const { data: history, error: histErr } = await supabase
+    .from("rent_billings")
+    .select(
+      "id, billing_month, rent, management_fee, other_amount, other_description, total_amount, due_date, status, rent_payments(id, amount, payment_date, payment_method, notes)"
+    )
+    .eq("contract_id", contractId)
+    .order("billing_month", { ascending: false });
+
+  return {
+    current: target,
+    history: histErr ? [target] : (history ?? [target]),
+  };
 }
 
 // 修繕依頼一覧（物件・部屋付き）
