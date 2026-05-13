@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Crown, ExternalLink } from "lucide-react";
+import { Plus, X, Crown, ExternalLink, Trash2 } from "lucide-react";
 
 interface SettingsClientProps {
   company: Record<string, any>;
@@ -31,6 +31,9 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Record<string, any> | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [plans, setPlans] = useState<PlanOption[]>([]);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [planInfo, setPlanInfo] = useState<{
@@ -86,6 +89,27 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
       setSaveMsg(err.error || "保存に失敗しました");
     }
     setSaving(false);
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError("");
+
+    const res = await fetch("/api/users", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: deleteTarget.id }),
+    });
+
+    if (res.ok) {
+      setDeleteTarget(null);
+      router.refresh();
+    } else {
+      const err = await res.json();
+      setDeleteError(err.error || "削除に失敗しました");
+    }
+    setDeleting(false);
   }
 
   async function handleInvite(e: React.FormEvent<HTMLFormElement>) {
@@ -347,7 +371,7 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
 
         <div className="space-y-2">
           {users.map((u) => (
-            <div key={u.id} className="flex items-center justify-between p-3 rounded bg-bg-2">
+            <div key={u.id} className="flex items-center justify-between p-3 rounded bg-bg-2 group">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-accent-tint flex items-center justify-center text-accent text-[12px] font-semibold">
                   {u.name?.charAt(0) || "?"}
@@ -357,17 +381,63 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                   <p className="text-[11px] text-ink-3">{u.email}</p>
                 </div>
               </div>
-              <span className={`text-[11px] px-2 py-0.5 rounded font-medium ${
-                u.role === "admin" ? "bg-accent-tint text-accent" :
-                u.role === "manager" ? "bg-accent-tint text-accent-deep" :
-                "bg-bg-2 text-ink-3 border border-line"
-              }`}>
-                {roleLabels[u.role] || u.role}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`text-[11px] px-2 py-0.5 rounded font-medium ${
+                  u.role === "admin" ? "bg-accent-tint text-accent" :
+                  u.role === "manager" ? "bg-accent-tint text-accent-deep" :
+                  "bg-bg-2 text-ink-3 border border-line"
+                }`}>
+                  {roleLabels[u.role] || u.role}
+                </span>
+                <button
+                  onClick={() => { setDeleteTarget(u); setDeleteError(""); }}
+                  className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-danger transition-all p-1 rounded hover:bg-danger/10"
+                  title="削除"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* ユーザー削除確認モーダル */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && setDeleteTarget(null)}>
+          <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h2 className="text-[15px] font-semibold mb-3">ユーザーを削除</h2>
+            <p className="text-[13px] text-ink-2 mb-1">
+              <span className="font-medium">{deleteTarget.name}</span>（{deleteTarget.email}）を削除しますか？
+            </p>
+            <p className="text-[12px] text-ink-3 mb-4">
+              削除されたユーザーはログインできなくなります。
+            </p>
+
+            {deleteError && (
+              <div className="bg-danger-tint text-danger text-sm rounded-lg px-3 py-2 mb-4">{deleteError}</div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-bg-2 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="bg-danger text-white rounded-lg px-4 py-2 text-sm hover:bg-danger/90 transition-colors disabled:opacity-50"
+              >
+                {deleting ? "削除中..." : "削除する"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ユーザー追加モーダル */}
       {inviteOpen && (
