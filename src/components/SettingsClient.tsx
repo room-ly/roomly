@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Check, Crown, ArrowRight, ExternalLink } from "lucide-react";
+import { Plus, X, Crown, ExternalLink } from "lucide-react";
 
 interface SettingsClientProps {
   company: Record<string, any>;
@@ -205,85 +205,89 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
             </div>
           </div>
 
-          {/* プラン選択カード */}
+          {/* 料金テーブル */}
           {company?.plan !== "pro" && plans.length > 0 && (
             <div>
-              <p className="text-[13px] text-ink-2 mb-3">アップグレードすると、より多くの区画を管理できます。</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {plans.map((plan, i) => {
-                  const unitPrice = Math.round(plan.price / plan.maxUnits);
-                  const isPopular = i === 1;
-                  return (
-                    <div
-                      key={plan.priceId}
-                      className={`relative rounded-xl border-2 p-4 transition-all ${
-                        isPopular
-                          ? "border-accent bg-accent-tint/50 shadow-sm"
-                          : "border-line hover:border-accent-soft"
-                      }`}
-                    >
-                      {isPopular && (
-                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-accent text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-full">
-                          人気
-                        </span>
-                      )}
-                      <p className="text-[14px] font-semibold mt-1">{plan.name}</p>
-                      <p className="text-[12px] text-ink-3 mt-1">
-                        最大 {plan.maxUnits.toLocaleString()} 区画
-                      </p>
-                      <div className="mt-3 mb-3">
-                        <span className="text-[20px] font-bold text-ink">
-                          ¥{plan.price.toLocaleString()}
-                        </span>
-                        <span className="text-[11px] text-ink-3 ml-0.5">（税込）/ 月</span>
-                      </div>
-                      <p className="text-[11px] text-ink-3 mb-3">
-                        1区画あたり ¥{unitPrice.toLocaleString()}/月
-                      </p>
-                      <ul className="space-y-1.5 mb-4">
-                        <li className="flex items-center gap-1.5 text-[12px] text-ink-2">
-                          <Check size={13} className="text-accent shrink-0" />
-                          {plan.maxUnits.toLocaleString()}区画まで登録可
-                        </li>
-                        <li className="flex items-center gap-1.5 text-[12px] text-ink-2">
-                          <Check size={13} className="text-accent shrink-0" />
-                          全機能利用可能
-                        </li>
-                      </ul>
-                      <button
-                        type="button"
-                        disabled={checkingOut !== null}
-                        onClick={async () => {
-                          setCheckingOut(plan.priceId);
-                          const res = await fetch("/api/stripe/checkout", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ priceId: plan.priceId }),
-                          });
-                          const data = await res.json();
-                          if (data.url) {
-                            window.location.href = data.url;
-                          } else {
-                            alert(data.detail || data.error || "エラーが発生しました");
-                            setCheckingOut(null);
-                          }
-                        }}
-                        className={`w-full flex items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-medium transition-colors disabled:opacity-50 ${
-                          isPopular
-                            ? "bg-accent text-white hover:bg-accent-deep"
-                            : "bg-bg-2 text-ink hover:bg-line"
-                        }`}
-                      >
-                        {checkingOut === plan.priceId ? (
-                          "リダイレクト中..."
-                        ) : (
-                          <>アップグレード <ArrowRight size={13} /></>
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
+              <p className="text-[13px] text-ink-2 mb-3">
+                区画数に応じた月額料金です。全プランで全機能が使えます。
+              </p>
+              <div className="rounded-lg border border-line overflow-hidden">
+                <table className="w-full text-[13px]">
+                  <thead>
+                    <tr className="bg-bg-2 text-ink-3 text-[11px] uppercase tracking-wider">
+                      <th className="px-4 py-2.5 text-left font-medium">区画数</th>
+                      <th className="px-4 py-2.5 text-right font-medium">月額（税込）</th>
+                      <th className="px-4 py-2.5 text-right font-medium">区画単価</th>
+                      <th className="px-4 py-2.5 w-28"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-line bg-accent-tint/30">
+                      <td className="px-4 py-3 font-medium">〜10区画</td>
+                      <td className="px-4 py-3 text-right font-semibold">¥0</td>
+                      <td className="px-4 py-3 text-right text-ink-3">—</td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="text-[12px] text-accent-deep font-medium">利用中</span>
+                      </td>
+                    </tr>
+                    {plans.map((plan) => {
+                      const unitPrice = Math.round(plan.price / plan.maxUnits);
+                      const isRecommended = planInfo.currentUnits > 10 && planInfo.currentUnits <= plan.maxUnits
+                        && !plans.some((p) => p.maxUnits < plan.maxUnits && p.maxUnits >= planInfo.currentUnits);
+                      return (
+                        <tr
+                          key={plan.priceId}
+                          className={`border-t border-line transition-colors hover:bg-bg-2/50 ${
+                            isRecommended ? "bg-accent-tint/20" : ""
+                          }`}
+                        >
+                          <td className="px-4 py-3 font-medium">
+                            〜{plan.maxUnits.toLocaleString()}区画
+                            {isRecommended && (
+                              <span className="ml-2 text-[10px] bg-accent text-white px-1.5 py-0.5 rounded-full font-semibold">
+                                おすすめ
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                            ¥{plan.price.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-right text-ink-3 tabular-nums">
+                            ¥{unitPrice.toLocaleString()}/区画
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <button
+                              type="button"
+                              disabled={checkingOut !== null}
+                              onClick={async () => {
+                                setCheckingOut(plan.priceId);
+                                const res = await fetch("/api/stripe/checkout", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ priceId: plan.priceId }),
+                                });
+                                const data = await res.json();
+                                if (data.url) {
+                                  window.location.href = data.url;
+                                } else {
+                                  alert(data.detail || data.error || "エラーが発生しました");
+                                  setCheckingOut(null);
+                                }
+                              }}
+                              className="text-[12px] font-medium text-white bg-accent hover:bg-accent-deep rounded-md px-3 py-1.5 transition-colors disabled:opacity-50"
+                            >
+                              {checkingOut === plan.priceId ? "処理中..." : "選択"}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
+              <p className="text-[11px] text-ink-3 mt-2">
+                2,001区画以上は1,000区画ごとに+¥5,000（税込）/月。お問い合わせください。
+              </p>
             </div>
           )}
 
