@@ -30,13 +30,22 @@ const supabase = createClient();
 
 // Supabase Auth ユーザーから public.users の情報を取得
 async function fetchProfile(authUser: SupabaseUser): Promise<User | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("users")
     .select("id, name, email, role, company_id, is_active")
     .eq("id", authUser.id)
     .single();
 
-  if (!data || data.is_active === false) return null;
+  if (error || !data || data.is_active === false) {
+    // RLSブロック等でprofileが取れない場合、auth userからフォールバック
+    return {
+      id: authUser.id,
+      name: authUser.user_metadata?.name || authUser.email?.split("@")[0] || "",
+      email: authUser.email || "",
+      role: "staff",
+      company_id: "",
+    };
+  }
   return {
     id: data.id,
     name: data.name,
@@ -52,28 +61,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      try {
-        if (session?.user) {
-          const profile = await fetchProfile(session.user);
-          setUser(profile);
-        }
-      } catch {
-        // fetchProfile失敗時もローディングを終了
-      } finally {
-        setIsLoading(false);
+      if (session?.user) {
+        const profile = await fetchProfile(session.user);
+        setUser(profile);
       }
+      setIsLoading(false);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
-        try {
-          const profile = await fetchProfile(session.user);
-          setUser(profile);
-        } catch {
-          // プロフィール取得失敗
-        }
+        const profile = await fetchProfile(session.user);
+        setUser(profile);
         setIsLoading(false);
       } else if (event === "SIGNED_OUT") {
         setUser(null);
