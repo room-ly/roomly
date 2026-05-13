@@ -22,6 +22,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import type { SidebarInitialData } from "./AppShell";
 
 interface NavItem {
   href: string;
@@ -58,27 +59,38 @@ const navGroups = [
   },
 ];
 
-export default function Sidebar({ children }: { children: React.ReactNode }) {
+export default function Sidebar({ children, initialData }: { children: React.ReactNode; initialData: SidebarInitialData | null }) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
-  const [companyName, setCompanyName] = useState<string>("");
-  const [serverUser, setServerUser] = useState<{ name: string; email: string }>({ name: "", email: "" });
+  const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>(initialData?.badgeCounts ?? {});
+  const [companyName, setCompanyName] = useState<string>(initialData?.companyName ?? "");
+  const [displayUser, setDisplayUser] = useState<{ name: string; email: string }>({
+    name: initialData?.userName ?? "",
+    email: initialData?.userEmail ?? "",
+  });
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
+    // 初回はサーバーサイドから渡されたデータがあるのでスキップ
+    if (isFirstRender.current && initialData) {
+      isFirstRender.current = false;
+      return;
+    }
+    isFirstRender.current = false;
+
     fetch("/api/badge-counts")
       .then((res) => res.json())
       .then((data) => {
-        const { company_name, user_name, user_email, ...counts } = data;
-        setBadgeCounts(counts);
+        const { company_name, user_name, user_email, contract_alert_days: _, ...counts } = data;
+        setBadgeCounts(counts as Record<string, number>);
         if (company_name) setCompanyName(company_name);
-        if (user_name || user_email) setServerUser({ name: user_name || "", email: user_email || "" });
+        setDisplayUser({ name: user_name || "", email: user_email || "" });
       })
       .catch(() => {});
-  }, [pathname]);
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setMobileOpen(false);
@@ -211,11 +223,11 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           className="w-full flex items-center gap-2.5 p-1.5 rounded-[var(--r-md)] hover:bg-surface transition-colors"
         >
           <span className="w-7 h-7 rounded-full bg-surface-2 border border-line grid place-items-center text-[12px] font-semibold text-ink-2 shrink-0">
-            {(serverUser.name || user?.name || serverUser.email || user?.email || "U").charAt(0).toUpperCase()}
+            {(displayUser.name || displayUser.email || "U").charAt(0).toUpperCase()}
           </span>
           <span className="flex flex-col leading-tight min-w-0 flex-1 text-left">
-            <span className="text-[13px] font-medium truncate">{serverUser.name || user?.name || (serverUser.email || user?.email || "").split("@")[0] || "ユーザー"}</span>
-            <span className="text-[11px] text-ink-3 mt-0.5 truncate">{serverUser.email || user?.email || ""}</span>
+            <span className="text-[13px] font-medium truncate">{displayUser.name || displayUser.email.split("@")[0] || "ユーザー"}</span>
+            <span className="text-[11px] text-ink-3 mt-0.5 truncate">{displayUser.email}</span>
           </span>
           <MoreHorizontal size={14} className="text-ink-3 shrink-0" />
         </button>

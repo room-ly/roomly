@@ -3,7 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-context";
 import { AuthProvider } from "@/lib/auth-context";
+import { PostHogProvider } from "@/lib/posthog";
 import AppShell from "@/components/AppShell";
+import { getBadgeCounts } from "@/lib/queries";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -16,19 +18,41 @@ export const metadata: Metadata = {
   description: "賃貸管理会社向けSaaS",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let sidebarData: {
+    badgeCounts: Record<string, number>;
+    companyName: string;
+    userName: string;
+    userEmail: string;
+  } | null = null;
+
+  try {
+    const data = await getBadgeCounts();
+    const { company_name, user_name, user_email, contract_alert_days: _, ...counts } = data;
+    sidebarData = {
+      badgeCounts: counts as Record<string, number>,
+      companyName: company_name,
+      userName: user_name,
+      userEmail: user_email,
+    };
+  } catch {
+    // 未認証（ログインページ等）では取得できない
+  }
+
   return (
     <html lang="ja" suppressHydrationWarning>
       <body className={`${inter.variable} antialiased`} style={{ fontFamily: "var(--font-sans)" }}>
         <ThemeProvider>
           <AuthProvider>
-            <AppShell>
-              {children}
-            </AppShell>
+            <PostHogProvider>
+              <AppShell sidebarData={sidebarData}>
+                {children}
+              </AppShell>
+            </PostHogProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

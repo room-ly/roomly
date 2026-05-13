@@ -4,7 +4,14 @@ import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export interface SidebarInitialData {
+  badgeCounts: Record<string, number>;
+  companyName: string;
+  userName: string;
+  userEmail: string;
+}
+
+export default function AppShell({ children, sidebarData }: { children: React.ReactNode; sidebarData: SidebarInitialData | null }) {
   const pathname = usePathname();
 
   const authPaths = ["/login", "/signup", "/reset-password", "/update-password"];
@@ -13,7 +20,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <Sidebar>
+    <Sidebar initialData={sidebarData}>
       <Header />
       <main className="px-8 py-7 max-w-[1320px] relative z-0">
         {children}
