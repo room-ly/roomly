@@ -3,11 +3,10 @@
 import { Play } from "lucide-react";
 
 function trackDemo(location: string) {
-  fetch("/api/demo-click", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ location }),
-  }).catch(() => {});
+  navigator.sendBeacon(
+    "/api/demo-click",
+    new Blob([JSON.stringify({ location })], { type: "application/json" })
+  );
 }
 
 export function DemoButtonHero() {
