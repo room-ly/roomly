@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { createClient } from "@/lib/supabase";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -27,8 +26,7 @@ export default function LoginPage() {
         setError("メールアドレスまたはパスワードが正しくありません");
       } else {
         if (isDemo) {
-          const supabase = createClient();
-          await supabase.from("demo_clicks").insert({ project: "roomly", location: "login" });
+          navigator.sendBeacon("/api/demo-click");
         }
         router.push("/");
       }
