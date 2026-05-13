@@ -297,7 +297,7 @@ describe("inquirySchema", () => {
 
   it("件名が空でエラー", () => {
     const result = inquirySchema.safeParse({
-      inquiry_type: "general",
+      inquiry_type: "other",
       title: "",
     });
     expect(result.success).toBe(false);
@@ -305,7 +305,7 @@ describe("inquirySchema", () => {
 
   it("デフォルト値が設定される", () => {
     const result = inquirySchema.safeParse({
-      inquiry_type: "general",
+      inquiry_type: "other",
       title: "テスト問い合わせ",
     });
     expect(result.success).toBe(true);
