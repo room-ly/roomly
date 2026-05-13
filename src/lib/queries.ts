@@ -488,7 +488,7 @@ export async function getOwnersForSelect() {
 export async function getBadgeCounts() {
   const supabase = await createClient();
 
-  const [overdueRes, maintenanceRes, inquiriesRes, companyRes] =
+  const [overdueRes, maintenanceRes, inquiriesRes, companyRes, authRes] =
     await Promise.all([
       supabase
         .from("rent_billings")
@@ -503,6 +503,7 @@ export async function getBadgeCounts() {
         .select("id", { count: "exact", head: true })
         .in("status", ["open", "in_progress"]),
       supabase.from("companies").select("name, contract_alert_days").single(),
+      supabase.auth.getUser(),
     ]);
 
   const alertDays = (companyRes.data?.contract_alert_days as number) ?? 90;
@@ -518,6 +519,21 @@ export async function getBadgeCounts() {
     .gte("end_date", today)
     .lte("end_date", alertDateStr);
 
+  // サーバーサイドでユーザープロフィールを取得
+  let userName = "";
+  let userEmail = authRes.data?.user?.email ?? "";
+  if (authRes.data?.user) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("name, email")
+      .eq("id", authRes.data.user.id)
+      .single();
+    if (profile) {
+      userName = profile.name ?? "";
+      userEmail = profile.email ?? userEmail;
+    }
+  }
+
   return {
     "/rent": overdueRes.count ?? 0,
     "/maintenance": maintenanceRes.count ?? 0,
@@ -525,5 +541,7 @@ export async function getBadgeCounts() {
     "/contracts": contractsRes.count ?? 0,
     company_name: (companyRes.data?.name as string) ?? "",
     contract_alert_days: alertDays,
+    user_name: userName,
+    user_email: userEmail,
   };
 }

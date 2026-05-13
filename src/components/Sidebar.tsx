@@ -64,6 +64,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
   const [companyName, setCompanyName] = useState<string>("");
+  const [serverUser, setServerUser] = useState<{ name: string; email: string }>({ name: "", email: "" });
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -71,9 +72,10 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
     fetch("/api/badge-counts")
       .then((res) => res.json())
       .then((data) => {
-        const { company_name, ...counts } = data;
+        const { company_name, user_name, user_email, ...counts } = data;
         setBadgeCounts(counts);
         if (company_name) setCompanyName(company_name);
+        if (user_name || user_email) setServerUser({ name: user_name || "", email: user_email || "" });
       })
       .catch(() => {});
   }, [pathname]);
@@ -209,11 +211,11 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           className="w-full flex items-center gap-2.5 p-1.5 rounded-[var(--r-md)] hover:bg-surface transition-colors"
         >
           <span className="w-7 h-7 rounded-full bg-surface-2 border border-line grid place-items-center text-[12px] font-semibold text-ink-2 shrink-0">
-            {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
+            {(serverUser.name || user?.name || serverUser.email || user?.email || "U").charAt(0).toUpperCase()}
           </span>
           <span className="flex flex-col leading-tight min-w-0 flex-1 text-left">
-            <span className="text-[13px] font-medium truncate">{user?.name || user?.email?.split("@")[0] || "ユーザー"}</span>
-            <span className="text-[11px] text-ink-3 mt-0.5 truncate">{user?.email || ""}</span>
+            <span className="text-[13px] font-medium truncate">{serverUser.name || user?.name || (serverUser.email || user?.email || "").split("@")[0] || "ユーザー"}</span>
+            <span className="text-[11px] text-ink-3 mt-0.5 truncate">{serverUser.email || user?.email || ""}</span>
           </span>
           <MoreHorizontal size={14} className="text-ink-3 shrink-0" />
         </button>
