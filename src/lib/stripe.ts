@@ -14,3 +14,9 @@ export const PLANS = [
 export function getPlanByPriceId(priceId: string) {
   return PLANS.find((p) => p.priceId === priceId);
 }
+
+export function calcCustomPrice(maxUnits: number): number | null {
+  if (maxUnits <= 2000) return null;
+  const extra = Math.ceil((maxUnits - 2000) / 1000);
+  return 30000 + extra * 5000;
+}

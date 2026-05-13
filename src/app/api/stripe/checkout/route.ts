@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
-import { stripe, PLANS } from "@/lib/stripe";
+import { stripe, PLANS, calcCustomPrice } from "@/lib/stripe";
 
 function getAdmin() {
   return createAdminClient(
@@ -13,10 +13,36 @@ function getAdmin() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { priceId } = await request.json();
-    const plan = PLANS.find((p) => p.priceId === priceId);
-    if (!plan) {
-      return NextResponse.json({ error: "無効なプランです" }, { status: 400 });
+    const body = await request.json();
+    const { priceId, maxUnits: rawMaxUnits } = body;
+
+    let checkoutPriceId: string;
+    let maxUnits: number;
+
+    if (priceId) {
+      const plan = PLANS.find((p) => p.priceId === priceId);
+      if (!plan) {
+        return NextResponse.json({ error: "無効なプランです" }, { status: 400 });
+      }
+      checkoutPriceId = priceId;
+      maxUnits = plan.maxUnits;
+    } else if (rawMaxUnits && Number(rawMaxUnits) > 2000) {
+      maxUnits = Math.ceil(Number(rawMaxUnits) / 1000) * 1000;
+      const amount = calcCustomPrice(maxUnits);
+      if (!amount) {
+        return NextResponse.json({ error: "無効な区画数です" }, { status: 400 });
+      }
+      const price = await stripe.prices.create({
+        product: (await stripe.products.list({ limit: 1 })).data[0]?.id
+          || (await stripe.products.create({ name: "Roomly プラン" })).id,
+        unit_amount: amount,
+        currency: "jpy",
+        recurring: { interval: "month" },
+        metadata: { max_units: String(maxUnits) },
+      });
+      checkoutPriceId = price.id;
+    } else {
+      return NextResponse.json({ error: "priceId または maxUnits が必要です" }, { status: 400 });
     }
 
     const companyId = await getCompanyId();
@@ -54,12 +80,12 @@ export async function POST(request: NextRequest) {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: checkoutPriceId, quantity: 1 }],
       success_url: `${origin}/settings?checkout=success`,
       cancel_url: `${origin}/settings?checkout=cancel`,
       metadata: { company_id: companyId },
       subscription_data: {
-        metadata: { company_id: companyId, max_units: String(plan.maxUnits) },
+        metadata: { company_id: companyId, max_units: String(maxUnits) },
       },
     });
 

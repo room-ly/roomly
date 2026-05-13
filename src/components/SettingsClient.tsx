@@ -35,6 +35,7 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
   const [deleteError, setDeleteError] = useState("");
   const [plans, setPlans] = useState<PlanOption[]>([]);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [customUnits, setCustomUnits] = useState("");
   const [planInfo, setPlanInfo] = useState<{
     currentUnits: number;
     maxUnits: number;
@@ -230,15 +231,11 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
 
           {/* 料金テーブル */}
           {plans.length > 0 && (() => {
-            const isCurrent = (maxUnits: number) =>
-              planInfo.isSubscriptionActive && planInfo.maxUnits === maxUnits;
             const isFreeCurrent = !planInfo.isSubscriptionActive;
             const upgradePlans = planInfo.isSubscriptionActive
               ? plans.filter((p) => p.maxUnits > planInfo.maxUnits)
               : plans;
-            const hasUpgrade = upgradePlans.length > 0;
-
-            return hasUpgrade ? (
+            return (
               <div>
                 <p className="text-[13px] text-ink-2 mb-3">
                   区画数に応じた月額料金です。全プランで全機能が使えます。
@@ -307,23 +304,68 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                             </td>
                           </tr>
                       ))}
+                      {/* 2,001区画〜 */}
+                      <tr className="border-t border-line transition-colors hover:bg-bg-2/50">
+                        <td className="px-4 py-3">
+                          <p className="font-medium">2,001区画〜</p>
+                          <p className="text-[11px] text-ink-3 mt-0.5">1,000区画ごとに+¥5,000（税込）/月</p>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <input
+                              type="number"
+                              min={2001}
+                              step={1000}
+                              placeholder="例: 3000"
+                              value={customUnits}
+                              onChange={(e) => setCustomUnits(e.target.value)}
+                              className="input w-24 text-right text-[13px] tabular-nums"
+                            />
+                            <span className="text-[12px] text-ink-3">区画</span>
+                          </div>
+                          {customUnits && Number(customUnits) > 2000 && (
+                            <p className="text-[12px] font-semibold tabular-nums mt-1">
+                              ¥{(30000 + Math.ceil((Number(customUnits) - 2000) / 1000) * 5000).toLocaleString()}/月
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            disabled={checkingOut !== null || !customUnits || Number(customUnits) <= 2000}
+                            onClick={async () => {
+                              const units = Number(customUnits);
+                              if (units <= 2000) return;
+                              setCheckingOut("custom");
+                              const res = await fetch("/api/stripe/checkout", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ maxUnits: units }),
+                              });
+                              const data = await res.json();
+                              if (data.url) {
+                                window.location.href = data.url;
+                              } else {
+                                alert(data.detail || data.error || "エラーが発生しました");
+                                setCheckingOut(null);
+                              }
+                            }}
+                            className="text-[12px] font-medium text-white bg-accent hover:bg-accent-deep rounded-md px-3 py-1.5 transition-colors disabled:opacity-50"
+                          >
+                            {checkingOut === "custom" ? "処理中..." : "選択"}
+                          </button>
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
-                <p className="text-[11px] text-ink-3 mt-2">
-                  2,001区画以上は1,000区画ごとに+¥5,000（税込）/月。お問い合わせください。
-                </p>
                 {planInfo.hasStripeCustomer && (
                   <p className="text-[11px] text-ink-3 mt-1">
                     現在のプランの変更・解約は「請求管理」から行えます。
                   </p>
                 )}
               </div>
-            ) : planInfo.hasStripeCustomer ? (
-              <p className="text-[12px] text-ink-3">
-                最上位プランをご利用中です。プランの変更・解約は「請求管理」から行えます。
-              </p>
-            ) : null;
+            );
           })()}
         </div>
 
