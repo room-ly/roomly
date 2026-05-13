@@ -249,7 +249,6 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                       <tr className="bg-bg-2 text-ink-3 text-[11px] uppercase tracking-wider">
                         <th className="px-4 py-2.5 text-left font-medium">区画数</th>
                         <th className="px-4 py-2.5 text-right font-medium">月額（税込）</th>
-                        <th className="px-4 py-2.5 text-right font-medium">区画単価</th>
                         <th className="px-4 py-2.5 w-28"></th>
                       </tr>
                     </thead>
@@ -259,7 +258,6 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                         <tr className="border-t border-line bg-accent-tint/30">
                           <td className="px-4 py-3 font-medium">〜10区画</td>
                           <td className="px-4 py-3 text-right font-semibold">¥0</td>
-                          <td className="px-4 py-3 text-right text-ink-3">—</td>
                           <td className="px-4 py-3 text-right">
                             <span className="text-[12px] text-accent-deep font-medium">利用中</span>
                           </td>
@@ -269,25 +267,19 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                         <tr key={plan.priceId} className="border-t border-line bg-accent-tint/30">
                           <td className="px-4 py-3 font-medium">〜{plan.maxUnits.toLocaleString()}区画</td>
                           <td className="px-4 py-3 text-right font-semibold tabular-nums">¥{plan.price.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-right text-ink-3 tabular-nums">¥{Math.round(plan.price / plan.maxUnits).toLocaleString()}/区画</td>
                           <td className="px-4 py-3 text-right">
                             <span className="text-[12px] text-accent-deep font-medium">利用中</span>
                           </td>
                         </tr>
                       ))}
                       {/* アップグレード候補 */}
-                      {upgradePlans.map((plan) => {
-                        const unitPrice = Math.round(plan.price / plan.maxUnits);
-                        return (
+                      {upgradePlans.map((plan) => (
                           <tr key={plan.priceId} className="border-t border-line transition-colors hover:bg-bg-2/50">
                             <td className="px-4 py-3 font-medium">
                               〜{plan.maxUnits.toLocaleString()}区画
                             </td>
                             <td className="px-4 py-3 text-right font-semibold tabular-nums">
                               ¥{plan.price.toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-right text-ink-3 tabular-nums">
-                              ¥{unitPrice.toLocaleString()}/区画
                             </td>
                             <td className="px-4 py-3 text-right">
                               <button
@@ -314,8 +306,7 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                               </button>
                             </td>
                           </tr>
-                        );
-                      })}
+                      ))}
                     </tbody>
                   </table>
                 </div>
