@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import MonthSelector from "./MonthSelector";
 import FilterableTable from "./FilterableTable";
 import StatusBadge from "./StatusBadge";
 import RowMenu from "./RowMenu";
@@ -25,25 +26,51 @@ interface MaintenanceTableProps {
   properties: SelectOption[];
 }
 
+function getAvailableMonths(data: Record<string, any>[]): string[] {
+  const set = new Set<string>();
+  for (const item of data) {
+    if (item.reported_date) set.add(item.reported_date.slice(0, 7));
+  }
+  return Array.from(set).sort().reverse();
+}
+
+function getCurrentMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export default function MaintenanceTable({ data, properties }: MaintenanceTableProps) {
   const router = useRouter();
   const [editData, setEditData] = useState<Record<string, any> | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
+  const availableMonths = useMemo(() => getAvailableMonths(data), [data]);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const current = getCurrentMonth();
+    return availableMonths.includes(current) ? current : availableMonths[0] || current;
+  });
+
+  const monthFiltered = useMemo(() => {
+    if (selectedMonth === "all") return data;
+    return data.filter((m) => m.reported_date?.startsWith(selectedMonth));
+  }, [data, selectedMonth]);
+
+  const sorted = useMemo(() => {
+    const priorityOrder: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
+    return [...monthFiltered].sort((a, b) => (priorityOrder[a.priority] ?? 4) - (priorityOrder[b.priority] ?? 4));
+  }, [monthFiltered]);
+
   async function handleDelete(item: Record<string, any>) {
-    if (!confirm(`この修繕依頼を削除しますか？`)) return;
+    if (!confirm("この修繕依頼を削除しますか？")) return;
     const res = await fetch(`/api/maintenance/${item.id}`, { method: "DELETE" });
     if (res.ok) router.refresh();
     else alert("削除に失敗しました");
   }
 
-  const sorted = [...data].sort((a, b) => {
-    const priorityOrder: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
-    return (priorityOrder[a.priority] ?? 4) - (priorityOrder[b.priority] ?? 4);
-  });
-
   return (
     <>
+      <MonthSelector selectedMonth={selectedMonth} availableMonths={availableMonths} onChange={setSelectedMonth} />
+
       <FilterableTable
         data={sorted}
         searchFields={["title", "property.name", "vendor_name"]}
