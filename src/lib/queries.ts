@@ -114,6 +114,37 @@ export async function getPropertyDetail(id: string) {
   return { property, units: visibleUnits, contracts };
 }
 
+// 部屋詳細（物件・アクティブ契約・入居者付き）
+export async function getUnitDetail(unitId: string) {
+  const supabase = await createClient();
+
+  const { data: unit, error } = await supabase
+    .from("units")
+    .select("*, property:properties(id, name, address)")
+    .eq("id", unitId)
+    .single();
+  if (error || !unit) return null;
+
+  const { data: contracts } = await supabase
+    .from("contracts")
+    .select("*, tenant:tenants(id, name, phone, email)")
+    .eq("unit_id", unitId)
+    .order("start_date", { ascending: false });
+
+  const { data: maintenanceRequests } = await supabase
+    .from("maintenance_requests")
+    .select("*")
+    .eq("unit_id", unitId)
+    .order("reported_date", { ascending: false })
+    .limit(5);
+
+  return {
+    unit,
+    contracts: contracts ?? [],
+    maintenanceRequests: maintenanceRequests ?? [],
+  };
+}
+
 // 入居者一覧（アクティブ契約・部屋・物件情報付き）
 export async function getTenantsWithInfo() {
   const supabase = await createClient();

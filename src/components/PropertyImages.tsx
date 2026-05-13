@@ -13,6 +13,23 @@ import {
 } from "lucide-react";
 import type { PropertyImage } from "@/types";
 
+async function convertHeicToWebp(file: File): Promise<File> {
+  const heic2any = (await import("heic2any")).default;
+  const blob = await heic2any({ blob: file, toType: "image/webp", quality: 0.85 }) as Blob;
+  const name = file.name.replace(/\.heic$/i, ".webp");
+  return new File([blob], name, { type: "image/webp" });
+}
+
+async function prepareFiles(files: File[]): Promise<File[]> {
+  return Promise.all(
+    files.map((f) =>
+      /\.heic$/i.test(f.name) || f.type === "image/heic" || f.type === "image/heif"
+        ? convertHeicToWebp(f)
+        : f
+    )
+  );
+}
+
 interface PropertyImagesProps {
   propertyId: string;
 }
@@ -49,8 +66,9 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
     if (fileArray.length === 0) return;
     setUploading(true);
     try {
+      const prepared = await prepareFiles(fileArray);
       const formData = new FormData();
-      fileArray.forEach((f) => formData.append("files", f));
+      prepared.forEach((f) => formData.append("files", f));
       const res = await fetch(`/api/properties/${propertyId}/images`, {
         method: "POST",
         body: formData,
@@ -109,18 +127,18 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
       <div className="mb-6">
         <div
           onClick={() => fileInputRef.current?.click()}
-          className="inline-flex items-center gap-3 rounded-lg border-2 border-dashed border-line hover:border-accent px-5 py-4 cursor-pointer transition-colors hover:bg-accent-tint/50"
+          className="flex items-center justify-center gap-3 rounded-xl border-2 border-dashed border-line hover:border-accent w-full h-36 cursor-pointer transition-colors hover:bg-accent-tint/50"
         >
-          <Building2 size={28} className="text-ink-3/40" />
-          <div>
-            <p className="text-[12px] text-ink-2">物件画像を追加</p>
-            <p className="text-[11px] text-ink-3">JPEG / PNG / WebP</p>
+          <div className="text-center">
+            <ImagePlus size={28} className="text-ink-3/40 mx-auto mb-2" />
+            <p className="text-[13px] text-ink-2 font-medium">物件画像を追加</p>
+            <p className="text-[11px] text-ink-3 mt-0.5">クリックまたはドラッグ&ドロップ</p>
           </div>
         </div>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
           multiple
           className="hidden"
           onChange={(e) => {
@@ -202,6 +220,14 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
                 className="w-[38px] h-[38px] rounded bg-bg-2 flex items-center justify-center cursor-pointer text-[10px] font-medium text-ink-3 hover:bg-bg-2 transition-colors"
               >
                 +{images.length - 8}
+              </div>
+            )}
+            {images.length < 10 && (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="w-[38px] h-[38px] rounded border-2 border-dashed border-line hover:border-accent flex items-center justify-center cursor-pointer transition-colors hover:bg-accent-tint/50"
+              >
+                <ImagePlus size={14} className="text-ink-3" />
               </div>
             )}
           </div>
@@ -325,7 +351,7 @@ export default function PropertyImages({ propertyId }: PropertyImagesProps) {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
         multiple
         className="hidden"
         onChange={(e) => {

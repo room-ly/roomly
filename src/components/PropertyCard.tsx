@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Building2, MapPin, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { toWareki } from "@/lib/wareki";
 import PropertyFormModal from "./PropertyFormModal";
 
 interface Owner {
@@ -133,7 +134,7 @@ export default function PropertyCard({ property: prop, owners }: PropertyCardPro
 
             <div className="pt-2.5 border-t border-line flex items-center gap-3 text-[11px] text-ink-3">
               <span>{prop.structure} {prop.floors ? `${prop.floors}F` : ""}</span>
-              <span>築{prop.built_year ? new Date().getFullYear() - prop.built_year : "-"}年</span>
+              <span>{prop.built_year ? `${toWareki(prop.built_year)}・築${new Date().getFullYear() - prop.built_year}年` : "築-年"}</span>
               <span>{prop.nearest_station} 徒歩{prop.walk_minutes}分</span>
               <span className="ml-auto font-medium text-ink-2">{prop.owner?.name}</span>
             </div>
