@@ -28,10 +28,6 @@ export async function GET() {
 
     const effectiveMax = isSubscriptionActive ? maxUnits : 10;
 
-    const currentPlan = isSubscriptionActive
-      ? PLANS.find((p) => p.maxUnits === maxUnits)
-      : null;
-
     return NextResponse.json({
       plan,
       maxUnits: effectiveMax,
@@ -40,11 +36,9 @@ export async function GET() {
       subscriptionStatus: company?.subscription_status ?? "none",
       isSubscriptionActive,
       hasStripeCustomer: !!company?.stripe_customer_id,
-      currentPlanName: currentPlan?.name ?? null,
       periodEnd: company?.subscription_current_period_end ?? null,
       plans: PLANS.map((p) => ({
         priceId: p.priceId,
-        name: p.name,
         maxUnits: p.maxUnits,
         price: p.price,
         label: p.label,

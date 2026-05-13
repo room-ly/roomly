@@ -18,7 +18,6 @@ const roleLabels: Record<string, string> = {
 
 interface PlanOption {
   priceId: string;
-  name: string;
   maxUnits: number;
   price: number;
   label: string;
@@ -38,11 +37,11 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [planInfo, setPlanInfo] = useState<{
     currentUnits: number;
+    maxUnits: number;
     isSubscriptionActive: boolean;
-    currentPlanName: string | null;
     periodEnd: string | null;
     hasStripeCustomer: boolean;
-  }>({ currentUnits: 0, isSubscriptionActive: false, currentPlanName: null, periodEnd: null, hasStripeCustomer: false });
+  }>({ currentUnits: 0, maxUnits: 10, isSubscriptionActive: false, periodEnd: null, hasStripeCustomer: false });
 
   useEffect(() => {
     fetch("/api/plan-check")
@@ -51,8 +50,8 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
         setPlans(data.plans ?? []);
         setPlanInfo({
           currentUnits: data.currentUnits ?? 0,
+          maxUnits: data.maxUnits ?? 10,
           isSubscriptionActive: data.isSubscriptionActive ?? false,
-          currentPlanName: data.currentPlanName ?? null,
           periodEnd: data.periodEnd ?? null,
           hasStripeCustomer: data.hasStripeCustomer ?? false,
         });
@@ -189,11 +188,11 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                 <div>
                   <p className="text-[13px] font-semibold">
                     {planInfo.isSubscriptionActive
-                      ? `${planInfo.currentPlanName || "プロ"}プラン`
+                      ? `〜${planInfo.maxUnits.toLocaleString()}区画プラン`
                       : "フリープラン"}
                   </p>
                   <p className="text-[12px] text-ink-3 mt-0.5">
-                    {planInfo.currentUnits}区画 / {company?.max_units || 10}区画
+                    {planInfo.currentUnits}区画 / {planInfo.maxUnits.toLocaleString()}区画
                   </p>
                 </div>
               </div>
@@ -223,7 +222,7 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
               <div className="w-full h-1.5 rounded-full bg-line overflow-hidden">
                 <div
                   className="h-full rounded-full bg-accent transition-all duration-500"
-                  style={{ width: `${Math.min((planInfo.currentUnits / (company?.max_units || 10)) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((planInfo.currentUnits / planInfo.maxUnits) * 100, 100)}%` }}
                 />
               </div>
             </div>
