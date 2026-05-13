@@ -209,10 +209,10 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           className="w-full flex items-center gap-2.5 p-1.5 rounded-[var(--r-md)] hover:bg-surface transition-colors"
         >
           <span className="w-7 h-7 rounded-full bg-surface-2 border border-line grid place-items-center text-[12px] font-semibold text-ink-2 shrink-0">
-            {user?.name?.charAt(0) || "U"}
+            {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
           </span>
           <span className="flex flex-col leading-tight min-w-0 flex-1 text-left">
-            <span className="text-[13px] font-medium truncate">{user?.name || "ユーザー"}</span>
+            <span className="text-[13px] font-medium truncate">{user?.name || user?.email?.split("@")[0] || "ユーザー"}</span>
             <span className="text-[11px] text-ink-3 mt-0.5 truncate">{user?.email || ""}</span>
           </span>
           <MoreHorizontal size={14} className="text-ink-3 shrink-0" />

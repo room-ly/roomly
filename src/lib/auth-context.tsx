@@ -38,10 +38,11 @@ async function fetchProfile(authUser: SupabaseUser): Promise<User | null> {
 
   if (error || !data || data.is_active === false) {
     // RLSブロック等でprofileが取れない場合、auth userからフォールバック
+    const email = authUser.email || "";
     return {
       id: authUser.id,
-      name: authUser.user_metadata?.name || authUser.email?.split("@")[0] || "",
-      email: authUser.email || "",
+      name: authUser.user_metadata?.name || email.split("@")[0] || "",
+      email,
       role: "staff",
       company_id: "",
     };
@@ -60,20 +61,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const profile = await fetchProfile(session.user);
-        setUser(profile);
-      }
-      setIsLoading(false);
-    });
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
+      if (
+        (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") &&
+        session?.user
+      ) {
         const profile = await fetchProfile(session.user);
         setUser(profile);
+        setIsLoading(false);
+      } else if (event === "INITIAL_SESSION" && !session) {
         setIsLoading(false);
       } else if (event === "SIGNED_OUT") {
         setUser(null);
