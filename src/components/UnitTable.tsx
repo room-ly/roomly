@@ -100,6 +100,9 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
   const [modalOpen, setModalOpen] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const visibleUnits = units.filter((u) => !u._hidden);
+  const hiddenCount = units.filter((u) => u._hidden).length;
+
   async function deleteUnit(unitId: string) {
     if (!confirm("この部屋を削除しますか？")) return;
     setDeleting(unitId);
@@ -118,8 +121,13 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
   return (
     <>
       <div className="card overflow-hidden">
-        <div className="px-5 py-3 border-b border-line">
-          <h2 className="text-[13px] font-semibold">部屋一覧（{units.length}戸）</h2>
+        <div className="px-5 py-3 border-b border-line flex items-center justify-between">
+          <h2 className="text-[13px] font-semibold">部屋一覧（{visibleUnits.length}戸）</h2>
+          {hiddenCount > 0 && (
+            <span className="text-[12px] text-warn font-medium">
+              +{hiddenCount}戸が非表示（プランをアップグレードすると表示されます）
+            </span>
+          )}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
@@ -137,7 +145,7 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
               </tr>
             </thead>
             <tbody>
-              {units.map((unit) => {
+              {visibleUnits.map((unit) => {
                 const contract = contracts.find((c) => c.unit_id === unit.id);
                 const s = statusLabel[unit.status] || statusLabel.maintenance;
                 return (
@@ -168,7 +176,7 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
                   </tr>
                 );
               })}
-              {units.length === 0 && (
+              {visibleUnits.length === 0 && (
                 <tr>
                   <td colSpan={9} className="px-5 py-8 text-center text-ink-3 text-[13px]">
                     部屋が登録されていません

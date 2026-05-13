@@ -26,14 +26,22 @@ export async function POST(request: NextRequest) {
     const company_id = await getCompanyId();
 
     const [companyRes, unitsRes] = await Promise.all([
-      supabase.from("companies").select("plan, max_units").single(),
+      supabase.from("companies").select("plan, max_units, subscription_status, subscription_current_period_end").single(),
       supabase.from("units").select("id", { count: "exact", head: true }),
     ]);
-    const maxUnits = companyRes.data?.max_units ?? 10;
+    const comp = companyRes.data;
+    const isSubActive =
+      comp?.subscription_status === "active" &&
+      (!comp.subscription_current_period_end ||
+        new Date(comp.subscription_current_period_end) > new Date());
+    const effectiveMax = isSubActive ? (comp?.max_units ?? 50) : 10;
     const currentUnits = unitsRes.count ?? 0;
-    if (currentUnits >= maxUnits) {
+    if (currentUnits >= effectiveMax) {
       return NextResponse.json(
-        { error: "区画数の上限に達しています。プロプランにアップグレードしてください。" },
+        { error: isSubActive
+            ? "現在のプランの区画数上限に達しています。プランをアップグレードしてください。"
+            : "フリープランの上限（10区画）に達しています。プロプランにアップグレードしてください。"
+        },
         { status: 403 }
       );
     }

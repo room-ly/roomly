@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 
@@ -16,6 +16,14 @@ const roleLabels: Record<string, string> = {
   viewer: "閲覧のみ",
 };
 
+interface PlanOption {
+  priceId: string;
+  name: string;
+  maxUnits: number;
+  price: number;
+  label: string;
+}
+
 export default function SettingsClient({ company, users }: SettingsClientProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -23,6 +31,15 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState("");
+  const [plans, setPlans] = useState<PlanOption[]>([]);
+  const [checkingOut, setCheckingOut] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/plan-check")
+      .then((res) => res.json())
+      .then((data) => setPlans(data.plans ?? []))
+      .catch(() => {});
+  }, []);
 
   async function handleSaveCompany(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -115,12 +132,63 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
         {/* プラン */}
         <div className="card p-5 mb-4">
           <h2 className="text-[14px] font-semibold mb-4">プラン</h2>
-          <div className="flex items-center justify-between p-3.5 rounded bg-bg-2">
+          <div className="flex items-center justify-between p-3.5 rounded bg-bg-2 mb-4">
             <div>
               <p className="text-[13px] font-medium">{company?.plan === "pro" ? "プロプラン" : "フリープラン"}</p>
               <p className="text-[12px] text-ink-3 mt-0.5">管理区画数 {company?.max_units || 10}区画まで</p>
             </div>
+            {company?.stripe_customer_id && (
+              <button
+                onClick={async () => {
+                  const res = await fetch("/api/stripe/portal", { method: "POST" });
+                  const data = await res.json();
+                  if (data.url) window.location.href = data.url;
+                }}
+                className="text-[12px] text-accent-deep hover:underline"
+              >
+                請求管理
+              </button>
+            )}
           </div>
+          {company?.plan !== "pro" && plans.length > 0 && (
+            <div>
+              <p className="text-[13px] text-ink-2 mb-3">アップグレードすると、より多くの区画を管理できます。</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {plans.map((plan) => (
+                  <button
+                    key={plan.priceId}
+                    disabled={checkingOut !== null}
+                    onClick={async () => {
+                      setCheckingOut(plan.priceId);
+                      const res = await fetch("/api/stripe/checkout", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ priceId: plan.priceId }),
+                      });
+                      const data = await res.json();
+                      if (data.url) {
+                        window.location.href = data.url;
+                      } else {
+                        alert(data.error || "エラーが発生しました");
+                        setCheckingOut(null);
+                      }
+                    }}
+                    className="p-3 rounded border border-line hover:border-accent hover:bg-accent-tint transition-colors text-left disabled:opacity-50"
+                  >
+                    <p className="text-[13px] font-medium">{plan.name}</p>
+                    <p className="text-[11px] text-ink-3 mt-0.5">〜{plan.maxUnits.toLocaleString()}区画</p>
+                    <p className="text-[13px] font-semibold text-accent-deep mt-2">
+                      ¥{plan.price.toLocaleString()}
+                      <span className="text-[11px] font-normal text-ink-3">（税込）/ 月</span>
+                    </p>
+                    {checkingOut === plan.priceId && (
+                      <p className="text-[11px] text-ink-3 mt-1">リダイレクト中...</p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 通知設定 */}
