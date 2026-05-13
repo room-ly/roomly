@@ -100,7 +100,6 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
   const [modalOpen, setModalOpen] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  const visibleUnits = units.filter((u) => !u._hidden);
   const hiddenCount = units.filter((u) => u._hidden).length;
 
   async function deleteUnit(unitId: string) {
@@ -122,12 +121,7 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
     <>
       <div className="card overflow-hidden">
         <div className="px-5 py-3 border-b border-line flex items-center justify-between">
-          <h2 className="text-[13px] font-semibold">部屋一覧（{visibleUnits.length}戸）</h2>
-          {hiddenCount > 0 && (
-            <span className="text-[12px] text-warn font-medium">
-              +{hiddenCount}戸が非表示（プランをアップグレードすると表示されます）
-            </span>
-          )}
+          <h2 className="text-[13px] font-semibold">部屋一覧（{units.length}戸）</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
@@ -145,38 +139,41 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
               </tr>
             </thead>
             <tbody>
-              {visibleUnits.map((unit) => {
+              {units.map((unit) => {
                 const contract = contracts.find((c) => c.unit_id === unit.id);
                 const s = statusLabel[unit.status] || statusLabel.maintenance;
+                const isHidden = unit._hidden;
                 return (
-                  <tr key={unit.id} className="border-b border-line last:border-0 hover:bg-bg-2/30 transition-colors">
-                    <td className="px-5 py-2.5 font-medium">{unit.unit_number}</td>
-                    <td className="px-5 py-2.5">{unit.floor ? `${unit.floor}F` : "—"}</td>
-                    <td className="px-5 py-2.5">{unit.layout || "—"}</td>
-                    <td className="px-5 py-2.5">{unit.area_sqm ? `${Number(unit.area_sqm)}m²` : "—"}</td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">¥{Number(unit.rent).toLocaleString()}</td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">¥{Number(unit.management_fee).toLocaleString()}</td>
-                    <td className="px-5 py-2.5">
+                  <tr key={unit.id} className={`border-b border-line last:border-0 transition-colors ${isHidden ? "select-none" : "hover:bg-bg-2/30"}`}>
+                    <td className={`px-5 py-2.5 font-medium ${isHidden ? "blur-[3px]" : ""}`}>{unit.unit_number}</td>
+                    <td className={`px-5 py-2.5 ${isHidden ? "blur-[3px]" : ""}`}>{unit.floor ? `${unit.floor}F` : "—"}</td>
+                    <td className={`px-5 py-2.5 ${isHidden ? "blur-[3px]" : ""}`}>{unit.layout || "—"}</td>
+                    <td className={`px-5 py-2.5 ${isHidden ? "blur-[3px]" : ""}`}>{unit.area_sqm ? `${Number(unit.area_sqm)}m²` : "—"}</td>
+                    <td className={`px-5 py-2.5 text-right tabular-nums ${isHidden ? "blur-[3px]" : ""}`}>¥{Number(unit.rent).toLocaleString()}</td>
+                    <td className={`px-5 py-2.5 text-right tabular-nums ${isHidden ? "blur-[3px]" : ""}`}>¥{Number(unit.management_fee).toLocaleString()}</td>
+                    <td className={`px-5 py-2.5 ${isHidden ? "blur-[3px]" : ""}`}>
                       <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-medium ${s.cls}`}>
                         {s.text}
                       </span>
                     </td>
-                    <td className="px-5 py-2.5 text-ink-2">{contract?.tenant?.name || "—"}</td>
+                    <td className={`px-5 py-2.5 text-ink-2 ${isHidden ? "blur-[3px]" : ""}`}>{contract?.tenant?.name || "—"}</td>
                     <td className="px-5 py-2.5">
-                      <UnitMenu
-                        unit={unit}
-                        onEdit={() => {
-                          setEditUnit(unit);
-                          setModalOpen(true);
-                        }}
-                        onDelete={() => deleteUnit(unit.id)}
-                        deleting={deleting === unit.id}
-                      />
+                      {!isHidden && (
+                        <UnitMenu
+                          unit={unit}
+                          onEdit={() => {
+                            setEditUnit(unit);
+                            setModalOpen(true);
+                          }}
+                          onDelete={() => deleteUnit(unit.id)}
+                          deleting={deleting === unit.id}
+                        />
+                      )}
                     </td>
                   </tr>
                 );
               })}
-              {visibleUnits.length === 0 && (
+              {units.length === 0 && (
                 <tr>
                   <td colSpan={9} className="px-5 py-8 text-center text-ink-3 text-[13px]">
                     部屋が登録されていません
@@ -186,6 +183,13 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
             </tbody>
           </table>
         </div>
+        {hiddenCount > 0 && (
+          <div className="px-5 py-3 border-t border-line bg-warn/5 text-center">
+            <span className="text-[12px] text-warn font-medium">
+              +{hiddenCount}戸が非表示（プランをアップグレードすると表示されます）
+            </span>
+          </div>
+        )}
       </div>
 
       <UnitFormModal
