@@ -166,7 +166,7 @@ export default function FilterableTable({
                     </span>
                   </th>
                 ))}
-                {actions && <th className="px-3 py-2.5 font-medium w-12 sticky right-0 bg-surface"></th>}
+                {actions && <th className="px-3 py-2.5 font-medium w-12 sticky right-0 bg-inherit"></th>}
               </tr>
             </thead>
             <tbody>
@@ -196,7 +196,7 @@ export default function FilterableTable({
                       </td>
                     ))}
                     {actions && (
-                      <td className="px-3 py-2.5 sticky right-0 bg-surface" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-3 py-2.5 sticky right-0 bg-inherit" onClick={(e) => e.stopPropagation()}>
                         {actions(item)}
                       </td>
                     )}

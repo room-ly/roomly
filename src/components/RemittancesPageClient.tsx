@@ -55,7 +55,7 @@ export default function RemittancesPageClient({ owners, remittances }: Remittanc
                   <th className="px-5 py-2.5 font-medium">方法</th>
                   <th className="px-5 py-2.5 font-medium">状態</th>
                   <th className="px-5 py-2.5 font-medium"></th>
-                  <th className="px-3 py-2.5 font-medium w-12 sticky right-0 bg-surface"></th>
+                  <th className="px-3 py-2.5 font-medium w-12 sticky right-0 bg-inherit"></th>
                 </tr>
               </thead>
               <tbody>
@@ -81,7 +81,7 @@ export default function RemittancesPageClient({ owners, remittances }: Remittanc
                         PDF
                       </a>
                     </td>
-                    <td className="px-3 py-2.5 sticky right-0 bg-surface" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-3 py-2.5 sticky right-0 bg-inherit" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => { setEditData(r); setModalOpen(true); }}
                         className="p-1.5 rounded text-ink-3 hover:text-accent hover:bg-accent-tint transition-colors"
