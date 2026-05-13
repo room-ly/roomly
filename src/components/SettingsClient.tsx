@@ -314,9 +314,9 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                           <div className="flex items-center justify-end gap-2">
                             <input
                               type="number"
-                              min={2001}
+                              min={3000}
                               step={1000}
-                              placeholder="例: 3000"
+                              placeholder="3000"
                               value={customUnits}
                               onChange={(e) => setCustomUnits(e.target.value)}
                               className="input w-24 text-right text-[13px] tabular-nums"
