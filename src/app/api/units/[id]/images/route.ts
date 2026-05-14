@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_IMAGES_PER_PROPERTY = 10;
+const MAX_IMAGES_PER_UNIT = 10;
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: propertyId } = await params;
+    const { id: unitId } = await params;
     const supabase = await createClient();
 
     const { data, error } = await supabase
       .from("documents")
       .select("id, file_name, file_path, file_size, mime_type, is_primary, created_at")
-      .eq("property_id", propertyId)
-      .is("unit_id", null)
+      .eq("unit_id", unitId)
       .eq("document_type", "photo")
       .order("is_primary", { ascending: false })
       .order("created_at", { ascending: true });
@@ -45,20 +44,29 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: propertyId } = await params;
+    const { id: unitId } = await params;
     const supabase = await createClient();
     const companyId = await getCompanyId();
+
+    const { data: unit } = await supabase
+      .from("units")
+      .select("property_id")
+      .eq("id", unitId)
+      .single();
+
+    if (!unit) {
+      return NextResponse.json({ error: "部屋が見つかりません" }, { status: 404 });
+    }
 
     const { count } = await supabase
       .from("documents")
       .select("id", { count: "exact", head: true })
-      .eq("property_id", propertyId)
-      .is("unit_id", null)
+      .eq("unit_id", unitId)
       .eq("document_type", "photo");
 
-    if ((count ?? 0) >= MAX_IMAGES_PER_PROPERTY) {
+    if ((count ?? 0) >= MAX_IMAGES_PER_UNIT) {
       return NextResponse.json(
-        { error: `画像は${MAX_IMAGES_PER_PROPERTY}枚までです` },
+        { error: `画像は${MAX_IMAGES_PER_UNIT}枚までです` },
         { status: 400 }
       );
     }
@@ -73,7 +81,7 @@ export async function POST(
       );
     }
 
-    const remaining = MAX_IMAGES_PER_PROPERTY - (count ?? 0);
+    const remaining = MAX_IMAGES_PER_UNIT - (count ?? 0);
     if (files.length > remaining) {
       return NextResponse.json(
         { error: `あと${remaining}枚までアップロードできます` },
@@ -100,7 +108,7 @@ export async function POST(
       }
 
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const storagePath = `${companyId}/${propertyId}/${crypto.randomUUID()}.${ext}`;
+      const storagePath = `${companyId}/${unit.property_id}/units/${unitId}/${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("property-images")
@@ -120,7 +128,8 @@ export async function POST(
         .from("documents")
         .insert({
           company_id: companyId,
-          property_id: propertyId,
+          property_id: unit.property_id,
+          unit_id: unitId,
           document_type: "photo",
           file_name: file.name,
           file_path: storagePath,
@@ -159,7 +168,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: propertyId } = await params;
+    const { id: unitId } = await params;
     const supabase = await createClient();
     const { imageId } = await request.json();
 
@@ -170,8 +179,7 @@ export async function PATCH(
     await supabase
       .from("documents")
       .update({ is_primary: false })
-      .eq("property_id", propertyId)
-      .is("unit_id", null)
+      .eq("unit_id", unitId)
       .eq("document_type", "photo");
 
     const { error } = await supabase

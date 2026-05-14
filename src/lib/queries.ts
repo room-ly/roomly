@@ -59,14 +59,16 @@ export async function getProperties() {
   const propertyIds = properties.map((p: Row) => p.id);
   const { data: images } = await supabase
     .from("documents")
-    .select("property_id, file_path")
+    .select("property_id, file_path, is_primary")
     .in("property_id", propertyIds)
+    .is("unit_id", null)
     .eq("document_type", "photo")
+    .order("is_primary", { ascending: false })
     .order("created_at", { ascending: true });
 
   const thumbnailMap = new Map<string, string>();
   for (const img of images ?? []) {
-    if (!thumbnailMap.has(img.property_id)) {
+    if (img.is_primary || !thumbnailMap.has(img.property_id)) {
       thumbnailMap.set(
         img.property_id,
         `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/property-images/${img.file_path}`

@@ -169,6 +169,7 @@ export interface PropertyImage {
   url: string;
   mime_type: string;
   file_size: number;
+  is_primary: boolean;
   created_at: string;
 }
 

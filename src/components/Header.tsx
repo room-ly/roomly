@@ -89,7 +89,8 @@ export default function Header() {
     .filter((seg) => !isUuid(seg))
     .map((seg, i, arr) => {
       const href = "/" + arr.slice(0, i + 1).join("/");
-      return breadcrumbMap[href] || decodeURIComponent(seg);
+      const segMap: Record<string, string> = { units: "部屋" };
+      return breadcrumbMap[href] || segMap[seg] || decodeURIComponent(seg);
     });
   if (crumbs.length === 0) crumbs.push("ダッシュボード");
 
