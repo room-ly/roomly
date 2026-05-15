@@ -236,10 +236,10 @@ export default async function ContractDetailPage({
                   <p>{unit.layout}</p>
                 </div>
               )}
-              {unit?.floor_area_sqm && (
+              {unit?.area_sqm && (
                 <div>
                   <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">面積</p>
-                  <p>{unit.floor_area_sqm}㎡</p>
+                  <p>{unit.area_sqm}㎡</p>
                 </div>
               )}
             </div>

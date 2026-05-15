@@ -189,11 +189,10 @@ export async function getContractDetail(id: string) {
   const { data: contract, error } = await supabase
     .from("contracts")
     .select(
-      "*, tenant:tenants(id, name, name_kana, phone, email, workplace), unit:units(id, unit_number, floor_area_sqm, layout, property:properties(id, name, address))"
+      "*, tenant:tenants(id, name, name_kana, phone, email, workplace), unit:units(id, unit_number, area_sqm, layout, property:properties(id, name, address))"
     )
     .eq("id", id)
     .single();
-  if (error) console.error("[getContractDetail]", id, error.message, error.code);
   if (error || !contract) return null;
 
   const { data: billings } = await supabase
@@ -585,13 +584,17 @@ export async function getUnitsForSelect() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("units")
-    .select("id, unit_number, property:properties(name)")
+    .select("id, unit_number, property:properties(name), contracts(tenant_id, status)")
     .order("unit_number");
   if (error) throw error;
-  return (data ?? []).map((u: Row) => ({
-    id: u.id,
-    label: `${u.property?.name || ""} ${u.unit_number}`,
-  }));
+  return (data ?? []).map((u: Row) => {
+    const active = u.contracts?.find((c: Row) => c.status === "active");
+    return {
+      id: u.id,
+      label: `${u.property?.name || ""} ${u.unit_number}`,
+      tenant_id: active?.tenant_id || null,
+    };
+  });
 }
 
 // 入居者セレクトリスト
