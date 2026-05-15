@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import RemittanceFormModal from "./RemittanceFormModal";
 
@@ -55,12 +55,15 @@ export default function RemittancesPageClient({ owners, remittances }: Remittanc
                   <th className="px-5 py-2.5 font-medium">方法</th>
                   <th className="px-5 py-2.5 font-medium">状態</th>
                   <th className="px-5 py-2.5 font-medium"></th>
-                  <th className="px-3 py-2.5 font-medium w-12 sticky right-0 bg-inherit"></th>
                 </tr>
               </thead>
               <tbody>
                 {remittances.map((r) => (
-                  <tr key={r.id} className="border-b border-line last:border-0 hover:bg-bg-2/30 transition-colors">
+                  <tr
+                    key={r.id}
+                    className="border-b border-line last:border-0 hover:bg-bg-2/30 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/remittances/${r.id}`)}
+                  >
                     <td className="px-5 py-2.5">{r.remittance_month?.slice(0, 7)}</td>
                     <td className="px-5 py-2.5 font-medium">{r.owner?.name ?? "—"}</td>
                     <td className="px-5 py-2.5 text-right tabular-nums">¥{Number(r.total_rent).toLocaleString()}</td>
@@ -76,18 +79,10 @@ export default function RemittancesPageClient({ owners, remittances }: Remittanc
                       <span className="text-[12px] text-ink-2">{paymentMethodLabel[r.payment_method] || "振込"}</span>
                     </td>
                     <td className="px-5 py-2.5"><StatusBadge status={r.status} /></td>
-                    <td className="px-5 py-2.5">
+                    <td className="px-5 py-2.5" onClick={(e) => e.stopPropagation()}>
                       <a href={`/api/remittances/${r.id}/pdf`} target="_blank" rel="noopener noreferrer" className="text-[11px] text-accent hover:underline">
                         PDF
                       </a>
-                    </td>
-                    <td className="px-3 py-2.5 sticky right-0 bg-inherit" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => { setEditData(r); setModalOpen(true); }}
-                        className="p-1.5 rounded text-ink-3 hover:text-accent hover:bg-accent-tint transition-colors"
-                      >
-                        <Pencil size={14} />
-                      </button>
                     </td>
                   </tr>
                 ))}

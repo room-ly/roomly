@@ -18,7 +18,7 @@ export default async function ExpensesPage() {
         action={<ExpensesPageClient properties={properties} owners={owners} />}
       />
 
-      <ExpensesTable data={expenses} properties={properties} owners={owners} />
+      <ExpensesTable data={expenses} />
     </>
   );
 }

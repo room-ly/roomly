@@ -5,19 +5,9 @@ import { useRouter } from "next/navigation";
 import { Search, ArrowUpDown } from "lucide-react";
 import MonthSelector from "./MonthSelector";
 import StatusBadge from "./StatusBadge";
-import RowMenu from "./RowMenu";
-import ExpenseFormModal from "./ExpenseFormModal";
-
-interface SelectOption {
-  id: string;
-  label: string;
-  owner_id?: string;
-}
 
 interface ExpensesTableProps {
   data: Record<string, any>[];
-  properties: SelectOption[];
-  owners: SelectOption[];
 }
 
 function getAvailableMonths(data: Record<string, any>[]): string[] {
@@ -33,10 +23,8 @@ function getCurrentMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export default function ExpensesTable({ data, properties, owners }: ExpensesTableProps) {
+export default function ExpensesTable({ data }: ExpensesTableProps) {
   const router = useRouter();
-  const [editData, setEditData] = useState<Record<string, any> | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
 
   const availableMonths = useMemo(() => getAvailableMonths(data), [data]);
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -91,13 +79,6 @@ export default function ExpensesTable({ data, properties, owners }: ExpensesTabl
   function toggleSort(key: string) {
     if (sortKey === key) setSortAsc(!sortAsc);
     else { setSortKey(key); setSortAsc(true); }
-  }
-
-  async function handleDelete(item: Record<string, any>) {
-    if (!confirm("この経費を削除しますか？")) return;
-    const res = await fetch(`/api/expenses/${item.id}`, { method: "DELETE" });
-    if (res.ok) router.refresh();
-    else alert("削除に失敗しました");
   }
 
   const monthLabel = selectedMonth === "all"
@@ -194,15 +175,14 @@ export default function ExpensesTable({ data, properties, owners }: ExpensesTabl
                     </span>
                   </th>
                 ))}
-                <th className="px-3 py-2.5 font-medium w-12 sticky right-0 bg-inherit" />
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={8} className="px-5 py-8 text-center text-ink-3">{`${monthLabel}の経費データがありません`}</td></tr>
+                <tr><td colSpan={7} className="px-5 py-8 text-center text-ink-3">{`${monthLabel}の経費データがありません`}</td></tr>
               ) : (
                 filtered.map((item, idx) => (
-                  <tr key={item.id || idx} className="border-b border-line last:border-0 hover:bg-bg-2/30 transition-colors">
+                  <tr key={item.id || idx} className="border-b border-line last:border-0 hover:bg-bg-2/30 transition-colors cursor-pointer" onClick={() => router.push(`/expenses/${item.id}`)}>
                     <td className="px-5 py-2.5">{item.expense_date}</td>
                     <td className="px-5 py-2.5"><StatusBadge status={item.category} /></td>
                     <td className="px-5 py-2.5"><span className="font-medium">{item.description}</span></td>
@@ -215,9 +195,6 @@ export default function ExpensesTable({ data, properties, owners }: ExpensesTabl
                         {item.is_owner_charge ? "オーナー" : "管理会社"}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 sticky right-0 bg-inherit" onClick={(e) => e.stopPropagation()}>
-                      <RowMenu onEdit={() => { setEditData(item); setModalOpen(true); }} onDelete={() => handleDelete(item)} />
-                    </td>
                   </tr>
                 ))
               )}
@@ -226,7 +203,6 @@ export default function ExpensesTable({ data, properties, owners }: ExpensesTabl
         </div>
       </div>
 
-      <ExpenseFormModal isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditData(null); }} properties={properties} owners={owners} editData={editData} />
     </>
   );
 }
