@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   Sun,
   Moon,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
+import { createClient } from "@/lib/supabase";
 
 const breadcrumbMap: Record<string, string> = {
   "/": "ダッシュボード",
@@ -46,12 +47,14 @@ function formatTimeAgo(dateStr: string): string {
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const notifRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const fetchNotifications = useCallback(() => {
     fetch("/api/notifications")
       .then((res) => res.json())
       .then((data) => {
@@ -59,7 +62,30 @@ export default function Header() {
         setUnreadCount(data.unreadCount ?? 0);
       })
       .catch(() => {});
-  }, [pathname]);
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [pathname, fetchNotifications]);
+
+  // Supabase Realtimeで新着通知を即時反映
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("notifications-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications" },
+        (payload) => {
+          const row = payload.new as Notification;
+          setNotifications((prev) => [row, ...prev].slice(0, 20));
+          setUnreadCount((prev) => prev + 1);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const markAllRead = () => {
     fetch("/api/notifications", {
@@ -71,7 +97,24 @@ export default function Header() {
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     });
   };
-  const notifRef = useRef<HTMLDivElement>(null);
+
+  const handleNotifClick = (n: Notification) => {
+    if (!n.is_read) {
+      fetch("/api/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [n.id] }),
+      });
+      setNotifications((prev) =>
+        prev.map((item) => (item.id === n.id ? { ...item, is_read: true } : item))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+    if (n.link) {
+      setNotifOpen(false);
+      router.push(n.link);
+    }
+  };
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -155,6 +198,7 @@ export default function Header() {
                   notifications.map((n) => (
                     <div
                       key={n.id}
+                      onClick={() => handleNotifClick(n)}
                       className={`px-4 py-2.5 hover:bg-surface-2 transition-colors border-b border-line cursor-pointer ${
                         !n.is_read ? "bg-accent-tint/30" : ""
                       }`}

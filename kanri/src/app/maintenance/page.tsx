@@ -17,7 +17,7 @@ export default async function MaintenancePage() {
         action={<MaintenancePageClient properties={properties} />}
       />
 
-      <MaintenanceTable data={maintenanceRequests} properties={properties} />
+      <MaintenanceTable data={maintenanceRequests} />
     </>
   );
 }

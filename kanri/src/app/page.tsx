@@ -8,6 +8,7 @@ import {
   Megaphone,
   Banknote,
 } from "lucide-react";
+import Link from "next/link";
 import { getDashboardData, getMonthlyTrend } from "@/lib/queries";
 import StatusBadge from "@/components/StatusBadge";
 import PageHeader from "@/components/PageHeader";
@@ -149,13 +150,13 @@ export default async function DashboardPage() {
                 <p className="text-[12px] text-ink-3 text-center py-3">該当なし</p>
               ) : (
                 expiringWithDays.map((c: Record<string, any>) => (
-                  <div key={c.id} className="bg-bg-2 rounded-lg p-2.5 flex flex-col gap-0.5">
+                  <Link key={c.id} href={`/contracts/${c.id}`} className="bg-bg-2 rounded-lg p-2.5 flex flex-col gap-0.5 hover:bg-bg-3 transition-colors">
                     <span className="text-[13px] font-medium">{c.unit?.property?.name} {c.unit?.unit_number}</span>
                     <span className="text-[11px] text-ink-3">{c.tenant?.name}</span>
                     <span className={`font-mono text-[11px] mt-1 ${c.remainingDays <= 30 ? "text-danger" : "text-warn"}`}>
                       あと{c.remainingDays}日 · {c.end_date}
                     </span>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>
@@ -171,10 +172,10 @@ export default async function DashboardPage() {
                 <p className="text-[12px] text-ink-3 text-center py-3">該当なし</p>
               ) : (
                 maintenanceUnits.map((u: Record<string, any>) => (
-                  <div key={u.id} className="bg-bg-2 rounded-lg p-2.5 flex flex-col gap-0.5">
+                  <Link key={u.id} href={`/properties/${u.property_id}/units/${u.id}`} className="bg-bg-2 rounded-lg p-2.5 flex flex-col gap-0.5 hover:bg-bg-3 transition-colors">
                     <span className="text-[13px] font-medium">{u.property?.name} {u.unit_number}</span>
                     <span className="text-[11px] text-ink-3">¥{Number(u.rent).toLocaleString()}/月</span>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>
@@ -190,10 +191,10 @@ export default async function DashboardPage() {
                 <p className="text-[12px] text-ink-3 text-center py-3">該当なし</p>
               ) : (
                 vacantUnits.map((u: Record<string, any>) => (
-                  <div key={u.id} className="bg-bg-2 rounded-lg p-2.5 flex flex-col gap-0.5">
+                  <Link key={u.id} href={`/properties/${u.property_id}/units/${u.id}`} className="bg-bg-2 rounded-lg p-2.5 flex flex-col gap-0.5 hover:bg-bg-3 transition-colors">
                     <span className="text-[13px] font-medium">{u.property?.name} {u.unit_number}</span>
                     <span className="text-[11px] text-ink-3">¥{Number(u.rent).toLocaleString()}/月</span>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>
@@ -241,9 +242,12 @@ export default async function DashboardPage() {
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-line">
             <h2 className="text-[14px] font-semibold">滞納一覧</h2>
-            {s.overdue_count > 0 && (
-              <span className="badge badge-danger font-mono">{s.overdue_count}件 / ¥{s.overdue_amount.toLocaleString()}</span>
-            )}
+            <div className="flex items-center gap-2">
+              {s.overdue_count > 0 && (
+                <span className="badge badge-danger font-mono">{s.overdue_count}件 / ¥{s.overdue_amount.toLocaleString()}</span>
+              )}
+              <Link href="/rent" className="text-[11px] text-accent hover:text-accent-deep transition-colors">すべて見る</Link>
+            </div>
           </div>
           <div className="overflow-x-auto">
             {overdueBillings.length === 0 ? (
@@ -262,7 +266,9 @@ export default async function DashboardPage() {
                   {overdueBillings.map((b: Record<string, any>) => (
                     <tr key={b.id} className="row-hover">
                       <td>
-                        <div className="strong">{b.contract?.tenant?.name || "—"}</div>
+                        <Link href={`/rent/${b.id}`} className="strong hover:text-accent transition-colors">
+                          {b.contract?.tenant?.name || "—"}
+                        </Link>
                       </td>
                       <td className="font-mono text-[12px] text-ink-2">{b.billing_month}</td>
                       <td className="num">¥{Number(b.total_amount).toLocaleString()}</td>
@@ -278,9 +284,12 @@ export default async function DashboardPage() {
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-line">
             <h2 className="text-[14px] font-semibold">修繕対応中</h2>
-            {s.open_maintenance > 0 && (
-              <span className="badge badge-warn font-mono">{s.open_maintenance}件</span>
-            )}
+            <div className="flex items-center gap-2">
+              {s.open_maintenance > 0 && (
+                <span className="badge badge-warn font-mono">{s.open_maintenance}件</span>
+              )}
+              <Link href="/maintenance" className="text-[11px] text-accent hover:text-accent-deep transition-colors">すべて見る</Link>
+            </div>
           </div>
           <div className="overflow-x-auto">
             {activeMaintenance.length === 0 ? (
@@ -293,7 +302,11 @@ export default async function DashboardPage() {
                 <tbody>
                   {activeMaintenance.map((m: Record<string, any>) => (
                     <tr key={m.id} className="row-hover">
-                      <td className="strong">{m.title}</td>
+                      <td>
+                        <Link href={`/maintenance/${m.id}`} className="strong hover:text-accent transition-colors">
+                          {m.title}
+                        </Link>
+                      </td>
                       <td className="text-[12px] text-ink-3">{m.property?.name}</td>
                       <td><StatusBadge status={m.priority} /></td>
                       <td><StatusBadge status={m.status} /></td>
@@ -308,6 +321,7 @@ export default async function DashboardPage() {
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-line">
             <h2 className="text-[14px] font-semibold">契約満了間近（3ヶ月以内）</h2>
+            <Link href="/contracts" className="text-[11px] text-accent hover:text-accent-deep transition-colors">すべて見る</Link>
           </div>
           <div className="overflow-x-auto">
             {expiringContracts.length === 0 ? (
@@ -325,7 +339,11 @@ export default async function DashboardPage() {
                 <tbody>
                   {expiringContracts.map((c: Record<string, any>) => (
                     <tr key={c.id} className="row-hover">
-                      <td className="strong">{c.tenant?.name}</td>
+                      <td>
+                        <Link href={`/contracts/${c.id}`} className="strong hover:text-accent transition-colors">
+                          {c.tenant?.name}
+                        </Link>
+                      </td>
                       <td className="text-[12px] text-ink-3">
                         {c.unit?.property?.name} {c.unit?.unit_number}
                       </td>
@@ -342,6 +360,7 @@ export default async function DashboardPage() {
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-line">
             <h2 className="text-[14px] font-semibold">最近の問い合わせ</h2>
+            <Link href="/inquiries" className="text-[11px] text-accent hover:text-accent-deep transition-colors">すべて見る</Link>
           </div>
           <div className="overflow-x-auto">
             {recentInquiries.length === 0 ? (
@@ -358,7 +377,11 @@ export default async function DashboardPage() {
                 <tbody>
                   {recentInquiries.map((inq: Record<string, any>) => (
                     <tr key={inq.id} className="row-hover">
-                      <td className="strong">{inq.title}</td>
+                      <td>
+                        <Link href={`/inquiries/${inq.id}`} className="strong hover:text-accent transition-colors">
+                          {inq.title}
+                        </Link>
+                      </td>
                       <td><StatusBadge status={inq.inquiry_type} /></td>
                       <td><StatusBadge status={inq.status} /></td>
                     </tr>

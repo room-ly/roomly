@@ -138,6 +138,7 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
   }, []);
 
   const getBadgeKind = (href: string): string | undefined => {
+    if (href === "/") return "danger";
     if (href === "/rent") return "danger";
     if (href === "/contracts") return "warn";
     return undefined;

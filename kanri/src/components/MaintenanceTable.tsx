@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import MonthSelector from "./MonthSelector";
 import FilterableTable from "./FilterableTable";
 import StatusBadge from "./StatusBadge";
-import RowMenu from "./RowMenu";
-import MaintenanceFormModal from "./MaintenanceFormModal";
 
 const categoryLabels: Record<string, string> = {
   plumbing: "水回り",
@@ -16,14 +14,8 @@ const categoryLabels: Record<string, string> = {
   other: "その他",
 };
 
-interface SelectOption {
-  id: string;
-  label: string;
-}
-
 interface MaintenanceTableProps {
   data: Record<string, any>[];
-  properties: SelectOption[];
 }
 
 function getAvailableMonths(data: Record<string, any>[]): string[] {
@@ -39,10 +31,8 @@ function getCurrentMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export default function MaintenanceTable({ data, properties }: MaintenanceTableProps) {
+export default function MaintenanceTable({ data }: MaintenanceTableProps) {
   const router = useRouter();
-  const [editData, setEditData] = useState<Record<string, any> | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
 
   const availableMonths = useMemo(() => getAvailableMonths(data), [data]);
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -59,13 +49,6 @@ export default function MaintenanceTable({ data, properties }: MaintenanceTableP
     const priorityOrder: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
     return [...monthFiltered].sort((a, b) => (priorityOrder[a.priority] ?? 4) - (priorityOrder[b.priority] ?? 4));
   }, [monthFiltered]);
-
-  async function handleDelete(item: Record<string, any>) {
-    if (!confirm("この修繕依頼を削除しますか？")) return;
-    const res = await fetch(`/api/maintenance/${item.id}`, { method: "DELETE" });
-    if (res.ok) router.refresh();
-    else alert("削除に失敗しました");
-  }
 
   return (
     <>
@@ -107,20 +90,8 @@ export default function MaintenanceTable({ data, properties }: MaintenanceTableP
             ),
           },
         ]}
-        actions={(item) => (
-          <RowMenu
-            onEdit={() => { setEditData(item); setModalOpen(true); }}
-            onDelete={() => handleDelete(item)}
-          />
-        )}
+        onRowClick={(item) => router.push(`/maintenance/${item.id}`)}
         rowClassName={(item) => item.priority === "urgent" ? "bg-danger-tint" : ""}
-      />
-
-      <MaintenanceFormModal
-        isOpen={modalOpen}
-        onClose={() => { setModalOpen(false); setEditData(null); }}
-        properties={properties}
-        editData={editData}
       />
     </>
   );

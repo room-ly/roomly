@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { rentPaymentSchema } from "@/lib/schemas";
+import { createNotification } from "@/lib/notify";
 
 // 入金登録（部分入金対応）
 export async function PUT(
@@ -78,6 +79,14 @@ export async function PUT(
         );
       }
 
+      if (newStatus === "paid") {
+        await createNotification({
+          title: `入金完了: ${billing.billing_month}`,
+          type: "info",
+          link: `/rent/${id}`,
+        });
+      }
+
       return NextResponse.json({
         success: true,
         status: newStatus,
@@ -100,6 +109,14 @@ export async function PUT(
         { error: "家賃請求の更新に失敗しました", details: error.message },
         { status: 500 }
       );
+    }
+
+    if (body.status === "overdue") {
+      await createNotification({
+        title: `家賃滞納: ${updated.billing_month}`,
+        type: "danger",
+        link: `/rent/${id}`,
+      });
     }
 
     return NextResponse.json(updated);

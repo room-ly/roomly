@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { inquirySchema } from "@/lib/schemas";
+import { createNotification } from "@/lib/notify";
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +37,15 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    const typeMap: Record<string, "info" | "warning" | "danger"> = {
+      complaint: "danger", urgent: "danger", normal: "info",
+    };
+    await createNotification({
+      title: `問い合わせ: ${parsed.data.title}`,
+      type: typeMap[parsed.data.inquiry_type ?? ""] ?? "info",
+      link: `/inquiries/${inquiry.id}`,
+    });
 
     return NextResponse.json(inquiry, { status: 201 });
   } catch {

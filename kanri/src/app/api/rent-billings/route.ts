@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { rentBillingSchema } from "@/lib/schemas";
+import { createNotification } from "@/lib/notify";
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,6 +42,14 @@ export async function POST(request: NextRequest) {
         { error: "家賃請求の作成に失敗しました", details: error.message },
         { status: 500 }
       );
+    }
+
+    if (billing.status === "overdue") {
+      await createNotification({
+        title: `家賃滞納: ${parsed.data.billing_month}`,
+        type: "danger",
+        link: `/rent/${billing.id}`,
+      });
     }
 
     return NextResponse.json(billing, { status: 201 });

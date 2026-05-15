@@ -19,7 +19,7 @@ export default async function InquiriesPage() {
         action={<InquiriesPageClient properties={properties} units={units} tenants={tenants} />}
       />
 
-      <InquiriesTable inquiries={inquiries} properties={properties} units={units} tenants={tenants} />
+      <InquiriesTable inquiries={inquiries} />
     </>
   );
 }

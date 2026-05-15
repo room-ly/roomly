@@ -8,6 +8,7 @@ export async function GET() {
   } catch {
     return NextResponse.json(
       {
+        "/": 0,
         "/rent": 0,
         "/maintenance": 0,
         "/inquiries": 0,

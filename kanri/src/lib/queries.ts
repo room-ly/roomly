@@ -183,6 +183,136 @@ export async function getContracts() {
   return (data ?? []) as Row[];
 }
 
+// 契約詳細（入居者・部屋・物件・家賃請求履歴付き）
+export async function getContractDetail(id: string) {
+  const supabase = await createClient();
+  const { data: contract, error } = await supabase
+    .from("contracts")
+    .select(
+      "*, tenant:tenants(id, name, name_kana, phone, email, workplace), unit:units(id, unit_number, floor_area_sqm, layout, property:properties(id, name, address))"
+    )
+    .eq("id", id)
+    .single();
+  if (error || !contract) return null;
+
+  const { data: billings } = await supabase
+    .from("rent_billings")
+    .select("id, billing_month, total_amount, status")
+    .eq("contract_id", id)
+    .order("billing_month", { ascending: false })
+    .limit(12);
+
+  return { contract, billings: billings ?? [] };
+}
+
+// 入居者詳細（契約・物件・家賃請求付き）
+export async function getTenantDetail(id: string) {
+  const supabase = await createClient();
+  const { data: tenant, error } = await supabase
+    .from("tenants")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error || !tenant) return null;
+
+  const { data: contracts } = await supabase
+    .from("contracts")
+    .select("*, unit:units(unit_number, property:properties(name))")
+    .eq("tenant_id", id)
+    .order("start_date", { ascending: false });
+
+  return { tenant, contracts: contracts ?? [] };
+}
+
+// 修繕依頼詳細（物件・部屋・対応履歴付き）
+export async function getMaintenanceDetail(id: string) {
+  const supabase = await createClient();
+  const { data: request, error } = await supabase
+    .from("maintenance_requests")
+    .select("*, property:properties(id, name, address), unit:units(unit_number)")
+    .eq("id", id)
+    .single();
+  if (error || !request) return null;
+
+  const { data: logs } = await supabase
+    .from("maintenance_logs")
+    .select("*")
+    .eq("maintenance_request_id", id)
+    .order("created_at", { ascending: false });
+
+  return { request, logs: logs ?? [] };
+}
+
+// 問い合わせ詳細（物件・部屋・入居者・対応履歴付き）
+export async function getInquiryDetail(id: string) {
+  const supabase = await createClient();
+  const { data: inquiry, error } = await supabase
+    .from("inquiries")
+    .select("*, property:properties(id, name), unit:units(unit_number), tenant:tenants(name, phone, email)")
+    .eq("id", id)
+    .single();
+  if (error || !inquiry) return null;
+
+  const { data: logs } = await supabase
+    .from("inquiry_logs")
+    .select("*")
+    .eq("inquiry_id", id)
+    .order("created_at", { ascending: false });
+
+  return { inquiry, logs: logs ?? [] };
+}
+
+// オーナー詳細（物件・送金履歴付き）
+export async function getOwnerDetail(id: string) {
+  const supabase = await createClient();
+  const { data: owner, error } = await supabase
+    .from("owners")
+    .select("*, properties(id, name, units(id, status, rent))")
+    .eq("id", id)
+    .single();
+  if (error || !owner) return null;
+
+  const { data: remittances } = await supabase
+    .from("owner_remittances")
+    .select("id, remittance_month, total_rent, management_fee_deducted, expense_deducted, net_amount, status")
+    .eq("owner_id", id)
+    .order("remittance_month", { ascending: false })
+    .limit(12);
+
+  return { owner, remittances: remittances ?? [] };
+}
+
+// 経費詳細
+export async function getExpenseDetail(id: string) {
+  const supabase = await createClient();
+  const { data: expense, error } = await supabase
+    .from("expenses")
+    .select("*, property:properties(id, name, address), unit:units(unit_number), owner:owners(name)")
+    .eq("id", id)
+    .single();
+  if (error || !expense) return null;
+  return expense;
+}
+
+// 送金詳細（オーナー・明細付き）
+export async function getRemittanceDetail(id: string) {
+  const supabase = await createClient();
+  const { data: remittance, error } = await supabase
+    .from("owner_remittances")
+    .select("*, owner:owners(id, name, phone, email, bank_name, bank_branch, account_type, account_holder)")
+    .eq("id", id)
+    .single();
+  if (error || !remittance) return null;
+
+  const { data: items } = await supabase
+    .from("owner_remittance_items")
+    .select("*, property:properties(name), unit:units(unit_number)")
+    .eq("remittance_id", id)
+    .order("created_at");
+
+  return { remittance, items: items ?? [] };
+}
+
 // 家賃請求一覧（契約・入居者・物件付き）
 export async function getRentBillings() {
   const supabase = await createClient();
@@ -323,12 +453,12 @@ export async function getDashboardData() {
     supabase
       .from("contracts")
       .select(
-        "*, tenant:tenants(name), unit:units(unit_number, property:properties(name))"
+        "*, tenant:tenants(name), unit:units(unit_number, property_id, property:properties(name))"
       )
       .eq("status", "active"),
     supabase
       .from("units")
-      .select("id, unit_number, status, rent, property:properties(name)")
+      .select("id, unit_number, status, rent, property_id, property:properties(name)")
       .in("status", ["maintenance", "vacant"]),
   ]);
 
@@ -571,12 +701,20 @@ export async function getBadgeCounts() {
     }
   }
 
+  const rent = overdueRes.count ?? 0;
+  const maintenance = maintenanceRes.count ?? 0;
+  const inquiries = inquiriesRes.count ?? 0;
+  const contracts = contractsRes.count ?? 0;
+  const moveOut = moveOutRes.count ?? 0;
+  const dashboard = rent + maintenance + inquiries + contracts + moveOut;
+
   return {
-    "/rent": overdueRes.count ?? 0,
-    "/maintenance": maintenanceRes.count ?? 0,
-    "/inquiries": inquiriesRes.count ?? 0,
-    "/contracts": contractsRes.count ?? 0,
-    "/move-out-requests": moveOutRes.count ?? 0,
+    "/": dashboard,
+    "/rent": rent,
+    "/maintenance": maintenance,
+    "/inquiries": inquiries,
+    "/contracts": contracts,
+    "/move-out-requests": moveOut,
     company_name: (companyRes.data?.name as string) ?? "",
     contract_alert_days: alertDays,
     user_name: userName,

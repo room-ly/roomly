@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { maintenanceSchema } from "@/lib/schemas";
+import { createNotification } from "@/lib/notify";
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,6 +36,16 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    const priority = parsed.data.priority ?? "normal";
+    const typeMap: Record<string, "info" | "warning" | "danger"> = {
+      urgent: "danger", high: "warning", normal: "info", low: "info",
+    };
+    await createNotification({
+      title: `修繕依頼: ${parsed.data.title}`,
+      type: typeMap[priority] ?? "info",
+      link: `/maintenance/${maintenance.id}`,
+    });
 
     return NextResponse.json(maintenance, { status: 201 });
   } catch {
