@@ -23,6 +23,7 @@ interface FilterableTableProps {
   searchFields?: string[];
   searchPlaceholder?: string;
   filters?: FilterOption[];
+  initialFilters?: Record<string, string>;
   pageSize?: number;
   rowClassName?: (item: Record<string, any>) => string;
   onRowClick?: (item: Record<string, any>) => void;
@@ -40,6 +41,7 @@ export default function FilterableTable({
   searchFields = [],
   searchPlaceholder = "検索...",
   filters = [],
+  initialFilters = {},
   pageSize = 20,
   rowClassName,
   onRowClick,
@@ -47,7 +49,7 @@ export default function FilterableTable({
   actions,
 }: FilterableTableProps) {
   const [search, setSearch] = useState("");
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const [filterValues, setFilterValues] = useState<Record<string, string>>(initialFilters);
   const [sortKey, setSortKey] = useState<string>("");
   const [sortAsc, setSortAsc] = useState(true);
   const [page, setPage] = useState(1);
@@ -110,7 +112,7 @@ export default function FilterableTable({
       {(searchFields.length > 0 || filters.length > 0) && (
         <div className="flex flex-wrap items-center gap-2 mb-4">
           {searchFields.length > 0 && (
-            <div className="relative w-full sm:w-64">
+            <div className="relative" style={{ flex: "1 1 0", minWidth: 180, maxWidth: 320 }}>
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
               <input
                 type="text"
@@ -130,7 +132,8 @@ export default function FilterableTable({
                 setFilterValues((prev) => ({ ...prev, [f.key]: e.target.value }));
                 setPage(1);
               }}
-              className="input flex-1 sm:flex-none sm:w-40"
+              className="input"
+              style={{ width: "auto", minWidth: 120 }}
             >
               <option value="all">{f.label}: すべて</option>
               {f.options.map((opt) => (
