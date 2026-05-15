@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import FilterableTable from "./FilterableTable";
 import StatusBadge from "./StatusBadge";
 
@@ -11,19 +12,53 @@ interface ContractsTableProps {
 
 export default function ContractsTable({ data, alertDays = 90 }: ContractsTableProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get("filter");
+
+  const enrichedData = useMemo(() => {
+    const now = Date.now();
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return data.map((c) => {
+      let expiryStatus = "none";
+      if (c.end_date) {
+        const remaining = Math.ceil((new Date(c.end_date).getTime() - now) / msPerDay);
+        if (remaining <= 0) expiryStatus = "expired";
+        else if (remaining <= alertDays) expiryStatus = "expiring";
+      }
+      return { ...c, _expiry_status: expiryStatus };
+    });
+  }, [data, alertDays]);
 
   return (
     <FilterableTable
-      data={data}
+      data={enrichedData}
       searchFields={["tenant.name", "unit.property.name", "unit.unit_number"]}
       searchPlaceholder="入居者・物件名で検索..."
+      initialFilters={filterParam === "expiring" ? { _expiry_status: "expiring" } : {}}
       filters={[
+        {
+          key: "_expiry_status",
+          label: "満了状況",
+          options: [
+            { value: "expiring", label: "満了間近" },
+            { value: "expired", label: "期限切れ" },
+            { value: "none", label: "問題なし" },
+          ],
+        },
         {
           key: "contract_type",
           label: "契約種別",
           options: [
             { value: "fixed", label: "定期" },
             { value: "ordinary", label: "普通" },
+          ],
+        },
+        {
+          key: "_move_out_status",
+          label: "退去状態",
+          options: [
+            { value: "pending", label: "退去申請中" },
+            { value: "approved", label: "退去予定" },
           ],
         },
       ]}
@@ -67,6 +102,27 @@ export default function ContractsTable({ data, alertDays = 90 }: ContractsTableP
                 )}
               </div>
             );
+          },
+        },
+        {
+          key: "_move_out_status",
+          label: "状態",
+          render: (item) => {
+            if (item._move_out_status === "pending") {
+              return (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-warn-tint text-warn">
+                  退去申請中
+                </span>
+              );
+            }
+            if (item._move_out_status === "approved") {
+              return (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-danger-tint text-danger">
+                  退去予定 {item._move_out_date}
+                </span>
+              );
+            }
+            return <span className="text-[11px] text-ink-4">入居中</span>;
           },
         },
         {

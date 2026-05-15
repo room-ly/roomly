@@ -170,17 +170,27 @@ export async function getTenantsWithInfo() {
   });
 }
 
-// 契約一覧（入居者・部屋・物件付き）
+// 契約一覧（入居者・部屋・物件・退去申請付き）
 export async function getContracts() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("contracts")
     .select(
-      "*, tenant:tenants(name), unit:units(unit_number, property:properties(name))"
+      "*, tenant:tenants(name), unit:units(unit_number, property:properties(name)), move_out_requests(id, status, desired_move_out_date)"
     )
     .order("start_date", { ascending: false });
   if (error) throw error;
-  return (data ?? []) as Row[];
+
+  return (data ?? []).map((c: Row) => {
+    const reqs = (c.move_out_requests ?? []) as Row[];
+    const pending = reqs.find((r: Row) => r.status === "pending");
+    const approved = reqs.find((r: Row) => r.status === "approved");
+    return {
+      ...c,
+      _move_out_status: pending ? "pending" : approved ? "approved" : null,
+      _move_out_date: pending?.desired_move_out_date ?? approved?.desired_move_out_date ?? null,
+    };
+  }) as Row[];
 }
 
 // 契約詳細（入居者・部屋・物件・家賃請求履歴付き）
@@ -508,6 +518,18 @@ export async function getDashboardData() {
   );
 
   const now = new Date();
+  const staleThreshold = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+
+  const alertMaintenance = activeMaintenance.filter(
+    (m: Row) =>
+      (m.priority === "high" || m.priority === "urgent") ||
+      new Date(m.created_at) < staleThreshold
+  );
+  const alertInquiries = openInquiries.filter(
+    (i: Row) =>
+      (i.priority === "high" || i.priority === "urgent") ||
+      new Date(i.created_at) < staleThreshold
+  );
   const expiringContracts = allContracts.filter((c: Row) => {
     if (!c.end_date) return false;
     const end = new Date(c.end_date);
@@ -534,7 +556,9 @@ export async function getDashboardData() {
       overdue_count: overdueBillings.length,
       overdue_amount: overdueAmount,
       open_maintenance: activeMaintenance.length,
+      alert_maintenance: alertMaintenance.length,
       open_inquiries: openInquiries.length,
+      alert_inquiries: alertInquiries.length,
       expiring_contracts: expiringContracts.length,
     },
     overdueBillings,
@@ -666,7 +690,7 @@ export async function getBadgeCounts() {
   staleThreshold.setDate(staleThreshold.getDate() - 3);
   const staleDate = staleThreshold.toISOString();
 
-  const [overdueRes, maintenanceUrgentRes, maintenanceStaleRes, inquiriesUrgentRes, inquiriesStaleRes, moveOutRes, companyRes, authRes] =
+  const [overdueRes, maintenanceUrgentRes, maintenanceStaleRes, inquiriesUrgentRes, inquiriesStaleRes, companyRes, authRes] =
     await Promise.all([
       supabase
         .from("rent_billings")
@@ -698,10 +722,6 @@ export async function getBadgeCounts() {
         .in("status", ["open", "in_progress"])
         .in("priority", ["low", "normal"])
         .lt("created_at", staleDate),
-      supabase
-        .from("move_out_requests")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pending"),
       supabase.from("companies").select("name, contract_alert_days").single(),
       supabase.auth.getUser(),
     ]);
@@ -737,9 +757,8 @@ export async function getBadgeCounts() {
   const rent = overdueRes.count ?? 0;
   const maintenance = (maintenanceUrgentRes.count ?? 0) + (maintenanceStaleRes.count ?? 0);
   const inquiries = (inquiriesUrgentRes.count ?? 0) + (inquiriesStaleRes.count ?? 0);
-  const contracts = (contractsRes.count ?? 0) + (moveOutRes.count ?? 0);
-  const moveOut = moveOutRes.count ?? 0;
-  const dashboard = rent + maintenance + inquiries + contracts + moveOut;
+  const contracts = contractsRes.count ?? 0;
+  const dashboard = rent + maintenance + inquiries + contracts;
 
   return {
     "/": dashboard,
