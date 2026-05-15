@@ -263,18 +263,17 @@ export default async function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {overdueBillings.map((b: Record<string, any>) => (
-                    <tr key={b.id} className="row-hover">
-                      <td>
-                        <Link href={`/rent/${b.id}`} className="strong hover:text-accent transition-colors">
-                          {b.contract?.tenant?.name || "—"}
-                        </Link>
-                      </td>
-                      <td className="font-mono text-[12px] text-ink-2">{b.billing_month}</td>
-                      <td className="num">¥{Number(b.total_amount).toLocaleString()}</td>
-                      <td><StatusBadge status={b.status} /></td>
-                    </tr>
-                  ))}
+                  {overdueBillings.map((b: Record<string, any>) => {
+                    const href = `/rent/${b.id}`;
+                    return (
+                      <tr key={b.id} className="row-hover">
+                        <td><Link href={href} className="block strong">{b.contract?.tenant?.name || "—"}</Link></td>
+                        <td><Link href={href} className="block font-mono text-[12px] text-ink-2">{b.billing_month}</Link></td>
+                        <td><Link href={href} className="block num">¥{Number(b.total_amount).toLocaleString()}</Link></td>
+                        <td><Link href={href} className="block"><StatusBadge status={b.status} /></Link></td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
@@ -300,18 +299,17 @@ export default async function DashboardPage() {
                   <tr><th>件名</th><th>物件</th><th>優先度</th><th>状態</th></tr>
                 </thead>
                 <tbody>
-                  {activeMaintenance.map((m: Record<string, any>) => (
-                    <tr key={m.id} className="row-hover">
-                      <td>
-                        <Link href={`/maintenance/${m.id}`} className="strong hover:text-accent transition-colors">
-                          {m.title}
-                        </Link>
-                      </td>
-                      <td className="text-[12px] text-ink-3">{m.property?.name}</td>
-                      <td><StatusBadge status={m.priority} /></td>
-                      <td><StatusBadge status={m.status} /></td>
-                    </tr>
-                  ))}
+                  {activeMaintenance.map((m: Record<string, any>) => {
+                    const href = `/maintenance/${m.id}`;
+                    return (
+                      <tr key={m.id} className="row-hover">
+                        <td><Link href={href} className="block strong">{m.title}</Link></td>
+                        <td><Link href={href} className="block text-[12px] text-ink-3">{m.property?.name}</Link></td>
+                        <td><Link href={href} className="block"><StatusBadge status={m.priority} /></Link></td>
+                        <td><Link href={href} className="block"><StatusBadge status={m.status} /></Link></td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
@@ -337,20 +335,17 @@ export default async function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {expiringContracts.map((c: Record<string, any>) => (
-                    <tr key={c.id} className="row-hover">
-                      <td>
-                        <Link href={`/contracts/${c.id}`} className="strong hover:text-accent transition-colors">
-                          {c.tenant?.name}
-                        </Link>
-                      </td>
-                      <td className="text-[12px] text-ink-3">
-                        {c.unit?.property?.name} {c.unit?.unit_number}
-                      </td>
-                      <td className="font-mono text-[12px]">{c.end_date}</td>
-                      <td><StatusBadge status={c.contract_type} /></td>
-                    </tr>
-                  ))}
+                  {expiringContracts.map((c: Record<string, any>) => {
+                    const href = `/contracts/${c.id}`;
+                    return (
+                      <tr key={c.id} className="row-hover">
+                        <td><Link href={href} className="block strong">{c.tenant?.name}</Link></td>
+                        <td><Link href={href} className="block text-[12px] text-ink-3">{c.unit?.property?.name} {c.unit?.unit_number}</Link></td>
+                        <td><Link href={href} className="block font-mono text-[12px]">{c.end_date}</Link></td>
+                        <td><Link href={href} className="block"><StatusBadge status={c.contract_type} /></Link></td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
@@ -375,17 +370,16 @@ export default async function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentInquiries.map((inq: Record<string, any>) => (
-                    <tr key={inq.id} className="row-hover">
-                      <td>
-                        <Link href={`/inquiries/${inq.id}`} className="strong hover:text-accent transition-colors">
-                          {inq.title}
-                        </Link>
-                      </td>
-                      <td><StatusBadge status={inq.inquiry_type} /></td>
-                      <td><StatusBadge status={inq.status} /></td>
-                    </tr>
-                  ))}
+                  {recentInquiries.map((inq: Record<string, any>) => {
+                    const href = `/inquiries/${inq.id}`;
+                    return (
+                      <tr key={inq.id} className="row-hover">
+                        <td><Link href={href} className="block strong">{inq.title}</Link></td>
+                        <td><Link href={href} className="block"><StatusBadge status={inq.inquiry_type} /></Link></td>
+                        <td><Link href={href} className="block"><StatusBadge status={inq.status} /></Link></td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
