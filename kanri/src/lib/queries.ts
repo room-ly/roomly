@@ -193,6 +193,7 @@ export async function getContractDetail(id: string) {
     )
     .eq("id", id)
     .single();
+  if (error) console.error("[getContractDetail]", id, error.message, error.code);
   if (error || !contract) return null;
 
   const { data: billings } = await supabase
