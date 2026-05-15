@@ -195,14 +195,21 @@ export async function getContractDetail(id: string) {
     .single();
   if (error || !contract) return null;
 
-  const { data: billings } = await supabase
-    .from("rent_billings")
-    .select("id, billing_month, total_amount, status")
-    .eq("contract_id", id)
-    .order("billing_month", { ascending: false })
-    .limit(12);
+  const [{ data: billings }, { data: moveOutRequests }] = await Promise.all([
+    supabase
+      .from("rent_billings")
+      .select("id, billing_month, total_amount, status")
+      .eq("contract_id", id)
+      .order("billing_month", { ascending: false })
+      .limit(12),
+    supabase
+      .from("move_out_requests")
+      .select("*")
+      .eq("contract_id", id)
+      .order("created_at", { ascending: false }),
+  ]);
 
-  return { contract, billings: billings ?? [] };
+  return { contract, billings: billings ?? [], moveOutRequests: moveOutRequests ?? [] };
 }
 
 // 入居者詳細（契約・物件・家賃請求付き）
@@ -655,20 +662,42 @@ export async function getOwnersForSelect() {
 export async function getBadgeCounts() {
   const supabase = await createClient();
 
-  const [overdueRes, maintenanceRes, inquiriesRes, moveOutRes, companyRes, authRes] =
+  const staleThreshold = new Date();
+  staleThreshold.setDate(staleThreshold.getDate() - 3);
+  const staleDate = staleThreshold.toISOString();
+
+  const [overdueRes, maintenanceUrgentRes, maintenanceStaleRes, inquiriesUrgentRes, inquiriesStaleRes, moveOutRes, companyRes, authRes] =
     await Promise.all([
       supabase
         .from("rent_billings")
         .select("id", { count: "exact", head: true })
         .eq("status", "overdue"),
+      // 修繕: 緊急（high/urgent）で未解決
       supabase
         .from("maintenance_requests")
         .select("id", { count: "exact", head: true })
-        .in("status", ["open", "in_progress"]),
+        .in("status", ["open", "in_progress"])
+        .in("priority", ["high", "urgent"]),
+      // 修繕: 3日以上放置で未解決
+      supabase
+        .from("maintenance_requests")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["open", "in_progress"])
+        .in("priority", ["low", "normal"])
+        .lt("created_at", staleDate),
+      // 問い合わせ: 緊急（high/urgent）で未解決
       supabase
         .from("inquiries")
         .select("id", { count: "exact", head: true })
-        .in("status", ["open", "in_progress"]),
+        .in("status", ["open", "in_progress"])
+        .in("priority", ["high", "urgent"]),
+      // 問い合わせ: 3日以上放置で未解決
+      supabase
+        .from("inquiries")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["open", "in_progress"])
+        .in("priority", ["low", "normal"])
+        .lt("created_at", staleDate),
       supabase
         .from("move_out_requests")
         .select("id", { count: "exact", head: true })
@@ -706,9 +735,9 @@ export async function getBadgeCounts() {
   }
 
   const rent = overdueRes.count ?? 0;
-  const maintenance = maintenanceRes.count ?? 0;
-  const inquiries = inquiriesRes.count ?? 0;
-  const contracts = contractsRes.count ?? 0;
+  const maintenance = (maintenanceUrgentRes.count ?? 0) + (maintenanceStaleRes.count ?? 0);
+  const inquiries = (inquiriesUrgentRes.count ?? 0) + (inquiriesStaleRes.count ?? 0);
+  const contracts = (contractsRes.count ?? 0) + (moveOutRes.count ?? 0);
   const moveOut = moveOutRes.count ?? 0;
   const dashboard = rent + maintenance + inquiries + contracts + moveOut;
 
@@ -718,7 +747,6 @@ export async function getBadgeCounts() {
     "/maintenance": maintenance,
     "/inquiries": inquiries,
     "/contracts": contracts,
-    "/move-out-requests": moveOut,
     company_name: (companyRes.data?.name as string) ?? "",
     contract_alert_days: alertDays,
     user_name: userName,

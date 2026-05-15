@@ -4,6 +4,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { getContractDetail, getUnitsForSelect, getTenantsForSelect } from "@/lib/queries";
 import StatusBadge from "@/components/StatusBadge";
 import ContractDetailClient from "@/components/ContractDetailClient";
+import MoveOutReviewClient from "@/components/MoveOutReviewClient";
 
 const contractTypeLabels: Record<string, string> = {
   fixed: "定期借家",
@@ -41,7 +42,7 @@ export default async function ContractDetailPage({
   ]);
   if (!result) notFound();
 
-  const { contract, billings } = result;
+  const { contract, billings, moveOutRequests } = result;
   const tenant = contract.tenant;
   const unit = contract.unit;
   const property = unit?.property;
@@ -152,6 +153,60 @@ export default async function ContractDetailPage({
                   })}
                 </tbody>
               </table>
+            </section>
+          )}
+
+          {/* 退去申請 */}
+          {moveOutRequests.length > 0 && (
+            <section>
+              <h2 className="text-[11px] font-semibold text-ink-4 uppercase tracking-[0.08em] mb-3">退去申請</h2>
+              <div className="space-y-3">
+                {moveOutRequests.map((req: any) => (
+                  <div key={req.id} className={`border rounded-lg p-4 ${req.status === "pending" ? "border-warn border-2" : "border-line"}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {req.status === "pending" && (
+                          <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-warn-tint text-warn">未処理</span>
+                        )}
+                        <span className="text-[13px] font-medium">退去希望日: {req.desired_move_out_date}</span>
+                      </div>
+                      <span className="text-[12px] text-ink-3">申請日: {req.created_at?.slice(0, 10)}</span>
+                    </div>
+
+                    {req.reason && (
+                      <div className="text-[13px] mb-2">
+                        <span className="text-ink-3">理由: </span>
+                        <span>{req.reason}</span>
+                      </div>
+                    )}
+
+                    {(req.forwarding_address || req.forwarding_phone) && (
+                      <div className="text-[13px] mb-2">
+                        <span className="text-ink-3">転居先: </span>
+                        {req.forwarding_postal_code && <span>〒{req.forwarding_postal_code} </span>}
+                        {req.forwarding_address && <span>{req.forwarding_address} </span>}
+                        {req.forwarding_phone && <span>TEL: {req.forwarding_phone}</span>}
+                      </div>
+                    )}
+
+                    {req.bank_name && (
+                      <div className="text-[13px] mb-2">
+                        <span className="text-ink-3">敷金返還先: </span>
+                        <span>{req.bank_name} {req.bank_branch} {req.bank_account_type} {req.bank_account_number}（{req.bank_account_holder}）</span>
+                      </div>
+                    )}
+
+                    {req.review_notes && req.status !== "pending" && (
+                      <div className="text-[13px] mb-2">
+                        <span className="text-ink-3">備考: </span>
+                        <span>{req.review_notes}</span>
+                      </div>
+                    )}
+
+                    <MoveOutReviewClient request={req} />
+                  </div>
+                ))}
+              </div>
             </section>
           )}
         </div>

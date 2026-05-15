@@ -13,7 +13,6 @@ export async function GET() {
         "/maintenance": 0,
         "/inquiries": 0,
         "/contracts": 0,
-        "/move-out-requests": 0,
         company_name: "",
         contract_alert_days: 90,
         user_name: "",

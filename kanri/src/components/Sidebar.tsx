@@ -20,7 +20,6 @@ import {
   LogOut,
   MoreHorizontal,
   Settings,
-  DoorOpen,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import type { SidebarInitialData } from "./AppShell";
@@ -48,7 +47,6 @@ const navGroups = [
       { href: "/maintenance", label: "修繕", icon: Wrench },
       { href: "/expenses", label: "経費", icon: Receipt },
       { href: "/inquiries", label: "問い合わせ", icon: MessageSquare },
-      { href: "/move-out-requests", label: "退去申請", icon: DoorOpen },
     ] as NavItem[],
   },
   {
@@ -140,6 +138,8 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
   const getBadgeKind = (href: string): string | undefined => {
     if (href === "/") return "danger";
     if (href === "/rent") return "danger";
+    if (href === "/maintenance") return "danger";
+    if (href === "/inquiries") return "danger";
     if (href === "/contracts") return "warn";
     return undefined;
   };
