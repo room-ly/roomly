@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { getContractDetail, getUnitsForSelect, getTenantsForSelect } from "@/lib/queries";
 import StatusBadge from "@/components/StatusBadge";
 import ContractDetailClient from "@/components/ContractDetailClient";
@@ -9,6 +9,24 @@ const contractTypeLabels: Record<string, string> = {
   fixed: "定期借家",
   ordinary: "普通借家",
 };
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
+      <span className="text-ink-3 shrink-0 w-[120px]">{label}</span>
+      <span className="text-right">{children}</span>
+    </div>
+  );
+}
+
+function RefLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="inline-flex items-center gap-1 text-accent underline underline-offset-2 decoration-accent/40 hover:decoration-accent transition-colors">
+      {children}
+      <ExternalLink size={11} className="opacity-50" />
+    </Link>
+  );
+}
 
 export default async function ContractDetailPage({
   params,
@@ -32,110 +50,87 @@ export default async function ContractDetailPage({
     ? Math.ceil((new Date(contract.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null;
 
-  const remainingColor = remainingDays === null ? "" : remainingDays <= 0 ? "text-danger" : remainingDays <= 30 ? "text-danger" : remainingDays <= 90 ? "text-warn" : "";
-
   return (
     <>
-      <div className="mb-5">
+      {/* ヘッダー */}
+      <div className="mb-6">
         <Link
           href="/contracts"
-          className="inline-flex items-center gap-1 text-[13px] text-ink-3 hover:text-accent mb-3 transition-colors"
+          className="inline-flex items-center gap-1 text-[12px] text-ink-4 hover:text-ink-2 mb-4 transition-colors"
         >
-          <ArrowLeft size={13} />
-          契約一覧に戻る
+          <ArrowLeft size={12} />
+          契約一覧
         </Link>
+
         <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold">
-              {tenant?.name}
+          <div>
+            <div className="flex items-center gap-2.5 mb-1">
+              <StatusBadge status={contract.status} />
+              <StatusBadge status={contract.contract_type} />
+              {remainingDays !== null && remainingDays <= 90 && (
+                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                  remainingDays <= 30 ? "bg-danger-tint text-danger" : "bg-warn-tint text-warn"
+                }`}>
+                  {remainingDays <= 0 ? "期限切れ" : `あと${remainingDays}日`}
+                </span>
+              )}
+            </div>
+            <h1 className="text-[20px] font-semibold tracking-tight leading-tight">
+              {property?.name} {unit?.unit_number}
             </h1>
-            <StatusBadge status={contract.contract_type} />
-            <StatusBadge status={contract.status} />
+            <p className="text-[13px] text-ink-3 mt-0.5">{contract.start_date} 〜 {contract.end_date || "期限なし"}</p>
           </div>
           <ContractDetailClient contract={contract} units={units} tenants={tenants} />
         </div>
-        <p className="text-[13px] text-ink-3 mt-1">
-          {property?.name} {unit?.unit_number}
-          {property?.address && <span className="ml-2 text-ink-4">({property.address})</span>}
-        </p>
       </div>
 
-      {remainingDays !== null && remainingDays <= 90 && (
-        <div className={`text-[13px] px-4 py-2.5 mb-5 border-l-[3px] bg-bg-2 ${remainingDays <= 30 ? "border-l-danger" : "border-l-warn"}`}>
-          <span className={`font-semibold ${remainingColor}`}>
-            {remainingDays <= 0 ? "契約期限切れ" : `契約満了まであと${remainingDays}日`}
-          </span>
-          <span className="text-ink-3 ml-3">満了日: {contract.end_date}</span>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        <div className="space-y-6">
-          {/* 契約情報テーブル */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
+        {/* メインカラム */}
+        <div className="space-y-8">
+          {/* 賃料 */}
           <section>
-            <h2 className="text-[13px] font-semibold text-ink-3 uppercase tracking-wider mb-2">契約情報</h2>
-            <table className="w-full text-[13px] border-t border-line">
-              <tbody>
-                <tr className="border-b border-line">
-                  <td className="py-2.5 pr-4 text-ink-3 w-[140px]">契約種別</td>
-                  <td className="py-2.5 font-medium">{contractTypeLabels[contract.contract_type] || contract.contract_type}</td>
-                </tr>
-                <tr className="border-b border-line">
-                  <td className="py-2.5 pr-4 text-ink-3">契約期間</td>
-                  <td className="py-2.5 font-medium">{contract.start_date} 〜 {contract.end_date || "期限なし"}</td>
-                </tr>
-                <tr className="border-b border-line">
-                  <td className="py-2.5 pr-4 text-ink-3">賃料</td>
-                  <td className="py-2.5 font-semibold tabular-nums">¥{Number(contract.rent).toLocaleString()}</td>
-                </tr>
-                <tr className="border-b border-line">
-                  <td className="py-2.5 pr-4 text-ink-3">管理費</td>
-                  <td className="py-2.5 tabular-nums">¥{Number(contract.management_fee).toLocaleString()}</td>
-                </tr>
-                {Number(contract.deposit) > 0 && (
-                  <tr className="border-b border-line">
-                    <td className="py-2.5 pr-4 text-ink-3">敷金</td>
-                    <td className="py-2.5 tabular-nums">¥{Number(contract.deposit).toLocaleString()}</td>
-                  </tr>
-                )}
-                {Number(contract.key_money) > 0 && (
-                  <tr className="border-b border-line">
-                    <td className="py-2.5 pr-4 text-ink-3">礼金</td>
-                    <td className="py-2.5 tabular-nums">¥{Number(contract.key_money).toLocaleString()}</td>
-                  </tr>
-                )}
-                {Number(contract.renewal_fee) > 0 && (
-                  <tr className="border-b border-line">
-                    <td className="py-2.5 pr-4 text-ink-3">更新料</td>
-                    <td className="py-2.5 tabular-nums">¥{Number(contract.renewal_fee).toLocaleString()}</td>
-                  </tr>
-                )}
-                {contract.guarantor_name && (
-                  <tr className="border-b border-line">
-                    <td className="py-2.5 pr-4 text-ink-3">保証人</td>
-                    <td className="py-2.5">{contract.guarantor_name}{contract.guarantor_phone && <span className="text-ink-3 ml-2">{contract.guarantor_phone}</span>}</td>
-                  </tr>
-                )}
-                {contract.insurance_company && (
-                  <tr className="border-b border-line">
-                    <td className="py-2.5 pr-4 text-ink-3">保険会社</td>
-                    <td className="py-2.5">{contract.insurance_company}</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <h2 className="text-[11px] font-semibold text-ink-4 uppercase tracking-[0.08em] mb-3">賃料・費用</h2>
+            <div className="border-t border-line">
+              <Field label="賃料"><span className="font-semibold tabular-nums">¥{Number(contract.rent).toLocaleString()}</span></Field>
+              <Field label="管理費"><span className="tabular-nums">¥{Number(contract.management_fee).toLocaleString()}</span></Field>
+              <Field label="月額合計"><span className="font-semibold tabular-nums">¥{(Number(contract.rent) + Number(contract.management_fee)).toLocaleString()}</span></Field>
+              {Number(contract.deposit) > 0 && (
+                <Field label="敷金"><span className="tabular-nums">¥{Number(contract.deposit).toLocaleString()}</span></Field>
+              )}
+              {Number(contract.key_money) > 0 && (
+                <Field label="礼金"><span className="tabular-nums">¥{Number(contract.key_money).toLocaleString()}</span></Field>
+              )}
+              {Number(contract.renewal_fee) > 0 && (
+                <Field label="更新料"><span className="tabular-nums">¥{Number(contract.renewal_fee).toLocaleString()}</span></Field>
+              )}
+            </div>
+          </section>
+
+          {/* 契約条件 */}
+          <section>
+            <h2 className="text-[11px] font-semibold text-ink-4 uppercase tracking-[0.08em] mb-3">契約条件</h2>
+            <div className="border-t border-line">
+              <Field label="契約種別">{contractTypeLabels[contract.contract_type] || contract.contract_type}</Field>
+              <Field label="契約期間">{contract.start_date} 〜 {contract.end_date || "期限なし"}</Field>
+              {contract.guarantor_name && (
+                <Field label="保証人">
+                  {contract.guarantor_name}
+                  {contract.guarantor_phone && <span className="text-ink-3 ml-2 text-[12px]">{contract.guarantor_phone}</span>}
+                </Field>
+              )}
+              {contract.insurance_company && (
+                <Field label="保険会社">{contract.insurance_company}</Field>
+              )}
+            </div>
             {contract.notes && (
-              <div className="mt-3 text-[13px]">
-                <span className="text-ink-3">備考:</span>
-                <span className="ml-2 whitespace-pre-wrap">{contract.notes}</span>
-              </div>
+              <p className="text-[13px] text-ink-2 mt-3 whitespace-pre-wrap">{contract.notes}</p>
             )}
           </section>
 
           {/* 家賃請求履歴 */}
           {billings.length > 0 && (
             <section>
-              <h2 className="text-[13px] font-semibold text-ink-3 uppercase tracking-wider mb-2">家賃請求履歴（直近12ヶ月）</h2>
+              <h2 className="text-[11px] font-semibold text-ink-4 uppercase tracking-[0.08em] mb-3">請求履歴（直近12ヶ月）</h2>
               <table className="tbl">
                 <thead>
                   <tr>
@@ -150,7 +145,7 @@ export default async function ContractDetailPage({
                     return (
                       <tr key={b.id} className={`row-hover row-link ${b.status === "overdue" ? "bg-danger-tint" : ""}`}>
                         <td><Link href={href}>{b.billing_month}</Link></td>
-                        <td><Link href={href} className="tabular-nums text-right">{`¥${Number(b.total_amount).toLocaleString()}`}</Link></td>
+                        <td><Link href={href} className="tabular-nums text-right">¥{Number(b.total_amount).toLocaleString()}</Link></td>
                         <td><Link href={href}><StatusBadge status={b.status} /></Link></td>
                       </tr>
                     );
@@ -162,74 +157,63 @@ export default async function ContractDetailPage({
         </div>
 
         {/* サイドバー */}
-        <div className="space-y-6">
+        <div className="space-y-8">
+          {/* 入居者 */}
           <section>
-            <h2 className="text-[13px] font-semibold text-ink-3 uppercase tracking-wider mb-2">入居者</h2>
-            <table className="w-full text-[13px] border-t border-line">
-              <tbody>
-                <tr className="border-b border-line">
-                  <td className="py-2.5 pr-4 text-ink-3 w-[80px]">氏名</td>
-                  <td className="py-2.5">
-                    <Link href={`/tenants/${tenant?.id}`} className="font-medium text-accent hover:underline">{tenant?.name || "—"}</Link>
-                    {tenant?.name_kana && <span className="text-ink-4 ml-2 text-[12px]">{tenant.name_kana}</span>}
-                  </td>
-                </tr>
-                {tenant?.phone && (
-                  <tr className="border-b border-line">
-                    <td className="py-2.5 pr-4 text-ink-3">電話</td>
-                    <td className="py-2.5"><a href={`tel:${tenant.phone}`} className="text-accent hover:underline">{tenant.phone}</a></td>
-                  </tr>
-                )}
-                {tenant?.email && (
-                  <tr className="border-b border-line">
-                    <td className="py-2.5 pr-4 text-ink-3">メール</td>
-                    <td className="py-2.5"><a href={`mailto:${tenant.email}`} className="text-accent hover:underline">{tenant.email}</a></td>
-                  </tr>
-                )}
-                {tenant?.workplace && (
-                  <tr className="border-b border-line">
-                    <td className="py-2.5 pr-4 text-ink-3">勤務先</td>
-                    <td className="py-2.5">{tenant.workplace}</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <h2 className="text-[11px] font-semibold text-ink-4 uppercase tracking-[0.08em] mb-3">入居者</h2>
+            <div className="border-t border-line">
+              <div className="py-3 border-b border-line">
+                <RefLink href={`/tenants/${tenant?.id}`}>{tenant?.name || "—"}</RefLink>
+                {tenant?.name_kana && <span className="text-ink-4 ml-2 text-[12px]">{tenant.name_kana}</span>}
+              </div>
+              {tenant?.phone && (
+                <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
+                  <span className="text-ink-3">電話</span>
+                  <a href={`tel:${tenant.phone}`} className="text-accent underline underline-offset-2 decoration-accent/40 hover:decoration-accent">{tenant.phone}</a>
+                </div>
+              )}
+              {tenant?.email && (
+                <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
+                  <span className="text-ink-3">メール</span>
+                  <a href={`mailto:${tenant.email}`} className="text-accent underline underline-offset-2 decoration-accent/40 hover:decoration-accent text-[12px]">{tenant.email}</a>
+                </div>
+              )}
+              {tenant?.workplace && (
+                <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
+                  <span className="text-ink-3">勤務先</span>
+                  <span>{tenant.workplace}</span>
+                </div>
+              )}
+            </div>
           </section>
 
+          {/* 物件 */}
           <section>
-            <h2 className="text-[13px] font-semibold text-ink-3 uppercase tracking-wider mb-2">物件</h2>
-            <table className="w-full text-[13px] border-t border-line">
-              <tbody>
-                <tr className="border-b border-line">
-                  <td className="py-2.5 pr-4 text-ink-3 w-[80px]">物件名</td>
-                  <td className="py-2.5">
-                    <Link href={`/properties/${property?.id}`} className="text-accent hover:underline">{property?.name || "—"}</Link>
-                  </td>
-                </tr>
-                {property?.address && (
-                  <tr className="border-b border-line">
-                    <td className="py-2.5 pr-4 text-ink-3">住所</td>
-                    <td className="py-2.5 text-ink-2">{property.address}</td>
-                  </tr>
-                )}
-                <tr className="border-b border-line">
-                  <td className="py-2.5 pr-4 text-ink-3">部屋</td>
-                  <td className="py-2.5">{unit?.unit_number || "—"}</td>
-                </tr>
-                {unit?.layout && (
-                  <tr className="border-b border-line">
-                    <td className="py-2.5 pr-4 text-ink-3">間取り</td>
-                    <td className="py-2.5">{unit.layout}</td>
-                  </tr>
-                )}
-                {unit?.area_sqm && (
-                  <tr className="border-b border-line">
-                    <td className="py-2.5 pr-4 text-ink-3">面積</td>
-                    <td className="py-2.5">{unit.area_sqm}㎡</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <h2 className="text-[11px] font-semibold text-ink-4 uppercase tracking-[0.08em] mb-3">物件</h2>
+            <div className="border-t border-line">
+              <div className="py-3 border-b border-line">
+                <RefLink href={`/properties/${property?.id}`}>{property?.name || "—"}</RefLink>
+                <span className="text-ink-2 ml-2">{unit?.unit_number}</span>
+              </div>
+              {property?.address && (
+                <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
+                  <span className="text-ink-3">住所</span>
+                  <span className="text-ink-2">{property.address}</span>
+                </div>
+              )}
+              {unit?.layout && (
+                <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
+                  <span className="text-ink-3">間取り</span>
+                  <span>{unit.layout}</span>
+                </div>
+              )}
+              {unit?.area_sqm && (
+                <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
+                  <span className="text-ink-3">面積</span>
+                  <span>{unit.area_sqm}㎡</span>
+                </div>
+              )}
+            </div>
           </section>
         </div>
       </div>
