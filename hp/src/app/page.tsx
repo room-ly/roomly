@@ -53,7 +53,7 @@ export default function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Hero */}
-      <section className="overflow-hidden px-7 pt-20 pb-16 sm:pt-24 sm:pb-16">
+      <section data-section="hero" className="overflow-hidden px-7 pt-20 pb-16 sm:pt-24 sm:pb-16">
         <div className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-12 sm:grid-cols-[1.05fr_1fr] sm:gap-16">
           <div>
             <span className="eyebrow">SaaS for Property Management</span>
@@ -210,7 +210,7 @@ export default function Home() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="bg-rm-surface-tint px-7 py-24">
+      <section id="pricing" data-section="pricing" className="bg-rm-surface-tint px-7 py-24">
         <div className="mx-auto max-w-[1180px]">
           <SectionHead eyebrow="Pricing" desc="10区画まで完全無料。全プランで全機能が使えます。">
             区画数で決まる、<Em>シンプル料金</Em>。
@@ -283,7 +283,7 @@ export default function Home() {
       </section>
 
       {/* Final CTA */}
-      <section className="px-7 py-24">
+      <section data-section="cta" className="px-7 py-24">
         <Reveal className="mx-auto max-w-[1180px]">
           <div className="relative overflow-hidden rounded-3xl bg-rm-primary text-rm-bg px-8 py-20 text-center sm:px-12">
             <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(600px circle at 20% 0%, color-mix(in srgb, var(--rm-accent) 30%, transparent), transparent 60%), radial-gradient(500px circle at 80% 100%, color-mix(in srgb, var(--rm-accent) 18%, transparent), transparent 60%)" }} />

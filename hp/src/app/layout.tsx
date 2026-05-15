@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/lib/theme-provider";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import { DemoClickTracker } from "@/components/DemoButton";
 
 const notoSansJP = Noto_Sans_JP({
   subsets: ["latin"],
@@ -53,6 +54,7 @@ export default function RootLayout({
     <html lang="ja" suppressHydrationWarning>
       <body className={`${notoSansJP.className} ${instrumentSerif.variable} antialiased`}>
         <GoogleAnalytics />
+        <DemoClickTracker />
         <ThemeProvider>
           <Header />
           <main className="min-h-screen">{children}</main>

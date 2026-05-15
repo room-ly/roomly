@@ -38,7 +38,7 @@ export default function PricingPage() {
   return (
     <>
       {/* ヒーロー */}
-      <section className="px-7 pt-20 pb-16 text-center sm:pt-28">
+      <section data-section="pricing" className="px-7 pt-20 pb-16 text-center sm:pt-28">
         <div className="mx-auto max-w-3xl">
           <span className="eyebrow">Pricing</span>
           <h1 className="mt-6 text-[clamp(32px,5vw,56px)] font-medium leading-tight tracking-tight text-rm-primary">
@@ -92,7 +92,7 @@ export default function PricingPage() {
       </section>
 
       {/* CTA */}
-      <section className="px-7 py-24">
+      <section data-section="cta" className="px-7 py-24">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-[clamp(24px,3vw,36px)] font-medium tracking-tight text-rm-primary">
             まずは無料で試してみませんか？

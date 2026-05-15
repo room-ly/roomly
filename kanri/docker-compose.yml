@@ -1,0 +1,13 @@
+services:
+  kanri:
+    build: .
+    ports:
+      - "3001:3001"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - .env.local
+    environment:
+      - WATCHPACK_POLLING=true

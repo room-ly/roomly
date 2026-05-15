@@ -262,7 +262,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* CTA */}
-      <section className="px-7 py-24">
+      <section data-section="cta" className="px-7 py-24">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-[clamp(24px,3vw,36px)] font-medium tracking-tight text-rm-primary">
             まずは無料で試してみませんか？

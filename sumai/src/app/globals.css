@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f8f9fa;
+  --bg-2: #f0f1f3;
+  --surface: #ffffff;
+  --ink: #1a1a1f;
+  --ink-2: #4a4a55;
+  --ink-3: #7a7a88;
+  --ink-4: #a8a8b5;
+  --line: #e5e7eb;
+  --line-2: #d1d5db;
+
+  --accent: #2563eb;
+  --accent-deep: #1d4ed8;
+  --accent-soft: #dbeafe;
+  --accent-tint: #eff6ff;
+
+  --warn: #d97706;
+  --warn-tint: #fef3c7;
+  --danger: #dc2626;
+  --danger-tint: #fee2e2;
+  --success: #16a34a;
+  --success-tint: #dcfce7;
+
+  --font-sans: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Noto Sans JP", system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-tint: var(--accent-tint);
+  --color-warn: var(--warn);
+  --color-warn-tint: var(--warn-tint);
+  --color-danger: var(--danger);
+  --color-danger-tint: var(--danger-tint);
+  --color-success: var(--success);
+  --color-success-tint: var(--success-tint);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
