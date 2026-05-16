@@ -1,4 +1,12 @@
 import { z } from "zod";
+import { stripPhone } from "./phone";
+
+const phoneField = z
+  .string()
+  .transform((v) => stripPhone(v))
+  .pipe(z.string().regex(/^\d*$/, "電話番号の形式が正しくありません"))
+  .optional()
+  .or(z.literal(""));
 
 const optionalInt = z.coerce
   .number()
@@ -128,11 +136,7 @@ export type UnitFormData = z.infer<typeof unitSchema>;
 export const tenantSchema = z.object({
   name: z.string().min(1, "氏名は必須です"),
   name_kana: z.string().optional(),
-  phone: z
-    .string()
-    .regex(/^[\d\-+()]*$/, "電話番号の形式が正しくありません")
-    .optional()
-    .or(z.literal("")),
+  phone: phoneField,
   email: z
     .string()
     .email("メールアドレスの形式が正しくありません")
@@ -140,11 +144,10 @@ export const tenantSchema = z.object({
     .or(z.literal("")),
   workplace: z.string().optional(),
   emergency_contact_name: z.string().optional(),
-  emergency_contact_phone: z
-    .string()
-    .regex(/^[\d\-+()]*$/, "電話番号の形式が正しくありません")
-    .optional()
-    .or(z.literal("")),
+  emergency_contact_phone: phoneField,
+  guarantor_name: z.string().optional(),
+  guarantor_phone: phoneField,
+  guarantor_address: z.string().optional(),
 });
 
 export type TenantFormData = z.infer<typeof tenantSchema>;
@@ -257,7 +260,7 @@ export type InquiryFormData = z.infer<typeof inquirySchema>;
 // オーナースキーマ
 export const ownerSchema = z.object({
   name: z.string().min(1, "氏名は必須です"),
-  phone: z.string().optional().or(z.literal("")),
+  phone: phoneField,
   email: z.string().email("メールアドレスの形式が正しくありません").optional().or(z.literal("")),
   postal_code: z.string().optional().or(z.literal("")),
   address: z.string().optional().or(z.literal("")),

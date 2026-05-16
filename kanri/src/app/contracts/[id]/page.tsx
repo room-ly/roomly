@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink } from "lucide-react";
 import { getContractDetail, getUnitsForSelect, getTenantsForSelect } from "@/lib/queries";
+import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import ContractDetailClient from "@/components/ContractDetailClient";
 import MoveOutReviewClient from "@/components/MoveOutReviewClient";
@@ -10,24 +10,6 @@ const contractTypeLabels: Record<string, string> = {
   fixed: "定期借家",
   ordinary: "普通借家",
 };
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
-      <span className="text-ink-3 shrink-0 w-[120px]">{label}</span>
-      <span className="text-right">{children}</span>
-    </div>
-  );
-}
-
-function RefLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link href={href} className="inline-flex items-center gap-1 text-accent underline underline-offset-2 decoration-accent/40 hover:decoration-accent transition-colors">
-      {children}
-      <ExternalLink size={11} className="opacity-50" />
-    </Link>
-  );
-}
 
 export default async function ContractDetailPage({
   params,
@@ -51,225 +33,317 @@ export default async function ContractDetailPage({
     ? Math.ceil((new Date(contract.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null;
 
+  const monthlyTotal = Number(contract.rent) + Number(contract.management_fee);
+
   return (
     <>
-      {/* ヘッダー */}
-      <div className="mb-6">
-        <Link
-          href="/contracts"
-          className="inline-flex items-center gap-1 text-[12px] text-ink-4 hover:text-ink-2 mb-4 transition-colors"
-        >
-          <ArrowLeft size={12} />
-          契約一覧
-        </Link>
+      <div className="detail-back">
+        <Link href="/contracts" className="rlink is-muted is-back">← 契約一覧に戻る</Link>
+      </div>
 
-        <div className="flex items-start justify-between gap-4">
+      <div className="detail-header">
+        <div className="detail-header-main">
           <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <StatusBadge status={contract.status} />
-              <StatusBadge status={contract.contract_type} />
-              {remainingDays !== null && remainingDays <= 90 && (
-                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
-                  remainingDays <= 30 ? "bg-danger-tint text-danger" : "bg-warn-tint text-warn"
-                }`}>
-                  {remainingDays <= 0 ? "期限切れ" : `あと${remainingDays}日`}
-                </span>
-              )}
-            </div>
-            <h1 className="text-[20px] font-semibold tracking-tight leading-tight">
-              {property?.name} {unit?.unit_number}
-            </h1>
-            <p className="text-[13px] text-ink-3 mt-0.5">{contract.start_date} 〜 {contract.end_date || "期限なし"}</p>
+            <h1 className="detail-title">{property?.name} {unit?.unit_number}</h1>
+            <div className="detail-kana">{contract.start_date} 〜 {contract.end_date || "期限なし"}</div>
           </div>
+          <div style={{ marginLeft: 8, display: "flex", gap: 6, alignItems: "center" }}>
+            <StatusBadge status={contract.status} />
+            <StatusBadge status={contract.contract_type} />
+            {remainingDays !== null && remainingDays <= 90 && (
+              <span className={`tag ${remainingDays <= 30 ? "is-danger" : "is-warn"}`}>
+                {remainingDays <= 0 ? "期限切れ" : `あと${remainingDays}日`}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="detail-header-actions">
           <ContractDetailClient contract={contract} units={units} tenants={tenants} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
-        {/* メインカラム */}
-        <div className="space-y-8">
-          {/* 賃料 */}
-          <section>
-            <h2 className="text-[11px] font-semibold text-ink-4 uppercase tracking-[0.08em] mb-3">賃料・費用</h2>
-            <div className="border-t border-line">
-              <Field label="賃料"><span className="font-semibold tabular-nums">¥{Number(contract.rent).toLocaleString()}</span></Field>
-              <Field label="管理費"><span className="tabular-nums">¥{Number(contract.management_fee).toLocaleString()}</span></Field>
-              <Field label="月額合計"><span className="font-semibold tabular-nums">¥{(Number(contract.rent) + Number(contract.management_fee)).toLocaleString()}</span></Field>
-              {Number(contract.deposit) > 0 && (
-                <Field label="敷金"><span className="tabular-nums">¥{Number(contract.deposit).toLocaleString()}</span></Field>
-              )}
-              {Number(contract.key_money) > 0 && (
-                <Field label="礼金"><span className="tabular-nums">¥{Number(contract.key_money).toLocaleString()}</span></Field>
-              )}
-              {Number(contract.renewal_fee) > 0 && (
-                <Field label="更新料"><span className="tabular-nums">¥{Number(contract.renewal_fee).toLocaleString()}</span></Field>
-              )}
+      <div className="detail-grid">
+        <div className="detail-col-main">
+          {/* 賃料・費用 */}
+          <div className="section">
+            <div className="section-head-bar"><h2>賃料・費用</h2></div>
+            <div className="section-body">
+              <div className="cfee-grid">
+                <div className="cfee-main">
+                  <div className="cfee-label mono">月額合計</div>
+                  <div className="cfee-value">¥{monthlyTotal.toLocaleString()}</div>
+                </div>
+                <div className="cfee-item">
+                  <div className="cfee-label mono">賃料</div>
+                  <div className="cfee-sub num">¥{Number(contract.rent).toLocaleString()}</div>
+                </div>
+                <div className="cfee-item">
+                  <div className="cfee-label mono">管理費</div>
+                  <div className="cfee-sub num">¥{Number(contract.management_fee).toLocaleString()}</div>
+                </div>
+              </div>
+              <div className="kv-grid" style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+                {Number(contract.deposit) > 0 && (
+                  <div className="field">
+                    <div className="field-label mono">敷金</div>
+                    <div className="field-value num">¥{Number(contract.deposit).toLocaleString()}</div>
+                  </div>
+                )}
+                {Number(contract.key_money) > 0 && (
+                  <div className="field">
+                    <div className="field-label mono">礼金</div>
+                    <div className="field-value num">¥{Number(contract.key_money).toLocaleString()}</div>
+                  </div>
+                )}
+                {Number(contract.renewal_fee) > 0 && (
+                  <div className="field">
+                    <div className="field-label mono">更新料</div>
+                    <div className="field-value num">¥{Number(contract.renewal_fee).toLocaleString()}</div>
+                  </div>
+                )}
+              </div>
             </div>
-          </section>
+          </div>
 
           {/* 契約条件 */}
-          <section>
-            <h2 className="text-[11px] font-semibold text-ink-4 uppercase tracking-[0.08em] mb-3">契約条件</h2>
-            <div className="border-t border-line">
-              <Field label="契約種別">{contractTypeLabels[contract.contract_type] || contract.contract_type}</Field>
-              <Field label="契約期間">{contract.start_date} 〜 {contract.end_date || "期限なし"}</Field>
-              {contract.guarantor_name && (
-                <Field label="保証人">
-                  {contract.guarantor_name}
-                  {contract.guarantor_phone && <span className="text-ink-3 ml-2 text-[12px]">{contract.guarantor_phone}</span>}
-                </Field>
-              )}
-              {contract.insurance_company && (
-                <Field label="保険会社">{contract.insurance_company}</Field>
+          <div className="section">
+            <div className="section-head-bar"><h2>契約条件</h2></div>
+            <div className="section-body">
+              <div className="kv-grid">
+                <div className="field">
+                  <div className="field-label mono">契約種別</div>
+                  <div className="field-value"><StatusBadge status={contract.contract_type} /></div>
+                </div>
+                <div className="field">
+                  <div className="field-label mono">契約期間</div>
+                  <div className="field-value field-plain mono">{contract.start_date} 〜 {contract.end_date || "期限なし"}</div>
+                </div>
+                {contract.guarantor_name && (
+                  <div className="field">
+                    <div className="field-label mono">保証人</div>
+                    <div className="field-value field-plain">
+                      {contract.guarantor_name}
+                      {contract.guarantor_phone && <span className="mono" style={{ marginLeft: 8, fontSize: 12, color: "var(--ink-3)" }}>{contract.guarantor_phone}</span>}
+                    </div>
+                  </div>
+                )}
+                {contract.insurance_company && (
+                  <div className="field">
+                    <div className="field-label mono">保険会社</div>
+                    <div className="field-value field-plain">{contract.insurance_company}</div>
+                  </div>
+                )}
+              </div>
+              {contract.notes && (
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+                  <span className="field-label mono">備考</span>
+                  <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{contract.notes}</p>
+                </div>
               )}
             </div>
-            {contract.notes && (
-              <p className="text-[13px] text-ink-2 mt-3 whitespace-pre-wrap">{contract.notes}</p>
-            )}
-          </section>
+          </div>
 
-          {/* 家賃請求履歴 */}
+          {/* 請求履歴 */}
           {billings.length > 0 && (
-            <section>
-              <h2 className="text-[11px] font-semibold text-ink-4 uppercase tracking-[0.08em] mb-3">請求履歴（直近12ヶ月）</h2>
-              <table className="tbl">
-                <thead>
-                  <tr>
-                    <th>対象月</th>
-                    <th style={{ textAlign: "right" }}>請求額</th>
-                    <th>状態</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {billings.map((b: any) => {
-                    const href = `/rent/${b.id}`;
-                    return (
-                      <tr key={b.id} className={`row-hover row-link ${b.status === "overdue" ? "bg-danger-tint" : ""}`}>
-                        <td><Link href={href}>{b.billing_month}</Link></td>
-                        <td><Link href={href} className="tabular-nums text-right">¥{Number(b.total_amount).toLocaleString()}</Link></td>
-                        <td><Link href={href}><StatusBadge status={b.status} /></Link></td>
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>請求履歴</h2>
+                <span className="desc">直近12ヶ月</span>
+              </div>
+              <div className="section-body flush">
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>対象月</th>
+                      <th style={{ textAlign: "right" }}>請求額</th>
+                      <th>状態</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {billings.map((b: any) => (
+                      <tr key={b.id} className={`row-hover ${b.status === "overdue" ? "bg-danger-tint" : ""}`}>
+                        <td>
+                          <Link href={`/rent/${b.id}`} className="rlink">{b.billing_month}</Link>
+                        </td>
+                        <td className="num">¥{Number(b.total_amount).toLocaleString()}</td>
+                        <td><StatusBadge status={b.status} /></td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </section>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
 
           {/* 退去申請 */}
           {moveOutRequests.length > 0 && (
-            <section>
-              <h2 className="text-[11px] font-semibold text-ink-4 uppercase tracking-[0.08em] mb-3">退去申請</h2>
-              <div className="space-y-3">
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>退去申請</h2>
+                <span className="desc">{moveOutRequests.length}件</span>
+              </div>
+              <div className="section-body">
                 {moveOutRequests.map((req: any) => (
-                  <div key={req.id} className={`border rounded-lg p-4 ${req.status === "pending" ? "border-warn border-2" : "border-line"}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {req.status === "pending" && (
-                          <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-warn-tint text-warn">未処理</span>
-                        )}
-                        <span className="text-[13px] font-medium">退去希望日: {req.desired_move_out_date}</span>
+                  <div key={req.id} className="moveout-card" style={{
+                    border: req.status === "pending" ? "2px solid var(--warn)" : "1px solid var(--line)",
+                    borderRadius: 8,
+                    padding: 16,
+                    marginBottom: moveOutRequests.length > 1 ? 12 : 0,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {req.status === "pending" && <span className="tag is-warn">未処理</span>}
+                        <span style={{ fontSize: 13, fontWeight: 500 }}>退去希望日: <span className="mono">{req.desired_move_out_date}</span></span>
                       </div>
-                      <span className="text-[12px] text-ink-3">申請日: {req.created_at?.slice(0, 10)}</span>
+                      <span className="mono" style={{ fontSize: 12, color: "var(--ink-3)" }}>申請日: {req.created_at?.slice(0, 10)}</span>
                     </div>
 
-                    {req.reason && (
-                      <div className="text-[13px] mb-2">
-                        <span className="text-ink-3">理由: </span>
-                        <span>{req.reason}</span>
-                      </div>
-                    )}
-
-                    {(req.forwarding_address || req.forwarding_phone) && (
-                      <div className="text-[13px] mb-2">
-                        <span className="text-ink-3">転居先: </span>
-                        {req.forwarding_postal_code && <span>〒{req.forwarding_postal_code} </span>}
-                        {req.forwarding_address && <span>{req.forwarding_address} </span>}
-                        {req.forwarding_phone && <span>TEL: {req.forwarding_phone}</span>}
-                      </div>
-                    )}
-
-                    {req.bank_name && (
-                      <div className="text-[13px] mb-2">
-                        <span className="text-ink-3">敷金返還先: </span>
-                        <span>{req.bank_name} {req.bank_branch} {req.bank_account_type} {req.bank_account_number}（{req.bank_account_holder}）</span>
-                      </div>
-                    )}
-
-                    {req.review_notes && req.status !== "pending" && (
-                      <div className="text-[13px] mb-2">
-                        <span className="text-ink-3">備考: </span>
-                        <span>{req.review_notes}</span>
-                      </div>
-                    )}
+                    <div className="kv-grid">
+                      {req.reason && (
+                        <div className="field">
+                          <div className="field-label mono">理由</div>
+                          <div className="field-value field-plain">{req.reason}</div>
+                        </div>
+                      )}
+                      {(req.forwarding_address || req.forwarding_phone) && (
+                        <div className="field">
+                          <div className="field-label mono">転居先</div>
+                          <div className="field-value field-plain">
+                            {req.forwarding_postal_code && `〒${req.forwarding_postal_code} `}
+                            {req.forwarding_address && `${req.forwarding_address} `}
+                            {req.forwarding_phone && `TEL: ${req.forwarding_phone}`}
+                          </div>
+                        </div>
+                      )}
+                      {req.bank_name && (
+                        <div className="field">
+                          <div className="field-label mono">敷金返還先</div>
+                          <div className="field-value field-plain">{req.bank_name} {req.bank_branch} {req.bank_account_type} {req.bank_account_number}（{req.bank_account_holder}）</div>
+                        </div>
+                      )}
+                      {req.review_notes && req.status !== "pending" && (
+                        <div className="field">
+                          <div className="field-label mono">備考</div>
+                          <div className="field-value field-plain">{req.review_notes}</div>
+                        </div>
+                      )}
+                    </div>
 
                     <MoveOutReviewClient request={req} />
                   </div>
                 ))}
               </div>
-            </section>
+            </div>
           )}
         </div>
 
-        {/* サイドバー */}
-        <div className="space-y-8">
-          {/* 入居者 */}
-          <section>
-            <h2 className="text-[11px] font-semibold text-ink-4 uppercase tracking-[0.08em] mb-3">入居者</h2>
-            <div className="border-t border-line">
-              <div className="py-3 border-b border-line">
-                <RefLink href={`/tenants/${tenant?.id}`}>{tenant?.name || "—"}</RefLink>
-                {tenant?.name_kana && <span className="text-ink-4 ml-2 text-[12px]">{tenant.name_kana}</span>}
+        {/* サイドカラム */}
+        <div className="detail-col-side">
+          <div className="section">
+            <div className="section-head-bar"><h2>入居者</h2></div>
+            <div className="section-body">
+              <div className="kv-list">
+                <div className="field">
+                  <div className="field-label mono">氏名</div>
+                  <div className="field-value">
+                    <Link href={`/tenants/${tenant?.id}`} className="rlink">{tenant?.name || "—"}</Link>
+                    {tenant?.name_kana && <span style={{ marginLeft: 6, fontSize: 12, color: "var(--ink-3)" }}>{tenant.name_kana}</span>}
+                  </div>
+                </div>
+                {tenant?.phone && (
+                  <div className="field">
+                    <div className="field-label mono">電話</div>
+                    <div className="field-value">
+                      <a href={`tel:${tenant.phone}`} className="rlink mono" style={{ fontSize: 12 }}>{formatPhone(tenant.phone)}</a>
+                    </div>
+                  </div>
+                )}
+                {tenant?.email && (
+                  <div className="field">
+                    <div className="field-label mono">メール</div>
+                    <div className="field-value">
+                      <a href={`mailto:${tenant.email}`} className="rlink" style={{ fontSize: 12 }}>{tenant.email}</a>
+                    </div>
+                  </div>
+                )}
+                {tenant?.workplace && (
+                  <div className="field">
+                    <div className="field-label mono">勤務先</div>
+                    <div className="field-value field-plain">{tenant.workplace}</div>
+                  </div>
+                )}
               </div>
-              {tenant?.phone && (
-                <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
-                  <span className="text-ink-3">電話</span>
-                  <a href={`tel:${tenant.phone}`} className="text-accent underline underline-offset-2 decoration-accent/40 hover:decoration-accent">{tenant.phone}</a>
-                </div>
-              )}
-              {tenant?.email && (
-                <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
-                  <span className="text-ink-3">メール</span>
-                  <a href={`mailto:${tenant.email}`} className="text-accent underline underline-offset-2 decoration-accent/40 hover:decoration-accent text-[12px]">{tenant.email}</a>
-                </div>
-              )}
-              {tenant?.workplace && (
-                <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
-                  <span className="text-ink-3">勤務先</span>
-                  <span>{tenant.workplace}</span>
-                </div>
-              )}
             </div>
-          </section>
+          </div>
 
-          {/* 物件 */}
-          <section>
-            <h2 className="text-[11px] font-semibold text-ink-4 uppercase tracking-[0.08em] mb-3">物件</h2>
-            <div className="border-t border-line">
-              <div className="py-3 border-b border-line">
-                <RefLink href={`/properties/${property?.id}`}>{property?.name || "—"}</RefLink>
-                <span className="text-ink-2 ml-2">{unit?.unit_number}</span>
+          <div className="section">
+            <div className="section-head-bar"><h2>物件</h2></div>
+            <div className="section-body">
+              <div className="kv-list">
+                <div className="field">
+                  <div className="field-label mono">物件名</div>
+                  <div className="field-value">
+                    <Link href={`/properties/${property?.id}`} className="rlink">{property?.name || "—"}</Link>
+                  </div>
+                </div>
+                <div className="field">
+                  <div className="field-label mono">部屋</div>
+                  <div className="field-value field-plain mono">{unit?.unit_number || "—"}</div>
+                </div>
+                {property?.address && (
+                  <div className="field">
+                    <div className="field-label mono">住所</div>
+                    <div className="field-value field-plain" style={{ fontSize: 12 }}>{property.address}</div>
+                  </div>
+                )}
+                {unit?.layout && (
+                  <div className="field">
+                    <div className="field-label mono">間取り</div>
+                    <div className="field-value field-plain">{unit.layout}</div>
+                  </div>
+                )}
+                {unit?.area_sqm && (
+                  <div className="field">
+                    <div className="field-label mono">面積</div>
+                    <div className="field-value field-plain">{unit.area_sqm}㎡</div>
+                  </div>
+                )}
               </div>
-              {property?.address && (
-                <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
-                  <span className="text-ink-3">住所</span>
-                  <span className="text-ink-2">{property.address}</span>
-                </div>
-              )}
-              {unit?.layout && (
-                <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
-                  <span className="text-ink-3">間取り</span>
-                  <span>{unit.layout}</span>
-                </div>
-              )}
-              {unit?.area_sqm && (
-                <div className="flex items-baseline justify-between py-2 border-b border-line text-[13px]">
-                  <span className="text-ink-3">面積</span>
-                  <span>{unit.area_sqm}㎡</span>
-                </div>
-              )}
             </div>
-          </section>
+          </div>
+
+          <div className="section">
+            <div className="section-head-bar"><h2>関連</h2></div>
+            <div className="section-body">
+              <div className="related-list">
+                {tenant?.id && (
+                  <Link href={`/tenants/${tenant.id}`} className="related-row">
+                    <div>
+                      <div className="related-label">入居者詳細</div>
+                      <div className="related-sub">{tenant.name}</div>
+                    </div>
+                    <span className="related-arrow">↗</span>
+                  </Link>
+                )}
+                {property?.id && (
+                  <Link href={`/properties/${property.id}`} className="related-row">
+                    <div>
+                      <div className="related-label">物件詳細</div>
+                      <div className="related-sub">{property.name}</div>
+                    </div>
+                    <span className="related-arrow">↗</span>
+                  </Link>
+                )}
+                <Link href="/rent" className="related-row">
+                  <div>
+                    <div className="related-label">家賃台帳</div>
+                    <div className="related-sub">入金履歴</div>
+                  </div>
+                  <span className="related-arrow">↗</span>
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

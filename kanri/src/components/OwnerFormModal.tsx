@@ -117,7 +117,7 @@ export default function OwnerFormModal({
                 name="phone"
                 defaultValue={editData?.phone || ""}
                 className="input"
-                placeholder="例: 03-1234-5678"
+                placeholder="例: 0312345678"
               />
             </div>
             <div>

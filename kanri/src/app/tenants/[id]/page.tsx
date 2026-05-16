@@ -1,9 +1,26 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, Mail } from "lucide-react";
+
+
 import { getTenantDetail } from "@/lib/queries";
+import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import TenantDetailClient from "@/components/TenantDetailClient";
+
+const AVATAR_TONES = [
+  { bg: "#e8f0e8", fg: "#3f5a4c" },
+  { bg: "#e1e8f1", fg: "#3a5580" },
+  { bg: "#f8eed8", fg: "#8a6420" },
+  { bg: "#fbe6dc", fg: "#8a4020" },
+  { bg: "#e8e0f0", fg: "#5a4080" },
+  { bg: "#d8e8e8", fg: "#2a5050" },
+];
+
+function avatarTone(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return AVATAR_TONES[h % AVATAR_TONES.length];
+}
 
 export default async function TenantDetailPage({
   params,
@@ -16,151 +33,201 @@ export default async function TenantDetailPage({
 
   const { tenant, contracts } = result;
   const activeContract = contracts.find((c: any) => c.status === "active");
+  const tone = avatarTone(tenant.name || "");
 
   return (
     <>
-      <div className="mb-6">
-        <Link
-          href="/tenants"
-          className="inline-flex items-center gap-1 text-[13px] text-ink-3 hover:text-accent mb-3 transition-colors"
-        >
-          <ArrowLeft size={13} />
-          入居者一覧に戻る
-        </Link>
-        <div className="flex items-start justify-between gap-4">
+      <div className="detail-back">
+        <Link href="/tenants" className="rlink is-muted is-back">← 入居者一覧に戻る</Link>
+      </div>
+
+      <div className="detail-header">
+        <div className="detail-header-main">
+          <span className="tn-av" style={{
+            width: 56, height: 56, fontSize: 20,
+            background: tone.bg, color: tone.fg,
+          }}>
+            {(tenant.name || "?").charAt(0)}
+          </span>
           <div>
-            <h1 className="text-lg font-semibold">{tenant.name}</h1>
-            {tenant.name_kana && <p className="text-[13px] text-ink-3 mt-0.5">{tenant.name_kana}</p>}
+            <h1 className="detail-title">{tenant.name}</h1>
+            {tenant.name_kana && <div className="detail-kana">{tenant.name_kana}</div>}
           </div>
+        </div>
+        <div className="detail-header-actions">
           <TenantDetailClient tenant={tenant} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* 左カラム */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* 基本情報カード */}
-          <div className="card p-5">
-            <h2 className="text-[14px] font-semibold mb-4">基本情報</h2>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-[13px]">
-              <div>
-                <span className="text-ink-3">氏名</span>
-                <p className="font-medium">{tenant.name}</p>
+      <div className="detail-grid">
+        <div className="detail-col-main">
+          {/* 基本情報 */}
+          <div className="section">
+            <div className="section-head-bar"><h2>基本情報</h2></div>
+            <div className="section-body">
+              <div className="kv-grid">
+                <div className="field">
+                  <div className="field-label mono">氏名</div>
+                  <div className="field-value field-plain">{tenant.name}</div>
+                </div>
+                {tenant.name_kana && (
+                  <div className="field">
+                    <div className="field-label mono">フリガナ</div>
+                    <div className="field-value field-plain">{tenant.name_kana}</div>
+                  </div>
+                )}
+                {tenant.phone && (
+                  <div className="field">
+                    <div className="field-label mono">電話番号</div>
+                    <div className="field-value field-plain mono">{formatPhone(tenant.phone)}</div>
+                  </div>
+                )}
+                {tenant.email && (
+                  <div className="field">
+                    <div className="field-label mono">メール</div>
+                    <div className="field-value field-plain">{tenant.email}</div>
+                  </div>
+                )}
+                {tenant.workplace && (
+                  <div className="field">
+                    <div className="field-label mono">勤務先</div>
+                    <div className="field-value field-plain">{tenant.workplace}</div>
+                  </div>
+                )}
+                {tenant.emergency_contact && (
+                  <div className="field">
+                    <div className="field-label mono">緊急連絡先</div>
+                    <div className="field-value field-plain">{tenant.emergency_contact}</div>
+                  </div>
+                )}
+                {tenant.emergency_phone && (
+                  <div className="field">
+                    <div className="field-label mono">緊急連絡先電話</div>
+                    <div className="field-value field-plain mono">{formatPhone(tenant.emergency_phone)}</div>
+                  </div>
+                )}
+                {tenant.guarantor_name && (
+                  <div className="field">
+                    <div className="field-label mono">保証人</div>
+                    <div className="field-value field-plain">{tenant.guarantor_name}</div>
+                  </div>
+                )}
+                {tenant.guarantor_phone && (
+                  <div className="field">
+                    <div className="field-label mono">保証人電話</div>
+                    <div className="field-value field-plain mono">{formatPhone(tenant.guarantor_phone)}</div>
+                  </div>
+                )}
+                {tenant.guarantor_address && (
+                  <div className="field">
+                    <div className="field-label mono">保証人住所</div>
+                    <div className="field-value field-plain">{tenant.guarantor_address}</div>
+                  </div>
+                )}
               </div>
-              {tenant.name_kana && (
-                <div>
-                  <span className="text-ink-3">フリガナ</span>
-                  <p className="font-medium">{tenant.name_kana}</p>
-                </div>
-              )}
-              {tenant.phone && (
-                <div>
-                  <span className="text-ink-3">電話番号</span>
-                  <a href={`tel:${tenant.phone}`} className="flex items-center gap-1.5 text-accent hover:underline">
-                    <Phone size={13} />
-                    {tenant.phone}
-                  </a>
-                </div>
-              )}
-              {tenant.email && (
-                <div>
-                  <span className="text-ink-3">メール</span>
-                  <a href={`mailto:${tenant.email}`} className="flex items-center gap-1.5 text-accent hover:underline">
-                    <Mail size={13} />
-                    {tenant.email}
-                  </a>
-                </div>
-              )}
-              {tenant.workplace && (
-                <div>
-                  <span className="text-ink-3">勤務先</span>
-                  <p className="font-medium">{tenant.workplace}</p>
-                </div>
-              )}
-              {tenant.emergency_contact && (
-                <div>
-                  <span className="text-ink-3">緊急連絡先</span>
-                  <p className="font-medium">{tenant.emergency_contact}</p>
-                </div>
-              )}
-              {tenant.emergency_phone && (
-                <div>
-                  <span className="text-ink-3">緊急連絡先電話</span>
-                  <p className="font-medium">{tenant.emergency_phone}</p>
+              {tenant.notes && (
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+                  <span className="field-label mono">備考</span>
+                  <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{tenant.notes}</p>
                 </div>
               )}
             </div>
-            {tenant.notes && (
-              <div className="mt-4 pt-4 border-t border-line">
-                <span className="text-[11px] text-ink-3">備考</span>
-                <p className="text-[13px] mt-1 whitespace-pre-wrap">{tenant.notes}</p>
-              </div>
-            )}
           </div>
 
           {/* 契約履歴 */}
-          <div className="card p-5">
-            <h2 className="text-[14px] font-semibold mb-4">契約履歴</h2>
-            {contracts.length === 0 ? (
-              <p className="text-[13px] text-ink-3 text-center py-3">契約がありません</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-[13px]">
+          <div className="section">
+            <div className="section-head-bar">
+              <h2>契約履歴</h2>
+              <span className="desc">{contracts.length}件</span>
+            </div>
+            <div className="section-body flush">
+              {contracts.length === 0 ? (
+                <p style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "center", padding: "24px 0" }}>契約がありません</p>
+              ) : (
+                <table className="tbl">
                   <thead>
-                    <tr className="text-left text-ink-3 border-b border-line">
-                      <th className="px-4 py-2 font-medium">物件・部屋</th>
-                      <th className="px-4 py-2 font-medium">契約期間</th>
-                      <th className="px-4 py-2 font-medium text-right">賃料</th>
-                      <th className="px-4 py-2 font-medium">状態</th>
+                    <tr>
+                      <th>物件・部屋</th>
+                      <th>契約期間</th>
+                      <th style={{ textAlign: "right" }}>賃料</th>
+                      <th>状態</th>
                     </tr>
                   </thead>
                   <tbody>
                     {contracts.map((c: any) => (
-                      <tr key={c.id} className="border-b border-line last:border-0 hover:bg-bg-2/30 transition-colors">
-                        <td className="px-4 py-2.5">
-                          <Link href={`/contracts/${c.id}`} className="text-accent hover:underline">
+                      <tr key={c.id} className="row-hover">
+                        <td>
+                          <Link href={`/contracts/${c.id}`} className="rlink">
                             {c.unit?.property?.name} {c.unit?.unit_number}
                           </Link>
                         </td>
-                        <td className="px-4 py-2.5">{c.start_date} 〜 {c.end_date || "—"}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums">¥{Number(c.rent).toLocaleString()}</td>
-                        <td className="px-4 py-2.5"><StatusBadge status={c.status} /></td>
+                        <td className="mono" style={{ fontSize: 12, color: "var(--ink-3)" }}>{c.start_date} 〜 {c.end_date || "—"}</td>
+                        <td className="num">¥{Number(c.rent).toLocaleString()}</td>
+                        <td><StatusBadge status={c.status} /></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
-        {/* 右カラム */}
-        <div className="space-y-6">
+        {/* サイドカラム */}
+        <div className="detail-col-side">
           {activeContract && (
-            <div className="card p-5">
-              <h2 className="text-[14px] font-semibold mb-4">現在の入居先</h2>
-              <div className="space-y-3 text-[13px]">
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">物件</p>
-                  <Link href={`/properties/${activeContract.unit?.property?.id}`} className="text-accent hover:underline">
-                    {activeContract.unit?.property?.name || "—"}
-                  </Link>
-                </div>
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">部屋</p>
-                  <p>{activeContract.unit?.unit_number || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">賃料</p>
-                  <p className="font-semibold tabular-nums">¥{Number(activeContract.rent).toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">契約満了</p>
-                  <p>{activeContract.end_date || "—"}</p>
+            <div className="section">
+              <div className="section-head-bar"><h2>現在の入居先</h2></div>
+              <div className="section-body">
+                <div className="kv-list">
+                  <div className="field">
+                    <div className="field-label mono">物件</div>
+                    <div className="field-value">
+                      <Link href={`/properties/${activeContract.unit?.property?.id}`} className="rlink">
+                        {activeContract.unit?.property?.name || "—"}
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">部屋</div>
+                    <div className="field-value field-plain mono">{activeContract.unit?.unit_number || "—"}</div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">賃料</div>
+                    <div className="field-value num">¥{Number(activeContract.rent).toLocaleString()}</div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">契約満了</div>
+                    <div className="field-value field-plain mono">{activeContract.end_date || "—"}</div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
+
+          <div className="section">
+            <div className="section-head-bar"><h2>関連</h2></div>
+            <div className="section-body">
+              <div className="related-list">
+                {activeContract?.unit?.property && (
+                  <Link href={`/properties/${activeContract.unit.property.id}`} className="related-row">
+                    <div>
+                      <div className="related-label">物件詳細</div>
+                      <div className="related-sub">{activeContract.unit.property.name}</div>
+                    </div>
+                    <span className="related-arrow">↗</span>
+                  </Link>
+                )}
+                <Link href="/rent" className="related-row">
+                  <div>
+                    <div className="related-label">家賃台帳</div>
+                    <div className="related-sub">{tenant.name}の入金履歴</div>
+                  </div>
+                  <span className="related-arrow">↗</span>
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

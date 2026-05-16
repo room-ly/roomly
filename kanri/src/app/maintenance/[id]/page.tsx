@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { getMaintenanceDetail, getPropertiesForSelect } from "@/lib/queries";
+import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import MaintenanceDetailClient from "@/components/MaintenanceDetailClient";
 
@@ -29,141 +29,204 @@ export default async function MaintenanceDetailPage({
 
   return (
     <>
-      <div className="mb-6">
-        <Link
-          href="/maintenance"
-          className="inline-flex items-center gap-1 text-[13px] text-ink-3 hover:text-accent mb-3 transition-colors"
-        >
-          <ArrowLeft size={13} />
-          修繕一覧に戻る
-        </Link>
-        <div className="flex items-start justify-between gap-4">
+      <div className="detail-back">
+        <Link href="/maintenance" className="rlink is-muted is-back">← 修繕一覧に戻る</Link>
+      </div>
+
+      <div className="detail-header">
+        <div className="detail-header-main">
           <div>
-            <h1 className="text-lg font-semibold">{request.title}</h1>
-            <p className="text-[13px] text-ink-3 mt-0.5">
+            <h1 className="detail-title">{request.title}</h1>
+            <div className="detail-kana">
               {request.property?.name}{request.unit?.unit_number ? ` ${request.unit.unit_number}` : " 共用部"}
-            </p>
+            </div>
           </div>
+          <div style={{ marginLeft: 8, display: "flex", gap: 6 }}>
+            <StatusBadge status={request.status} />
+            <StatusBadge status={request.priority} />
+          </div>
+        </div>
+        <div className="detail-header-actions">
           <MaintenanceDetailClient request={request} properties={properties} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {/* ステータスカード */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">状態</p>
-              <StatusBadge status={request.status} />
-            </div>
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">優先度</p>
-              <StatusBadge status={request.priority} />
-            </div>
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">カテゴリ</p>
-              <p className="text-[14px] font-medium">{categoryLabels[request.category] || request.category}</p>
-            </div>
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">報告日</p>
-              <p className="text-[14px] font-medium">{request.reported_date}</p>
+      <div className="detail-grid">
+        <div className="detail-col-main">
+          {/* 概要 */}
+          <div className="section">
+            <div className="section-head-bar"><h2>基本情報</h2></div>
+            <div className="section-body">
+              <div className="kv-grid">
+                <div className="field">
+                  <div className="field-label mono">状態</div>
+                  <div className="field-value"><StatusBadge status={request.status} /></div>
+                </div>
+                <div className="field">
+                  <div className="field-label mono">優先度</div>
+                  <div className="field-value"><StatusBadge status={request.priority} /></div>
+                </div>
+                <div className="field">
+                  <div className="field-label mono">カテゴリ</div>
+                  <div className="field-value field-plain">{categoryLabels[request.category] || request.category}</div>
+                </div>
+                <div className="field">
+                  <div className="field-label mono">報告日</div>
+                  <div className="field-value field-plain mono">{request.reported_date}</div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* 詳細 */}
-          <div className="card p-5">
-            <h2 className="text-[14px] font-semibold mb-4">修繕内容</h2>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-[13px]">
-              {request.vendor_name && (
-                <div>
-                  <span className="text-ink-3">業者</span>
-                  <p className="font-medium">{request.vendor_name}</p>
+          {/* 費用・業者 */}
+          {(request.vendor_name || request.estimated_cost != null || request.actual_cost != null || request.scheduled_date || request.completed_date) && (
+            <div className="section">
+              <div className="section-head-bar"><h2>費用・業者情報</h2></div>
+              <div className="section-body">
+                <div className="kv-grid">
+                  {request.vendor_name && (
+                    <div className="field">
+                      <div className="field-label mono">業者</div>
+                      <div className="field-value field-plain">{request.vendor_name}</div>
+                    </div>
+                  )}
+                  {request.vendor_phone && (
+                    <div className="field">
+                      <div className="field-label mono">業者連絡先</div>
+                      <div className="field-value field-plain mono">{formatPhone(request.vendor_phone)}</div>
+                    </div>
+                  )}
+                  {request.estimated_cost != null && (
+                    <div className="field">
+                      <div className="field-label mono">見積金額</div>
+                      <div className="field-value num">¥{Number(request.estimated_cost).toLocaleString()}</div>
+                    </div>
+                  )}
+                  {request.actual_cost != null && (
+                    <div className="field">
+                      <div className="field-label mono">実費</div>
+                      <div className="field-value num">¥{Number(request.actual_cost).toLocaleString()}</div>
+                    </div>
+                  )}
+                  {request.scheduled_date && (
+                    <div className="field">
+                      <div className="field-label mono">作業予定日</div>
+                      <div className="field-value field-plain mono">{request.scheduled_date}</div>
+                    </div>
+                  )}
+                  {request.completed_date && (
+                    <div className="field">
+                      <div className="field-label mono">完了日</div>
+                      <div className="field-value field-plain mono">{request.completed_date}</div>
+                    </div>
+                  )}
                 </div>
-              )}
-              {request.vendor_phone && (
-                <div>
-                  <span className="text-ink-3">業者連絡先</span>
-                  <p className="font-medium">{request.vendor_phone}</p>
-                </div>
-              )}
-              {request.estimated_cost != null && (
-                <div>
-                  <span className="text-ink-3">見積金額</span>
-                  <p className="font-medium tabular-nums">¥{Number(request.estimated_cost).toLocaleString()}</p>
-                </div>
-              )}
-              {request.actual_cost != null && (
-                <div>
-                  <span className="text-ink-3">実費</span>
-                  <p className="font-medium tabular-nums">¥{Number(request.actual_cost).toLocaleString()}</p>
-                </div>
-              )}
-              {request.scheduled_date && (
-                <div>
-                  <span className="text-ink-3">作業予定日</span>
-                  <p className="font-medium">{request.scheduled_date}</p>
-                </div>
-              )}
-              {request.completed_date && (
-                <div>
-                  <span className="text-ink-3">完了日</span>
-                  <p className="font-medium">{request.completed_date}</p>
-                </div>
-              )}
+              </div>
             </div>
-            {request.description && (
-              <div className="mt-4 pt-4 border-t border-line">
-                <span className="text-[11px] text-ink-3">説明</span>
-                <p className="text-[13px] mt-1 whitespace-pre-wrap">{request.description}</p>
+          )}
+
+          {/* 説明・備考 */}
+          {(request.description || request.notes) && (
+            <div className="section">
+              <div className="section-head-bar"><h2>詳細</h2></div>
+              <div className="section-body">
+                {request.description && (
+                  <div style={{ marginBottom: request.notes ? 16 : 0 }}>
+                    <span className="field-label mono">説明</span>
+                    <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{request.description}</p>
+                  </div>
+                )}
+                {request.notes && (
+                  <div style={{ paddingTop: request.description ? 16 : 0, borderTop: request.description ? "1px solid var(--line)" : "none" }}>
+                    <span className="field-label mono">備考</span>
+                    <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{request.notes}</p>
+                  </div>
+                )}
               </div>
-            )}
-            {request.notes && (
-              <div className="mt-4 pt-4 border-t border-line">
-                <span className="text-[11px] text-ink-3">備考</span>
-                <p className="text-[13px] mt-1 whitespace-pre-wrap">{request.notes}</p>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* 対応履歴 */}
           {logs.length > 0 && (
-            <div className="card p-5">
-              <h2 className="text-[14px] font-semibold mb-4">対応履歴</h2>
-              <div className="space-y-3">
-                {logs.map((log: any) => (
-                  <div key={log.id} className="border-b border-line last:border-0 pb-3 last:pb-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[12px] text-ink-3">{log.created_at?.slice(0, 16).replace("T", " ")}</span>
-                      {log.action_type && <StatusBadge status={log.action_type} />}
-                    </div>
-                    <p className="text-[13px] whitespace-pre-wrap">{log.content}</p>
-                  </div>
-                ))}
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>対応履歴</h2>
+                <span className="desc">{logs.length}件</span>
+              </div>
+              <div className="section-body flush">
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>日時</th>
+                      <th>種別</th>
+                      <th>内容</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logs.map((log: any) => (
+                      <tr key={log.id} className="row-hover">
+                        <td className="mono" style={{ fontSize: 12, color: "var(--ink-3)", whiteSpace: "nowrap" }}>
+                          {log.created_at?.slice(0, 16).replace("T", " ")}
+                        </td>
+                        <td>{log.action_type && <StatusBadge status={log.action_type} />}</td>
+                        <td style={{ whiteSpace: "pre-wrap" }}>{log.content}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
         </div>
 
-        {/* 右カラム */}
-        <div className="space-y-6">
-          <div className="card p-5">
-            <h2 className="text-[14px] font-semibold mb-4">物件情報</h2>
-            <div className="space-y-3 text-[13px]">
-              <div>
-                <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">物件</p>
-                <Link href={`/properties/${request.property?.id}`} className="text-accent hover:underline">
-                  {request.property?.name || "—"}
-                </Link>
-              </div>
-              {request.property?.address && (
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">住所</p>
-                  <p className="text-ink-2">{request.property.address}</p>
+        {/* サイドカラム */}
+        <div className="detail-col-side">
+          <div className="section">
+            <div className="section-head-bar"><h2>物件情報</h2></div>
+            <div className="section-body">
+              <div className="kv-list">
+                <div className="field">
+                  <div className="field-label mono">物件</div>
+                  <div className="field-value">
+                    <Link href={`/properties/${request.property?.id}`} className="rlink">
+                      {request.property?.name || "—"}
+                    </Link>
+                  </div>
                 </div>
-              )}
-              <div>
-                <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">部屋</p>
-                <p>{request.unit?.unit_number || "共用部"}</p>
+                {request.property?.address && (
+                  <div className="field">
+                    <div className="field-label mono">住所</div>
+                    <div className="field-value field-plain" style={{ fontSize: 12 }}>{request.property.address}</div>
+                  </div>
+                )}
+                <div className="field">
+                  <div className="field-label mono">部屋</div>
+                  <div className="field-value field-plain mono">{request.unit?.unit_number || "共用部"}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="section">
+            <div className="section-head-bar"><h2>関連</h2></div>
+            <div className="section-body">
+              <div className="related-list">
+                {request.property?.id && (
+                  <Link href={`/properties/${request.property.id}`} className="related-row">
+                    <div>
+                      <div className="related-label">物件詳細</div>
+                      <div className="related-sub">{request.property.name}</div>
+                    </div>
+                    <span className="related-arrow">↗</span>
+                  </Link>
+                )}
+                <Link href="/expenses" className="related-row">
+                  <div>
+                    <div className="related-label">経費管理</div>
+                    <div className="related-sub">修繕費の経費登録</div>
+                  </div>
+                  <span className="related-arrow">↗</span>
+                </Link>
               </div>
             </div>
           </div>

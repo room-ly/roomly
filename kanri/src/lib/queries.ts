@@ -470,7 +470,7 @@ export async function getDashboardData() {
     supabase
       .from("contracts")
       .select(
-        "*, tenant:tenants(name), unit:units(unit_number, property_id, property:properties(name))"
+        "*, tenant:tenants(name), unit:units(unit_number, property_id, property:properties(name)), move_out_requests(id, status, desired_move_out_date)"
       )
       .eq("status", "active"),
     supabase
@@ -521,9 +521,7 @@ export async function getDashboardData() {
   const staleThreshold = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
 
   const alertMaintenance = activeMaintenance.filter(
-    (m: Row) =>
-      (m.priority === "high" || m.priority === "urgent") ||
-      new Date(m.created_at) < staleThreshold
+    (m: Row) => m.priority === "high" || m.priority === "urgent"
   );
   const alertInquiries = openInquiries.filter(
     (i: Row) =>
@@ -535,6 +533,10 @@ export async function getDashboardData() {
     const end = new Date(c.end_date);
     const diff = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
     return diff > 0 && diff <= 90;
+  });
+  const pendingMoveOuts = allContracts.filter((c: Row) => {
+    const reqs = (c.move_out_requests ?? []) as Row[];
+    return reqs.some((r: Row) => r.status === "pending" || r.status === "approved");
   });
 
   return {
@@ -560,11 +562,13 @@ export async function getDashboardData() {
       open_inquiries: openInquiries.length,
       alert_inquiries: alertInquiries.length,
       expiring_contracts: expiringContracts.length,
+      pending_move_outs: pendingMoveOuts.length,
     },
     overdueBillings,
     activeMaintenance,
     expiringContracts,
-    recentInquiries: openInquiries,
+    pendingMoveOuts,
+    openInquiries,
     maintenanceUnits: allPipelineUnits.filter((u: Row) => u.status === "maintenance"),
     vacantUnits: allPipelineUnits.filter((u: Row) => u.status === "vacant"),
   };
@@ -628,18 +632,28 @@ export async function getUnitsForSelect() {
   });
 }
 
-// 入居者セレクトリスト
+// 入居者セレクトリスト（有効な契約がある入居者は除外）
 export async function getTenantsForSelect() {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("tenants")
-    .select("id, name")
-    .order("name");
-  if (error) throw error;
-  return (data ?? []).map((t: Row) => ({
-    id: t.id,
-    label: t.name,
-  }));
+
+  const [{ data: tenants, error: tErr }, { data: activeContracts, error: cErr }] =
+    await Promise.all([
+      supabase.from("tenants").select("id, name").order("name"),
+      supabase.from("contracts").select("tenant_id").eq("status", "active"),
+    ]);
+  if (tErr) throw tErr;
+  if (cErr) throw cErr;
+
+  const activeTenantIds = new Set(
+    (activeContracts ?? []).map((c: Row) => c.tenant_id)
+  );
+
+  return (tenants ?? [])
+    .filter((t: Row) => !activeTenantIds.has(t.id))
+    .map((t: Row) => ({
+      id: t.id,
+      label: t.name,
+    }));
 }
 
 // 物件セレクトリスト

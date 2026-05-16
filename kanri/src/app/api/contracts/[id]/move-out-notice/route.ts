@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { formatPhone } from "@/lib/phone";
 
 export async function GET(
   _request: NextRequest,
@@ -41,7 +42,7 @@ export async function GET(
     const companyName = company?.name ?? "";
     const companyPostalCode = company?.postal_code ?? "";
     const companyAddress = company?.address ?? "";
-    const companyPhone = company?.phone ?? "";
+    const companyPhone = formatPhone(company?.phone) || "";
 
     const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -192,7 +193,7 @@ export async function GET(
       </tr>
       <tr>
         <th>連絡先電話番号</th>
-        <td>${tenant?.phone ?? ""}</td>
+        <td>${formatPhone(tenant?.phone) || ""}</td>
       </tr>
       <tr>
         <th>連絡先メール</th>

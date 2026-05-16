@@ -1,3 +1,5 @@
+import { stripPhone } from "./phone";
+
 // CSVパース・インポートユーティリティ
 
 export interface CsvParseResult {
@@ -160,6 +162,8 @@ export function mapRowToDb(
       } else {
         data[col.dbField] = num;
       }
+    } else if (["phone", "emergency_contact_phone"].includes(col.dbField)) {
+      data[col.dbField] = stripPhone(value);
     } else {
       data[col.dbField] = value;
     }

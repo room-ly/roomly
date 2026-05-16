@@ -130,7 +130,7 @@ export default function TenantFormModal({
                 name="phone"
                 defaultValue={editData?.phone || ""}
                 className="input"
-                placeholder="例: 090-1234-5678"
+                placeholder="例: 09012345678"
               />
               {errors.phone && (
                 <p className="text-danger text-sm mt-1">{errors.phone[0]}</p>
@@ -185,13 +185,49 @@ export default function TenantFormModal({
                 name="emergency_contact_phone"
                 defaultValue={editData?.emergency_contact_phone || ""}
                 className="input"
-                placeholder="例: 03-1234-5678"
+                placeholder="例: 0312345678"
               />
               {errors.emergency_contact_phone && (
                 <p className="text-danger text-sm mt-1">
                   {errors.emergency_contact_phone[0]}
                 </p>
               )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                保証人（氏名）
+              </label>
+              <input
+                name="guarantor_name"
+                defaultValue={editData?.guarantor_name || ""}
+                className="input"
+                placeholder="例: 山田一郎"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                保証人（電話）
+              </label>
+              <input
+                name="guarantor_phone"
+                defaultValue={editData?.guarantor_phone || ""}
+                className="input"
+                placeholder="例: 0312345678"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                保証人（住所）
+              </label>
+              <input
+                name="guarantor_address"
+                defaultValue={editData?.guarantor_address || ""}
+                className="input"
+                placeholder="例: 東京都新宿区..."
+              />
             </div>
           </div>
 

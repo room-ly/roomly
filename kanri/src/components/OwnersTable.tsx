@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import FilterableTable from "./FilterableTable";
+import { formatPhone } from "@/lib/phone";
 
 interface OwnersTableProps {
   owners: Record<string, any>[];
@@ -21,20 +22,52 @@ export default function OwnersTable({ owners }: OwnersTableProps) {
           label: "オーナー名",
           sortable: true,
           render: (item) => (
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded bg-accent-tint flex items-center justify-center text-accent text-[11px] font-semibold shrink-0">
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span className="tn-av" style={{
+                width: 28, height: 28, fontSize: 11,
+                background: "var(--accent-tint)", color: "var(--accent-deep)",
+              }}>
                 {item.name?.charAt(0)}
-              </div>
-              <span className="font-medium">{item.name}</span>
+              </span>
+              <span className="strong">{item.name}</span>
             </div>
           ),
         },
-        { key: "phone", label: "電話番号", render: (item) => <span className="text-ink-2">{item.phone || "—"}</span> },
-        { key: "email", label: "メール", render: (item) => <span className="text-ink-2">{item.email || "—"}</span> },
-        { key: "propertyCount", label: "物件数", align: "center" as const, render: (item) => <span className="tabular-nums">{item.propertyCount}</span> },
-        { key: "unitCount", label: "総戸数", align: "center" as const, render: (item) => <span className="tabular-nums">{item.unitCount}</span> },
-        { key: "occupiedCount", label: "入居", align: "center" as const, render: (item) => <span className="tabular-nums text-accent-deep">{item.occupiedCount}</span> },
-        { key: "management_fee_rate", label: "手数料率", align: "right" as const, render: (item) => <span className="tabular-nums">{Number(item.management_fee_rate)}%</span> },
+        { key: "phone", label: "電話番号", render: (item) => <span className="mono" style={{ fontSize: 12, color: "var(--ink-2)" }}>{formatPhone(item.phone) || "—"}</span> },
+        { key: "propertyCount", label: "物件数", align: "center" as const, render: (item) => <span className="mono">{item.propertyCount}</span> },
+        {
+          key: "occupancy",
+          label: "入居率",
+          render: (item) => {
+            const rate = item.unitCount > 0 ? Math.round((item.occupiedCount / item.unitCount) * 100) : 0;
+            return (
+              <div className="owner-occ">
+                <span className="num"><b>{rate}</b>%</span>
+                <span className="mono" style={{ fontSize: 10, color: "var(--ink-4)" }}>{item.occupiedCount}/{item.unitCount}</span>
+                <div className="owner-occ-bar">
+                  <div
+                    className="owner-occ-bar-fill"
+                    style={{
+                      width: `${rate}%`,
+                      background: rate >= 80 ? "var(--accent)" : rate >= 50 ? "var(--warn)" : "var(--danger)",
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          },
+        },
+        {
+          key: "management_fee_rate",
+          label: "手数料率",
+          align: "right" as const,
+          render: (item) => <span className="num">{Number(item.management_fee_rate)}%</span>,
+        },
+        {
+          key: "email",
+          label: "メール",
+          render: (item) => <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{item.email || "—"}</span>,
+        },
       ]}
       onRowClick={(item) => router.push(`/owners/${item.id}`)}
     />

@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, Mail } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 import { getOwnerDetail } from "@/lib/queries";
+import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import OwnerDetailClient from "@/components/OwnerDetailClient";
 
@@ -22,66 +23,67 @@ export default async function OwnerDetailPage({
 
   return (
     <>
-      <div className="mb-6">
-        <Link
-          href="/owners"
-          className="inline-flex items-center gap-1 text-[13px] text-ink-3 hover:text-accent mb-3 transition-colors"
-        >
-          <ArrowLeft size={13} />
-          オーナー一覧に戻る
-        </Link>
-        <div className="flex items-start justify-between gap-4">
+      <div className="detail-back">
+        <Link href="/owners" className="rlink is-muted is-back">← オーナー一覧に戻る</Link>
+      </div>
+
+      <div className="detail-header">
+        <div className="detail-header-main">
+          <span className="tn-av" style={{
+            width: 48, height: 48, fontSize: 18,
+            background: "var(--accent-tint)", color: "var(--accent)",
+          }}>
+            {(owner.name || "?").charAt(0)}
+          </span>
           <div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded bg-accent-tint flex items-center justify-center text-accent text-[16px] font-semibold">
-                {owner.name?.charAt(0)}
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold">{owner.name}</h1>
-                <p className="text-[13px] text-ink-3 mt-0.5">手数料率 {Number(owner.management_fee_rate)}%</p>
-              </div>
-            </div>
+            <h1 className="detail-title">{owner.name}</h1>
+            <div className="detail-kana">手数料率 {Number(owner.management_fee_rate)}%</div>
           </div>
+        </div>
+        <div className="detail-header-actions">
           <OwnerDetailClient owner={owner} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {/* サマリー */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">物件数</p>
-              <p className="text-lg font-semibold tabular-nums">{ownerProps.length}</p>
-            </div>
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">総戸数</p>
-              <p className="text-lg font-semibold tabular-nums">{ownerUnits.length}</p>
-            </div>
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">入居</p>
-              <p className="text-lg font-semibold text-accent-deep tabular-nums">{occupiedUnits.length}</p>
-            </div>
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">家賃収入</p>
-              <p className="text-lg font-semibold tabular-nums">¥{totalRent.toLocaleString()}</p>
-            </div>
-          </div>
+      {/* サマリー */}
+      <div className="cols-summary" style={{ marginBottom: 24 }}>
+        <div className="sum-card">
+          <span className="sum-label mono">物件数</span>
+          <span className="sum-value serif-i">{ownerProps.length}</span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">総戸数</span>
+          <span className="sum-value serif-i">{ownerUnits.length}</span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">入居</span>
+          <span className="sum-value serif-i" style={{ color: "var(--accent-deep)" }}>{occupiedUnits.length}</span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">家賃収入</span>
+          <span className="sum-value serif-i">¥{totalRent.toLocaleString()}</span>
+        </div>
+      </div>
 
+      <div className="detail-grid">
+        <div className="detail-col-main">
           {/* 所有物件 */}
-          <div className="card p-5">
-            <h2 className="text-[14px] font-semibold mb-4">所有物件</h2>
-            {ownerProps.length === 0 ? (
-              <p className="text-[13px] text-ink-3 text-center py-3">物件がありません</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-[13px]">
+          <div className="section">
+            <div className="section-head-bar">
+              <h2>所有物件</h2>
+              <span className="desc">{ownerProps.length}件</span>
+            </div>
+            <div className="section-body flush">
+              {ownerProps.length === 0 ? (
+                <p style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "center", padding: "24px 0" }}>物件がありません</p>
+              ) : (
+                <table className="tbl">
                   <thead>
-                    <tr className="text-left text-ink-3 border-b border-line">
-                      <th className="px-4 py-2 font-medium">物件名</th>
-                      <th className="px-4 py-2 font-medium text-center">戸数</th>
-                      <th className="px-4 py-2 font-medium text-center">入居</th>
-                      <th className="px-4 py-2 font-medium text-right">家賃合計</th>
+                    <tr>
+                      <th>物件名</th>
+                      <th style={{ textAlign: "center" }}>戸数</th>
+                      <th style={{ textAlign: "center" }}>入居</th>
+                      <th style={{ textAlign: "right" }}>家賃合計</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -90,55 +92,54 @@ export default async function OwnerDetailPage({
                       const pOccupied = pUnits.filter((u: any) => u.status === "occupied");
                       const pRent = pOccupied.reduce((s: number, u: any) => s + Number(u.rent), 0);
                       return (
-                        <tr key={p.id} className="border-b border-line last:border-0 hover:bg-bg-2/30 transition-colors">
-                          <td className="px-4 py-2.5">
-                            <Link href={`/properties/${p.id}`} className="text-accent hover:underline font-medium">
-                              {p.name}
-                            </Link>
+                        <tr key={p.id} className="row-hover">
+                          <td>
+                            <Link href={`/properties/${p.id}`} className="rlink">{p.name}</Link>
                           </td>
-                          <td className="px-4 py-2.5 text-center tabular-nums">{pUnits.length}</td>
-                          <td className="px-4 py-2.5 text-center tabular-nums text-accent-deep">{pOccupied.length}</td>
-                          <td className="px-4 py-2.5 text-right tabular-nums">¥{pRent.toLocaleString()}</td>
+                          <td className="num" style={{ textAlign: "center" }}>{pUnits.length}</td>
+                          <td className="num" style={{ textAlign: "center", color: "var(--accent-deep)" }}>{pOccupied.length}</td>
+                          <td className="num">¥{pRent.toLocaleString()}</td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* 送金履歴 */}
           {remittances.length > 0 && (
-            <div className="card p-5">
-              <h2 className="text-[14px] font-semibold mb-4">送金履歴（直近12ヶ月）</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-[13px]">
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>送金履歴</h2>
+                <span className="desc">直近12ヶ月</span>
+              </div>
+              <div className="section-body flush">
+                <table className="tbl">
                   <thead>
-                    <tr className="text-left text-ink-3 border-b border-line">
-                      <th className="px-4 py-2 font-medium">対象月</th>
-                      <th className="px-4 py-2 font-medium text-right">家賃収入</th>
-                      <th className="px-4 py-2 font-medium text-right">手数料</th>
-                      <th className="px-4 py-2 font-medium text-right">経費</th>
-                      <th className="px-4 py-2 font-medium text-right">送金額</th>
-                      <th className="px-4 py-2 font-medium">状態</th>
+                    <tr>
+                      <th>対象月</th>
+                      <th style={{ textAlign: "right" }}>家賃収入</th>
+                      <th style={{ textAlign: "right" }}>手数料</th>
+                      <th style={{ textAlign: "right" }}>経費</th>
+                      <th style={{ textAlign: "right" }}>送金額</th>
+                      <th>状態</th>
                     </tr>
                   </thead>
                   <tbody>
                     {remittances.map((r: any) => (
-                      <tr key={r.id} className="border-b border-line last:border-0 hover:bg-bg-2/30 transition-colors">
-                        <td className="px-4 py-2.5">
-                          <Link href={`/remittances/${r.id}`} className="text-accent hover:underline">
-                            {r.remittance_month?.slice(0, 7)}
-                          </Link>
+                      <tr key={r.id} className="row-hover">
+                        <td>
+                          <Link href={`/remittances/${r.id}`} className="rlink">{r.remittance_month?.slice(0, 7)}</Link>
                         </td>
-                        <td className="px-4 py-2.5 text-right tabular-nums">¥{Number(r.total_rent).toLocaleString()}</td>
-                        <td className="px-4 py-2.5 text-right text-danger tabular-nums">-¥{Number(r.management_fee_deducted).toLocaleString()}</td>
-                        <td className="px-4 py-2.5 text-right text-warn tabular-nums">
+                        <td className="num">¥{Number(r.total_rent).toLocaleString()}</td>
+                        <td className="num" style={{ color: "var(--danger)" }}>-¥{Number(r.management_fee_deducted).toLocaleString()}</td>
+                        <td className="num" style={{ color: "var(--warn)" }}>
                           {Number(r.expense_deducted) > 0 ? `-¥${Number(r.expense_deducted).toLocaleString()}` : "—"}
                         </td>
-                        <td className="px-4 py-2.5 text-right font-medium text-accent tabular-nums">¥{Number(r.net_amount).toLocaleString()}</td>
-                        <td className="px-4 py-2.5"><StatusBadge status={r.status} /></td>
+                        <td className="num" style={{ fontWeight: 500, color: "var(--accent)" }}>¥{Number(r.net_amount).toLocaleString()}</td>
+                        <td><StatusBadge status={r.status} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -148,67 +149,95 @@ export default async function OwnerDetailPage({
           )}
         </div>
 
-        {/* 右カラム */}
-        <div className="space-y-6">
-          <div className="card p-5">
-            <h2 className="text-[14px] font-semibold mb-4">連絡先</h2>
-            <div className="space-y-3">
-              {owner.phone && (
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">電話番号</p>
-                  <a href={`tel:${owner.phone}`} className="inline-flex items-center gap-1.5 text-[14px] text-accent hover:underline">
-                    <Phone size={13} />
-                    {owner.phone}
-                  </a>
-                </div>
-              )}
-              {owner.email && (
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">メール</p>
-                  <a href={`mailto:${owner.email}`} className="inline-flex items-center gap-1.5 text-[14px] text-accent hover:underline">
-                    <Mail size={13} />
-                    {owner.email}
-                  </a>
-                </div>
-              )}
-              {owner.address && (
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">住所</p>
-                  <p className="text-[13px]">{owner.address}</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {owner.bank_name && (
-            <div className="card p-5">
-              <h2 className="text-[14px] font-semibold mb-4">振込先</h2>
-              <div className="space-y-2 text-[13px]">
-                <div>
-                  <span className="text-ink-3">銀行</span>
-                  <p className="font-medium">{owner.bank_name} {owner.bank_branch}</p>
-                </div>
-                {owner.account_type && (
-                  <div>
-                    <span className="text-ink-3">種別</span>
-                    <p className="font-medium">{owner.account_type === "ordinary" ? "普通" : owner.account_type === "current" ? "当座" : owner.account_type}</p>
+        {/* サイドカラム */}
+        <div className="detail-col-side">
+          <div className="section">
+            <div className="section-head-bar"><h2>連絡先</h2></div>
+            <div className="section-body">
+              <div className="kv-list">
+                {owner.phone && (
+                  <div className="field">
+                    <div className="field-label mono">電話番号</div>
+                    <div className="field-value">
+                      <a href={`tel:${owner.phone}`} className="rlink" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <Phone size={13} /> <span className="mono">{formatPhone(owner.phone)}</span>
+                      </a>
+                    </div>
                   </div>
                 )}
-                {owner.account_number && (
-                  <div>
-                    <span className="text-ink-3">口座番号</span>
-                    <p className="font-medium tabular-nums">{owner.account_number}</p>
+                {owner.email && (
+                  <div className="field">
+                    <div className="field-label mono">メール</div>
+                    <div className="field-value">
+                      <a href={`mailto:${owner.email}`} className="rlink" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <Mail size={13} /> {owner.email}
+                      </a>
+                    </div>
                   </div>
                 )}
-                {owner.account_holder && (
-                  <div>
-                    <span className="text-ink-3">名義</span>
-                    <p className="font-medium">{owner.account_holder}</p>
+                {owner.address && (
+                  <div className="field">
+                    <div className="field-label mono">住所</div>
+                    <div className="field-value field-plain" style={{ fontSize: 12 }}>{owner.address}</div>
                   </div>
                 )}
               </div>
             </div>
+          </div>
+
+          {owner.bank_name && (
+            <div className="section">
+              <div className="section-head-bar"><h2>振込先</h2></div>
+              <div className="section-body">
+                <div className="kv-list">
+                  <div className="field">
+                    <div className="field-label mono">銀行</div>
+                    <div className="field-value field-plain">{owner.bank_name} {owner.bank_branch}</div>
+                  </div>
+                  {owner.account_type && (
+                    <div className="field">
+                      <div className="field-label mono">種別</div>
+                      <div className="field-value field-plain">{owner.account_type === "ordinary" ? "普通" : owner.account_type === "current" ? "当座" : owner.account_type}</div>
+                    </div>
+                  )}
+                  {owner.account_number && (
+                    <div className="field">
+                      <div className="field-label mono">口座番号</div>
+                      <div className="field-value field-plain mono">{owner.account_number}</div>
+                    </div>
+                  )}
+                  {owner.account_holder && (
+                    <div className="field">
+                      <div className="field-label mono">名義</div>
+                      <div className="field-value field-plain">{owner.account_holder}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           )}
+
+          <div className="section">
+            <div className="section-head-bar"><h2>関連</h2></div>
+            <div className="section-body">
+              <div className="related-list">
+                <Link href="/remittances" className="related-row">
+                  <div>
+                    <div className="related-label">オーナー送金</div>
+                    <div className="related-sub">送金履歴一覧</div>
+                  </div>
+                  <span className="related-arrow">↗</span>
+                </Link>
+                <Link href="/expenses" className="related-row">
+                  <div>
+                    <div className="related-label">経費管理</div>
+                    <div className="related-sub">オーナー負担経費</div>
+                  </div>
+                  <span className="related-arrow">↗</span>
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

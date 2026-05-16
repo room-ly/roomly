@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { formatPhone } from "@/lib/phone";
 import OwnerFormModal from "./OwnerFormModal";
 
 interface OwnerCardProps {
@@ -121,7 +122,7 @@ export default function OwnerCard({ owner }: OwnerCardProps) {
 
         {(owner.phone || owner.email) && (
           <div className="mt-3 flex items-center gap-3 text-[11px] text-ink-3">
-            {owner.phone && <span>{owner.phone}</span>}
+            {owner.phone && <span>{formatPhone(owner.phone)}</span>}
             {owner.email && <span>{owner.email}</span>}
           </div>
         )}

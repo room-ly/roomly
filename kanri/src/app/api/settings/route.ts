@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { stripPhone } from "@/lib/phone";
 
 export async function PUT(request: NextRequest) {
   try {
@@ -11,6 +12,9 @@ export async function PUT(request: NextRequest) {
     const update: Record<string, any> = {};
     for (const key of allowed) {
       if (key in body) update[key] = body[key];
+    }
+    if (update.phone !== undefined) {
+      update.phone = stripPhone(update.phone);
     }
     if (update.contract_alert_days !== undefined) {
       update.contract_alert_days = Number(update.contract_alert_days);

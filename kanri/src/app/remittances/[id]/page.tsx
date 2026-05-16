@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, Mail } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 import { getRemittanceDetail, getOwnersForSelect } from "@/lib/queries";
+import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import RemittanceDetailClient from "@/components/RemittanceDetailClient";
 
@@ -27,109 +28,114 @@ export default async function RemittanceDetailPage({
 
   return (
     <>
-      <div className="mb-6">
-        <Link
-          href="/remittances"
-          className="inline-flex items-center gap-1 text-[13px] text-ink-3 hover:text-accent mb-3 transition-colors"
-        >
-          <ArrowLeft size={13} />
-          送金管理に戻る
-        </Link>
-        <div className="flex items-start justify-between gap-4">
+      <div className="detail-back">
+        <Link href="/remittances" className="rlink is-muted is-back">← 送金管理に戻る</Link>
+      </div>
+
+      <div className="detail-header">
+        <div className="detail-header-main">
           <div>
-            <h1 className="text-lg font-semibold">
-              {owner?.name} — {remittance.remittance_month?.slice(0, 7)}
-            </h1>
-            <p className="text-[13px] text-ink-3 mt-0.5">送金明細</p>
+            <h1 className="detail-title">{owner?.name} — {remittance.remittance_month?.slice(0, 7)}</h1>
+            <div className="detail-kana">送金明細</div>
           </div>
+          <div style={{ marginLeft: 8 }}>
+            <StatusBadge status={remittance.status} />
+          </div>
+        </div>
+        <div className="detail-header-actions">
           <RemittanceDetailClient remittance={remittance} owners={owners} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {/* サマリー */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">家賃収入</p>
-              <p className="text-lg font-semibold tabular-nums">¥{Number(remittance.total_rent).toLocaleString()}</p>
-            </div>
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">管理手数料</p>
-              <p className="text-lg font-semibold text-danger tabular-nums">-¥{Number(remittance.management_fee_deducted).toLocaleString()}</p>
-            </div>
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">経費控除</p>
-              <p className="text-lg font-semibold text-warn tabular-nums">
-                {Number(remittance.expense_deducted) > 0 ? `-¥${Number(remittance.expense_deducted).toLocaleString()}` : "¥0"}
-              </p>
-            </div>
-            <div className="card p-4 border-l-[3px] border-l-accent">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">送金額</p>
-              <p className="text-lg font-semibold text-accent tabular-nums">¥{Number(remittance.net_amount).toLocaleString()}</p>
+      {/* サマリー */}
+      <div className="cols-summary" style={{ marginBottom: 24 }}>
+        <div className="sum-card">
+          <span className="sum-label mono">家賃収入</span>
+          <span className="sum-value serif-i">¥{Number(remittance.total_rent).toLocaleString()}</span>
+        </div>
+        <div className="sum-card" style={{ borderLeft: "3px solid var(--danger)" }}>
+          <span className="sum-label mono">管理手数料</span>
+          <span className="sum-value serif-i" style={{ color: "var(--danger)" }}>-¥{Number(remittance.management_fee_deducted).toLocaleString()}</span>
+        </div>
+        <div className="sum-card" style={{ borderLeft: "3px solid var(--warn)" }}>
+          <span className="sum-label mono">経費控除</span>
+          <span className="sum-value serif-i" style={{ color: "var(--warn)" }}>
+            {Number(remittance.expense_deducted) > 0 ? `-¥${Number(remittance.expense_deducted).toLocaleString()}` : "¥0"}
+          </span>
+        </div>
+        <div className="sum-card sum-card-em">
+          <span className="sum-label mono">送金額</span>
+          <span className="sum-value serif-i">¥{Number(remittance.net_amount).toLocaleString()}</span>
+        </div>
+      </div>
+
+      <div className="detail-grid">
+        <div className="detail-col-main">
+          {/* 送金情報 */}
+          <div className="section">
+            <div className="section-head-bar"><h2>送金情報</h2></div>
+            <div className="section-body">
+              <div className="kv-grid">
+                <div className="field">
+                  <div className="field-label mono">対象月</div>
+                  <div className="field-value field-plain mono">{remittance.remittance_month?.slice(0, 7)}</div>
+                </div>
+                <div className="field">
+                  <div className="field-label mono">方法</div>
+                  <div className="field-value field-plain">{paymentMethodLabel[remittance.payment_method] || "振込"}</div>
+                </div>
+                <div className="field">
+                  <div className="field-label mono">状態</div>
+                  <div className="field-value"><StatusBadge status={remittance.status} /></div>
+                </div>
+                {remittance.transfer_date && (
+                  <div className="field">
+                    <div className="field-label mono">振込日</div>
+                    <div className="field-value field-plain mono">{remittance.transfer_date}</div>
+                  </div>
+                )}
+                {remittance.manual_override && (
+                  <div className="field">
+                    <div className="field-label mono">手動調整</div>
+                    <div className="field-value" style={{ color: "var(--warn)", fontWeight: 500 }}>あり</div>
+                  </div>
+                )}
+              </div>
+              {remittance.notes && (
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+                  <span className="field-label mono">備考</span>
+                  <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{remittance.notes}</p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* 送金詳細 */}
-          <div className="card p-5">
-            <h2 className="text-[14px] font-semibold mb-4">送金情報</h2>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-[13px]">
-              <div>
-                <span className="text-ink-3">対象月</span>
-                <p className="font-medium">{remittance.remittance_month?.slice(0, 7)}</p>
-              </div>
-              <div>
-                <span className="text-ink-3">方法</span>
-                <p className="font-medium">{paymentMethodLabel[remittance.payment_method] || "振込"}</p>
-              </div>
-              <div>
-                <span className="text-ink-3">状態</span>
-                <StatusBadge status={remittance.status} />
-              </div>
-              {remittance.transfer_date && (
-                <div>
-                  <span className="text-ink-3">振込日</span>
-                  <p className="font-medium">{remittance.transfer_date}</p>
-                </div>
-              )}
-              {remittance.manual_override && (
-                <div>
-                  <span className="text-ink-3">手動調整</span>
-                  <p className="font-medium text-warn">あり</p>
-                </div>
-              )}
-            </div>
-            {remittance.notes && (
-              <div className="mt-4 pt-4 border-t border-line">
-                <span className="text-[11px] text-ink-3">備考</span>
-                <p className="text-[13px] mt-1 whitespace-pre-wrap">{remittance.notes}</p>
-              </div>
-            )}
-          </div>
-
-          {/* 明細 */}
+          {/* 物件別明細 */}
           {items.length > 0 && (
-            <div className="card p-5">
-              <h2 className="text-[14px] font-semibold mb-4">物件別明細</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-[13px]">
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>物件別明細</h2>
+                <span className="desc">{items.length}件</span>
+              </div>
+              <div className="section-body flush">
+                <table className="tbl">
                   <thead>
-                    <tr className="text-left text-ink-3 border-b border-line">
-                      <th className="px-4 py-2 font-medium">物件</th>
-                      <th className="px-4 py-2 font-medium">部屋</th>
-                      <th className="px-4 py-2 font-medium text-right">家賃</th>
-                      <th className="px-4 py-2 font-medium text-right">手数料</th>
-                      <th className="px-4 py-2 font-medium text-right">差引額</th>
+                    <tr>
+                      <th>物件</th>
+                      <th>部屋</th>
+                      <th style={{ textAlign: "right" }}>家賃</th>
+                      <th style={{ textAlign: "right" }}>手数料</th>
+                      <th style={{ textAlign: "right" }}>差引額</th>
                     </tr>
                   </thead>
                   <tbody>
                     {items.map((item: any) => (
-                      <tr key={item.id} className="border-b border-line last:border-0">
-                        <td className="px-4 py-2.5">{item.property?.name || "—"}</td>
-                        <td className="px-4 py-2.5">{item.unit?.unit_number || "—"}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums">¥{Number(item.rent_amount || 0).toLocaleString()}</td>
-                        <td className="px-4 py-2.5 text-right text-danger tabular-nums">-¥{Number(item.fee_amount || 0).toLocaleString()}</td>
-                        <td className="px-4 py-2.5 text-right font-medium tabular-nums">¥{Number(item.net_amount || 0).toLocaleString()}</td>
+                      <tr key={item.id}>
+                        <td>{item.property?.name || "—"}</td>
+                        <td className="mono">{item.unit?.unit_number || "—"}</td>
+                        <td className="num">¥{Number(item.rent_amount || 0).toLocaleString()}</td>
+                        <td className="num" style={{ color: "var(--danger)" }}>-¥{Number(item.fee_amount || 0).toLocaleString()}</td>
+                        <td className="num" style={{ fontWeight: 500 }}>¥{Number(item.net_amount || 0).toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -139,73 +145,104 @@ export default async function RemittanceDetailPage({
           )}
 
           {/* PDF */}
-          <div className="flex gap-2">
+          <div style={{ marginTop: 16 }}>
             <a
               href={`/api/remittances/${remittance.id}/pdf`}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-secondary text-[13px]"
+              className="btn btn-secondary"
+              style={{ fontSize: 13 }}
             >
               PDF をダウンロード
             </a>
           </div>
         </div>
 
-        {/* 右カラム */}
-        <div className="space-y-6">
-          <div className="card p-5">
-            <h2 className="text-[14px] font-semibold mb-4">オーナー情報</h2>
-            <div className="space-y-3">
-              <div>
-                <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">氏名</p>
-                <Link href={`/owners/${owner?.id}`} className="text-[14px] font-medium text-accent hover:underline">
-                  {owner?.name || "—"}
-                </Link>
+        {/* サイドカラム */}
+        <div className="detail-col-side">
+          <div className="section">
+            <div className="section-head-bar"><h2>オーナー情報</h2></div>
+            <div className="section-body">
+              <div className="kv-list">
+                <div className="field">
+                  <div className="field-label mono">氏名</div>
+                  <div className="field-value">
+                    <Link href={`/owners/${owner?.id}`} className="rlink">{owner?.name || "—"}</Link>
+                  </div>
+                </div>
+                {owner?.phone && (
+                  <div className="field">
+                    <div className="field-label mono">電話番号</div>
+                    <div className="field-value">
+                      <a href={`tel:${owner.phone}`} className="rlink" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <Phone size={13} /> <span className="mono">{formatPhone(owner.phone)}</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {owner?.email && (
+                  <div className="field">
+                    <div className="field-label mono">メール</div>
+                    <div className="field-value">
+                      <a href={`mailto:${owner.email}`} className="rlink" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <Mail size={13} /> {owner.email}
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
-              {owner?.phone && (
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">電話番号</p>
-                  <a href={`tel:${owner.phone}`} className="inline-flex items-center gap-1.5 text-[14px] text-accent hover:underline">
-                    <Phone size={13} />
-                    {owner.phone}
-                  </a>
-                </div>
-              )}
-              {owner?.email && (
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">メール</p>
-                  <a href={`mailto:${owner.email}`} className="inline-flex items-center gap-1.5 text-[14px] text-accent hover:underline">
-                    <Mail size={13} />
-                    {owner.email}
-                  </a>
-                </div>
-              )}
             </div>
           </div>
 
           {owner?.bank_name && (
-            <div className="card p-5">
-              <h2 className="text-[14px] font-semibold mb-4">振込先</h2>
-              <div className="space-y-2 text-[13px]">
-                <div>
-                  <span className="text-ink-3">銀行</span>
-                  <p className="font-medium">{owner.bank_name} {owner.bank_branch}</p>
+            <div className="section">
+              <div className="section-head-bar"><h2>振込先</h2></div>
+              <div className="section-body">
+                <div className="kv-list">
+                  <div className="field">
+                    <div className="field-label mono">銀行</div>
+                    <div className="field-value field-plain">{owner.bank_name} {owner.bank_branch}</div>
+                  </div>
+                  {owner.account_type && (
+                    <div className="field">
+                      <div className="field-label mono">種別</div>
+                      <div className="field-value field-plain">{owner.account_type === "ordinary" ? "普通" : owner.account_type === "current" ? "当座" : owner.account_type}</div>
+                    </div>
+                  )}
+                  {owner.account_holder && (
+                    <div className="field">
+                      <div className="field-label mono">名義</div>
+                      <div className="field-value field-plain">{owner.account_holder}</div>
+                    </div>
+                  )}
                 </div>
-                {owner.account_type && (
-                  <div>
-                    <span className="text-ink-3">種別</span>
-                    <p className="font-medium">{owner.account_type === "ordinary" ? "普通" : owner.account_type === "current" ? "当座" : owner.account_type}</p>
-                  </div>
-                )}
-                {owner.account_holder && (
-                  <div>
-                    <span className="text-ink-3">名義</span>
-                    <p className="font-medium">{owner.account_holder}</p>
-                  </div>
-                )}
               </div>
             </div>
           )}
+
+          <div className="section">
+            <div className="section-head-bar"><h2>関連</h2></div>
+            <div className="section-body">
+              <div className="related-list">
+                {owner?.id && (
+                  <Link href={`/owners/${owner.id}`} className="related-row">
+                    <div>
+                      <div className="related-label">オーナー詳細</div>
+                      <div className="related-sub">{owner.name}</div>
+                    </div>
+                    <span className="related-arrow">↗</span>
+                  </Link>
+                )}
+                <Link href="/remittances" className="related-row">
+                  <div>
+                    <div className="related-label">送金一覧</div>
+                    <div className="related-sub">全送金データ</div>
+                  </div>
+                  <span className="related-arrow">↗</span>
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

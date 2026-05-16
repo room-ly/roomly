@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Phone, Mail } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 import { getRentBillingDetail } from "@/lib/queries";
+import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import RentDetailClient from "@/components/RentDetailClient";
 
@@ -41,59 +42,54 @@ export default async function RentDetailPage({
 
   return (
     <>
-      <div className="mb-6">
-        <Link
-          href="/rent"
-          className="inline-flex items-center gap-1 text-[13px] text-ink-3 hover:text-accent mb-3 transition-colors"
-        >
-          <ArrowLeft size={13} />
-          家賃管理に戻る
-        </Link>
-        <div className="flex items-start justify-between gap-4">
+      <div className="detail-back">
+        <Link href="/rent" className="rlink is-muted is-back">← 家賃管理に戻る</Link>
+      </div>
+
+      <div className="detail-header">
+        <div className="detail-header-main">
           <div>
-            <h1 className="text-lg font-semibold">
-              {property?.name} {unit?.unit_number}
-            </h1>
-            <p className="text-[13px] text-ink-3 mt-0.5">
-              {tenant?.name} — 家賃履歴
-            </p>
+            <h1 className="detail-title">{property?.name} {unit?.unit_number}</h1>
+            <div className="detail-kana">{tenant?.name} — 家賃履歴</div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* 左カラム */}
-        <div className="lg:col-span-2 space-y-6">
+      {/* サマリー */}
+      <div className="cols-summary" style={{ marginBottom: 24 }}>
+        <div className="sum-card">
+          <span className="sum-label mono">請求累計</span>
+          <span className="sum-value serif-i">¥{totalBilled.toLocaleString()}</span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">入金累計</span>
+          <span className="sum-value serif-i" style={{ color: "var(--accent-deep)" }}>¥{totalPaid.toLocaleString()}</span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">請求回数</span>
+          <span className="sum-value serif-i">{history.length}</span>
+          <span className="sum-foot mono">ヶ月</span>
+        </div>
+      </div>
 
-          {/* サマリーカード */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">請求累計</p>
-              <p className="text-lg font-semibold tabular-nums">¥{totalBilled.toLocaleString()}</p>
+      <div className="detail-grid">
+        <div className="detail-col-main">
+          {/* 月別家賃履歴 */}
+          <div className="section">
+            <div className="section-head-bar">
+              <h2>月別家賃履歴</h2>
+              <span className="desc">{history.length}件</span>
             </div>
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">入金累計</p>
-              <p className="text-lg font-semibold text-accent-deep tabular-nums">¥{totalPaid.toLocaleString()}</p>
-            </div>
-            <div className="card p-4">
-              <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">請求回数</p>
-              <p className="text-lg font-semibold tabular-nums">{history.length}ヶ月</p>
-            </div>
-          </div>
-
-          {/* 月別家賃履歴テーブル */}
-          <div className="card p-5">
-            <h2 className="text-[14px] font-semibold mb-4">月別家賃履歴</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-[13px]">
+            <div className="section-body flush">
+              <table className="tbl">
                 <thead>
-                  <tr className="text-left text-ink-3 border-b border-line">
-                    <th className="px-4 py-2 font-medium">対象月</th>
-                    <th className="px-4 py-2 font-medium text-right">請求額</th>
-                    <th className="px-4 py-2 font-medium text-right">入金額</th>
-                    <th className="px-4 py-2 font-medium">支払期限</th>
-                    <th className="px-4 py-2 font-medium">状態</th>
-                    <th className="px-4 py-2 font-medium"></th>
+                  <tr>
+                    <th>対象月</th>
+                    <th style={{ textAlign: "right" }}>請求額</th>
+                    <th style={{ textAlign: "right" }}>入金額</th>
+                    <th>支払期限</th>
+                    <th>状態</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -104,30 +100,24 @@ export default async function RentDetailPage({
                     return (
                       <tr
                         key={b.id}
-                        className={`border-b border-line last:border-0 transition-colors ${
-                          isCurrent ? "bg-accent/5" : "hover:bg-bg-2/30"
-                        } ${b.status === "overdue" ? "bg-danger-tint" : ""}`}
+                        className={`row-hover ${b.status === "overdue" ? "bg-danger-tint" : ""}`}
+                        style={isCurrent ? { background: "var(--accent-tint)" } : undefined}
                       >
-                        <td className="px-4 py-2.5">
-                          <span className={isCurrent ? "font-semibold" : ""}>{b.billing_month}</span>
-                          {isCurrent && <span className="ml-1.5 text-[10px] text-accent font-medium">●</span>}
+                        <td>
+                          <span style={isCurrent ? { fontWeight: 600 } : undefined}>{b.billing_month}</span>
+                          {isCurrent && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--accent)" }}>●</span>}
                         </td>
-                        <td className="px-4 py-2.5 text-right tabular-nums">¥{Number(b.total_amount).toLocaleString()}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums">
-                          <span className={paid > 0 ? "text-accent-deep font-medium" : "text-ink-3"}>
+                        <td className="num">¥{Number(b.total_amount).toLocaleString()}</td>
+                        <td className="num">
+                          <span style={{ color: paid > 0 ? "var(--accent-deep)" : "var(--ink-3)", fontWeight: paid > 0 ? 500 : 400 }}>
                             ¥{paid.toLocaleString()}
                           </span>
                         </td>
-                        <td className="px-4 py-2.5">{b.due_date}</td>
-                        <td className="px-4 py-2.5"><StatusBadge status={b.status} /></td>
-                        <td className="px-4 py-2.5">
+                        <td className="mono" style={{ fontSize: 12, color: "var(--ink-3)" }}>{b.due_date}</td>
+                        <td><StatusBadge status={b.status} /></td>
+                        <td>
                           {b.status !== "paid" && (
-                            <Link
-                              href={`/rent/${b.id}`}
-                              className="text-[11px] text-accent hover:underline"
-                            >
-                              詳細
-                            </Link>
+                            <Link href={`/rent/${b.id}`} className="rlink" style={{ fontSize: 11 }}>詳細</Link>
                           )}
                         </td>
                       </tr>
@@ -138,145 +128,180 @@ export default async function RentDetailPage({
             </div>
           </div>
 
-          {/* 選択月の請求内訳 + 入金履歴 */}
-          <div className="card p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[14px] font-semibold">{current.billing_month} の詳細</h2>
+          {/* 選択月の詳細 */}
+          <div className="section">
+            <div className="section-head-bar">
+              <h2>{current.billing_month} の詳細</h2>
               <StatusBadge status={current.status} />
             </div>
-
-            <div className="space-y-2 text-[13px] mb-4">
-              <div className="flex justify-between">
-                <span className="text-ink-3">賃料</span>
-                <span className="tabular-nums">¥{Number(current.rent).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-ink-3">管理費</span>
-                <span className="tabular-nums">¥{Number(current.management_fee).toLocaleString()}</span>
-              </div>
-              {Number(current.other_amount) > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-ink-3">{current.other_description || "その他"}</span>
-                  <span className="tabular-nums">¥{Number(current.other_amount).toLocaleString()}</span>
+            <div className="section-body">
+              {/* 請求内訳 */}
+              <div className="cfee-grid">
+                <div className="cfee-main">
+                  <div className="cfee-label mono">請求合計</div>
+                  <div className="cfee-value">¥{Number(current.total_amount).toLocaleString()}</div>
                 </div>
-              )}
-              <div className="flex justify-between pt-2 border-t border-line font-medium">
-                <span>請求合計</span>
-                <span className="tabular-nums">¥{Number(current.total_amount).toLocaleString()}</span>
+                <div className="cfee-item">
+                  <div className="cfee-label mono">賃料</div>
+                  <div className="cfee-sub num">¥{Number(current.rent).toLocaleString()}</div>
+                </div>
+                <div className="cfee-item">
+                  <div className="cfee-label mono">管理費</div>
+                  <div className="cfee-sub num">¥{Number(current.management_fee).toLocaleString()}</div>
+                </div>
+                {Number(current.other_amount) > 0 && (
+                  <div className="cfee-item">
+                    <div className="cfee-label mono">{current.other_description || "その他"}</div>
+                    <div className="cfee-sub num">¥{Number(current.other_amount).toLocaleString()}</div>
+                  </div>
+                )}
               </div>
-            </div>
 
-            {/* 入金状況バー */}
-            <div className="mb-5">
-              <div className="flex justify-between text-[12px] mb-1">
-                <span className="text-ink-3">入金済 ¥{currentPaidTotal.toLocaleString()}</span>
-                <span className={`font-medium ${currentRemaining > 0 ? "text-warn" : "text-accent-deep"}`}>
-                  {currentRemaining > 0 ? `残 ¥${currentRemaining.toLocaleString()}` : "完済"}
-                </span>
+              {/* 入金バー */}
+              <div style={{ marginTop: 20, marginBottom: 20 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+                  <span style={{ color: "var(--ink-3)" }}>入金済 ¥{currentPaidTotal.toLocaleString()}</span>
+                  <span style={{ fontWeight: 500, color: currentRemaining > 0 ? "var(--warn)" : "var(--accent-deep)" }}>
+                    {currentRemaining > 0 ? `残 ¥${currentRemaining.toLocaleString()}` : "完済"}
+                  </span>
+                </div>
+                <div style={{ height: 8, background: "var(--bg-2)", borderRadius: 99, overflow: "hidden" }}>
+                  <div style={{
+                    height: "100%",
+                    borderRadius: 99,
+                    background: currentRemaining > 0 ? "var(--warn)" : "var(--accent-deep)",
+                    width: `${Math.min(100, (currentPaidTotal / Number(current.total_amount)) * 100)}%`,
+                    transition: "width 0.3s",
+                  }} />
+                </div>
               </div>
-              <div className="h-2 bg-bg-2 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${currentRemaining > 0 ? "bg-warn" : "bg-accent-deep"}`}
-                  style={{ width: `${Math.min(100, (currentPaidTotal / Number(current.total_amount)) * 100)}%` }}
-                />
-              </div>
-            </div>
 
-            {/* 入金履歴 */}
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[13px] font-medium text-ink-2">入金履歴</h3>
-              {current.status !== "paid" && (
-                <RentDetailClient billing={{
-                  id: current.id,
-                  total_amount: Number(current.total_amount),
-                  paid_amount: currentPaidTotal,
-                  tenant_name: tenant?.name || "—",
-                  unit_label: `${property?.name || ""} ${unit?.unit_number || ""}`,
-                  billing_month: current.billing_month,
-                }} />
-              )}
-            </div>
-            {currentPayments.length === 0 ? (
-              <p className="text-[13px] text-ink-3 py-3 text-center">入金記録はありません</p>
-            ) : (
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="text-left text-ink-3 border-b border-line">
-                    <th className="px-4 py-2 font-medium">入金日</th>
-                    <th className="px-4 py-2 font-medium">方法</th>
-                    <th className="px-4 py-2 font-medium text-right">金額</th>
-                    <th className="px-4 py-2 font-medium">備考</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentPayments
-                    .sort((a: any, b: any) => (a.payment_date > b.payment_date ? -1 : 1))
-                    .map((p: any) => (
-                    <tr key={p.id} className="border-b border-line last:border-0">
-                      <td className="px-4 py-2.5">{p.payment_date}</td>
-                      <td className="px-4 py-2.5">{paymentMethodLabels[p.payment_method] || p.payment_method}</td>
-                      <td className="px-4 py-2.5 text-right font-medium tabular-nums">¥{Number(p.amount).toLocaleString()}</td>
-                      <td className="px-4 py-2.5 text-ink-3">{p.notes || "—"}</td>
+              {/* 入金履歴 */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <h3 style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-2)" }}>入金履歴</h3>
+                {current.status !== "paid" && (
+                  <RentDetailClient billing={{
+                    id: current.id,
+                    total_amount: Number(current.total_amount),
+                    paid_amount: currentPaidTotal,
+                    tenant_name: tenant?.name || "—",
+                    unit_label: `${property?.name || ""} ${unit?.unit_number || ""}`,
+                    billing_month: current.billing_month,
+                  }} />
+                )}
+              </div>
+              {currentPayments.length === 0 ? (
+                <p style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "center", padding: "16px 0" }}>入金記録はありません</p>
+              ) : (
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>入金日</th>
+                      <th>方法</th>
+                      <th style={{ textAlign: "right" }}>金額</th>
+                      <th>備考</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody>
+                    {currentPayments
+                      .sort((a: any, b: any) => (a.payment_date > b.payment_date ? -1 : 1))
+                      .map((p: any) => (
+                      <tr key={p.id}>
+                        <td className="mono" style={{ fontSize: 12 }}>{p.payment_date}</td>
+                        <td>{paymentMethodLabels[p.payment_method] || p.payment_method}</td>
+                        <td className="num" style={{ fontWeight: 500 }}>¥{Number(p.amount).toLocaleString()}</td>
+                        <td style={{ color: "var(--ink-3)" }}>{p.notes || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* 右カラム: 入居者情報 */}
-        <div className="space-y-6">
-          <div className="card p-5">
-            <h2 className="text-[14px] font-semibold mb-4">入居者情報</h2>
-            <div className="space-y-3">
-              <div>
-                <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">氏名</p>
-                <p className="text-[14px] font-medium">{tenant?.name || "—"}</p>
+        {/* サイドカラム */}
+        <div className="detail-col-side">
+          <div className="section">
+            <div className="section-head-bar"><h2>入居者情報</h2></div>
+            <div className="section-body">
+              <div className="kv-list">
+                <div className="field">
+                  <div className="field-label mono">氏名</div>
+                  <div className="field-value">
+                    <Link href={`/tenants/${tenant?.id}`} className="rlink">{tenant?.name || "—"}</Link>
+                  </div>
+                </div>
+                {tenant?.phone && (
+                  <div className="field">
+                    <div className="field-label mono">電話番号</div>
+                    <div className="field-value">
+                      <a href={`tel:${tenant.phone}`} className="rlink" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <Phone size={13} /> <span className="mono">{formatPhone(tenant.phone)}</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {tenant?.email && (
+                  <div className="field">
+                    <div className="field-label mono">メール</div>
+                    <div className="field-value">
+                      <a href={`mailto:${tenant.email}`} className="rlink" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <Mail size={13} /> {tenant.email}
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
-              {tenant?.phone && (
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">電話番号</p>
-                  <a
-                    href={`tel:${tenant.phone}`}
-                    className="inline-flex items-center gap-1.5 text-[14px] text-accent hover:underline"
-                  >
-                    <Phone size={13} />
-                    {tenant.phone}
-                  </a>
-                </div>
-              )}
-              {tenant?.email && (
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">メール</p>
-                  <a
-                    href={`mailto:${tenant.email}`}
-                    className="inline-flex items-center gap-1.5 text-[14px] text-accent hover:underline"
-                  >
-                    <Mail size={13} />
-                    {tenant.email}
-                  </a>
-                </div>
-              )}
             </div>
           </div>
 
-          <div className="card p-5">
-            <h2 className="text-[14px] font-semibold mb-4">物件情報</h2>
-            <div className="space-y-3 text-[13px]">
-              <div>
-                <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">物件</p>
-                <p>{property?.name || "—"}</p>
-              </div>
-              {property?.address && (
-                <div>
-                  <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">住所</p>
-                  <p className="text-ink-2">{property.address}</p>
+          <div className="section">
+            <div className="section-head-bar"><h2>物件情報</h2></div>
+            <div className="section-body">
+              <div className="kv-list">
+                <div className="field">
+                  <div className="field-label mono">物件</div>
+                  <div className="field-value">
+                    <Link href={`/properties/${property?.id}`} className="rlink">{property?.name || "—"}</Link>
+                  </div>
                 </div>
-              )}
-              <div>
-                <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-0.5">部屋</p>
-                <p>{unit?.unit_number || "—"}</p>
+                {property?.address && (
+                  <div className="field">
+                    <div className="field-label mono">住所</div>
+                    <div className="field-value field-plain" style={{ fontSize: 12 }}>{property.address}</div>
+                  </div>
+                )}
+                <div className="field">
+                  <div className="field-label mono">部屋</div>
+                  <div className="field-value field-plain mono">{unit?.unit_number || "—"}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="section">
+            <div className="section-head-bar"><h2>関連</h2></div>
+            <div className="section-body">
+              <div className="related-list">
+                {tenant?.id && (
+                  <Link href={`/tenants/${tenant.id}`} className="related-row">
+                    <div>
+                      <div className="related-label">入居者詳細</div>
+                      <div className="related-sub">{tenant.name}</div>
+                    </div>
+                    <span className="related-arrow">↗</span>
+                  </Link>
+                )}
+                {property?.id && (
+                  <Link href={`/properties/${property.id}`} className="related-row">
+                    <div>
+                      <div className="related-label">物件詳細</div>
+                      <div className="related-sub">{property.name}</div>
+                    </div>
+                    <span className="related-arrow">↗</span>
+                  </Link>
+                )}
               </div>
             </div>
           </div>

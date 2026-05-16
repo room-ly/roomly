@@ -143,12 +143,26 @@ describe("tenantSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("有効な電話番号を受け入れる", () => {
+  it("有効な電話番号を受け入れ、ハイフンを除去する", () => {
     const result = tenantSchema.safeParse({
       name: "山田太郎",
       phone: "03-1234-5678",
     });
     expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.phone).toBe("0312345678");
+    }
+  });
+
+  it("数字のみの電話番号をそのまま受け入れる", () => {
+    const result = tenantSchema.safeParse({
+      name: "山田太郎",
+      phone: "09012345678",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.phone).toBe("09012345678");
+    }
   });
 
   it("無効な電話番号でエラー", () => {
