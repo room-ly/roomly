@@ -388,7 +388,7 @@ export async function getInquiries() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("inquiries")
-    .select("*, property:properties(name), unit:units(unit_number), tenant:tenants(name)")
+    .select("*, property:properties(id, name), unit:units(unit_number), tenant:tenants(id, name, phone, email), inquiry_logs(id, content, action_type, created_at)")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as Row[];

@@ -22,7 +22,7 @@ export default async function InquiriesPage({
         eyebrow="Inquiries"
         title="問い合わせ"
         em="管理"
-        description={`${inquiries.length}件の問い合わせ`}
+        description={`${inquiries.filter(q => q.status === "open").length}件未対応`}
         action={<InquiriesPageClient properties={properties} units={units} tenants={tenants} />}
       />
 
