@@ -9,6 +9,7 @@ import type { ZodError } from "zod";
 interface SelectOption {
   id: string;
   label: string;
+  tenant_id?: string | null;
 }
 
 interface InquiryFormModalProps {
@@ -33,6 +34,7 @@ export default function InquiryFormModal({
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState(editData?.property_id || "");
+  const [selectedTenantId, setSelectedTenantId] = useState(editData?.tenant_id || "");
 
   const filteredUnits = useMemo(() => {
     if (!selectedPropertyId) return units;
@@ -40,6 +42,13 @@ export default function InquiryFormModal({
       properties.find((p) => p.id === selectedPropertyId)?.label || ""
     ));
   }, [selectedPropertyId, units, properties]);
+
+  function handleUnitChange(unitId: string) {
+    const unit = units.find((u) => u.id === unitId);
+    if (unit?.tenant_id) {
+      setSelectedTenantId(unit.tenant_id);
+    }
+  }
 
   if (!isOpen) return null;
 
@@ -153,6 +162,7 @@ export default function InquiryFormModal({
               <select
                 name="unit_id"
                 defaultValue={editData?.unit_id || ""}
+                onChange={(e) => handleUnitChange(e.target.value)}
                 className="input"
               >
                 <option value="">未選択</option>
@@ -167,7 +177,8 @@ export default function InquiryFormModal({
               </label>
               <select
                 name="tenant_id"
-                defaultValue={editData?.tenant_id || ""}
+                value={selectedTenantId}
+                onChange={(e) => setSelectedTenantId(e.target.value)}
                 className="input"
               >
                 <option value="">未選択</option>

@@ -73,33 +73,36 @@ export default function ContractsTable({ data, alertDays = 90 }: ContractsTableP
         { key: "start_date", label: "契約開始", sortable: true },
         {
           key: "end_date",
-          label: "契約終了",
+          label: "契約期間",
           sortable: true,
           render: (item) => {
-            const remainingDays = item.end_date
-              ? Math.ceil((new Date(item.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-              : null;
-            const isExpired = remainingDays !== null && remainingDays <= 0;
-            const isUrgent = remainingDays !== null && remainingDays > 0 && remainingDays <= 30;
-            const isWarning = remainingDays !== null && remainingDays > 30 && remainingDays <= alertDays;
+            if (!item.start_date || !item.end_date) return <span style={{ color: "var(--ink-3)" }}>—</span>;
+            const now = Date.now();
+            const start = new Date(item.start_date).getTime();
+            const end = new Date(item.end_date).getTime();
+            const totalMonths = Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24 * 30)));
+            const elapsed = Math.max(0, (now - start) / (end - start));
+            const remainingDays = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+            const remainingMonths = Math.max(0, Math.ceil(remainingDays / 30));
+            const pct = Math.min(100, Math.max(0, elapsed * 100));
+            const isExpired = remainingDays <= 0;
+            const isUrgent = remainingDays > 0 && remainingDays <= 30;
+            const color = isExpired ? "var(--danger)" : isUrgent ? "var(--danger)" : remainingDays <= alertDays ? "var(--warn)" : "var(--accent)";
             return (
-              <div className="flex items-center gap-2">
-                <span>{item.end_date || "—"}</span>
-                {isExpired && (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-danger/15 text-danger">
-                    期限切れ
-                  </span>
-                )}
-                {isUrgent && (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-danger/15 text-danger">
-                    あと{remainingDays}日
-                  </span>
-                )}
-                {isWarning && (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-warn/15 text-warn">
-                    あと{remainingDays}日
-                  </span>
-                )}
+              <div className="tn-contract-cell">
+                <div className="tn-meter-wrap">
+                  <div className="tn-meter">
+                    <div className="tn-meter-fill" style={{ width: `${pct}%`, background: color }} />
+                    {Array.from({ length: Math.min(totalMonths, 48) }).map((_, i) => {
+                      const tickPct = ((i + 1) / Math.min(totalMonths, 48)) * 100;
+                      if (tickPct >= 99) return null;
+                      return i % 12 === 11 ? <div key={i} className="tn-meter-tick" style={{ left: `${tickPct}%` }} /> : null;
+                    })}
+                  </div>
+                </div>
+                <span className="mono" style={{ fontSize: 11, color: isExpired ? "var(--danger)" : "var(--ink-3)" }}>
+                  {isExpired ? "期限切れ" : `残${remainingMonths}ヶ月`}
+                </span>
               </div>
             );
           },

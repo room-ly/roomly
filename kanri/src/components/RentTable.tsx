@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import MonthSelector from "./MonthSelector";
 import FilterableTable from "./FilterableTable";
 import StatusBadge from "./StatusBadge";
@@ -26,8 +26,11 @@ function getCurrentMonth() {
 
 export default function RentTable({ data }: RentTableProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const statusParam = searchParams.get("status");
   const availableMonths = useMemo(() => getAvailableMonths(data), [data]);
   const [selectedMonth, setSelectedMonth] = useState(() => {
+    if (statusParam) return "all";
     const current = getCurrentMonth();
     return availableMonths.includes(current) ? current : availableMonths[0] || current;
   });
@@ -48,28 +51,28 @@ export default function RentTable({ data }: RentTableProps) {
       <MonthSelector selectedMonth={selectedMonth} availableMonths={availableMonths} onChange={setSelectedMonth} />
 
       {/* サマリー */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <div className="card p-4">
-          <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-2">請求総額</p>
-          <p className="text-xl font-semibold tabular-nums">¥{totalExpected.toLocaleString()}</p>
+      <div className="cols-summary">
+        <div className="sum-card">
+          <span className="sum-label mono">請求総額</span>
+          <span className="sum-value serif-i">¥{totalExpected.toLocaleString()}</span>
+          <span className="sum-foot mono">{monthFiltered.length}件</span>
         </div>
-        <div className="card p-4">
-          <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-2">入金済</p>
-          <p className="text-xl font-semibold text-accent-deep tabular-nums">¥{totalPaid.toLocaleString()}</p>
+        <div className="sum-card">
+          <span className="sum-label mono">入金済</span>
+          <span className="sum-value serif-i" style={{ color: "var(--accent-deep)" }}>¥{totalPaid.toLocaleString()}</span>
+          <span className="sum-foot mono">{monthFiltered.filter((b) => b.status === "paid").length}件</span>
         </div>
-        <div className="card p-4">
-          <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-2">回収率</p>
-          <div className="flex items-end gap-2">
-            <p className="text-xl font-semibold tabular-nums">{collectionRate}%</p>
-            <div className="flex-1 h-1 bg-bg-2 rounded-full overflow-hidden mb-1.5">
-              <div className="h-full rounded-full bg-accent" style={{ width: `${collectionRate}%` }} />
-            </div>
+        <div className="sum-card">
+          <span className="sum-label mono">回収率</span>
+          <span className="sum-value serif-i">{collectionRate}%</span>
+          <div style={{ height: 4, background: "var(--bg-2)", borderRadius: 99, overflow: "hidden", marginTop: 4 }}>
+            <div style={{ height: "100%", background: "var(--accent)", borderRadius: 99, width: `${collectionRate}%`, transition: "width .3s" }} />
           </div>
         </div>
-        <div className="card p-4 border-l-[3px] border-l-danger">
-          <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-2">滞納</p>
-          <p className="text-xl font-semibold text-danger tabular-nums">{overdueCount}件</p>
-          <p className="text-[12px] text-danger mt-0.5 tabular-nums">¥{overdueAmount.toLocaleString()}</p>
+        <div className="sum-card" style={{ borderLeft: "3px solid var(--danger)" }}>
+          <span className="sum-label mono">滞納</span>
+          <span className="sum-value serif-i" style={{ color: "var(--danger)" }}>{overdueCount}件</span>
+          <span className="sum-foot mono" style={{ color: "var(--danger)" }}>¥{overdueAmount.toLocaleString()}</span>
         </div>
       </div>
 
@@ -77,6 +80,7 @@ export default function RentTable({ data }: RentTableProps) {
         data={monthFiltered}
         searchFields={["contract.tenant.name", "contract.unit.property.name", "contract.unit.unit_number"]}
         searchPlaceholder="入居者・物件名で検索..."
+        initialFilters={statusParam ? { status: statusParam } : {}}
         filters={[
           {
             key: "status",

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Building2, MapPin, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Building2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { formatBuiltYear } from "@/lib/wareki";
 import PropertyFormModal from "./PropertyFormModal";
 
@@ -34,110 +34,114 @@ export default function PropertyCard({ property: prop, owners }: PropertyCardPro
     if (res.ok) router.refresh();
   }
 
+  const typeLabel = prop.property_type === "apartment" ? "マンション" :
+    prop.property_type === "house" ? "戸建て" :
+    prop.property_type === "commercial" ? "商業" : "駐車場";
+  const isApt = prop.property_type === "apartment";
+
   return (
     <>
-      <div className="card card-interactive relative overflow-hidden flex">
-        <Link href={`/properties/${prop.id}`} className="absolute inset-0 z-0" />
-
+      <div className="prop-card-h" onClick={() => router.push(`/properties/${prop.id}`)}>
         {prop.thumbnail_url ? (
-          <div className="w-32 sm:w-40 shrink-0 bg-bg-2">
+          <div className="prop-h-thumb">
             <img
               src={prop.thumbnail_url}
               alt={prop.name}
-              className="w-full h-full object-cover"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           </div>
         ) : (
-          <div className="w-32 sm:w-40 shrink-0 bg-bg-2 flex items-center justify-center">
-            <Building2 size={28} className="text-ink-3/30" />
+          <div className="prop-h-thumb">
+            <Building2 size={28} style={{ color: "var(--ink-4)", opacity: 0.3 }} />
           </div>
         )}
 
-        <div className="flex-1 min-w-0 p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div className="min-w-0">
-              <h3 className="text-[14px] font-semibold text-ink truncate">{prop.name}</h3>
-              <p className="flex items-center gap-1 text-[12px] text-ink-3 mt-0.5 truncate">
-                <MapPin size={11} className="shrink-0" />
-                {prop.address}
-              </p>
+        <div className="prop-h-body">
+          <div className="prop-h-head">
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h3>{prop.name}</h3>
+              <div className="prop-h-addr">{prop.address}</div>
             </div>
-            <div className="flex items-center gap-1.5 relative z-10 shrink-0 ml-2">
-              <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-medium ${
-                prop.property_type === "apartment" ? "bg-accent-tint text-accent" : "bg-bg-2 text-ink-3"
-              }`}>
-                {prop.property_type === "apartment" ? "マンション" :
-                 prop.property_type === "house" ? "戸建て" :
-                 prop.property_type === "commercial" ? "商業" : "駐車場"}
-              </span>
-              <div className="relative">
-                <button
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  className="p-1 rounded text-ink-3 hover:text-ink hover:bg-bg-2 transition-colors"
-                >
-                  <MoreVertical size={14} />
-                </button>
-                {menuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                    <div className="absolute right-0 top-full mt-1 w-28 bg-surface rounded border border-line shadow-md z-50 overflow-hidden">
-                      <button
-                        onClick={() => { setMenuOpen(false); setEditOpen(true); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-ink-2 hover:bg-bg-2 transition-colors"
-                      >
-                        <Pencil size={12} />
-                        編集
-                      </button>
-                      <button
-                        onClick={() => { setMenuOpen(false); handleDelete(); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-danger hover:bg-danger-tint transition-colors"
-                      >
-                        <Trash2 size={12} />
-                        削除
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
+            <span className={`prop-h-type${isApt ? " is-apt" : ""}`}>{typeLabel}</span>
+            <div style={{ position: "relative", zIndex: 10 }} onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="icon-btn"
+                style={{ width: 24, height: 24 }}
+              >
+                <MoreVertical size={14} />
+              </button>
+              {menuOpen && (
+                <>
+                  <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setMenuOpen(false)} />
+                  <div style={{
+                    position: "absolute", right: 0, top: "100%", marginTop: 4,
+                    width: 112, background: "var(--surface)", border: "1px solid var(--line)",
+                    borderRadius: "var(--r-md)", boxShadow: "0 4px 12px rgba(40,32,12,.1)",
+                    zIndex: 50, overflow: "hidden"
+                  }}>
+                    <button
+                      onClick={() => { setMenuOpen(false); setEditOpen(true); }}
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 12, color: "var(--ink-2)" }}
+                      onMouseEnter={(e) => { (e.target as HTMLElement).style.background = "var(--bg-2)"; }}
+                      onMouseLeave={(e) => { (e.target as HTMLElement).style.background = ""; }}
+                    >
+                      <Pencil size={12} /> 編集
+                    </button>
+                    <button
+                      onClick={() => { setMenuOpen(false); handleDelete(); }}
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 12, color: "var(--danger)" }}
+                      onMouseEnter={(e) => { (e.target as HTMLElement).style.background = "var(--danger-tint)"; }}
+                      onMouseLeave={(e) => { (e.target as HTMLElement).style.background = ""; }}
+                    >
+                      <Trash2 size={12} /> 削除
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="relative z-0 pointer-events-none">
-            <div className="mb-3">
-              <div className="flex items-center justify-between text-[11px] mb-1">
-                <span className="text-ink-3">入居率</span>
-                <span className="font-medium tabular-nums">{occupancyRate}%</span>
-              </div>
-              <div className="h-1 bg-bg-2 rounded-full overflow-hidden">
-                <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${occupancyRate}%` }} />
-              </div>
+          <div>
+            <div className="prop-h-occ-row">
+              <span>入居率 <span className="num"><b>{occupancyRate}</b>%</span></span>
+              <span className="mono">{occupied}/{propUnits.length}戸</span>
             </div>
+            <div className="prop-h-occ-bar">
+              <div className="prop-h-occ-fill" style={{ width: `${occupancyRate}%` }} />
+            </div>
+          </div>
 
-            <div className="flex gap-2 text-center mb-3">
-              <div className="flex-1 py-1.5 rounded bg-bg-2">
-                <p className="text-[10px] text-ink-3">全戸数</p>
-                <p className="text-[15px] font-semibold tabular-nums">{propUnits.length}</p>
-              </div>
-              <div className="flex-1 py-1.5 rounded bg-bg-2">
-                <p className="text-[10px] text-ink-3">入居</p>
-                <p className="text-[15px] font-semibold text-accent-deep tabular-nums">{occupied}</p>
-              </div>
-              <div className="flex-1 py-1.5 rounded bg-bg-2">
-                <p className="text-[10px] text-ink-3">空室</p>
-                <p className="text-[15px] font-semibold text-accent tabular-nums">{vacant}</p>
-              </div>
-              <div className="flex-1 py-1.5 rounded bg-bg-2">
-                <p className="text-[10px] text-ink-3">家賃合計</p>
-                <p className="text-[13px] font-semibold tabular-nums">¥{totalRent.toLocaleString()}</p>
-              </div>
+          <div className="prop-h-stats">
+            <div className="prop-h-stat">
+              <span className="k">全戸数</span>
+              <span className="v">{propUnits.length}</span>
             </div>
+            <div className="prop-h-stat">
+              <span className="k">入居</span>
+              <span className="v">{occupied}</span>
+            </div>
+            <div className="prop-h-stat">
+              <span className="k">空室</span>
+              <span className="v">{vacant}</span>
+            </div>
+            <div className="prop-h-stat">
+              <span className="k">家賃合計</span>
+              <span className="v" style={{ fontSize: 12 }}>¥{totalRent.toLocaleString()}<small>/月</small></span>
+            </div>
+          </div>
 
-            <div className="pt-2.5 border-t border-line flex items-center gap-3 text-[11px] text-ink-3">
-              <span>{prop.structure} {prop.floors ? `${prop.floors}F` : ""}</span>
-              <span>{prop.built_year ? formatBuiltYear(prop.built_year) : "築-年"}</span>
-              <span>{prop.nearest_station} 徒歩{prop.walk_minutes}分</span>
-              <span className="ml-auto font-medium text-ink-2">{prop.owner?.name}</span>
-            </div>
+          <div className="prop-h-foot">
+            <span>{prop.structure} {prop.floors ? `${prop.floors}F` : ""}</span>
+            <span className="dot-sep">·</span>
+            <span>{prop.built_year ? formatBuiltYear(prop.built_year) : "築-年"}</span>
+            {prop.nearest_station && (
+              <>
+                <span className="dot-sep">·</span>
+                <span>{prop.nearest_station} 徒歩{prop.walk_minutes}分</span>
+              </>
+            )}
+            <span style={{ marginLeft: "auto", fontWeight: 500, color: "var(--ink-2)" }}>{prop.owner?.name}</span>
           </div>
         </div>
       </div>

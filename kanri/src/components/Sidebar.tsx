@@ -14,7 +14,6 @@ import {
   UserCircle,
   Receipt,
   Send,
-  BarChart3,
   Menu,
   X,
   LogOut,
@@ -54,7 +53,6 @@ const navGroups = [
     items: [
       { href: "/owners", label: "オーナー", icon: UserCircle },
       { href: "/remittances", label: "送金", icon: Send },
-      { href: "/reports", label: "レポート", icon: BarChart3 },
     ] as NavItem[],
   },
 ];

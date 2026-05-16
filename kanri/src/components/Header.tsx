@@ -6,6 +6,7 @@ import {
   Bell,
   Sun,
   Moon,
+  Search,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import { createClient } from "@/lib/supabase";
@@ -68,7 +69,6 @@ export default function Header() {
     fetchNotifications();
   }, [pathname, fetchNotifications]);
 
-  // Supabase Realtimeで新着通知を即時反映
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
@@ -137,48 +137,51 @@ export default function Header() {
     });
   if (crumbs.length === 0) crumbs.push("ダッシュボード");
 
+  const openCommandPalette = () => {
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+  };
+
   return (
-    <header
-      className="h-[var(--header-h)] flex items-center gap-4 px-4 sm:px-6 md:px-7 border-b border-line sticky top-0 z-30"
-      style={{
-        background: "color-mix(in srgb, var(--bg) 92%, transparent)",
-        backdropFilter: "blur(12px)",
-      }}
-    >
+    <header className="topbar">
       {/* パンくず */}
-      <nav className="flex items-center gap-2 text-[13px] min-w-0 ml-10 md:ml-0">
+      <nav className="crumbs" style={{ marginLeft: 40 }}>
         {crumbs.map((c, i) => (
           <span key={i} className="flex items-center gap-2">
-            {i > 0 && <span className="text-ink-4">/</span>}
-            <span className={i === crumbs.length - 1 ? "text-ink font-medium" : "text-ink-3"}>
+            {i > 0 && <span className="sep">/</span>}
+            <span className={i === crumbs.length - 1 ? "now" : ""}>
               {c}
             </span>
           </span>
         ))}
       </nav>
 
+      {/* 検索ボタン */}
+      <button className="search-btn" onClick={openCommandPalette}>
+        <Search size={14} style={{ color: "var(--ink-3)", flexShrink: 0 }} />
+        <span className="search-placeholder">検索...</span>
+        <kbd>⌘K</kbd>
+      </button>
+
       {/* アクション */}
-      <div className="ml-auto flex items-center gap-2">
+      <div className="topbar-actions">
         {/* テーマ切替 */}
         <button
           onClick={toggleTheme}
-          className="w-8 h-8 grid place-items-center rounded-[7px] text-ink-2 hover:bg-surface hover:text-ink transition-colors"
+          className="icon-btn"
           aria-label="テーマ切り替え"
         >
           {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
         {/* 通知 */}
-        <div ref={notifRef} className="relative">
+        <div ref={notifRef} style={{ position: "relative" }}>
           <button
             onClick={() => setNotifOpen(!notifOpen)}
-            className="w-8 h-8 grid place-items-center rounded-[7px] text-ink-2 hover:bg-surface hover:text-ink transition-colors relative"
+            className="icon-btn"
             aria-label="通知"
           >
             <Bell size={16} />
-            {unreadCount > 0 && (
-              <span className="absolute top-[7px] right-2 w-1.5 h-1.5 rounded-full bg-danger border-[1.5px] border-bg" />
-            )}
+            {unreadCount > 0 && <span className="dot" />}
           </button>
 
           {notifOpen && (
@@ -225,7 +228,6 @@ export default function Header() {
             </div>
           )}
         </div>
-
       </div>
     </header>
   );

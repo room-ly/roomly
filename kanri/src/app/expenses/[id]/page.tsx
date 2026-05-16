@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { getExpenseDetail, getPropertiesForSelect, getOwnersForSelect } from "@/lib/queries";
 import StatusBadge from "@/components/StatusBadge";
 import ExpenseDetailClient from "@/components/ExpenseDetailClient";
@@ -20,88 +19,130 @@ export default async function ExpenseDetailPage({
 
   return (
     <>
-      <div className="mb-6">
-        <Link
-          href="/expenses"
-          className="inline-flex items-center gap-1 text-[13px] text-ink-3 hover:text-accent mb-3 transition-colors"
-        >
-          <ArrowLeft size={13} />
-          経費一覧に戻る
-        </Link>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-lg font-semibold">{expense.description}</h1>
-            <p className="text-[13px] text-ink-3 mt-0.5">
-              {expense.expense_date} — {expense.property?.name || "物件未指定"}
-            </p>
-          </div>
-          <ExpenseDetailClient expense={expense} properties={properties} owners={owners} />
-        </div>
+      <div className="detail-back">
+        <Link href="/expenses" className="rlink is-muted is-back">← 経費一覧に戻る</Link>
       </div>
 
-      <div className="card p-5">
-        <div className="flex items-center justify-between mb-5">
+      <div className="detail-header">
+        <div className="detail-header-main">
           <div>
-            <p className="text-[11px] text-ink-3 uppercase tracking-wider mb-1">金額</p>
-            <p className="text-2xl font-semibold tabular-nums">¥{Number(expense.amount).toLocaleString()}</p>
+            <h1 className="detail-title">{expense.description}</h1>
+            <div className="detail-kana">{expense.expense_date} — {expense.property?.name || "物件未指定"}</div>
           </div>
-          <div className="flex items-center gap-3">
+          <div style={{ marginLeft: 8, display: "flex", gap: 6, alignItems: "center" }}>
             <StatusBadge status={expense.category} />
-            <span className={`inline-flex items-center gap-1.5 text-[13px] font-medium ${expense.is_owner_charge ? "text-warn" : "text-accent"}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${expense.is_owner_charge ? "bg-warn" : "bg-accent"}`} />
+            <span className={`charge-tag ${expense.is_owner_charge ? "warn" : "accent"}`}>
+              <span className="dot" />
               {expense.is_owner_charge ? "オーナー負担" : "管理会社負担"}
             </span>
           </div>
         </div>
+        <div className="detail-header-actions">
+          <ExpenseDetailClient expense={expense} properties={properties} owners={owners} />
+        </div>
+      </div>
 
-        <div className="border-t border-line pt-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 text-[13px]">
-            <div>
-              <span className="text-ink-3">日付</span>
-              <p className="font-medium">{expense.expense_date}</p>
+      <div className="detail-grid">
+        <div className="detail-col-main">
+          {/* 金額 */}
+          <div className="section">
+            <div className="section-head-bar"><h2>金額</h2></div>
+            <div className="section-body">
+              <div className="cfee-grid">
+                <div className="cfee-main">
+                  <div className="cfee-label mono">経費金額</div>
+                  <div className="cfee-value">¥{Number(expense.amount).toLocaleString()}</div>
+                </div>
+              </div>
             </div>
-            <div>
-              <span className="text-ink-3">内容</span>
-              <p className="font-medium">{expense.description}</p>
+          </div>
+
+          {/* 詳細 */}
+          <div className="section">
+            <div className="section-head-bar"><h2>経費情報</h2></div>
+            <div className="section-body">
+              <div className="kv-grid">
+                <div className="field">
+                  <div className="field-label mono">日付</div>
+                  <div className="field-value field-plain mono">{expense.expense_date}</div>
+                </div>
+                <div className="field">
+                  <div className="field-label mono">内容</div>
+                  <div className="field-value field-plain">{expense.description}</div>
+                </div>
+                {expense.property && (
+                  <div className="field">
+                    <div className="field-label mono">物件</div>
+                    <div className="field-value">
+                      <Link href={`/properties/${expense.property.id}`} className="rlink">
+                        {expense.property.name}
+                      </Link>
+                      {expense.unit?.unit_number && <span style={{ marginLeft: 6, color: "var(--ink-3)", fontSize: 12 }}>{expense.unit.unit_number}</span>}
+                    </div>
+                  </div>
+                )}
+                {expense.owner?.name && (
+                  <div className="field">
+                    <div className="field-label mono">オーナー</div>
+                    <div className="field-value field-plain">{expense.owner.name}</div>
+                  </div>
+                )}
+                {expense.vendor_name && (
+                  <div className="field">
+                    <div className="field-label mono">業者</div>
+                    <div className="field-value field-plain">{expense.vendor_name}</div>
+                  </div>
+                )}
+                {expense.invoice_number && (
+                  <div className="field">
+                    <div className="field-label mono">請求書番号</div>
+                    <div className="field-value field-plain mono">{expense.invoice_number}</div>
+                  </div>
+                )}
+              </div>
+              {expense.notes && (
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+                  <span className="field-label mono">備考</span>
+                  <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{expense.notes}</p>
+                </div>
+              )}
             </div>
-            {expense.property && (
-              <div>
-                <span className="text-ink-3">物件</span>
-                <p className="font-medium">
-                  <Link href={`/properties/${expense.property.id}`} className="text-accent hover:underline">
-                    {expense.property.name}
-                  </Link>
-                  {expense.unit?.unit_number && <span className="text-ink-3 ml-1">{expense.unit.unit_number}</span>}
-                </p>
-              </div>
-            )}
-            {expense.owner?.name && (
-              <div>
-                <span className="text-ink-3">オーナー</span>
-                <p className="font-medium">{expense.owner.name}</p>
-              </div>
-            )}
-            {expense.vendor_name && (
-              <div>
-                <span className="text-ink-3">業者</span>
-                <p className="font-medium">{expense.vendor_name}</p>
-              </div>
-            )}
-            {expense.invoice_number && (
-              <div>
-                <span className="text-ink-3">請求書番号</span>
-                <p className="font-medium">{expense.invoice_number}</p>
-              </div>
-            )}
           </div>
         </div>
 
-        {expense.notes && (
-          <div className="mt-4 pt-4 border-t border-line">
-            <span className="text-[11px] text-ink-3">備考</span>
-            <p className="text-[13px] mt-1 whitespace-pre-wrap">{expense.notes}</p>
+        {/* サイドカラム */}
+        <div className="detail-col-side">
+          <div className="section">
+            <div className="section-head-bar"><h2>関連</h2></div>
+            <div className="section-body">
+              <div className="related-list">
+                {expense.property?.id && (
+                  <Link href={`/properties/${expense.property.id}`} className="related-row">
+                    <div>
+                      <div className="related-label">物件詳細</div>
+                      <div className="related-sub">{expense.property.name}</div>
+                    </div>
+                    <span className="related-arrow">↗</span>
+                  </Link>
+                )}
+                <Link href="/expenses" className="related-row">
+                  <div>
+                    <div className="related-label">経費一覧</div>
+                    <div className="related-sub">全経費データ</div>
+                  </div>
+                  <span className="related-arrow">↗</span>
+                </Link>
+                <Link href="/remittances" className="related-row">
+                  <div>
+                    <div className="related-label">オーナー送金</div>
+                    <div className="related-sub">経費控除の確認</div>
+                  </div>
+                  <span className="related-arrow">↗</span>
+                </Link>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </>
   );

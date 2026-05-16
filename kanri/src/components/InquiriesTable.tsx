@@ -6,6 +6,7 @@ import StatusBadge from "./StatusBadge";
 
 interface InquiriesTableProps {
   inquiries: Record<string, any>[];
+  initialFilter?: string;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -17,7 +18,7 @@ const TYPE_LABELS: Record<string, string> = {
   facility: "その他",
 };
 
-export default function InquiriesTable({ inquiries }: InquiriesTableProps) {
+export default function InquiriesTable({ inquiries, initialFilter }: InquiriesTableProps) {
   const router = useRouter();
 
   return (
@@ -25,6 +26,7 @@ export default function InquiriesTable({ inquiries }: InquiriesTableProps) {
       data={inquiries}
       searchFields={["title", "property.name", "tenant.name"]}
       searchPlaceholder="件名・物件名・入居者名で検索..."
+      initialFilters={initialFilter === "open" ? { status: "open" } : {}}
       filters={[
         {
           key: "status",

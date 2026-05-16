@@ -17,12 +17,14 @@ export default async function PropertiesPage() {
   return (
     <>
       <PageHeader
-        title="物件管理"
+        eyebrow="Properties"
+        title="物件"
+        em="管理"
         description={`${properties.length}件の管理物件`}
         action={<PropertiesPageClient owners={ownerOptions} />}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="prop-grid">
         {properties.map((prop: Record<string, any>) => (
           <PropertyCard key={prop.id} property={prop} owners={ownerOptions} />
         ))}

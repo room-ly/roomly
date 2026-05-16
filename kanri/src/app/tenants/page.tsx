@@ -9,7 +9,9 @@ export default async function TenantsPage() {
   return (
     <>
       <PageHeader
-        title="入居者管理"
+        eyebrow="Tenants"
+        title="入居者"
+        em="管理"
         description={`${tenantsWithInfo.length}名の入居者`}
         action={<TenantsPageClient />}
       />

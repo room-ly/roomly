@@ -3,7 +3,12 @@ import PageHeader from "@/components/PageHeader";
 import InquiriesPageClient from "@/components/InquiriesPageClient";
 import InquiriesTable from "@/components/InquiriesTable";
 
-export default async function InquiriesPage() {
+export default async function InquiriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>;
+}) {
+  const { filter } = await searchParams;
   const [inquiries, properties, units, tenants] = await Promise.all([
     getInquiries(),
     getPropertiesForSelect(),
@@ -14,12 +19,14 @@ export default async function InquiriesPage() {
   return (
     <>
       <PageHeader
-        title="問い合わせ管理"
+        eyebrow="Inquiries"
+        title="問い合わせ"
+        em="管理"
         description={`${inquiries.length}件の問い合わせ`}
         action={<InquiriesPageClient properties={properties} units={units} tenants={tenants} />}
       />
 
-      <InquiriesTable inquiries={inquiries} />
+      <InquiriesTable inquiries={inquiries} initialFilter={filter} />
     </>
   );
 }

@@ -13,8 +13,10 @@ export default async function ExpensesPage() {
   return (
     <>
       <PageHeader
-        title="経費管理"
-        description="物件経費・オーナー負担の管理"
+        eyebrow="Expenses"
+        title="経費"
+        em="管理"
+        description="物件経費・オーナー負担の管理。送金時にオーナー負担分が自動で控除されます。"
         action={<ExpensesPageClient properties={properties} owners={owners} />}
       />
 

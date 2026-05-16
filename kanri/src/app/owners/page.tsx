@@ -22,7 +22,9 @@ export default async function OwnersPage() {
   return (
     <>
       <PageHeader
-        title="オーナー管理"
+        eyebrow="Owners"
+        title="オーナー"
+        em="管理"
         description={`${owners.length}名のオーナー`}
         action={<OwnersPageClient />}
       />
