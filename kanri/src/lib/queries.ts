@@ -336,7 +336,7 @@ export async function getRentBillings() {
   const { data, error } = await supabase
     .from("rent_billings")
     .select(
-      "*, contract:contracts(id, tenant:tenants(name, phone), unit:units(unit_number, property:properties(name)))"
+      "*, contract:contracts(id, tenant:tenants(name, phone), unit:units(unit_number, property:properties(name))), rent_payments(payment_date)"
     )
     .order("billing_month", { ascending: false });
   if (error) throw error;

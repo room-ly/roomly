@@ -42,37 +42,38 @@ export default function RentTable({ data }: RentTableProps) {
 
   const totalExpected = monthFiltered.reduce((s, b) => s + Number(b.total_amount), 0);
   const totalPaid = monthFiltered.filter((b) => b.status === "paid").reduce((s, b) => s + Number(b.total_amount), 0);
-  const overdueCount = monthFiltered.filter((b) => b.status === "overdue").length;
-  const overdueAmount = monthFiltered.filter((b) => b.status === "overdue").reduce((s, b) => s + Number(b.total_amount), 0);
+  const paidCount = monthFiltered.filter((b) => b.status === "paid").length;
   const collectionRate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0;
+  const overdueItems = monthFiltered.filter((b) => b.status === "overdue");
+  const unpaidAmount = totalExpected - totalPaid;
+  const unpaidCount = monthFiltered.filter((b) => b.status !== "paid").length;
 
   return (
     <>
       <MonthSelector selectedMonth={selectedMonth} availableMonths={availableMonths} onChange={setSelectedMonth} />
 
-      {/* サマリー */}
       <div className="cols-summary">
         <div className="sum-card">
-          <span className="sum-label mono">請求総額</span>
+          <span className="sum-label">請求総額</span>
           <span className="sum-value serif-i">¥{totalExpected.toLocaleString()}</span>
           <span className="sum-foot mono">{monthFiltered.length}件</span>
         </div>
         <div className="sum-card">
-          <span className="sum-label mono">入金済</span>
+          <span className="sum-label">入金済</span>
           <span className="sum-value serif-i" style={{ color: "var(--accent-deep)" }}>¥{totalPaid.toLocaleString()}</span>
-          <span className="sum-foot mono">{monthFiltered.filter((b) => b.status === "paid").length}件</span>
+          <span className="sum-foot mono">{collectionRate}% · {paidCount}件</span>
         </div>
         <div className="sum-card">
-          <span className="sum-label mono">回収率</span>
+          <span className="sum-label">未収・滞納</span>
+          <span className="sum-value serif-i" style={{ color: unpaidCount > 0 ? "var(--danger)" : undefined }}>¥{unpaidAmount.toLocaleString()}</span>
+          <span className="sum-foot mono" style={{ color: overdueItems.length > 0 ? "var(--danger)" : undefined }}>{unpaidCount}件{overdueItems.length > 0 && ` (滞納${overdueItems.length}件)`}</span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label">回収率</span>
           <span className="sum-value serif-i">{collectionRate}%</span>
           <div style={{ height: 4, background: "var(--bg-2)", borderRadius: 99, overflow: "hidden", marginTop: 4 }}>
             <div style={{ height: "100%", background: "var(--accent)", borderRadius: 99, width: `${collectionRate}%`, transition: "width .3s" }} />
           </div>
-        </div>
-        <div className="sum-card" style={{ borderLeft: "3px solid var(--danger)" }}>
-          <span className="sum-label mono">滞納</span>
-          <span className="sum-value serif-i" style={{ color: "var(--danger)" }}>{overdueCount}件</span>
-          <span className="sum-foot mono" style={{ color: "var(--danger)" }}>¥{overdueAmount.toLocaleString()}</span>
         </div>
       </div>
 
@@ -95,39 +96,45 @@ export default function RentTable({ data }: RentTableProps) {
         ]}
         columns={[
           {
-            key: "contract.unit.property.name",
-            label: "物件",
-            render: (item) => <span className="text-ink-2">{item.contract?.unit?.property?.name || "—"}</span>,
-          },
-          { key: "contract.unit.unit_number", label: "部屋", render: (item) => item.contract?.unit?.unit_number || "—" },
-          {
             key: "contract.tenant.name",
-            label: "入居者",
+            label: "入居者 / 部屋",
             sortable: true,
-            render: (item) => <span className="font-medium">{item.contract?.tenant?.name || "—"}</span>,
+            render: (item) => (
+              <div>
+                <div className="strong">{item.contract?.tenant?.name || "—"}</div>
+                <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>
+                  {item.contract?.unit?.property?.name || ""} {item.contract?.unit?.unit_number || ""}
+                </div>
+              </div>
+            ),
           },
-          { key: "billing_month", label: "対象月", sortable: true },
           {
-            key: "rent",
-            label: "賃料",
-            align: "right" as const,
-            render: (item) => <span className="tabular-nums">¥{Number(item.rent).toLocaleString()}</span>,
+            key: "due_date",
+            label: "請求日",
+            sortable: true,
+            render: (item) => <span className="mono" style={{ fontSize: 12, color: "var(--ink-2)" }}>{item.due_date || "—"}</span>,
           },
           {
-            key: "management_fee",
-            label: "管理費",
-            align: "right" as const,
-            render: (item) => <span className="tabular-nums">¥{Number(item.management_fee).toLocaleString()}</span>,
+            key: "_paid_date",
+            label: "入金日",
+            render: (item) => {
+              const payment = item.rent_payments?.[0];
+              const paidDate = payment?.payment_date || "—";
+              return <span className="mono" style={{ fontSize: 12, color: paidDate === "—" ? "var(--ink-4)" : "var(--ink-2)" }}>{paidDate}</span>;
+            },
           },
           {
             key: "total_amount",
-            label: "合計",
+            label: "金額",
             align: "right" as const,
             sortable: true,
-            render: (item) => <span className="font-medium tabular-nums">¥{Number(item.total_amount).toLocaleString()}</span>,
+            render: (item) => <span className="num">¥{Number(item.total_amount).toLocaleString()}</span>,
           },
-          { key: "due_date", label: "支払期限", sortable: true },
-          { key: "status", label: "状態", render: (item) => <StatusBadge status={item.status} /> },
+          {
+            key: "status",
+            label: "状態",
+            render: (item) => <StatusBadge status={item.status} />,
+          },
           {
             key: "_action",
             label: "",
