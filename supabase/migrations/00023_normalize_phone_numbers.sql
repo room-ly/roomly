@@ -4,4 +4,3 @@ UPDATE tenants SET emergency_contact_phone = regexp_replace(emergency_contact_ph
 UPDATE owners SET phone = regexp_replace(phone, '[^0-9]', '', 'g') WHERE phone IS NOT NULL AND phone ~ '[^0-9]';
 UPDATE companies SET phone = regexp_replace(phone, '[^0-9]', '', 'g') WHERE phone IS NOT NULL AND phone ~ '[^0-9]';
 UPDATE tenants SET guarantor_phone = regexp_replace(guarantor_phone, '[^0-9]', '', 'g') WHERE guarantor_phone IS NOT NULL AND guarantor_phone ~ '[^0-9]';
-UPDATE maintenance_requests SET vendor_phone = regexp_replace(vendor_phone, '[^0-9]', '', 'g') WHERE vendor_phone IS NOT NULL AND vendor_phone ~ '[^0-9]';
