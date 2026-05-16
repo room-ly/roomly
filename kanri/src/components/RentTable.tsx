@@ -24,6 +24,8 @@ function getCurrentMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
+type StatusTab = "all" | "paid" | "unpaid" | "overdue";
+
 export default function RentTable({ data }: RentTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -34,19 +36,40 @@ export default function RentTable({ data }: RentTableProps) {
     const current = getCurrentMonth();
     return availableMonths.includes(current) ? current : availableMonths[0] || current;
   });
+  const [activeTab, setActiveTab] = useState<StatusTab>(() => {
+    if (statusParam === "overdue") return "overdue";
+    if (statusParam === "unpaid") return "unpaid";
+    if (statusParam === "paid") return "paid";
+    return "all";
+  });
 
   const monthFiltered = useMemo(() => {
     if (selectedMonth === "all") return data;
     return data.filter((b) => b.billing_month === selectedMonth);
   }, [data, selectedMonth]);
 
-  const totalExpected = monthFiltered.reduce((s, b) => s + Number(b.total_amount), 0);
-  const totalPaid = monthFiltered.filter((b) => b.status === "paid").reduce((s, b) => s + Number(b.total_amount), 0);
-  const paidCount = monthFiltered.filter((b) => b.status === "paid").length;
-  const collectionRate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0;
+  const paidItems = monthFiltered.filter((b) => b.status === "paid");
+  const unpaidItems = monthFiltered.filter((b) => b.status !== "paid");
   const overdueItems = monthFiltered.filter((b) => b.status === "overdue");
+
+  const tabFiltered = useMemo(() => {
+    if (activeTab === "paid") return paidItems;
+    if (activeTab === "unpaid") return unpaidItems;
+    if (activeTab === "overdue") return overdueItems;
+    return monthFiltered;
+  }, [monthFiltered, activeTab, paidItems, unpaidItems, overdueItems]);
+
+  const totalExpected = monthFiltered.reduce((s, b) => s + Number(b.total_amount), 0);
+  const totalPaid = paidItems.reduce((s, b) => s + Number(b.total_amount), 0);
+  const collectionRate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0;
   const unpaidAmount = totalExpected - totalPaid;
-  const unpaidCount = monthFiltered.filter((b) => b.status !== "paid").length;
+
+  const tabs: { key: StatusTab; label: string; count: number; danger?: boolean }[] = [
+    { key: "all", label: "すべて", count: monthFiltered.length },
+    { key: "paid", label: "入金済", count: paidItems.length },
+    { key: "unpaid", label: "未入金", count: unpaidItems.length },
+    { key: "overdue", label: "滞納", count: overdueItems.length, danger: true },
+  ];
 
   return (
     <>
@@ -61,12 +84,12 @@ export default function RentTable({ data }: RentTableProps) {
         <div className="sum-card">
           <span className="sum-label">入金済</span>
           <span className="sum-value serif-i" style={{ color: "var(--accent-deep)" }}>¥{totalPaid.toLocaleString()}</span>
-          <span className="sum-foot mono">{collectionRate}% · {paidCount}件</span>
+          <span className="sum-foot mono">{collectionRate}% · {paidItems.length}件</span>
         </div>
         <div className="sum-card">
           <span className="sum-label">未収・滞納</span>
-          <span className="sum-value serif-i" style={{ color: unpaidCount > 0 ? "var(--danger)" : undefined }}>¥{unpaidAmount.toLocaleString()}</span>
-          <span className="sum-foot mono" style={{ color: overdueItems.length > 0 ? "var(--danger)" : undefined }}>{unpaidCount}件{overdueItems.length > 0 && ` (滞納${overdueItems.length}件)`}</span>
+          <span className="sum-value serif-i" style={{ color: unpaidItems.length > 0 ? "var(--danger)" : undefined }}>¥{unpaidAmount.toLocaleString()}</span>
+          <span className="sum-foot mono" style={{ color: overdueItems.length > 0 ? "var(--danger)" : undefined }}>{unpaidItems.length}件{overdueItems.length > 0 && ` (滞納${overdueItems.length}件)`}</span>
         </div>
         <div className="sum-card">
           <span className="sum-label">回収率</span>
@@ -77,23 +100,24 @@ export default function RentTable({ data }: RentTableProps) {
         </div>
       </div>
 
+      <div className="toolbar">
+        <div className="tb-tabs">
+          {tabs.map((t) => (
+            <span
+              key={t.key}
+              className={`tb-tab${activeTab === t.key ? " is-active" : ""}${t.danger ? " danger" : ""}`}
+              onClick={() => setActiveTab(t.key)}
+            >
+              {t.label}<span className="c">{t.count}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
       <FilterableTable
-        data={monthFiltered}
+        data={tabFiltered}
         searchFields={["contract.tenant.name", "contract.unit.property.name", "contract.unit.unit_number"]}
         searchPlaceholder="入居者・物件名で検索..."
-        initialFilters={statusParam ? { status: statusParam } : {}}
-        filters={[
-          {
-            key: "status",
-            label: "状態",
-            options: [
-              { value: "paid", label: "入金済" },
-              { value: "unpaid", label: "未入金" },
-              { value: "partial", label: "一部入金" },
-              { value: "overdue", label: "滞納" },
-            ],
-          },
-        ]}
         columns={[
           {
             key: "contract.tenant.name",
