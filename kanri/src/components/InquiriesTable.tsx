@@ -283,40 +283,27 @@ function InquiryPreview({ inquiry, onOpenDetail }: { inquiry: Record<string, any
 
       {/* サイドバー情報 */}
       <div className="inq-sidebar">
-        <div className="inq-side-section">
-          <div className="inq-side-label mono">ステータス</div>
+        <div className="inq-side-section" style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
           <span className={`badge ${st.tone}`}><span className="dot" />{st.label}</span>
-        </div>
-        <div className="inq-side-section">
-          <div className="inq-side-label mono">優先度</div>
           <span className={`badge ${priorityClass(inquiry.priority)}`}>{priorityLabel(inquiry.priority)}</span>
+          <span className="inq-side-cat" style={{ fontSize: 11 }}>{TYPE_LABELS[inquiry.inquiry_type] || inquiry.inquiry_type}</span>
         </div>
-        <div className="inq-side-section">
-          <div className="inq-side-label mono">カテゴリ</div>
-          <span className="inq-side-cat">{TYPE_LABELS[inquiry.inquiry_type] || inquiry.inquiry_type}</span>
-        </div>
-        <div className="inq-side-section">
-          <div className="inq-side-label mono">差出人</div>
+        <div className="inq-side-section" style={{ fontSize: 12, lineHeight: 1.6 }}>
           {inquiry.tenant?.id ? (
             <Link href={`/tenants/${inquiry.tenant.id}`} className="rlink">{inquiry.tenant.name}</Link>
           ) : (
             <span>{inquiry.tenant?.name || "—"}</span>
           )}
-          <div className="inq-side-sub mono">入居者</div>
+          {inquiry.tenant?.phone && (
+            <span className="mono" style={{ color: "var(--ink-3)", marginLeft: 6 }}>{formatPhone(inquiry.tenant.phone)}</span>
+          )}
+          {inquiry.property && (
+            <div style={{ color: "var(--ink-3)", fontSize: 11 }}>
+              <Link href={`/properties/${inquiry.property.id}`} className="rlink is-muted">{inquiry.property.name}</Link>
+              {inquiry.unit?.unit_number && <span className="mono"> #{inquiry.unit.unit_number}</span>}
+            </div>
+          )}
         </div>
-        {inquiry.tenant?.phone && (
-          <div className="inq-side-section">
-            <div className="inq-side-label mono">電話番号</div>
-            <span className="mono" style={{ fontSize: 12 }}>{formatPhone(inquiry.tenant.phone)}</span>
-          </div>
-        )}
-        {inquiry.property && (
-          <div className="inq-side-section">
-            <div className="inq-side-label mono">関連物件</div>
-            <Link href={`/properties/${inquiry.property.id}`} className="rlink">{inquiry.property.name}</Link>
-            {inquiry.unit?.unit_number && <div className="inq-side-sub mono">#{inquiry.unit.unit_number}</div>}
-          </div>
-        )}
         <NotesEditor inquiryId={inquiry.id} initialNotes={inquiry.notes || ""} />
       </div>
     </div>

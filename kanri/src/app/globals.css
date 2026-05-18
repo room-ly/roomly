@@ -790,9 +790,9 @@ table {
 .inq-empty { padding: 40px 16px; text-align: center; font-size: 12px; color: var(--ink-4); }
 
 .inq-detail {
-  display: grid; grid-template-columns: 1fr 240px;
-  grid-template-rows: auto 1fr auto;
-  grid-template-areas: "head head" "thread side" "composer side";
+  display: grid; grid-template-columns: 1fr 200px;
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "head head" "thread side";
   max-height: calc(100vh - 280px);
 }
 .inq-detail-head {
@@ -872,10 +872,10 @@ table {
 
 .inq-sidebar {
   grid-area: side; border-left: 1px solid var(--line);
-  background: var(--surface-2); padding: 18px 16px;
-  display: flex; flex-direction: column; gap: 16px; overflow-y: auto;
+  background: var(--surface-2); padding: 14px 12px;
+  display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
 }
-.inq-side-section { display: flex; flex-direction: column; gap: 6px; }
+.inq-side-section { display: flex; flex-direction: column; gap: 4px; }
 .inq-side-label { font-size: 10px; letter-spacing: 0.06em; color: var(--ink-4); text-transform: uppercase; }
 .inq-side-cat {
   display: inline-block; font-size: 12px; color: var(--ink);
@@ -889,8 +889,8 @@ table {
   .inq-list { display: none; }
   .inq-detail {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr auto;
-    grid-template-areas: "head" "side" "thread" "composer";
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas: "head" "side" "thread";
   }
   .inq-sidebar {
     border-left: 0; border-bottom: 1px solid var(--line);
