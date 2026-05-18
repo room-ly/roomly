@@ -165,6 +165,7 @@ export const contractSchema = z
     }),
     start_date: z.string().min(1, "契約開始日は必須です"),
     end_date: z.string().optional().or(z.literal("")),
+    move_out_date: z.string().optional().or(z.literal("")),
     rent: z.coerce.number().positive("賃料は0より大きい値を入力してください"),
     management_fee: z.coerce
       .number()

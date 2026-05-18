@@ -242,7 +242,7 @@ function InquiryPreview({ inquiry, onOpenDetail }: { inquiry: Record<string, any
       </div>
 
       {/* 対応記録タイムライン */}
-      <div style={{ flex: 1, overflow: "auto", padding: "12px 20px" }}>
+      <div style={{ gridArea: "thread", overflow: "auto", padding: "12px 20px", background: "var(--bg)" }}>
         {inquiry.description && (
           <TimelineEntry
             label={inquiry.tenant?.name || "入居者"}

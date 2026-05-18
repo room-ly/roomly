@@ -35,3 +35,8 @@ next-env.d.ts
 # Misc
 .vercel
 .turbo
+
+# Data files
+zengin_*.txt
+properties_sample.csv
+*.zip

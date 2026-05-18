@@ -113,7 +113,6 @@ export default function ContractsTable({ data, alertDays = 90 }: ContractsTableP
                 <th>契約期間</th>
                 <th style={{ textAlign: "right" }}>賃料</th>
                 <th>状態</th>
-                <th style={{ width: 70 }}></th>
               </tr>
             </thead>
             <tbody>
@@ -140,15 +139,12 @@ export default function ContractsTable({ data, alertDays = 90 }: ContractsTableP
                     </td>
                     <td className="num">¥{Number(c.rent).toLocaleString()}</td>
                     <td><span className={`badge ${st.tone}`}><span className="dot" />{st.label}</span></td>
-                    <td>
-                      <button className="btn btn-ghost btn-sm" style={{ padding: "4px 10px" }}>詳細</button>
-                    </td>
                   </tr>
                 );
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "40px 16px", color: "var(--ink-3)" }}>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "40px 16px", color: "var(--ink-3)" }}>
                     該当する契約がありません
                   </td>
                 </tr>

@@ -14,11 +14,18 @@ interface ContractDetailClientProps {
   contract: Record<string, any>;
   units: SelectOption[];
   tenants: SelectOption[];
+  moveOutRequests?: Record<string, any>[];
 }
 
-export default function ContractDetailClient({ contract, units, tenants }: ContractDetailClientProps) {
+export default function ContractDetailClient({ contract, units, tenants, moveOutRequests }: ContractDetailClientProps) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
+
+  const latestMoveOut = moveOutRequests?.[0];
+  const editData = {
+    ...contract,
+    move_out_date: contract.move_out_date || latestMoveOut?.desired_move_out_date || "",
+  };
 
   async function handleDelete() {
     if (!confirm("この契約を削除しますか？")) return;
@@ -63,7 +70,7 @@ export default function ContractDetailClient({ contract, units, tenants }: Contr
         onClose={() => setModalOpen(false)}
         units={units}
         tenants={tenants}
-        editData={contract}
+        editData={editData}
       />
     </>
   );

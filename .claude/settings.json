@@ -36,7 +36,9 @@
       "Bash(grep -l \"use client\" /Users/ryuichiueda/works/zh/roomly/roomly/src/app/**/*.tsx)",
       "Bash(head -5 /Users/ryuichiueda/works/zh/roomly/roomly/src/app/properties/page.tsx /Users/ryuichiueda/works/zh/roomly/roomly/src/app/page.tsx /Users/ryuichiueda/works/zh/roomly/roomly/src/app/properties/[id]/page.tsx)",
       "WebSearch",
-      "WebFetch"
+      "WebFetch",
+      "mcp__analytics-mcp__*",
+      "mcp__gsc-server__*"
     ],
     "additionalDirectories": [
       "/Users/ryuichiueda/works/zh/roomly/app",

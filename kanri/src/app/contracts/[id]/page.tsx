@@ -58,7 +58,7 @@ export default async function ContractDetailPage({
           </div>
         </div>
         <div className="detail-header-actions">
-          <ContractDetailClient contract={contract} units={units} tenants={tenants} />
+          <ContractDetailClient contract={contract} units={units} tenants={tenants} moveOutRequests={moveOutRequests} />
         </div>
       </div>
 
@@ -228,6 +228,15 @@ export default async function ContractDetailPage({
                         </div>
                       )}
                     </div>
+
+                    {req.change_log && (
+                      <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
+                        <div className="field-label mono" style={{ marginBottom: 6 }}>変更履歴</div>
+                        <div style={{ fontSize: 12, color: "var(--ink-3)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+                          {req.change_log}
+                        </div>
+                      </div>
+                    )}
 
                     <MoveOutReviewClient request={req} />
                   </div>

@@ -71,6 +71,7 @@ export default function ArticleList({ articles, currentPage }: Props) {
               {currentPage > 1 ? (
                 <Link
                   href={currentPage === 2 ? "/column" : `/column/page/${currentPage - 1}`}
+                  scroll={false}
                   className="rounded-full border border-rm-border px-4 py-2 text-[13px] text-rm-text-secondary transition-colors hover:bg-rm-surface"
                 >
                   ← 前へ
@@ -81,25 +82,48 @@ export default function ArticleList({ articles, currentPage }: Props) {
                 </span>
               )}
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <Link
-                    key={page}
-                    href={page === 1 ? "/column" : `/column/page/${page}`}
-                    className={`rounded-full px-3.5 py-2 text-[13px] font-medium transition-colors ${
-                      page === currentPage
-                        ? "bg-rm-primary text-rm-bg"
-                        : "border border-rm-border text-rm-text-secondary hover:bg-rm-surface"
-                    }`}
-                  >
-                    {page}
-                  </Link>
-                )
-              )}
+              {(() => {
+                const pages: (number | "ellipsis-start" | "ellipsis-end")[] = [];
+                if (totalPages <= 7) {
+                  for (let i = 1; i <= totalPages; i++) pages.push(i);
+                } else {
+                  pages.push(1);
+                  if (currentPage > 3) pages.push("ellipsis-start");
+                  const start = Math.max(2, currentPage - 1);
+                  const end = Math.min(totalPages - 1, currentPage + 1);
+                  for (let i = start; i <= end; i++) pages.push(i);
+                  if (currentPage < totalPages - 2) pages.push("ellipsis-end");
+                  pages.push(totalPages);
+                }
+                return pages.map((page) =>
+                  typeof page === "string" ? (
+                    <span
+                      key={page}
+                      className="px-1.5 py-2 text-[13px] text-rm-text-muted"
+                    >
+                      …
+                    </span>
+                  ) : (
+                    <Link
+                      key={page}
+                      href={page === 1 ? "/column" : `/column/page/${page}`}
+                      scroll={false}
+                      className={`rounded-full px-3.5 py-2 text-[13px] font-medium transition-colors ${
+                        page === currentPage
+                          ? "bg-rm-primary text-rm-bg"
+                          : "border border-rm-border text-rm-text-secondary hover:bg-rm-surface"
+                      }`}
+                    >
+                      {page}
+                    </Link>
+                  )
+                );
+              })()}
 
               {currentPage < totalPages ? (
                 <Link
                   href={`/column/page/${currentPage + 1}`}
+                  scroll={false}
                   className="rounded-full border border-rm-border px-4 py-2 text-[13px] text-rm-text-secondary transition-colors hover:bg-rm-surface"
                 >
                   次へ →

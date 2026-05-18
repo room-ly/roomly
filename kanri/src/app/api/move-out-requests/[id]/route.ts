@@ -11,7 +11,7 @@ export async function PUT(
     const body = await request.json();
 
     const { status, review_notes } = body;
-    if (!["approved", "rejected", "completed"].includes(status)) {
+    if (!["approved", "completed"].includes(status)) {
       return NextResponse.json(
         { error: "無効なステータスです" },
         { status: 400 }
