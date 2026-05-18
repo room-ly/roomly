@@ -28,7 +28,7 @@ export async function GET(
 
     const { data: company } = await supabase
       .from("companies")
-      .select("name, postal_code, address, phone, email")
+      .select("name, postal_code, address, phone")
       .eq("id", companyId)
       .single();
 
