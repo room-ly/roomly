@@ -3,7 +3,7 @@ import { createClient, getCompanyId } from "@/lib/supabase-server";
 
 const ALLOWED_FIELDS = [
   "inquiry_type", "title", "description", "status", "priority",
-  "property_id", "unit_id", "tenant_id",
+  "property_id", "unit_id", "tenant_id", "notes",
 ] as const;
 
 export async function PUT(

@@ -236,7 +236,7 @@ function InquiryPreview({ inquiry, onOpenDetail }: { inquiry: Record<string, any
           </div>
         </div>
         <div className="inq-detail-actions" style={{ display: "flex", gap: 6 }}>
-          <button className="btn btn-secondary btn-sm" onClick={() => setShowLogForm(true)}>＋ 記録を追加</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => setShowLogForm(true)}>＋ 連絡を追加</button>
           <button className="btn btn-ghost btn-sm" onClick={onOpenDetail}>詳細を開く →</button>
         </div>
       </div>
@@ -317,6 +317,7 @@ function InquiryPreview({ inquiry, onOpenDetail }: { inquiry: Record<string, any
             {inquiry.unit?.unit_number && <div className="inq-side-sub mono">#{inquiry.unit.unit_number}</div>}
           </div>
         )}
+        <NotesEditor inquiryId={inquiry.id} initialNotes={inquiry.notes || ""} />
       </div>
     </div>
   );
@@ -350,15 +351,8 @@ function TimelineEntry({ label, tag, tagColor, content, time }: {
   );
 }
 
-const LOG_TYPES = [
-  { key: "customer_reply", label: "入居者からの連絡" },
-  { key: "staff_reply", label: "スタッフ対応" },
-  { key: "note", label: "社内メモ" },
-];
-
 function LogFormModal({ inquiryId, tenantName, onClose }: { inquiryId: string; tenantName?: string; onClose: () => void }) {
   const router = useRouter();
-  const [type, setType] = useState("customer_reply");
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -370,7 +364,7 @@ function LogFormModal({ inquiryId, tenantName, onClose }: { inquiryId: string; t
       const res = await fetch(`/api/inquiries/${inquiryId}/logs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: text.trim(), action_type: type }),
+        body: JSON.stringify({ content: text.trim(), action_type: "customer_reply" }),
       });
       if (res.ok) {
         onClose();
@@ -387,26 +381,17 @@ function LogFormModal({ inquiryId, tenantName, onClose }: { inquiryId: string; t
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-surface rounded-2xl shadow-xl p-5 w-full max-w-md">
-        <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>対応記録を追加</h3>
+        <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>
+          {tenantName ? `${tenantName}からの連絡` : "入居者からの連絡"}
+        </h3>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="text-sm font-medium text-ink-2 block mb-1">種別</label>
-            <select value={type} onChange={(e) => setType(e.target.value)} className="input">
-              {LOG_TYPES.map((t) => (
-                <option key={t.key} value={t.key}>{t.label}{t.key === "customer_reply" && tenantName ? `（${tenantName}）` : ""}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-ink-2 block mb-1">内容</label>
-            <textarea
-              className="input min-h-[80px]"
-              placeholder={type === "customer_reply" ? "入居者からの連絡内容を記録…" : type === "note" ? "社内メモ…" : "対応内容を記録…"}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              autoFocus
-            />
-          </div>
+          <textarea
+            className="input min-h-[80px]"
+            placeholder="連絡内容を記録…"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            autoFocus
+          />
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={onClose} className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm">キャンセル</button>
             <button type="submit" disabled={!text.trim() || sending} className="btn btn-primary disabled:opacity-50">
@@ -415,6 +400,51 @@ function LogFormModal({ inquiryId, tenantName, onClose }: { inquiryId: string; t
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+function NotesEditor({ inquiryId, initialNotes }: { inquiryId: string; initialNotes: string }) {
+  const router = useRouter();
+  const [notes, setNotes] = useState(initialNotes);
+  const [saving, setSaving] = useState(false);
+  const changed = notes !== initialNotes;
+
+  async function handleSave() {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/inquiries/${inquiryId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes }),
+      });
+      if (res.ok) router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="inq-side-section">
+      <div className="inq-side-label mono">メモ</div>
+      <textarea
+        className="input"
+        style={{ fontSize: 12, minHeight: 48, resize: "vertical" }}
+        placeholder="社内メモ…"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+      />
+      {changed && (
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="btn btn-primary btn-sm"
+          style={{ marginTop: 4, fontSize: 11 }}
+        >
+          {saving ? "保存中..." : "保存"}
+        </button>
+      )}
     </div>
   );
 }
