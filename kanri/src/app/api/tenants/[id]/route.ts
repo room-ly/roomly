@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { tenantSchema } from "@/lib/schemas";
 
 export async function PUT(
@@ -19,6 +19,7 @@ export async function PUT(
     }
 
     const supabase = await createClient();
+    const companyId = await getCompanyId();
     const data = Object.fromEntries(
       Object.entries(parsed.data).map(([k, v]) => [k, v === "" ? null : v])
     );
@@ -27,12 +28,13 @@ export async function PUT(
       .from("tenants")
       .update(data)
       .eq("id", id)
+      .eq("company_id", companyId)
       .select()
       .single();
 
     if (error) {
       return NextResponse.json(
-        { error: "入居者の更新に失敗しました", details: error.message },
+        { error: "入居者の更新に失敗しました" },
         { status: 500 }
       );
     }
@@ -53,15 +55,17 @@ export async function DELETE(
   try {
     const { id } = await params;
     const supabase = await createClient();
+    const companyId = await getCompanyId();
 
     const { error } = await supabase
       .from("tenants")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("company_id", companyId);
 
     if (error) {
       return NextResponse.json(
-        { error: "入居者の削除に失敗しました", details: error.message },
+        { error: "入居者の削除に失敗しました" },
         { status: 500 }
       );
     }

@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        { error: "修繕依頼の作成に失敗しました", details: error.message },
+        { error: "修繕依頼の作成に失敗しました" },
         { status: 500 }
       );
     }

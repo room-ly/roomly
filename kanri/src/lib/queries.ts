@@ -451,124 +451,106 @@ export async function getUsers() {
 // ダッシュボード用データ
 export async function getDashboardData() {
   const supabase = await createClient();
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const in90days = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const staleDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
   const [
-    { data: properties },
-    { data: units },
-    { data: billings },
-    { data: maintenance },
-    { data: inquiries },
-    { data: contracts },
-    { data: pipelineUnits },
+    propCount,
+    unitTotal,
+    unitOccupied,
+    unitVacant,
+    overdueBillingsRes,
+    activeMaintRes,
+    alertMaintRes,
+    openInqRes,
+    alertInqRes,
+    expiringRes,
+    pendingMoveOutRes,
+    pipelineUnitsRes,
+    billingSummaryRes,
   ] = await Promise.all([
-    supabase.from("properties").select("id"),
-    supabase.from("units").select("id, status, rent"),
+    supabase.from("properties").select("id", { count: "exact", head: true }),
+    supabase.from("units").select("id", { count: "exact", head: true }),
+    supabase.from("units").select("id", { count: "exact", head: true }).eq("status", "occupied"),
+    supabase.from("units").select("id", { count: "exact", head: true }).eq("status", "vacant"),
     supabase
       .from("rent_billings")
-      .select("*, contract:contracts(id, tenant:tenants(name))")
+      .select("id, billing_month, total_amount, contract:contracts(id, tenant:tenants(name))")
+      .eq("status", "overdue")
       .order("billing_month", { ascending: false }),
     supabase
       .from("maintenance_requests")
-      .select("*, property:properties(name)")
+      .select("id, title, priority, status, reported_date, property:properties(name)")
+      .in("status", ["open", "in_progress"])
       .order("reported_date", { ascending: false }),
     supabase
+      .from("maintenance_requests")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["open", "in_progress"])
+      .in("priority", ["high", "urgent"]),
+    supabase
       .from("inquiries")
-      .select("*")
+      .select("id, title, priority, status, created_at")
+      .in("status", ["open", "in_progress"])
       .order("created_at", { ascending: false }),
     supabase
+      .from("inquiries")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["open", "in_progress"])
+      .or("priority.in.(high,urgent),created_at.lt." + staleDate),
+    supabase
       .from("contracts")
-      .select(
-        "*, tenant:tenants(name), unit:units(unit_number, property_id, property:properties(name)), move_out_requests(id, status, desired_move_out_date)"
-      )
-      .eq("status", "active"),
+      .select("id, end_date, tenant:tenants(name), unit:units(unit_number, property_id, property:properties(name)), move_out_requests(id, status, desired_move_out_date)")
+      .eq("status", "active")
+      .gte("end_date", today)
+      .lte("end_date", in90days),
+    supabase
+      .from("contracts")
+      .select("id, tenant:tenants(name), unit:units(unit_number, property:properties(name)), move_out_requests!inner(id, status, desired_move_out_date)")
+      .eq("status", "active")
+      .in("move_out_requests.status", ["pending", "approved"]),
     supabase
       .from("units")
       .select("id, unit_number, status, rent, property_id, property:properties(name)")
       .in("status", ["maintenance", "vacant"]),
+    supabase
+      .from("rent_billings")
+      .select("total_amount, status"),
   ]);
 
-  const allUnits = (units ?? []) as Row[];
-  const allBillings = (billings ?? []) as Row[];
-  const allMaintenance = (maintenance ?? []) as Row[];
-  const allInquiries = (inquiries ?? []) as Row[];
-  const allContracts = (contracts ?? []) as Row[];
-  const allPipelineUnits = (pipelineUnits ?? []) as Row[];
+  const overdueBillings = (overdueBillingsRes.data ?? []) as Row[];
+  const activeMaintenance = (activeMaintRes.data ?? []) as Row[];
+  const openInquiries = (openInqRes.data ?? []) as Row[];
+  const expiringContracts = (expiringRes.data ?? []) as Row[];
+  const pendingMoveOuts = (pendingMoveOutRes.data ?? []) as Row[];
+  const allPipelineUnits = (pipelineUnitsRes.data ?? []) as Row[];
+  const allBillings = (billingSummaryRes.data ?? []) as Row[];
 
-  const totalUnits = allUnits.length;
-  const occupiedUnits = allUnits.filter(
-    (u: Row) => u.status === "occupied"
-  ).length;
-  const vacantUnits = allUnits.filter(
-    (u: Row) => u.status === "vacant"
-  ).length;
-
-  const totalExpected = allBillings.reduce(
-    (s: number, b: Row) => s + Number(b.total_amount),
-    0
-  );
-  const totalReceived = allBillings
-    .filter((b: Row) => b.status === "paid")
-    .reduce((s: number, b: Row) => s + Number(b.total_amount), 0);
-
-  const overdueBillings = allBillings.filter(
-    (b: Row) => b.status === "overdue"
-  );
-  const overdueAmount = overdueBillings.reduce(
-    (s: number, b: Row) => s + Number(b.total_amount),
-    0
-  );
-
-  const activeMaintenance = allMaintenance.filter(
-    (m: Row) => m.status === "open" || m.status === "in_progress"
-  );
-  const openInquiries = allInquiries.filter(
-    (i: Row) => i.status === "open" || i.status === "in_progress"
-  );
-
-  const now = new Date();
-  const staleThreshold = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-
-  const alertMaintenance = activeMaintenance.filter(
-    (m: Row) => m.priority === "high" || m.priority === "urgent"
-  );
-  const alertInquiries = openInquiries.filter(
-    (i: Row) =>
-      (i.priority === "high" || i.priority === "urgent") ||
-      new Date(i.created_at) < staleThreshold
-  );
-  const expiringContracts = allContracts.filter((c: Row) => {
-    if (!c.end_date) return false;
-    const end = new Date(c.end_date);
-    const diff = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-    return diff > 0 && diff <= 90;
-  });
-  const pendingMoveOuts = allContracts.filter((c: Row) => {
-    const reqs = (c.move_out_requests ?? []) as Row[];
-    return reqs.some((r: Row) => r.status === "pending" || r.status === "approved");
-  });
+  const totalUnits = unitTotal.count ?? 0;
+  const occupiedUnits = unitOccupied.count ?? 0;
+  const vacantUnitsCount = unitVacant.count ?? 0;
+  const overdueAmount = overdueBillings.reduce((s: number, b: Row) => s + Number(b.total_amount), 0);
+  const totalExpected = allBillings.reduce((s: number, b: Row) => s + Number(b.total_amount), 0);
+  const totalReceived = allBillings.filter((b: Row) => b.status === "paid").reduce((s: number, b: Row) => s + Number(b.total_amount), 0);
 
   return {
     stats: {
-      total_properties: (properties ?? []).length,
+      total_properties: propCount.count ?? 0,
       total_units: totalUnits,
       occupied_units: occupiedUnits,
-      vacant_units: vacantUnits,
-      occupancy_rate:
-        totalUnits > 0
-          ? Math.round((occupiedUnits / totalUnits) * 1000) / 10
-          : 0,
+      vacant_units: vacantUnitsCount,
+      occupancy_rate: totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 1000) / 10 : 0,
       total_rent_expected: totalExpected,
       total_rent_received: totalReceived,
-      collection_rate:
-        totalExpected > 0
-          ? Math.round((totalReceived / totalExpected) * 1000) / 10
-          : 0,
+      collection_rate: totalExpected > 0 ? Math.round((totalReceived / totalExpected) * 1000) / 10 : 0,
       overdue_count: overdueBillings.length,
       overdue_amount: overdueAmount,
       open_maintenance: activeMaintenance.length,
-      alert_maintenance: alertMaintenance.length,
+      alert_maintenance: alertMaintRes.count ?? 0,
       open_inquiries: openInquiries.length,
-      alert_inquiries: alertInquiries.length,
+      alert_inquiries: alertInqRes.count ?? 0,
       expiring_contracts: expiringContracts.length,
       pending_move_outs: pendingMoveOuts.length,
     },
@@ -756,27 +738,22 @@ export async function getBadgeCounts() {
   const today = new Date().toISOString().slice(0, 10);
   const alertDateStr = alertDate.toISOString().slice(0, 10);
 
-  const contractsRes = await supabase
-    .from("contracts")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "active")
-    .gte("end_date", today)
-    .lte("end_date", alertDateStr);
+  const profilePromise = authRes.data?.user
+    ? supabase.from("users").select("name, email").eq("id", authRes.data.user.id).single()
+    : Promise.resolve({ data: null });
 
-  // サーバーサイドでユーザープロフィールを取得
-  let userName = "";
-  let userEmail = authRes.data?.user?.email ?? "";
-  if (authRes.data?.user) {
-    const { data: profile } = await supabase
-      .from("users")
-      .select("name, email")
-      .eq("id", authRes.data.user.id)
-      .single();
-    if (profile) {
-      userName = profile.name ?? "";
-      userEmail = profile.email ?? userEmail;
-    }
-  }
+  const [contractsRes, profileRes] = await Promise.all([
+    supabase
+      .from("contracts")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "active")
+      .gte("end_date", today)
+      .lte("end_date", alertDateStr),
+    profilePromise,
+  ]);
+
+  const userEmail = profileRes.data?.email ?? authRes.data?.user?.email ?? "";
+  const userName = profileRes.data?.name ?? "";
 
   const rent = overdueRes.count ?? 0;
   const maintenance = (maintenanceUrgentRes.count ?? 0) + (maintenanceStaleRes.count ?? 0);

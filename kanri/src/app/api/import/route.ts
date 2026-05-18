@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     if (dbError) {
       return NextResponse.json(
-        { error: "データの登録に失敗しました", details: dbError.message },
+        { error: "データの登録に失敗しました" },
         { status: 500 }
       );
     }

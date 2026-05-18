@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { expenseSchema } from "@/lib/schemas-expense";
 
 export async function PUT(
@@ -19,6 +19,7 @@ export async function PUT(
     }
 
     const supabase = await createClient();
+    const companyId = await getCompanyId();
     const data = {
       ...parsed.data,
       property_id: parsed.data.property_id || null,
@@ -30,6 +31,7 @@ export async function PUT(
       .from("expenses")
       .update(data)
       .eq("id", id)
+      .eq("company_id", companyId)
       .select()
       .single();
 
@@ -56,11 +58,13 @@ export async function DELETE(
   try {
     const { id } = await params;
     const supabase = await createClient();
+    const companyId = await getCompanyId();
 
     const { error } = await supabase
       .from("expenses")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("company_id", companyId);
 
     if (error) {
       return NextResponse.json(

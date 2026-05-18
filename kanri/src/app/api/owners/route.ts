@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        { error: "オーナーの作成に失敗しました", details: error.message },
+        { error: "オーナーの作成に失敗しました" },
         { status: 500 }
       );
     }

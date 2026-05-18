@@ -27,7 +27,7 @@ export async function PUT(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        { error: "設定の保存に失敗しました", details: error.message },
+        { error: "設定の保存に失敗しました" },
         { status: 500 }
       );
     }

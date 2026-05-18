@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 
 export async function PUT(
   request: NextRequest,
@@ -21,6 +21,7 @@ export async function PUT(
     // ユーザーIDを取得
     const { data: { user } } = await supabase.auth.getUser();
 
+    const companyId = await getCompanyId();
     const { data, error } = await supabase
       .from("move_out_requests")
       .update({
@@ -31,11 +32,12 @@ export async function PUT(
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
+      .eq("company_id", companyId)
       .select("*, contract:contracts(id, unit_id)")
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "退去申請の更新に失敗しました" }, { status: 500 });
     }
 
     // 承認時は契約のmove_out_dateも更新
@@ -53,7 +55,8 @@ export async function PUT(
             move_out_date: moveOutReq.data.desired_move_out_date,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", moveOutReq.data.contract_id);
+          .eq("id", moveOutReq.data.contract_id)
+          .eq("company_id", companyId);
       }
     }
 

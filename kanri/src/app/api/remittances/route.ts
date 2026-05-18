@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     if (remError) {
       return NextResponse.json(
-        { error: "送金明細の作成に失敗しました", details: remError.message },
+        { error: "送金明細の作成に失敗しました" },
         { status: 500 }
       );
     }

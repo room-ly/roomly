@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { escapeHtml } from "@/lib/escape-html";
 
 // GET: 送金明細のHTML出力（ブラウザ印刷でPDF化）
 export async function GET(
@@ -20,8 +21,12 @@ export async function GET(
       return NextResponse.json({ error: "送金データが見つかりません" }, { status: 404 });
     }
 
-    const month = remittance.remittance_month?.slice(0, 7) ?? "";
+    const month = escapeHtml(remittance.remittance_month?.slice(0, 7) ?? "");
     const owner = remittance.owner as Record<string, string> | null;
+    const ownerName = escapeHtml(owner?.name ?? "—");
+    const bankInfo = escapeHtml(`${owner?.bank_name ?? ""} ${owner?.bank_branch ?? ""} ${owner?.bank_account_number ?? ""}`);
+    const statusText = remittance.status === "sent" ? "送金済" : remittance.status === "confirmed" ? "確定" : "下書き";
+    const sentDate = escapeHtml(remittance.sent_date ?? "");
 
     const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -51,11 +56,11 @@ export async function GET(
   <div class="info-grid">
     <div class="info-block">
       <label>オーナー名</label>
-      <p>${owner?.name ?? "—"}</p>
+      <p>${ownerName}</p>
     </div>
     <div class="info-block">
       <label>振込先</label>
-      <p>${owner?.bank_name ?? ""} ${owner?.bank_branch ?? ""} ${owner?.bank_account_number ?? ""}</p>
+      <p>${bankInfo}</p>
     </div>
   </div>
 
@@ -87,8 +92,8 @@ export async function GET(
   </table>
 
   <p style="color: #999; font-size: 11px; margin-top: 32px;">
-    ステータス: ${remittance.status === "sent" ? "送金済" : remittance.status === "confirmed" ? "確定" : "下書き"}
-    ${remittance.sent_date ? ` / 送金日: ${remittance.sent_date}` : ""}
+    ステータス: ${statusText}
+    ${sentDate ? ` / 送金日: ${sentDate}` : ""}
   </p>
 
   <script>window.print();</script>

@@ -38,19 +38,30 @@ export async function POST(request: NextRequest) {
   }
 
   if (action === "record") {
+    // クライアントからはfailure記録のみ許可（success:trueはサーバー側で処理すべき）
     await admin.from("login_attempts").insert({
       email: emailLower,
-      success: !!success,
+      success: false,
       ip_address: ip,
     });
 
-    if (success) {
-      await admin
-        .from("login_attempts")
-        .delete()
-        .eq("email", emailLower)
-        .eq("success", false);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === "clear" && success) {
+    // ログイン成功後のクリアは認証済みセッションからのみ許可
+    const { createClient: createAuthClient } = await import("@/lib/supabase-server");
+    const supabase = await createAuthClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || user.email?.toLowerCase() !== emailLower) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
+
+    await admin
+      .from("login_attempts")
+      .delete()
+      .eq("email", emailLower)
+      .eq("success", false);
 
     return NextResponse.json({ ok: true });
   }

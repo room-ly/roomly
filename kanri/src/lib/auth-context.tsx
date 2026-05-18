@@ -113,11 +113,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: error.message };
     }
 
-    // 成功を記録（失敗履歴をクリア）
+    // 成功時は失敗履歴をクリア（認証済みセッションで呼び出し）
     await fetch("/api/auth/login-check", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, action: "record", success: true }),
+      body: JSON.stringify({ email, action: "clear", success: true }),
     });
 
     // MFA要否チェック

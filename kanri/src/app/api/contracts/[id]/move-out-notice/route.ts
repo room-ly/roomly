@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { formatPhone } from "@/lib/phone";
+import { escapeHtml } from "@/lib/escape-html";
 
 export async function GET(
   _request: NextRequest,
@@ -37,14 +38,17 @@ export async function GET(
     const property = unit?.property as Record<string, string> | null;
     const today = new Date().toISOString().slice(0, 10);
 
-    const propertyName = property?.name ?? "";
-    const unitNumber = unit?.unit_number ?? "";
-    const propertyAddress = property?.address ?? "";
-    const tenantName = tenant?.name ?? "";
-    const companyName = company?.name ?? "";
-    const companyPostalCode = company?.postal_code ?? "";
-    const companyAddress = company?.address ?? "";
-    const companyPhone = formatPhone(company?.phone) || "";
+    const propertyName = escapeHtml(property?.name ?? "");
+    const unitNumber = escapeHtml(unit?.unit_number ?? "");
+    const propertyAddress = escapeHtml(property?.address ?? "");
+    const tenantName = escapeHtml(tenant?.name ?? "");
+    const tenantPhone = escapeHtml(formatPhone(tenant?.phone) || "");
+    const tenantEmail = escapeHtml(tenant?.email ?? "");
+    const startDate = escapeHtml(contract.start_date ?? "");
+    const companyName = escapeHtml(company?.name ?? "");
+    const companyPostalCode = escapeHtml(company?.postal_code ?? "");
+    const companyAddress = escapeHtml(company?.address ?? "");
+    const companyPhone = escapeHtml(formatPhone(company?.phone) || "");
 
     const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -195,15 +199,15 @@ export async function GET(
       </tr>
       <tr>
         <th>連絡先電話番号</th>
-        <td>${formatPhone(tenant?.phone) || ""}</td>
+        <td>${tenantPhone}</td>
       </tr>
       <tr>
         <th>連絡先メール</th>
-        <td>${tenant?.email ?? ""}</td>
+        <td>${tenantEmail}</td>
       </tr>
       <tr>
         <th>契約開始日</th>
-        <td>${contract.start_date ?? ""}</td>
+        <td>${startDate}</td>
       </tr>
       <tr>
         <th>退去予定日</th>

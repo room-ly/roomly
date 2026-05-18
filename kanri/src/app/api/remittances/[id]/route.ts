@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 
 const ALLOWED_FIELDS = [
   "status", "notes", "payment_method",
@@ -15,6 +15,7 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const supabase = await createClient();
+    const companyId = await getCompanyId();
 
     const updateData: Record<string, unknown> = {};
     for (const key of ALLOWED_FIELDS) {
@@ -28,12 +29,13 @@ export async function PUT(
       .from("owner_remittances")
       .update(updateData)
       .eq("id", id)
+      .eq("company_id", companyId)
       .select("*, owner:owners(name)")
       .single();
 
     if (error) {
       return NextResponse.json(
-        { error: "送金の更新に失敗しました", details: error.message },
+        { error: "送金の更新に失敗しました" },
         { status: 500 }
       );
     }
@@ -54,10 +56,12 @@ export async function DELETE(
   try {
     const { id } = await params;
     const supabase = await createClient();
+    const companyId = await getCompanyId();
     const { error } = await supabase
       .from("owner_remittances")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("company_id", companyId);
 
     if (error) {
       return NextResponse.json(

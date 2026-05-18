@@ -25,10 +25,12 @@ export async function PUT(
       const supabase = await createClient();
 
       // 現在の請求情報を取得
+      const company_id = await getCompanyId();
       const { data: billing, error: fetchError } = await supabase
         .from("rent_billings")
         .select("*, rent_payments(amount)")
         .eq("id", id)
+        .eq("company_id", company_id)
         .single();
 
       if (fetchError || !billing) {
@@ -46,7 +48,6 @@ export async function PUT(
       const newTotal = existingPayments + parsed.data.amount;
       const totalAmount = Number(billing.total_amount);
 
-      const company_id = await getCompanyId();
       const { error: paymentError } = await supabase
         .from("rent_payments")
         .insert({
@@ -60,7 +61,7 @@ export async function PUT(
 
       if (paymentError) {
         return NextResponse.json(
-          { error: "入金の登録に失敗しました", details: paymentError.message },
+          { error: "入金の登録に失敗しました" },
           { status: 500 }
         );
       }
@@ -74,7 +75,7 @@ export async function PUT(
 
       if (updateError) {
         return NextResponse.json(
-          { error: "ステータスの更新に失敗しました", details: updateError.message },
+          { error: "ステータスの更新に失敗しました" },
           { status: 500 }
         );
       }
@@ -96,17 +97,25 @@ export async function PUT(
     }
 
     // 通常の更新
+    const ALLOWED_BILLING_FIELDS = ["status", "due_date", "billing_month", "total_amount", "other_amount", "other_description"] as const;
+    const updateData: Record<string, unknown> = {};
+    for (const key of ALLOWED_BILLING_FIELDS) {
+      if (body[key] !== undefined) updateData[key] = body[key];
+    }
+
     const supabase = await createClient();
+    const companyId = await getCompanyId();
     const { data: updated, error } = await supabase
       .from("rent_billings")
-      .update(body)
+      .update(updateData)
       .eq("id", id)
+      .eq("company_id", companyId)
       .select()
       .single();
 
     if (error) {
       return NextResponse.json(
-        { error: "家賃請求の更新に失敗しました", details: error.message },
+        { error: "家賃請求の更新に失敗しました" },
         { status: 500 }
       );
     }

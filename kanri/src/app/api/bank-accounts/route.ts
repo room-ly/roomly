@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: "登録に失敗しました", details: error.message }, { status: 500 });
+      return NextResponse.json({ error: "登録に失敗しました" }, { status: 500 });
     }
     return NextResponse.json(data, { status: 201 });
   } catch {
@@ -75,8 +75,8 @@ export async function PUT(request: NextRequest) {
 
     const supabase = await createClient();
 
+    const company_id = await getCompanyId();
     if (is_default) {
-      const company_id = await getCompanyId();
       await supabase
         .from("company_bank_accounts")
         .update({ is_default: false })
@@ -97,11 +97,12 @@ export async function PUT(request: NextRequest) {
         is_default,
       })
       .eq("id", id)
+      .eq("company_id", company_id)
       .select()
       .single();
 
     if (error) {
-      return NextResponse.json({ error: "更新に失敗しました", details: error.message }, { status: 500 });
+      return NextResponse.json({ error: "更新に失敗しました" }, { status: 500 });
     }
     return NextResponse.json(data);
   } catch {
@@ -118,10 +119,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     const supabase = await createClient();
+    const company_id = await getCompanyId();
     const { error } = await supabase
       .from("company_bank_accounts")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("company_id", company_id);
 
     if (error) {
       return NextResponse.json({ error: "削除に失敗しました" }, { status: 500 });

@@ -22,7 +22,7 @@ export async function GET(
       .order("created_at", { ascending: true });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: "画像一覧の取得に失敗しました" }, { status: 500 });
     }
 
     const images = (data ?? []).map((doc) => ({
@@ -176,16 +176,19 @@ export async function PATCH(
       return NextResponse.json({ error: "画像IDが必要です" }, { status: 400 });
     }
 
+    const companyId = await getCompanyId();
     await supabase
       .from("documents")
       .update({ is_primary: false })
       .eq("unit_id", unitId)
+      .eq("company_id", companyId)
       .eq("document_type", "photo");
 
     const { error } = await supabase
       .from("documents")
       .update({ is_primary: true })
-      .eq("id", imageId);
+      .eq("id", imageId)
+      .eq("company_id", companyId);
 
     if (error) {
       return NextResponse.json({ error: "メイン画像の設定に失敗しました" }, { status: 500 });
@@ -213,10 +216,12 @@ export async function DELETE(
       );
     }
 
+    const companyId = await getCompanyId();
     const { data: doc, error: fetchError } = await supabase
       .from("documents")
       .select("id, file_path")
       .eq("id", imageId)
+      .eq("company_id", companyId)
       .single();
 
     if (fetchError || !doc) {
@@ -231,7 +236,8 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from("documents")
       .delete()
-      .eq("id", imageId);
+      .eq("id", imageId)
+      .eq("company_id", companyId);
 
     if (deleteError) {
       return NextResponse.json(

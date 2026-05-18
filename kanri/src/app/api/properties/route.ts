@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        { error: "物件の作成に失敗しました", details: error.message },
+        { error: "物件の作成に失敗しました" },
         { status: 500 }
       );
     }

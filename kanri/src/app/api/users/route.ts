@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         );
       }
       return NextResponse.json(
-        { error: "ユーザー作成に失敗しました", details: authError.message },
+        { error: "ユーザー作成に失敗しました" },
         { status: 500 }
       );
     }
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     if (profileError) {
       await admin.auth.admin.deleteUser(authData.user.id);
       return NextResponse.json(
-        { error: "ユーザー作成に失敗しました", details: profileError.message },
+        { error: "ユーザー作成に失敗しました" },
         { status: 500 }
       );
     }
@@ -171,7 +171,7 @@ export async function PUT(request: NextRequest) {
 
     if (updateError) {
       return NextResponse.json(
-        { error: "更新に失敗しました", details: updateError.message },
+        { error: "更新に失敗しました" },
         { status: 500 }
       );
     }
@@ -272,7 +272,7 @@ export async function DELETE(request: NextRequest) {
 
     if (updateError) {
       return NextResponse.json(
-        { error: "削除に失敗しました", details: updateError.message },
+        { error: "削除に失敗しました" },
         { status: 500 }
       );
     }

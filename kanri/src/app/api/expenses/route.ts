@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        { error: "経費の登録に失敗しました", details: error.message },
+        { error: "経費の登録に失敗しました" },
         { status: 500 }
       );
     }

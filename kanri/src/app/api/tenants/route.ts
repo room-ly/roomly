@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json(
-        { error: "入居者の作成に失敗しました", details: error.message },
+        { error: "入居者の作成に失敗しました" },
         { status: 500 }
       );
     }
