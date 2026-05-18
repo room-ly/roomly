@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Phone, Mail } from "lucide-react";
-import { getInquiryDetail, getPropertiesForSelect, getUnitsForSelect, getTenantsForSelect } from "@/lib/queries";
+import { getInquiryDetail, getPropertiesForSelect, getUnitsForSelect, getAllTenantsForSelect } from "@/lib/queries";
 import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import InquiryDetailClient from "@/components/InquiryDetailClient";
@@ -25,7 +25,7 @@ export default async function InquiryDetailPage({
     getInquiryDetail(id),
     getPropertiesForSelect(),
     getUnitsForSelect(),
-    getTenantsForSelect(),
+    getAllTenantsForSelect(),
   ]);
   if (!result) notFound();
 
@@ -56,62 +56,35 @@ export default async function InquiryDetailPage({
             </div>
           </div>
 
-          {/* スレッド */}
-          <div className="inq-thread" style={{ minHeight: 200, maxHeight: "none" }}>
-            {/* 最初のメッセージ（問い合わせ内容） */}
+          {/* 対応記録タイムライン */}
+          <div style={{ padding: "12px 24px", minHeight: 200 }}>
             {inquiry.description && (
-              <div className="inq-msg inq-msg-in with-avatar">
-                <div className="inq-msg-avatar-slot">
-                  <span className="tn-av" style={{
-                    width: 32, height: 32, fontSize: 12,
-                    background: "var(--info-tint)", color: "var(--info)",
-                  }}>
-                    {(inquiry.tenant?.name || "?").charAt(0)}
-                  </span>
-                </div>
-                <div className="inq-msg-content">
-                  <div className="inq-msg-head">
-                    <span className="strong">{inquiry.tenant?.name || "入居者"}</span>
-                    <span className="inq-from-tag inq-from-tenant">入居者</span>
-                    <span style={{ fontSize: 10, color: "var(--ink-4)" }}>{inquiry.created_at?.slice(0, 16).replace("T", " ")}</span>
-                  </div>
-                  <div className="inq-msg-bubble">
-                    <p className="inq-msg-body">{inquiry.description}</p>
-                  </div>
-                </div>
-              </div>
+              <DetailTimelineEntry
+                label={inquiry.tenant?.name || "入居者"}
+                tag="入居者"
+                tagColor="info"
+                content={inquiry.description}
+                time={inquiry.created_at?.slice(0, 16).replace("T", " ")}
+              />
             )}
 
-            {/* 対応履歴をチャットバブルで表示 */}
             {logs.map((log: any) => {
-              const isStaff = log.action_type !== "customer_reply";
+              const isCustomer = log.action_type === "customer_reply";
+              const isNote = log.action_type === "note";
               return (
-                <div key={log.id} className={`inq-msg ${isStaff ? "inq-msg-out" : "inq-msg-in"} with-avatar`}>
-                  <div className="inq-msg-avatar-slot">
-                    <span className="tn-av" style={{
-                      width: 32, height: 32, fontSize: 12,
-                      background: isStaff ? "var(--accent-tint)" : "var(--info-tint)",
-                      color: isStaff ? "var(--accent-deep)" : "var(--info)",
-                    }}>
-                      {isStaff ? "S" : (inquiry.tenant?.name || "?").charAt(0)}
-                    </span>
-                  </div>
-                  <div className="inq-msg-content">
-                    <div className="inq-msg-head">
-                      <span className="strong">{isStaff ? "スタッフ" : inquiry.tenant?.name || "入居者"}</span>
-                      {log.action_type && <span className="inq-msg-tag mono">{log.action_type}</span>}
-                    </div>
-                    <div className="inq-msg-bubble">
-                      <p className="inq-msg-body">{log.content}</p>
-                    </div>
-                    <span className="inq-msg-time mono">{log.created_at?.slice(0, 16).replace("T", " ")}</span>
-                  </div>
-                </div>
+                <DetailTimelineEntry
+                  key={log.id}
+                  label={isCustomer ? (inquiry.tenant?.name || "入居者") : isNote ? "メモ" : "スタッフ"}
+                  tag={isCustomer ? "入居者" : isNote ? "メモ" : "対応"}
+                  tagColor={isCustomer ? "info" : isNote ? "neutral" : "accent"}
+                  content={log.content}
+                  time={log.created_at?.slice(0, 16).replace("T", " ")}
+                />
               );
             })}
 
             {logs.length === 0 && !inquiry.description && (
-              <div className="inq-empty">まだ対応履歴がありません</div>
+              <div className="inq-empty">まだ対応記録がありません</div>
             )}
           </div>
 
@@ -184,5 +157,33 @@ export default async function InquiryDetailPage({
         )}
       </div>
     </>
+  );
+}
+
+function DetailTimelineEntry({ label, tag, tagColor, content, time }: {
+  label: string; tag: string; tagColor: string; content: string; time: string;
+}) {
+  const colors: Record<string, { bg: string; fg: string }> = {
+    info: { bg: "var(--info-tint)", fg: "var(--info)" },
+    accent: { bg: "var(--accent-tint)", fg: "var(--accent-deep)" },
+    neutral: { bg: "var(--bg-2)", fg: "var(--ink-3)" },
+  };
+  const c = colors[tagColor] || colors.neutral;
+  return (
+    <div style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+      <div style={{ width: 64, flexShrink: 0, fontSize: 11, color: "var(--ink-4)", fontFamily: "var(--font-mono)", lineHeight: "20px", paddingTop: 1 }}>
+        {time?.slice(5)}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>{label}</span>
+          <span style={{
+            fontSize: 10, padding: "1px 6px", borderRadius: 4,
+            background: c.bg, color: c.fg, fontWeight: 500,
+          }}>{tag}</span>
+        </div>
+        <p style={{ fontSize: 13, color: "var(--ink)", margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{content}</p>
+      </div>
+    </div>
   );
 }

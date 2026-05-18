@@ -86,18 +86,12 @@ export async function getProperties() {
 export async function getPropertyDetail(id: string) {
   const supabase = await createClient();
 
-  const { data: property, error } = await supabase
-    .from("properties")
-    .select("*, owner:owners(id, name)")
-    .eq("id", id)
-    .single();
+  const [{ data: property, error }, { data: units }, visibleIds] = await Promise.all([
+    supabase.from("properties").select("*, owner:owners(id, name)").eq("id", id).single(),
+    supabase.from("units").select("*").eq("property_id", id).order("unit_number"),
+    getVisibleUnitIds(),
+  ]);
   if (error || !property) return null;
-
-  const { data: units } = await supabase
-    .from("units")
-    .select("*")
-    .eq("property_id", id)
-    .order("unit_number");
 
   const unitIds = (units ?? []).map((u: Row) => u.id);
   let contracts: Row[] = [];
@@ -110,7 +104,6 @@ export async function getPropertyDetail(id: string) {
     contracts = data ?? [];
   }
 
-  const visibleIds = await getVisibleUnitIds();
   const visibleUnits = applyUnitVisibility(units ?? [], visibleIds);
 
   return { property, units: visibleUnits, contracts };
@@ -120,25 +113,12 @@ export async function getPropertyDetail(id: string) {
 export async function getUnitDetail(unitId: string) {
   const supabase = await createClient();
 
-  const { data: unit, error } = await supabase
-    .from("units")
-    .select("*, property:properties(id, name, address)")
-    .eq("id", unitId)
-    .single();
+  const [{ data: unit, error }, { data: contracts }, { data: maintenanceRequests }] = await Promise.all([
+    supabase.from("units").select("*, property:properties(id, name, address)").eq("id", unitId).single(),
+    supabase.from("contracts").select("*, tenant:tenants(id, name, phone, email)").eq("unit_id", unitId).order("start_date", { ascending: false }),
+    supabase.from("maintenance_requests").select("*").eq("unit_id", unitId).order("reported_date", { ascending: false }).limit(5),
+  ]);
   if (error || !unit) return null;
-
-  const { data: contracts } = await supabase
-    .from("contracts")
-    .select("*, tenant:tenants(id, name, phone, email)")
-    .eq("unit_id", unitId)
-    .order("start_date", { ascending: false });
-
-  const { data: maintenanceRequests } = await supabase
-    .from("maintenance_requests")
-    .select("*")
-    .eq("unit_id", unitId)
-    .order("reported_date", { ascending: false })
-    .limit(5);
 
   return {
     unit,
@@ -196,16 +176,12 @@ export async function getContracts() {
 // 契約詳細（入居者・部屋・物件・家賃請求履歴付き）
 export async function getContractDetail(id: string) {
   const supabase = await createClient();
-  const { data: contract, error } = await supabase
-    .from("contracts")
-    .select(
-      "*, tenant:tenants(id, name, name_kana, phone, email, workplace), unit:units(id, unit_number, area_sqm, layout, property:properties(id, name, address))"
-    )
-    .eq("id", id)
-    .single();
-  if (error || !contract) return null;
-
-  const [{ data: billings }, { data: moveOutRequests }, { data: unitContracts }] = await Promise.all([
+  const [{ data: contract, error }, { data: billings }, { data: moveOutRequests }] = await Promise.all([
+    supabase
+      .from("contracts")
+      .select("*, tenant:tenants(id, name, name_kana, phone, email, workplace), unit:units(id, unit_number, area_sqm, layout, property:properties(id, name, address))")
+      .eq("id", id)
+      .single(),
     supabase
       .from("rent_billings")
       .select("id, billing_month, total_amount, status")
@@ -217,34 +193,31 @@ export async function getContractDetail(id: string) {
       .select("*")
       .eq("contract_id", id)
       .order("created_at", { ascending: false }),
-    contract.unit_id
-      ? supabase
-          .from("contracts")
-          .select("id, start_date, end_date, rent, status, contract_type, tenant:tenants(id, name)")
-          .eq("unit_id", contract.unit_id)
-          .neq("id", id)
-          .order("start_date", { ascending: false })
-      : Promise.resolve({ data: [] }),
   ]);
+  if (error || !contract) return null;
 
-  return { contract, billings: billings ?? [], moveOutRequests: moveOutRequests ?? [], unitContracts: unitContracts ?? [] };
+  let unitContracts: Row[] = [];
+  if (contract.unit_id) {
+    const { data } = await supabase
+      .from("contracts")
+      .select("id, start_date, end_date, rent, status, contract_type, tenant:tenants(id, name)")
+      .eq("unit_id", contract.unit_id)
+      .neq("id", id)
+      .order("start_date", { ascending: false });
+    unitContracts = data ?? [];
+  }
+
+  return { contract, billings: billings ?? [], moveOutRequests: moveOutRequests ?? [], unitContracts };
 }
 
 // 入居者詳細（契約・物件・家賃請求付き）
 export async function getTenantDetail(id: string) {
   const supabase = await createClient();
-  const { data: tenant, error } = await supabase
-    .from("tenants")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [{ data: tenant, error }, { data: contracts }] = await Promise.all([
+    supabase.from("tenants").select("*").eq("id", id).single(),
+    supabase.from("contracts").select("*, unit:units(unit_number, property:properties(name))").eq("tenant_id", id).order("start_date", { ascending: false }),
+  ]);
   if (error || !tenant) return null;
-
-  const { data: contracts } = await supabase
-    .from("contracts")
-    .select("*, unit:units(unit_number, property:properties(name))")
-    .eq("tenant_id", id)
-    .order("start_date", { ascending: false });
 
   return { tenant, contracts: contracts ?? [] };
 }
@@ -252,18 +225,11 @@ export async function getTenantDetail(id: string) {
 // 修繕依頼詳細（物件・部屋・対応履歴付き）
 export async function getMaintenanceDetail(id: string) {
   const supabase = await createClient();
-  const { data: request, error } = await supabase
-    .from("maintenance_requests")
-    .select("*, property:properties(id, name, address), unit:units(unit_number)")
-    .eq("id", id)
-    .single();
+  const [{ data: request, error }, { data: logs }] = await Promise.all([
+    supabase.from("maintenance_requests").select("*, property:properties(id, name, address), unit:units(unit_number)").eq("id", id).single(),
+    supabase.from("maintenance_logs").select("*").eq("request_id", id).order("logged_at", { ascending: false }),
+  ]);
   if (error || !request) return null;
-
-  const { data: logs } = await supabase
-    .from("maintenance_logs")
-    .select("*")
-    .eq("maintenance_request_id", id)
-    .order("created_at", { ascending: false });
 
   return { request, logs: logs ?? [] };
 }
@@ -271,18 +237,16 @@ export async function getMaintenanceDetail(id: string) {
 // 問い合わせ詳細（物件・部屋・入居者・対応履歴付き）
 export async function getInquiryDetail(id: string) {
   const supabase = await createClient();
-  const { data: inquiry, error } = await supabase
-    .from("inquiries")
-    .select("*, property:properties(id, name), unit:units(unit_number), tenant:tenants(name, phone, email)")
-    .eq("id", id)
-    .single();
+  const [{ data: inquiry, error }, { data: logs }] = await Promise.all([
+    supabase.from("inquiries").select("*, property:properties(id, name), unit:units(unit_number, contracts(tenant_id, status, tenant:tenants(id, name, phone, email))), tenant:tenants(name, phone, email)").eq("id", id).single(),
+    supabase.from("inquiry_logs").select("*").eq("inquiry_id", id).order("created_at", { ascending: false }),
+  ]);
   if (error || !inquiry) return null;
 
-  const { data: logs } = await supabase
-    .from("inquiry_logs")
-    .select("*")
-    .eq("inquiry_id", id)
-    .order("created_at", { ascending: false });
+  if (!inquiry.tenant && inquiry.unit?.contracts) {
+    const active = inquiry.unit.contracts.find((c: Row) => c.status === "active");
+    if (active?.tenant) inquiry.tenant = active.tenant;
+  }
 
   return { inquiry, logs: logs ?? [] };
 }
@@ -290,19 +254,11 @@ export async function getInquiryDetail(id: string) {
 // オーナー詳細（物件・送金履歴付き）
 export async function getOwnerDetail(id: string) {
   const supabase = await createClient();
-  const { data: owner, error } = await supabase
-    .from("owners")
-    .select("*, properties(id, name, management_fee_rate, units(id, status, rent))")
-    .eq("id", id)
-    .single();
+  const [{ data: owner, error }, { data: remittances }] = await Promise.all([
+    supabase.from("owners").select("*, properties(id, name, management_fee_rate, units(id, status, rent))").eq("id", id).single(),
+    supabase.from("owner_remittances").select("id, remittance_month, total_rent, management_fee_deducted, expense_deducted, net_amount, status").eq("owner_id", id).order("remittance_month", { ascending: false }).limit(12),
+  ]);
   if (error || !owner) return null;
-
-  const { data: remittances } = await supabase
-    .from("owner_remittances")
-    .select("id, remittance_month, total_rent, management_fee_deducted, expense_deducted, net_amount, status")
-    .eq("owner_id", id)
-    .order("remittance_month", { ascending: false })
-    .limit(12);
 
   return { owner, remittances: remittances ?? [] };
 }
@@ -322,18 +278,11 @@ export async function getExpenseDetail(id: string) {
 // 送金詳細（オーナー・明細付き）
 export async function getRemittanceDetail(id: string) {
   const supabase = await createClient();
-  const { data: remittance, error } = await supabase
-    .from("owner_remittances")
-    .select("*, owner:owners(id, name, phone, email, bank_name, bank_branch, account_type, account_holder)")
-    .eq("id", id)
-    .single();
+  const [{ data: remittance, error }, { data: items }] = await Promise.all([
+    supabase.from("owner_remittances").select("*, owner:owners(id, name, phone, email, bank_name, bank_branch, account_type, account_holder)").eq("id", id).single(),
+    supabase.from("owner_remittance_items").select("*, property:properties(name), unit:units(unit_number)").eq("remittance_id", id).order("created_at"),
+  ]);
   if (error || !remittance) return null;
-
-  const { data: items } = await supabase
-    .from("owner_remittance_items")
-    .select("*, property:properties(name), unit:units(unit_number)")
-    .eq("remittance_id", id)
-    .order("created_at");
 
   return { remittance, items: items ?? [] };
 }
@@ -396,10 +345,16 @@ export async function getInquiries() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("inquiries")
-    .select("*, property:properties(id, name), unit:units(unit_number), tenant:tenants(id, name, phone, email), inquiry_logs(id, content, action_type, created_at)")
+    .select("*, property:properties(id, name), unit:units(unit_number, contracts(tenant_id, status, tenant:tenants(id, name, phone, email))), tenant:tenants(id, name, phone, email), inquiry_logs(id, content, action_type, created_at)")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []) as Row[];
+  return (data ?? []).map((row: Row) => {
+    if (!row.tenant && row.unit?.contracts) {
+      const active = row.unit.contracts.find((c: Row) => c.status === "active");
+      if (active?.tenant) row.tenant = active.tenant;
+    }
+    return row;
+  }) as Row[];
 }
 
 // オーナー一覧（物件・部屋付き）
@@ -648,6 +603,17 @@ export async function getTenantsForSelect(excludeContractId?: string) {
     }));
 }
 
+// 全入居者セレクトリスト（問い合わせ・修繕など契約状態を問わない用途）
+export async function getAllTenantsForSelect() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tenants")
+    .select("id, name")
+    .order("name");
+  if (error) throw error;
+  return (data ?? []).map((t: Row) => ({ id: t.id, label: t.name }));
+}
+
 // 物件セレクトリスト
 export async function getPropertiesForSelect() {
   const supabase = await createClient();
@@ -702,26 +668,22 @@ export async function getBadgeCounts() {
         .from("rent_billings")
         .select("id", { count: "exact", head: true })
         .eq("status", "overdue"),
-      // 修繕: 緊急（high/urgent）で未解決
       supabase
         .from("maintenance_requests")
         .select("id", { count: "exact", head: true })
         .in("status", ["open", "in_progress"])
         .in("priority", ["high", "urgent"]),
-      // 修繕: 3日以上放置で未解決
       supabase
         .from("maintenance_requests")
         .select("id", { count: "exact", head: true })
         .in("status", ["open", "in_progress"])
         .in("priority", ["low", "normal"])
         .lt("created_at", staleDate),
-      // 問い合わせ: 緊急（high/urgent）で未解決
       supabase
         .from("inquiries")
         .select("id", { count: "exact", head: true })
         .in("status", ["open", "in_progress"])
         .in("priority", ["high", "urgent"]),
-      // 問い合わせ: 3日以上放置で未解決
       supabase
         .from("inquiries")
         .select("id", { count: "exact", head: true })
@@ -738,19 +700,18 @@ export async function getBadgeCounts() {
   const today = new Date().toISOString().slice(0, 10);
   const alertDateStr = alertDate.toISOString().slice(0, 10);
 
+  const contractsPromise = supabase
+    .from("contracts")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "active")
+    .gte("end_date", today)
+    .lte("end_date", alertDateStr);
+
   const profilePromise = authRes.data?.user
     ? supabase.from("users").select("name, email").eq("id", authRes.data.user.id).single()
     : Promise.resolve({ data: null });
 
-  const [contractsRes, profileRes] = await Promise.all([
-    supabase
-      .from("contracts")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "active")
-      .gte("end_date", today)
-      .lte("end_date", alertDateStr),
-    profilePromise,
-  ]);
+  const [contractsRes, profileRes] = await Promise.all([contractsPromise, profilePromise]);
 
   const userEmail = profileRes.data?.email ?? authRes.data?.user?.email ?? "";
   const userName = profileRes.data?.name ?? "";

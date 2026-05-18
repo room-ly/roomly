@@ -179,7 +179,10 @@ export default function InquiriesTable({ inquiries, initialFilter }: InquiriesTa
 
         {/* 右: 詳細プレビュー */}
         {selected ? (
-          <InquiryPreview inquiry={selected} onOpenDetail={() => router.push(`/inquiries/${selected.id}`)} />
+          <InquiryPreview
+            inquiry={selected}
+            onOpenDetail={() => router.push(`/inquiries/${selected.id}`)}
+          />
         ) : (
           <div className="inq-detail" style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink-4)" }}>
             問い合わせを選択してください
@@ -191,6 +194,7 @@ export default function InquiriesTable({ inquiries, initialFilter }: InquiriesTa
 }
 
 function InquiryPreview({ inquiry, onOpenDetail }: { inquiry: Record<string, any>; onOpenDetail: () => void }) {
+  const router = useRouter();
   const st = statusInfo(inquiry.status);
   const logs = (inquiry.inquiry_logs || []).sort(
     (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -235,67 +239,39 @@ function InquiryPreview({ inquiry, onOpenDetail }: { inquiry: Record<string, any
         </div>
       </div>
 
-      {/* スレッド */}
-      <div className="inq-thread">
+      {/* 対応記録タイムライン */}
+      <div style={{ flex: 1, overflow: "auto", padding: "12px 20px" }}>
         {inquiry.description && (
-          <div className="inq-msg inq-msg-in with-avatar">
-            <div className="inq-msg-avatar-slot">
-              <span
-                className="tn-av"
-                style={{
-                  width: 32, height: 32, fontSize: 12,
-                  background: "var(--info-tint)", color: "var(--info)",
-                }}
-              >
-                {(inquiry.tenant?.name || "?").charAt(0)}
-              </span>
-            </div>
-            <div className="inq-msg-content">
-              <div className="inq-msg-head">
-                <span className="strong">{inquiry.tenant?.name || "入居者"}</span>
-                <span className="inq-from-tag inq-from-tenant">入居者</span>
-              </div>
-              <div className="inq-msg-bubble">
-                <p className="inq-msg-body">{inquiry.description}</p>
-              </div>
-              <span className="inq-msg-time mono">{inquiry.created_at?.slice(0, 16).replace("T", " ")}</span>
-            </div>
-          </div>
+          <TimelineEntry
+            label={inquiry.tenant?.name || "入居者"}
+            tag="入居者"
+            tagColor="info"
+            content={inquiry.description}
+            time={inquiry.created_at?.slice(0, 16).replace("T", " ")}
+          />
         )}
 
         {logs.map((log: any) => {
-          const isStaff = log.action_type !== "customer_reply";
+          const isCustomer = log.action_type === "customer_reply";
+          const isNote = log.action_type === "note";
           return (
-            <div key={log.id} className={`inq-msg ${isStaff ? "inq-msg-out" : "inq-msg-in"} with-avatar`}>
-              <div className="inq-msg-avatar-slot">
-                <span
-                  className="tn-av"
-                  style={{
-                    width: 32, height: 32, fontSize: 12,
-                    background: isStaff ? "var(--accent-tint)" : "var(--info-tint)",
-                    color: isStaff ? "var(--accent-deep)" : "var(--info)",
-                  }}
-                >
-                  {isStaff ? "S" : (inquiry.tenant?.name || "?").charAt(0)}
-                </span>
-              </div>
-              <div className="inq-msg-content">
-                <div className="inq-msg-head">
-                  <span className="strong">{isStaff ? "スタッフ" : inquiry.tenant?.name || "入居者"}</span>
-                </div>
-                <div className="inq-msg-bubble">
-                  <p className="inq-msg-body">{log.content}</p>
-                </div>
-                <span className="inq-msg-time mono">{log.created_at?.slice(0, 16).replace("T", " ")}</span>
-              </div>
-            </div>
+            <TimelineEntry
+              key={log.id}
+              label={isCustomer ? (inquiry.tenant?.name || "入居者") : isNote ? "メモ" : "スタッフ"}
+              tag={isCustomer ? "入居者" : isNote ? "メモ" : "対応"}
+              tagColor={isCustomer ? "info" : isNote ? "neutral" : "accent"}
+              content={log.content}
+              time={log.created_at?.slice(0, 16).replace("T", " ")}
+            />
           );
         })}
 
         {logs.length === 0 && !inquiry.description && (
-          <div className="inq-empty">まだ対応履歴がありません</div>
+          <div className="inq-empty">まだ対応記録がありません</div>
         )}
       </div>
+
+      <LogInput inquiryId={inquiry.id} />
 
       {/* サイドバー情報 */}
       <div className="inq-sidebar">
@@ -334,6 +310,105 @@ function InquiryPreview({ inquiry, onOpenDetail }: { inquiry: Record<string, any
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function TimelineEntry({ label, tag, tagColor, content, time }: {
+  label: string; tag: string; tagColor: string; content: string; time: string;
+}) {
+  const colors: Record<string, { bg: string; fg: string }> = {
+    info: { bg: "var(--info-tint)", fg: "var(--info)" },
+    accent: { bg: "var(--accent-tint)", fg: "var(--accent-deep)" },
+    neutral: { bg: "var(--bg-2)", fg: "var(--ink-3)" },
+  };
+  const c = colors[tagColor] || colors.neutral;
+  return (
+    <div style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
+      <div style={{ width: 56, flexShrink: 0, fontSize: 10, color: "var(--ink-4)", fontFamily: "var(--font-mono)", lineHeight: "18px", paddingTop: 1 }}>
+        {time?.slice(5)}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+          <span style={{ fontSize: 12, fontWeight: 600 }}>{label}</span>
+          <span style={{
+            fontSize: 10, padding: "1px 6px", borderRadius: 4,
+            background: c.bg, color: c.fg, fontWeight: 500,
+          }}>{tag}</span>
+        </div>
+        <p style={{ fontSize: 13, color: "var(--ink)", margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{content}</p>
+      </div>
+    </div>
+  );
+}
+
+const LOG_TABS = [
+  { key: "customer_reply", label: "入居者から", placeholder: "入居者からの連絡内容…", tone: "info" },
+  { key: "staff_reply", label: "スタッフ対応", placeholder: "対応内容を記録…", tone: "accent" },
+  { key: "note", label: "メモ", placeholder: "社内メモ…", tone: "neutral" },
+] as const;
+
+function LogInput({ inquiryId }: { inquiryId: string }) {
+  const router = useRouter();
+  const [text, setText] = useState("");
+  const [type, setType] = useState<string>("customer_reply");
+  const [sending, setSending] = useState(false);
+  const tab = LOG_TABS.find((t) => t.key === type) || LOG_TABS[0];
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!text.trim() || sending) return;
+    setSending(true);
+    try {
+      const res = await fetch(`/api/inquiries/${inquiryId}/logs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: text.trim(), action_type: type }),
+      });
+      if (res.ok) {
+        setText("");
+        router.refresh();
+      }
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div style={{ borderTop: "1px solid var(--line)" }}>
+      <div style={{ display: "flex", gap: 0, padding: "6px 16px 0" }}>
+        {LOG_TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setType(t.key)}
+            style={{
+              fontSize: 11,
+              padding: "4px 10px",
+              borderRadius: "6px 6px 0 0",
+              border: "none",
+              cursor: "pointer",
+              fontWeight: type === t.key ? 600 : 400,
+              background: type === t.key ? "var(--bg-2)" : "transparent",
+              color: type === t.key ? "var(--ink)" : "var(--ink-3)",
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <form onSubmit={handleSubmit} style={{ padding: "4px 16px 10px", display: "flex", gap: 6, alignItems: "center" }}>
+        <input
+          className="input"
+          style={{ flex: 1, height: 32, fontSize: 12 }}
+          placeholder={tab.placeholder}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+        <button type="submit" disabled={!text.trim() || sending} className="btn btn-primary" style={{ height: 32, fontSize: 12, flexShrink: 0 }}>
+          追加
+        </button>
+      </form>
     </div>
   );
 }

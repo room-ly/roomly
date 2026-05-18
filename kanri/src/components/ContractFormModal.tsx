@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
 import { contractSchema, type ContractFormData } from "@/lib/schemas";
 import type { ZodError } from "zod";
 
 interface SelectOption {
   id: string;
   label: string;
+  tenant_id?: string | null;
 }
 
 interface ContractFormModalProps {
@@ -30,6 +30,16 @@ export default function ContractFormModal({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
+  const [selectedUnitId, setSelectedUnitId] = useState(editData?.unit_id || editData?.unit?.id || "");
+  const [selectedTenantId, setSelectedTenantId] = useState(editData?.tenant_id || editData?.tenant?.id || "");
+
+  function handleUnitChange(unitId: string) {
+    setSelectedUnitId(unitId);
+    const unit = units.find((u) => u.id === unitId);
+    if (unit?.tenant_id) {
+      setSelectedTenantId(unit.tenant_id);
+    }
+  }
 
   if (!isOpen) return null;
 
@@ -89,12 +99,6 @@ export default function ContractFormModal({
           <h2 className="text-[15px] font-semibold">
             {isEdit ? "契約を編集" : "新規契約"}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-ink-3 hover:text-ink transition-colors"
-          >
-            <X size={18} />
-          </button>
         </div>
 
         {apiError && (
@@ -111,7 +115,8 @@ export default function ContractFormModal({
               </label>
               <select
                 name="unit_id"
-                defaultValue={editData?.unit_id || editData?.unit?.id || ""}
+                value={selectedUnitId}
+                onChange={(e) => handleUnitChange(e.target.value)}
                 className="input"
               >
                 <option value="">選択してください</option>
@@ -131,7 +136,8 @@ export default function ContractFormModal({
               </label>
               <select
                 name="tenant_id"
-                defaultValue={editData?.tenant_id || editData?.tenant?.id || ""}
+                value={selectedTenantId}
+                onChange={(e) => setSelectedTenantId(e.target.value)}
                 className="input"
               >
                 <option value="">選択してください</option>
@@ -222,6 +228,23 @@ export default function ContractFormModal({
                 </p>
               )}
             </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-ink-2 block mb-1">
+              退去予定日
+            </label>
+            <input
+              name="move_out_date"
+              type="date"
+              defaultValue={editData?.move_out_date || ""}
+              className="input"
+            />
+            {errors.move_out_date && (
+              <p className="text-danger text-sm mt-1">
+                {errors.move_out_date[0]}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

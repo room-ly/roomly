@@ -1,4 +1,4 @@
-import { getInquiries, getPropertiesForSelect, getUnitsForSelect, getTenantsForSelect } from "@/lib/queries";
+import { getInquiries, getPropertiesForSelect, getUnitsForSelect, getAllTenantsForSelect } from "@/lib/queries";
 import PageHeader from "@/components/PageHeader";
 import InquiriesPageClient from "@/components/InquiriesPageClient";
 import InquiriesTable from "@/components/InquiriesTable";
@@ -13,7 +13,7 @@ export default async function InquiriesPage({
     getInquiries(),
     getPropertiesForSelect(),
     getUnitsForSelect(),
-    getTenantsForSelect(),
+    getAllTenantsForSelect(),
   ]);
 
   return (

@@ -16,6 +16,7 @@ interface InquiryFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   editData?: Record<string, any> | null;
+  defaultData?: Record<string, any> | null;
   properties?: SelectOption[];
   units?: SelectOption[];
   tenants?: SelectOption[];
@@ -25,16 +26,25 @@ export default function InquiryFormModal({
   isOpen,
   onClose,
   editData,
+  defaultData,
   properties = [],
   units = [],
   tenants = [],
 }: InquiryFormModalProps) {
   const router = useRouter();
+  const initial = editData || defaultData;
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
-  const [selectedPropertyId, setSelectedPropertyId] = useState(editData?.property_id || "");
-  const [selectedTenantId, setSelectedTenantId] = useState(editData?.tenant_id || "");
+  const [selectedPropertyId, setSelectedPropertyId] = useState(initial?.property_id || "");
+  const [selectedUnitId, setSelectedUnitId] = useState(initial?.unit_id || "");
+  const [selectedTenantId, setSelectedTenantId] = useState(() => {
+    if (initial?.tenant_id) return initial.tenant_id;
+    if (initial?.unit_id) {
+      return units.find((u) => u.id === initial.unit_id)?.tenant_id || "";
+    }
+    return "";
+  });
 
   const filteredUnits = useMemo(() => {
     if (!selectedPropertyId) return units;
@@ -43,12 +53,20 @@ export default function InquiryFormModal({
     ));
   }, [selectedPropertyId, units, properties]);
 
-  function handleUnitChange(unitId: string) {
-    const unit = units.find((u) => u.id === unitId);
-    if (unit?.tenant_id) {
-      setSelectedTenantId(unit.tenant_id);
-    }
+  function handlePropertyChange(propertyId: string) {
+    setSelectedPropertyId(propertyId);
+    setSelectedUnitId("");
+    setSelectedTenantId("");
   }
+
+  function handleUnitChange(unitId: string) {
+    setSelectedUnitId(unitId);
+    const unit = units.find((u) => u.id === unitId);
+    setSelectedTenantId(unit?.tenant_id || "");
+  }
+
+  const unitTenantId = units.find((u) => u.id === selectedUnitId)?.tenant_id;
+  const tenantLocked = !!unitTenantId;
 
   if (!isOpen) return null;
 
@@ -145,8 +163,8 @@ export default function InquiryFormModal({
               </label>
               <select
                 name="property_id"
-                defaultValue={editData?.property_id || ""}
-                onChange={(e) => setSelectedPropertyId(e.target.value)}
+                value={selectedPropertyId}
+                onChange={(e) => handlePropertyChange(e.target.value)}
                 className="input"
               >
                 <option value="">未選択</option>
@@ -161,7 +179,7 @@ export default function InquiryFormModal({
               </label>
               <select
                 name="unit_id"
-                defaultValue={editData?.unit_id || ""}
+                value={selectedUnitId}
                 onChange={(e) => handleUnitChange(e.target.value)}
                 className="input"
               >
@@ -175,17 +193,26 @@ export default function InquiryFormModal({
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 入居者
               </label>
-              <select
-                name="tenant_id"
-                value={selectedTenantId}
-                onChange={(e) => setSelectedTenantId(e.target.value)}
-                className="input"
-              >
-                <option value="">未選択</option>
-                {tenants.map((t) => (
-                  <option key={t.id} value={t.id}>{t.label}</option>
-                ))}
-              </select>
+              {tenantLocked ? (
+                <>
+                  <input type="hidden" name="tenant_id" value={selectedTenantId} />
+                  <div className="input bg-bg-2 text-ink-2">
+                    {tenants.find((t) => t.id === selectedTenantId)?.label || "—"}
+                  </div>
+                </>
+              ) : (
+                <select
+                  name="tenant_id"
+                  value={selectedTenantId}
+                  onChange={(e) => setSelectedTenantId(e.target.value)}
+                  className="input"
+                >
+                  <option value="">未選択</option>
+                  {tenants.map((t) => (
+                    <option key={t.id} value={t.id}>{t.label}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
