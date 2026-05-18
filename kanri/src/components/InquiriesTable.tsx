@@ -195,6 +195,7 @@ export default function InquiriesTable({ inquiries, initialFilter }: InquiriesTa
 
 function InquiryPreview({ inquiry, onOpenDetail }: { inquiry: Record<string, any>; onOpenDetail: () => void }) {
   const router = useRouter();
+  const [showLogForm, setShowLogForm] = useState(false);
   const st = statusInfo(inquiry.status);
   const logs = (inquiry.inquiry_logs || []).sort(
     (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -234,7 +235,8 @@ function InquiryPreview({ inquiry, onOpenDetail }: { inquiry: Record<string, any
             )}
           </div>
         </div>
-        <div className="inq-detail-actions">
+        <div className="inq-detail-actions" style={{ display: "flex", gap: 6 }}>
+          <button className="btn btn-secondary btn-sm" onClick={() => setShowLogForm(true)}>＋ 記録を追加</button>
           <button className="btn btn-ghost btn-sm" onClick={onOpenDetail}>詳細を開く →</button>
         </div>
       </div>
@@ -271,7 +273,13 @@ function InquiryPreview({ inquiry, onOpenDetail }: { inquiry: Record<string, any
         )}
       </div>
 
-      <LogInput inquiryId={inquiry.id} />
+      {showLogForm && (
+        <LogFormModal
+          inquiryId={inquiry.id}
+          tenantName={inquiry.tenant?.name}
+          onClose={() => setShowLogForm(false)}
+        />
+      )}
 
       {/* サイドバー情報 */}
       <div className="inq-sidebar">
@@ -342,18 +350,17 @@ function TimelineEntry({ label, tag, tagColor, content, time }: {
   );
 }
 
-const LOG_TABS = [
-  { key: "customer_reply", label: "入居者から", placeholder: "入居者からの連絡内容…", tone: "info" },
-  { key: "staff_reply", label: "スタッフ対応", placeholder: "対応内容を記録…", tone: "accent" },
-  { key: "note", label: "メモ", placeholder: "社内メモ…", tone: "neutral" },
-] as const;
+const LOG_TYPES = [
+  { key: "customer_reply", label: "入居者からの連絡" },
+  { key: "staff_reply", label: "スタッフ対応" },
+  { key: "note", label: "社内メモ" },
+];
 
-function LogInput({ inquiryId }: { inquiryId: string }) {
+function LogFormModal({ inquiryId, tenantName, onClose }: { inquiryId: string; tenantName?: string; onClose: () => void }) {
   const router = useRouter();
+  const [type, setType] = useState("customer_reply");
   const [text, setText] = useState("");
-  const [type, setType] = useState<string>("customer_reply");
   const [sending, setSending] = useState(false);
-  const tab = LOG_TABS.find((t) => t.key === type) || LOG_TABS[0];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -366,7 +373,7 @@ function LogInput({ inquiryId }: { inquiryId: string }) {
         body: JSON.stringify({ content: text.trim(), action_type: type }),
       });
       if (res.ok) {
-        setText("");
+        onClose();
         router.refresh();
       }
     } finally {
@@ -375,40 +382,39 @@ function LogInput({ inquiryId }: { inquiryId: string }) {
   }
 
   return (
-    <div style={{ borderTop: "1px solid var(--line)" }}>
-      <div style={{ display: "flex", gap: 0, padding: "6px 16px 0" }}>
-        {LOG_TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setType(t.key)}
-            style={{
-              fontSize: 11,
-              padding: "4px 10px",
-              borderRadius: "6px 6px 0 0",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: type === t.key ? 600 : 400,
-              background: type === t.key ? "var(--bg-2)" : "transparent",
-              color: type === t.key ? "var(--ink)" : "var(--ink-3)",
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-surface rounded-2xl shadow-xl p-5 w-full max-w-md">
+        <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>対応記録を追加</h3>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="text-sm font-medium text-ink-2 block mb-1">種別</label>
+            <select value={type} onChange={(e) => setType(e.target.value)} className="input">
+              {LOG_TYPES.map((t) => (
+                <option key={t.key} value={t.key}>{t.label}{t.key === "customer_reply" && tenantName ? `（${tenantName}）` : ""}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-ink-2 block mb-1">内容</label>
+            <textarea
+              className="input min-h-[80px]"
+              placeholder={type === "customer_reply" ? "入居者からの連絡内容を記録…" : type === "note" ? "社内メモ…" : "対応内容を記録…"}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" onClick={onClose} className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm">キャンセル</button>
+            <button type="submit" disabled={!text.trim() || sending} className="btn btn-primary disabled:opacity-50">
+              {sending ? "保存中..." : "追加"}
+            </button>
+          </div>
+        </form>
       </div>
-      <form onSubmit={handleSubmit} style={{ padding: "4px 16px 10px", display: "flex", gap: 6, alignItems: "center" }}>
-        <input
-          className="input"
-          style={{ flex: 1, height: 32, fontSize: 12 }}
-          placeholder={tab.placeholder}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        <button type="submit" disabled={!text.trim() || sending} className="btn btn-primary" style={{ height: 32, fontSize: 12, flexShrink: 0 }}>
-          追加
-        </button>
-      </form>
     </div>
   );
 }
