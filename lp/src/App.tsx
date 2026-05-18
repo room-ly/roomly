@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const APP_URL = "https://roomly.jp";
+const APP_URL = "https://kanri.roomly.jp";
 const HP_URL = "https://hp.roomly.jp";
 const CONTACT_API = `${HP_URL}/api/contact`;
 

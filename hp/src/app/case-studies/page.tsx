@@ -50,7 +50,7 @@ export default function CaseStudiesPage() {
               <Link href="/contact" className="inline-flex h-11 items-center rounded-full bg-rm-primary px-[20px] text-[14px] font-medium text-rm-bg transition-colors hover:bg-rm-accent-deep hover:text-white">
                 お問い合わせ
               </Link>
-              <a href="https://roomly.jp" className="inline-flex h-11 items-center rounded-full border border-rm-border-strong px-[20px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-surface-tint">
+              <a href="https://kanri.roomly.jp" className="inline-flex h-11 items-center rounded-full border border-rm-border-strong px-[20px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-surface-tint">
                 無料で始める
               </a>
             </div>

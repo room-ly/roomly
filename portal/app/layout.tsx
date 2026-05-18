@@ -41,7 +41,7 @@ export default function RootLayout({
                 物件を探す
               </Link>
               <a
-                href="https://roomly.jp"
+                href="https://kanri.roomly.jp"
                 className="hover:text-white"
                 target="_blank"
                 rel="noopener noreferrer"

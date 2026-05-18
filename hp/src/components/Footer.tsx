@@ -31,7 +31,7 @@ export function Footer() {
             <div className="space-y-2.5">
               <Link href="/features" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">機能</Link>
               <Link href="/pricing" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">料金</Link>
-              <a href="https://roomly.jp/login?demo=1" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">デモを試す</a>
+              <a href="https://kanri.roomly.jp/login?demo=1" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">デモを試す</a>
             </div>
           </div>
 

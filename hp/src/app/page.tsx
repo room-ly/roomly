@@ -66,10 +66,10 @@ export default function Home() {
               物件・入居者・契約・家賃・修繕・送金——すべてを一つの画面で。Excelとメールから卒業する、最小で十分なSaaS。
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <a href="https://roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full border border-rm-border-strong px-[22px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-surface">
+              <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full border border-rm-border-strong px-[22px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-surface">
                 デモを試す
               </a>
-              <a href="https://roomly.jp/signup" className="inline-flex h-12 items-center gap-2 rounded-full bg-rm-primary px-[22px] text-[15px] font-medium text-rm-bg transition-colors hover:bg-rm-accent-deep hover:text-white">
+              <a href="https://kanri.roomly.jp/signup" className="inline-flex h-12 items-center gap-2 rounded-full bg-rm-primary px-[22px] text-[15px] font-medium text-rm-bg transition-colors hover:bg-rm-accent-deep hover:text-white">
                 無料で始める
               </a>
             </div>
@@ -228,8 +228,8 @@ export default function Home() {
                 ))}
               </ul>
               <div className="mt-7 flex flex-wrap gap-2.5">
-                <a href="https://roomly.jp/login?demo=1" className="inline-flex h-10 items-center rounded-full border border-rm-border-strong px-[18px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-surface-tint">デモを試す</a>
-                <a href="https://roomly.jp/signup" className="inline-flex h-10 items-center gap-2 rounded-full bg-rm-primary px-[18px] text-[14px] font-medium text-rm-bg transition-colors hover:bg-rm-accent-deep hover:text-white">無料で始める</a>
+                <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-10 items-center rounded-full border border-rm-border-strong px-[18px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-surface-tint">デモを試す</a>
+                <a href="https://kanri.roomly.jp/signup" className="inline-flex h-10 items-center gap-2 rounded-full bg-rm-primary px-[18px] text-[14px] font-medium text-rm-bg transition-colors hover:bg-rm-accent-deep hover:text-white">無料で始める</a>
               </div>
               <p className="mt-4 text-[12px] text-rm-text-muted">※ 10区画を超えても自動課金されません。カード登録・プラン切り替えはご自身のタイミングで。</p>
             </div>
@@ -294,10 +294,10 @@ export default function Home() {
               </h2>
               <p className="mx-auto mt-6 max-w-[38em] text-[16px] opacity-65">10区画まで完全無料。クレジットカード不要、最短5分で始められます。</p>
               <div className="mt-9 inline-flex flex-wrap justify-center gap-3">
-                <a href="https://roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full border px-[22px] text-[15px] font-medium text-rm-bg transition-colors hover:bg-white/10" style={{ borderColor: "color-mix(in srgb, var(--rm-bg) 25%, transparent)" }}>
+                <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full border px-[22px] text-[15px] font-medium text-rm-bg transition-colors hover:bg-white/10" style={{ borderColor: "color-mix(in srgb, var(--rm-bg) 25%, transparent)" }}>
                   デモを試す
                 </a>
-                <a href="https://roomly.jp/signup" className="inline-flex h-12 items-center gap-2 rounded-full bg-rm-bg px-[22px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-accent hover:text-white">
+                <a href="https://kanri.roomly.jp/signup" className="inline-flex h-12 items-center gap-2 rounded-full bg-rm-bg px-[22px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-accent hover:text-white">
                   無料で始める
                 </a>
               </div>

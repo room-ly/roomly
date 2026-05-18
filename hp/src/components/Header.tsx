@@ -63,13 +63,13 @@ export function Header() {
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           <a
-            href="https://roomly.jp/login?demo=1"
+            href="https://kanri.roomly.jp/login?demo=1"
             className="inline-flex h-10 items-center rounded-full border border-rm-border-strong px-[18px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-surface"
           >
             デモを試す
           </a>
           <a
-            href="https://roomly.jp/signup"
+            href="https://kanri.roomly.jp/signup"
             className="inline-flex h-10 items-center rounded-full bg-rm-primary px-[18px] text-[14px] font-medium text-rm-bg transition-colors hover:bg-rm-accent-deep hover:text-white"
           >
             無料で始める
@@ -108,13 +108,13 @@ export function Header() {
           ))}
           <div className="mt-2 flex gap-2">
             <a
-              href="https://roomly.jp/login?demo=1"
+              href="https://kanri.roomly.jp/login?demo=1"
               className="flex-1 rounded-full border border-rm-border-strong py-2.5 text-center text-[14px] font-medium text-rm-primary"
             >
               デモを試す
             </a>
             <a
-              href="https://roomly.jp/signup"
+              href="https://kanri.roomly.jp/signup"
               className="flex-1 rounded-full bg-rm-primary py-2.5 text-center text-[14px] font-medium text-rm-bg"
             >
               無料で始める
