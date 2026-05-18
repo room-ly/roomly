@@ -2,18 +2,26 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, FileDown } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import RemittanceFormModal from "./RemittanceFormModal";
+import ZenginCsvModal from "./ZenginCsvModal";
 
 interface OwnerOption {
   id: string;
   name: string;
 }
 
+interface OwnerSummary {
+  id: string;
+  name: string;
+  netAmount: number;
+}
+
 interface RemittancesPageClientProps {
   owners: OwnerOption[];
   remittances: Record<string, any>[];
+  ownerSummaries: OwnerSummary[];
 }
 
 const paymentMethodLabel: Record<string, string> = {
@@ -21,14 +29,22 @@ const paymentMethodLabel: Record<string, string> = {
   cash: "現金",
 };
 
-export default function RemittancesPageClient({ owners, remittances }: RemittancesPageClientProps) {
+export default function RemittancesPageClient({ owners, remittances, ownerSummaries }: RemittancesPageClientProps) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [editData, setEditData] = useState<Record<string, any> | null>(null);
+  const [zenginOpen, setZenginOpen] = useState(false);
 
   return (
     <>
-      <div className="flex justify-end mb-4">
+      {/* アクションボタン — ページ上部 */}
+      <div className="flex justify-end mb-4 gap-2">
+        <button
+          onClick={() => setZenginOpen(true)}
+          className="btn btn-secondary flex items-center gap-1.5"
+        >
+          <FileDown size={15} /> 全銀データ
+        </button>
         <button
           onClick={() => { setEditData(null); setModalOpen(true); }}
           className="btn btn-primary flex items-center gap-1.5"
@@ -37,50 +53,51 @@ export default function RemittancesPageClient({ owners, remittances }: Remittanc
         </button>
       </div>
 
+      {/* 送金履歴 */}
       {remittances.length > 0 && (
-        <div className="card overflow-hidden">
-          <div className="px-5 py-3 border-b border-line">
-            <h2 className="text-[13px] font-semibold">送金履歴</h2>
+        <div className="section">
+          <div className="section-head-bar">
+            <h2>送金履歴</h2>
+            <span className="desc">{remittances.length}件</span>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-[13px]">
+          <div className="section-body flush">
+            <table className="tbl">
               <thead>
-                <tr className="text-left text-ink-3 border-b border-line">
-                  <th className="px-5 py-2.5 font-medium">対象月</th>
-                  <th className="px-5 py-2.5 font-medium">オーナー</th>
-                  <th className="px-5 py-2.5 font-medium text-right">家賃収入</th>
-                  <th className="px-5 py-2.5 font-medium text-right">管理手数料</th>
-                  <th className="px-5 py-2.5 font-medium text-right">経費控除</th>
-                  <th className="px-5 py-2.5 font-medium text-right">送金額</th>
-                  <th className="px-5 py-2.5 font-medium">方法</th>
-                  <th className="px-5 py-2.5 font-medium">状態</th>
-                  <th className="px-5 py-2.5 font-medium"></th>
+                <tr>
+                  <th>対象月</th>
+                  <th>オーナー</th>
+                  <th style={{ textAlign: "right" }}>家賃収入</th>
+                  <th style={{ textAlign: "right" }}>管理手数料</th>
+                  <th style={{ textAlign: "right" }}>経費控除</th>
+                  <th style={{ textAlign: "right" }}>送金額</th>
+                  <th>方法</th>
+                  <th>状態</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 {remittances.map((r) => (
                   <tr
                     key={r.id}
-                    className="border-b border-line last:border-0 hover:bg-bg-2/30 transition-colors cursor-pointer"
+                    className="row-hover"
+                    style={{ cursor: "pointer" }}
                     onClick={() => router.push(`/remittances/${r.id}`)}
                   >
-                    <td className="px-5 py-2.5">{r.remittance_month?.slice(0, 7)}</td>
-                    <td className="px-5 py-2.5 font-medium">{r.owner?.name ?? "—"}</td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">¥{Number(r.total_rent).toLocaleString()}</td>
-                    <td className="px-5 py-2.5 text-right text-danger tabular-nums">-¥{Number(r.management_fee_deducted).toLocaleString()}</td>
-                    <td className="px-5 py-2.5 text-right text-warn tabular-nums">
+                    <td className="mono">{r.remittance_month?.slice(0, 7)}</td>
+                    <td className="strong">{r.owner?.name ?? "—"}</td>
+                    <td className="num">¥{Number(r.total_rent).toLocaleString()}</td>
+                    <td className="num" style={{ color: "var(--danger)" }}>-¥{Number(r.management_fee_deducted).toLocaleString()}</td>
+                    <td className="num" style={{ color: "var(--warn)" }}>
                       {Number(r.expense_deducted) > 0 ? `-¥${Number(r.expense_deducted).toLocaleString()}` : "—"}
                     </td>
-                    <td className="px-5 py-2.5 text-right font-medium text-accent tabular-nums">
+                    <td className="num strong" style={{ color: "var(--accent-deep)" }}>
                       ¥{Number(r.net_amount).toLocaleString()}
-                      {r.manual_override && <span className="text-[10px] text-warn ml-1">手動</span>}
+                      {r.manual_override && <span style={{ fontSize: 10, color: "var(--warn)", marginLeft: 4 }}>手動</span>}
                     </td>
-                    <td className="px-5 py-2.5">
-                      <span className="text-[12px] text-ink-2">{paymentMethodLabel[r.payment_method] || "振込"}</span>
-                    </td>
-                    <td className="px-5 py-2.5"><StatusBadge status={r.status} /></td>
-                    <td className="px-5 py-2.5" onClick={(e) => e.stopPropagation()}>
-                      <a href={`/api/remittances/${r.id}/pdf`} target="_blank" rel="noopener noreferrer" className="text-[11px] text-accent hover:underline">
+                    <td style={{ fontSize: 12, color: "var(--ink-2)" }}>{paymentMethodLabel[r.payment_method] || "振込"}</td>
+                    <td><StatusBadge status={r.status} /></td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <a href={`/api/remittances/${r.id}/pdf`} target="_blank" rel="noopener noreferrer" className="rlink" style={{ fontSize: 11 }}>
                         PDF
                       </a>
                     </td>
@@ -103,6 +120,13 @@ export default function RemittancesPageClient({ owners, remittances }: Remittanc
         onClose={() => { setModalOpen(false); setEditData(null); }}
         owners={owners}
         editData={editData}
+      />
+
+      <ZenginCsvModal
+        isOpen={zenginOpen}
+        onClose={() => setZenginOpen(false)}
+        remittances={remittances}
+        ownerSummaries={ownerSummaries}
       />
     </>
   );

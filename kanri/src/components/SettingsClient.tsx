@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Crown, ExternalLink, Trash2, Pencil, ShieldCheck, ShieldOff } from "lucide-react";
+import { Plus, X, Crown, ExternalLink, Trash2, Pencil, ShieldCheck, ShieldOff, Building2, Star } from "lucide-react";
+import BankSuggest from "./BankSuggest";
 
 interface SettingsClientProps {
   company: Record<string, any>;
@@ -43,6 +44,15 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
   const [mfaLoading, setMfaLoading] = useState(false);
   const [mfaError, setMfaError] = useState("");
   const [mfaMsg, setMfaMsg] = useState("");
+  const [bankAccounts, setBankAccounts] = useState<Record<string, any>[]>([]);
+  const [bankFormOpen, setBankFormOpen] = useState(false);
+  const [bankEditTarget, setBankEditTarget] = useState<Record<string, any> | null>(null);
+  const [bankSaving, setBankSaving] = useState(false);
+  const [bankError, setBankError] = useState("");
+  const [bfBankName, setBfBankName] = useState("");
+  const [bfBankCode, setBfBankCode] = useState("");
+  const [bfBranchName, setBfBranchName] = useState("");
+  const [bfBranchCode, setBfBranchCode] = useState("");
   const [plans, setPlans] = useState<PlanOption[]>([]);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [customUnits, setCustomUnits] = useState("");
@@ -63,6 +73,15 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
       })
       .catch(() => {});
   }, []);
+
+  function loadBankAccounts() {
+    fetch("/api/bank-accounts")
+      .then((res) => res.json())
+      .then((data) => { if (Array.isArray(data)) setBankAccounts(data); })
+      .catch(() => {});
+  }
+
+  useEffect(() => { loadBankAccounts(); }, []);
 
   useEffect(() => {
     fetch("/api/plan-check")
@@ -159,6 +178,48 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
       setEditError(err.error || "更新に失敗しました");
     }
     setEditing(false);
+  }
+
+  async function handleBankSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBankSaving(true);
+    setBankError("");
+
+    const fd = new FormData(e.currentTarget);
+    const body: Record<string, unknown> = {
+      label: fd.get("label"),
+      bank_name: fd.get("bank_name"),
+      bank_code: fd.get("bank_code"),
+      branch_name: fd.get("branch_name"),
+      branch_code: fd.get("branch_code"),
+      account_type: fd.get("account_type"),
+      account_number: fd.get("account_number"),
+      account_holder: fd.get("account_holder"),
+      is_default: fd.get("is_default") === "on",
+    };
+
+    if (bankEditTarget) body.id = bankEditTarget.id;
+
+    const res = await fetch("/api/bank-accounts", {
+      method: bankEditTarget ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      setBankFormOpen(false);
+      setBankEditTarget(null);
+      loadBankAccounts();
+    } else {
+      const err = await res.json();
+      setBankError(err.error || "保存に失敗しました");
+    }
+    setBankSaving(false);
+  }
+
+  async function handleBankDelete(id: string) {
+    const res = await fetch(`/api/bank-accounts?id=${id}`, { method: "DELETE" });
+    if (res.ok) loadBankAccounts();
   }
 
   async function handleInvite(e: React.FormEvent<HTMLFormElement>) {
@@ -431,6 +492,70 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
               <option value="180">180日前（半年前）</option>
             </select>
           </div>
+        </div>
+
+        {/* 振込元口座 */}
+        <div className="card p-5 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-[14px] font-semibold">振込元口座</h2>
+              <p className="text-[12px] text-ink-3 mt-0.5">全銀フォーマットCSV出力時の依頼人情報</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setBankEditTarget(null); setBankFormOpen(true); setBankError(""); setBfBankName(""); setBfBankCode(""); setBfBranchName(""); setBfBranchCode(""); }}
+              className="btn btn-primary text-[13px]"
+            >
+              <Plus size={14} /> 口座を追加
+            </button>
+          </div>
+
+          {bankAccounts.length === 0 ? (
+            <p className="text-[13px] text-ink-3 bg-bg-2 rounded-lg px-4 py-3">
+              口座が登録されていません。全銀CSV出力には口座の登録が必要です。
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {bankAccounts.map((a) => (
+                <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-bg-2 group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-accent-tint flex items-center justify-center">
+                      <Building2 size={14} className="text-accent-deep" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[13px] font-medium">{a.label}</p>
+                        {a.is_default && (
+                          <span className="flex items-center gap-0.5 text-[10px] text-accent-deep bg-accent-tint px-1.5 py-0.5 rounded font-medium">
+                            <Star size={9} /> デフォルト
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-ink-3 mt-0.5">
+                        {a.bank_name}（{a.bank_code}）{a.branch_name}（{a.branch_code}）{a.account_type === "2" ? "当座" : "普通"} {a.account_number} {a.account_holder}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => { setBankEditTarget(a); setBankFormOpen(true); setBankError(""); setBfBankName(a.bank_name); setBfBankCode(a.bank_code); setBfBranchName(a.branch_name); setBfBranchCode(a.branch_code); }}
+                      className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-accent transition-all p-1 rounded hover:bg-accent/10"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBankDelete(a.id)}
+                      className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-danger transition-all p-1 rounded hover:bg-danger/10"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* 二要素認証 */}
@@ -766,6 +891,74 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                 </button>
                 <button type="submit" disabled={inviting} className="btn btn-primary disabled:opacity-50">
                   {inviting ? "作成中..." : "追加する"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* 口座追加・編集モーダル */}
+      {bankFormOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && setBankFormOpen(false)}>
+          <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-md w-full">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-[15px] font-semibold">{bankEditTarget ? "口座を編集" : "口座を追加"}</h2>
+              <button onClick={() => setBankFormOpen(false)} className="text-ink-3 hover:text-ink transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            {bankError && (
+              <div className="bg-danger-tint text-danger text-sm rounded-lg px-3 py-2 mb-4">{bankError}</div>
+            )}
+
+            <form onSubmit={handleBankSubmit} className="space-y-3">
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">表示名 <span className="text-danger">*</span></label>
+                <input name="label" className="input" defaultValue={bankEditTarget?.label || ""} placeholder="例: メインバンク" required />
+              </div>
+              <BankSuggest
+                nameValue={bfBankName}
+                codeValue={bfBankCode}
+                onNameChange={setBfBankName}
+                onCodeChange={setBfBankCode}
+                branchNameValue={bfBranchName}
+                branchCodeValue={bfBranchCode}
+                onBranchNameChange={setBfBranchName}
+                onBranchCodeChange={setBfBranchCode}
+                branchNameName="branch_name"
+                branchCodeName="branch_code"
+                required
+              />
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">種別</label>
+                  <select name="account_type" className="input" defaultValue={bankEditTarget?.account_type || "1"}>
+                    <option value="1">普通</option>
+                    <option value="2">当座</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">口座番号 <span className="text-danger">*</span></label>
+                  <input name="account_number" className="input tabular-nums" defaultValue={bankEditTarget?.account_number || ""} placeholder="1234567" maxLength={7} required />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">名義（カナ） <span className="text-danger">*</span></label>
+                  <input name="account_holder" className="input" defaultValue={bankEditTarget?.account_holder || ""} placeholder="カ）ルームリー" required />
+                </div>
+              </div>
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="is_default" defaultChecked={bankEditTarget?.is_default ?? false} className="rounded border-line" />
+                  <span className="text-sm text-ink-2">デフォルトの口座にする</span>
+                </label>
+              </div>
+              <div className="flex justify-end gap-2 pt-3">
+                <button type="button" onClick={() => setBankFormOpen(false)} className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-bg-2/80 transition-colors">
+                  キャンセル
+                </button>
+                <button type="submit" disabled={bankSaving} className="btn btn-primary disabled:opacity-50">
+                  {bankSaving ? "保存中..." : bankEditTarget ? "更新する" : "追加する"}
                 </button>
               </div>
             </form>

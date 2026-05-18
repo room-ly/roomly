@@ -55,10 +55,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // オーナーの物件・部屋を取得
+    // オーナーの物件・部屋を取得（手数料率は物件単位）
     const { data: properties } = await supabase
       .from("properties")
-      .select("id, name, units(id, unit_number, rent, management_fee, status)")
+      .select("id, name, management_fee_rate, units(id, unit_number, rent, management_fee, status)")
       .eq("owner_id", owner_id);
 
     // 当月のアクティブ契約の家賃請求を取得（入金済み分のみ）
@@ -81,24 +81,22 @@ export async function POST(request: NextRequest) {
       .gte("expense_date", monthStart)
       .lt("expense_date", nextMonth.toISOString().slice(0, 10));
 
-    // 集計
-    const unitIds = (properties ?? []).flatMap((p: Record<string, unknown>) =>
-      ((p.units as Record<string, unknown>[]) ?? []).map((u: Record<string, unknown>) => u.id)
-    );
-    const paidBillings = (billings ?? []).filter(
-      (b: Record<string, unknown>) => {
-        const contract = b.contract as Record<string, unknown> | null;
-        return contract && unitIds.includes(contract.unit_id);
-      }
-    );
+    // 物件ごとに手数料を計算して合算
+    let totalRent = 0;
+    let managementFeeDeducted = 0;
 
-    const totalRent = paidBillings.reduce(
-      (s: number, b: Record<string, unknown>) => s + Number(b.total_amount),
-      0
-    );
-    const managementFeeDeducted = Math.round(
-      totalRent * (Number(owner.management_fee_rate) / 100)
-    );
+    for (const p of (properties ?? []) as Record<string, any>[]) {
+      const pUnitIds = ((p.units as any[]) ?? []).map((u: any) => u.id);
+      const pBillings = (billings ?? []).filter((b: any) => {
+        const contract = b.contract as Record<string, unknown> | null;
+        return contract && pUnitIds.includes(contract.unit_id);
+      });
+      const pRent = pBillings.reduce((s: number, b: any) => s + Number(b.total_amount), 0);
+      const pFeeRate = Number(p.management_fee_rate) || 0;
+      totalRent += pRent;
+      managementFeeDeducted += Math.round(pRent * (pFeeRate / 100));
+    }
+
     const expenseDeducted = (expenses ?? []).reduce(
       (s: number, e: Record<string, unknown>) => s + Number(e.amount),
       0

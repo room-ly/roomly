@@ -1,154 +1,162 @@
 "use client";
 
-import { useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import FilterableTable from "./FilterableTable";
-import StatusBadge from "./StatusBadge";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface ContractsTableProps {
   data: Record<string, any>[];
   alertDays?: number;
 }
 
+const CONTRACT_TYPE_LABEL: Record<string, string> = { fixed: "定期", ordinary: "普通" };
+
+type FilterKey = "active" | "renewal" | "ending" | "all";
+
+function getContractStatus(c: Record<string, any>, alertDays: number) {
+  if (c._move_out_status === "approved" || c._move_out_status === "pending") return "ending";
+  if (c.end_date) {
+    const remaining = Math.ceil((new Date(c.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    if (remaining <= 0) return "expired";
+    if (remaining <= alertDays) return "renewal";
+  }
+  return "active";
+}
+
+function ContractMeter({ startDate, endDate, alertDays }: { startDate?: string; endDate?: string; alertDays: number }) {
+  if (!startDate || !endDate) return <span style={{ color: "var(--ink-3)" }}>—</span>;
+  const now = Date.now();
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+  const elapsed = Math.max(0, (now - start) / (end - start));
+  const remainingDays = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+  const remainingMonths = Math.max(0, Math.ceil(remainingDays / 30));
+  const pct = Math.min(100, Math.max(0, elapsed * 100));
+  const isExpired = remainingDays <= 0;
+  const isUrgent = remainingDays > 0 && remainingDays <= 30;
+  const color = isExpired ? "var(--danger)" : isUrgent ? "var(--danger)" : remainingDays <= alertDays ? "var(--warn)" : "var(--accent)";
+  return (
+    <div>
+      <div className="tn-contract-cell">
+        <div className="tn-meter-wrap">
+          <div className="tn-meter">
+            <div className="tn-meter-fill" style={{ width: `${pct}%`, background: color }} />
+            <span className="tn-meter-tick" style={{ left: "25%" }} />
+            <span className="tn-meter-tick" style={{ left: "50%" }} />
+            <span className="tn-meter-tick" style={{ left: "75%" }} />
+          </div>
+        </div>
+        <span className="mono" style={{ fontSize: 11, color: isExpired ? "var(--danger)" : "var(--ink-3)" }}>
+          {isExpired ? "期限切れ" : `残${remainingMonths}ヶ月`}
+        </span>
+      </div>
+      <div className="mono" style={{ fontSize: 10, color: "var(--ink-4)", marginTop: 4 }}>
+        {startDate} 〜 {endDate}
+      </div>
+    </div>
+  );
+}
+
 export default function ContractsTable({ data, alertDays = 90 }: ContractsTableProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const filterParam = searchParams.get("filter");
+  const [filter, setFilter] = useState<FilterKey>("active");
 
   const enrichedData = useMemo(() => {
-    const now = Date.now();
-    const msPerDay = 24 * 60 * 60 * 1000;
     return data.map((c) => {
-      let expiryStatus = "none";
-      if (c.end_date) {
-        const remaining = Math.ceil((new Date(c.end_date).getTime() - now) / msPerDay);
-        if (remaining <= 0) expiryStatus = "expired";
-        else if (remaining <= alertDays) expiryStatus = "expiring";
-      }
-      return { ...c, _expiry_status: expiryStatus };
+      (c as any)._status = getContractStatus(c, alertDays);
+      return c;
     });
   }, [data, alertDays]);
 
+  const totals = useMemo(() => ({
+    all: enrichedData.length,
+    active: enrichedData.filter((c) => c._status === "active" || c._status === "renewal" || c._status === "ending").length,
+    renewal: enrichedData.filter((c) => c._status === "renewal").length,
+    ending: enrichedData.filter((c) => c._status === "ending").length,
+  }), [enrichedData]);
+
+  const filtered = useMemo(() => {
+    if (filter === "all") return enrichedData;
+    if (filter === "active") return enrichedData.filter((c) => c._status === "active" || c._status === "renewal" || c._status === "ending");
+    return enrichedData.filter((c) => c._status === filter);
+  }, [enrichedData, filter]);
+
   return (
-    <FilterableTable
-      data={enrichedData}
-      searchFields={["tenant.name", "unit.property.name", "unit.unit_number"]}
-      searchPlaceholder="入居者・物件名で検索..."
-      initialFilters={filterParam === "expiring" ? { _expiry_status: "expiring" } : {}}
-      filters={[
-        {
-          key: "_expiry_status",
-          label: "満了状況",
-          options: [
-            { value: "expiring", label: "満了間近" },
-            { value: "expired", label: "期限切れ" },
-            { value: "none", label: "問題なし" },
-          ],
-        },
-        {
-          key: "contract_type",
-          label: "契約種別",
-          options: [
-            { value: "fixed", label: "定期" },
-            { value: "ordinary", label: "普通" },
-          ],
-        },
-        {
-          key: "_move_out_status",
-          label: "退去状態",
-          options: [
-            { value: "pending", label: "退去申請中" },
-            { value: "approved", label: "退去予定" },
-          ],
-        },
-      ]}
-      columns={[
-        { key: "tenant.name", label: "入居者", sortable: true, render: (item) => <span className="font-medium">{item.tenant?.name}</span> },
-        {
-          key: "unit.property.name",
-          label: "物件・部屋",
-          render: (item) => <span>{item.unit?.property?.name} {item.unit?.unit_number}</span>,
-        },
-        { key: "contract_type", label: "種別", render: (item) => <StatusBadge status={item.contract_type} /> },
-        { key: "start_date", label: "契約開始", sortable: true },
-        {
-          key: "end_date",
-          label: "契約期間",
-          sortable: true,
-          render: (item) => {
-            if (!item.start_date || !item.end_date) return <span style={{ color: "var(--ink-3)" }}>—</span>;
-            const now = Date.now();
-            const start = new Date(item.start_date).getTime();
-            const end = new Date(item.end_date).getTime();
-            const totalMonths = Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24 * 30)));
-            const elapsed = Math.max(0, (now - start) / (end - start));
-            const remainingDays = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-            const remainingMonths = Math.max(0, Math.ceil(remainingDays / 30));
-            const pct = Math.min(100, Math.max(0, elapsed * 100));
-            const isExpired = remainingDays <= 0;
-            const isUrgent = remainingDays > 0 && remainingDays <= 30;
-            const color = isExpired ? "var(--danger)" : isUrgent ? "var(--danger)" : remainingDays <= alertDays ? "var(--warn)" : "var(--accent)";
-            return (
-              <div className="tn-contract-cell">
-                <div className="tn-meter-wrap">
-                  <div className="tn-meter">
-                    <div className="tn-meter-fill" style={{ width: `${pct}%`, background: color }} />
-                    {Array.from({ length: Math.min(totalMonths, 48) }).map((_, i) => {
-                      const tickPct = ((i + 1) / Math.min(totalMonths, 48)) * 100;
-                      if (tickPct >= 99) return null;
-                      return i % 12 === 11 ? <div key={i} className="tn-meter-tick" style={{ left: `${tickPct}%` }} /> : null;
-                    })}
-                  </div>
-                </div>
-                <span className="mono" style={{ fontSize: 11, color: isExpired ? "var(--danger)" : "var(--ink-3)" }}>
-                  {isExpired ? "期限切れ" : `残${remainingMonths}ヶ月`}
-                </span>
-              </div>
-            );
-          },
-        },
-        {
-          key: "_move_out_status",
-          label: "状態",
-          render: (item) => {
-            if (item._move_out_status === "pending") {
-              return (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-warn-tint text-warn">
-                  退去申請中
-                </span>
-              );
-            }
-            if (item._move_out_status === "approved") {
-              return (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-danger-tint text-danger">
-                  退去予定 {item._move_out_date}
-                </span>
-              );
-            }
-            return <span className="text-[11px] text-ink-4">入居中</span>;
-          },
-        },
-        {
-          key: "rent",
-          label: "賃料",
-          align: "right" as const,
-          sortable: true,
-          render: (item) => <span className="tabular-nums">¥{Number(item.rent).toLocaleString()}</span>,
-        },
-        {
-          key: "management_fee",
-          label: "管理費",
-          align: "right" as const,
-          render: (item) => <span className="tabular-nums">¥{Number(item.management_fee).toLocaleString()}</span>,
-        },
-      ]}
-      onRowClick={(item) => router.push(`/contracts/${item.id}`)}
-      rowClassName={(item) => {
-        const remainingDays = item.end_date
-          ? Math.ceil((new Date(item.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-          : null;
-        return remainingDays !== null && remainingDays <= 30 && remainingDays > 0 ? "bg-danger-tint" : "";
-      }}
-    />
+    <>
+      <div className="toolbar">
+        <div className="tb-tabs">
+          <span className={`tb-tab${filter === "active" ? " is-active" : ""}`} onClick={() => setFilter("active")}>
+            有効<span className="c">{totals.active}</span>
+          </span>
+          <span className={`tb-tab${filter === "renewal" ? " is-active" : ""}`} onClick={() => setFilter("renewal")}>
+            更新間近<span className="c">{totals.renewal}</span>
+          </span>
+          <span className={`tb-tab${filter === "ending" ? " is-active" : ""}`} onClick={() => setFilter("ending")}>
+            退去予告<span className="c">{totals.ending}</span>
+          </span>
+          <span className={`tb-tab${filter === "all" ? " is-active" : ""}`} onClick={() => setFilter("all")}>
+            全て<span className="c">{totals.all}</span>
+          </span>
+        </div>
+        <div className="tb-actions">
+          <button className="btn btn-ghost btn-sm">CSV</button>
+        </div>
+      </div>
+
+      <div className="section">
+        <div className="section-body flush">
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>入居者</th>
+                <th>物件 / 部屋</th>
+                <th>契約種別</th>
+                <th>契約期間</th>
+                <th style={{ textAlign: "right" }}>賃料</th>
+                <th>状態</th>
+                <th style={{ width: 70 }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((c) => {
+                const statusInfo: Record<string, { label: string; tone: string }> = {
+                  active: { label: "有効", tone: "ok" },
+                  renewal: { label: "更新間近", tone: "warn" },
+                  ending: { label: "退去予告", tone: "warn" },
+                  expired: { label: "終了", tone: "neutral" },
+                };
+                const st = statusInfo[c._status] || statusInfo.active;
+                return (
+                  <tr key={c.id} className="row-hover" style={{ cursor: "pointer" }} onClick={() => router.push(`/contracts/${c.id}`)}>
+                    <td>
+                      <span className="strong">{c.tenant?.name}</span>
+                    </td>
+                    <td>
+                      <span style={{ color: "var(--ink-2)" }}>{c.unit?.property?.name}</span>
+                      <span className="mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>#{c.unit?.unit_number}</span>
+                    </td>
+                    <td><span className="badge neutral">{CONTRACT_TYPE_LABEL[c.contract_type] || c.contract_type}</span></td>
+                    <td>
+                      <ContractMeter startDate={c.start_date} endDate={c.end_date} alertDays={alertDays} />
+                    </td>
+                    <td className="num">¥{Number(c.rent).toLocaleString()}</td>
+                    <td><span className={`badge ${st.tone}`}><span className="dot" />{st.label}</span></td>
+                    <td>
+                      <button className="btn btn-ghost btn-sm" style={{ padding: "4px 10px" }}>詳細</button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: "center", padding: "40px 16px", color: "var(--ink-3)" }}>
+                    該当する契約がありません
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
   );
 }

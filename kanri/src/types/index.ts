@@ -1,6 +1,6 @@
 export type UserRole = "admin" | "manager" | "staff" | "viewer";
 
-export type PropertyType = "apartment" | "house" | "commercial" | "parking";
+export type PropertyType = "apartment" | "apart" | "house" | "commercial" | "parking" | "land";
 
 export type UnitStatus = "vacant" | "occupied" | "reserved" | "maintenance";
 
@@ -47,7 +47,6 @@ export interface Owner {
   name: string;
   phone?: string;
   email?: string;
-  management_fee_rate: number;
 }
 
 export type ManagementForm =
@@ -116,6 +115,8 @@ export interface Property {
   building_coverage_ratio?: number;
   floor_area_ratio?: number;
   zoning?: string;
+  // 管理手数料
+  management_fee_rate?: number;
   // 取引
   transaction_type?: TransactionType;
   // 自由入力

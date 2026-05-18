@@ -111,7 +111,7 @@ export default function ContractFormModal({
               </label>
               <select
                 name="unit_id"
-                defaultValue={editData?.unit_id || ""}
+                defaultValue={editData?.unit_id || editData?.unit?.id || ""}
                 className="input"
               >
                 <option value="">選択してください</option>
@@ -131,7 +131,7 @@ export default function ContractFormModal({
               </label>
               <select
                 name="tenant_id"
-                defaultValue={editData?.tenant_id || ""}
+                defaultValue={editData?.tenant_id || editData?.tenant?.id || ""}
                 className="input"
               >
                 <option value="">選択してください</option>

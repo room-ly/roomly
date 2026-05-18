@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import RentPaymentModal from "./RentPaymentModal";
+import RentCsvImportModal from "./RentCsvImportModal";
 
 interface BillingInfo {
   id: string;
@@ -32,6 +33,25 @@ export function RentPaymentButton({ billing }: RentPaymentButtonProps) {
         onClose={() => setIsOpen(false)}
         billing={billing}
       />
+    </>
+  );
+}
+
+export function CsvImportButton() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(true);
+        }}
+        className="btn btn-secondary"
+      >
+        CSV入金消込
+      </button>
+      <RentCsvImportModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }

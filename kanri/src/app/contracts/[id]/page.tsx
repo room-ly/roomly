@@ -20,11 +20,11 @@ export default async function ContractDetailPage({
   const [result, units, tenants] = await Promise.all([
     getContractDetail(id),
     getUnitsForSelect(),
-    getTenantsForSelect(),
+    getTenantsForSelect(id),
   ]);
   if (!result) notFound();
 
-  const { contract, billings, moveOutRequests } = result;
+  const { contract, billings, moveOutRequests, unitContracts } = result;
   const tenant = contract.tenant;
   const unit = contract.unit;
   const property = unit?.property;
@@ -235,6 +235,47 @@ export default async function ContractDetailPage({
               </div>
             </div>
           )}
+          {/* この部屋の契約履歴 */}
+          {unitContracts.length > 0 && (
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>この部屋の契約履歴</h2>
+                <span className="desc">{unitContracts.length}件</span>
+              </div>
+              <div className="section-body flush">
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>入居者</th>
+                      <th>契約期間</th>
+                      <th>種別</th>
+                      <th style={{ textAlign: "right" }}>賃料</th>
+                      <th>状態</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {unitContracts.map((uc: any) => (
+                      <tr key={uc.id} className="row-hover">
+                        <td>
+                          {uc.tenant?.id ? (
+                            <Link href={`/tenants/${uc.tenant.id}`} className="rlink">{uc.tenant.name}</Link>
+                          ) : (
+                            <span style={{ color: "var(--ink-3)" }}>—</span>
+                          )}
+                        </td>
+                        <td className="mono" style={{ fontSize: 12 }}>
+                          {uc.start_date} 〜 {uc.end_date || "—"}
+                        </td>
+                        <td><StatusBadge status={uc.contract_type} /></td>
+                        <td className="num">¥{Number(uc.rent).toLocaleString()}</td>
+                        <td><StatusBadge status={uc.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* サイドカラム */}
@@ -312,38 +353,6 @@ export default async function ContractDetailPage({
             </div>
           </div>
 
-          <div className="section">
-            <div className="section-head-bar"><h2>関連</h2></div>
-            <div className="section-body">
-              <div className="related-list">
-                {tenant?.id && (
-                  <Link href={`/tenants/${tenant.id}`} className="related-row">
-                    <div>
-                      <div className="related-label">入居者詳細</div>
-                      <div className="related-sub">{tenant.name}</div>
-                    </div>
-                    <span className="related-arrow">↗</span>
-                  </Link>
-                )}
-                {property?.id && (
-                  <Link href={`/properties/${property.id}`} className="related-row">
-                    <div>
-                      <div className="related-label">物件詳細</div>
-                      <div className="related-sub">{property.name}</div>
-                    </div>
-                    <span className="related-arrow">↗</span>
-                  </Link>
-                )}
-                <Link href="/rent" className="related-row">
-                  <div>
-                    <div className="related-label">家賃台帳</div>
-                    <div className="related-sub">入金履歴</div>
-                  </div>
-                  <span className="related-arrow">↗</span>
-                </Link>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </>

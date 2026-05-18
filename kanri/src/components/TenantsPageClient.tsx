@@ -19,7 +19,7 @@ export default function TenantsPageClient() {
           <Upload size={14} />
           CSVインポート
         </button>
-        <button className="btn btn-primary" onClick={() => setIsOpen(true)}>
+        <button className="btn btn-accent" onClick={() => setIsOpen(true)}>
           <Plus size={14} />
           入居者を追加
         </button>

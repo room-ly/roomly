@@ -11,8 +11,8 @@ export default async function TenantsPage() {
       <PageHeader
         eyebrow="Tenants"
         title="入居者"
-        em="管理"
-        description={`${tenantsWithInfo.length}名の入居者`}
+        em={`${tenantsWithInfo.length}名`}
+        description="入居者一覧。レイアウト切替えで違う見せ方を比較できます。要対応の入居者を素早く特定するには「状態ボード」、点検時は「テーブル」が便利です。"
         action={<TenantsPageClient />}
       />
 

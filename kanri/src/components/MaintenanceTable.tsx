@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import MonthSelector from "./MonthSelector";
@@ -42,18 +42,21 @@ function getCurrentMonth() {
 
 export default function MaintenanceTable({ data, initialFilter }: MaintenanceTableProps) {
   const router = useRouter();
-  const [view, setView] = useState<"kanban" | "table">("kanban");
+  const [view, setView] = useState<"table" | "kanban">("table");
+  const [items, setItems] = useState(data);
+  const dragItem = useRef<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
-  const availableMonths = useMemo(() => getAvailableMonths(data), [data]);
+  const availableMonths = useMemo(() => getAvailableMonths(items), [items]);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const current = getCurrentMonth();
     return availableMonths.includes(current) ? current : availableMonths[0] || current;
   });
 
   const monthFiltered = useMemo(() => {
-    if (selectedMonth === "all") return data;
-    return data.filter((m) => m.reported_date?.startsWith(selectedMonth));
-  }, [data, selectedMonth]);
+    if (selectedMonth === "all") return items;
+    return items.filter((m) => m.reported_date?.startsWith(selectedMonth));
+  }, [items, selectedMonth]);
 
   const sorted = useMemo(() => {
     const priorityOrder: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
@@ -71,30 +74,76 @@ export default function MaintenanceTable({ data, initialFilter }: MaintenanceTab
     return map;
   }, [sorted]);
 
+  const handleDragStart = useCallback((id: string) => {
+    dragItem.current = id;
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, colKey: string) => {
+    e.preventDefault();
+    setDragOverCol(colKey);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverCol(null);
+  }, []);
+
+  const handleDrop = useCallback(async (colKey: string) => {
+    setDragOverCol(null);
+    const id = dragItem.current;
+    if (!id) return;
+    dragItem.current = null;
+
+    const item = items.find((m) => m.id === id);
+    if (!item || item.status === colKey) return;
+
+    setItems((prev) => prev.map((m) => m.id === id ? { ...m, status: colKey } : m));
+
+    try {
+      const res = await fetch(`/api/maintenance/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: colKey }),
+      });
+      if (!res.ok) {
+        setItems((prev) => prev.map((m) => m.id === id ? { ...m, status: item.status } : m));
+      }
+    } catch {
+      setItems((prev) => prev.map((m) => m.id === id ? { ...m, status: item.status } : m));
+    }
+  }, [items]);
+
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-        <MonthSelector selectedMonth={selectedMonth} availableMonths={availableMonths} onChange={setSelectedMonth} />
-        <div className="tn-viewbar-tabs" style={{ marginLeft: "auto" }}>
-          <button
-            className={`tn-viewbar-tab${view === "kanban" ? " is-active" : ""}`}
-            onClick={() => setView("kanban")}
-          >
-            カンバン
-          </button>
-          <button
-            className={`tn-viewbar-tab${view === "table" ? " is-active" : ""}`}
+      <div className="toolbar">
+        <div className="tb-tabs">
+          <span
+            className={`tb-tab${view === "table" ? " is-active" : ""}`}
             onClick={() => setView("table")}
           >
             テーブル
-          </button>
+          </span>
+          <span
+            className={`tb-tab${view === "kanban" ? " is-active" : ""}`}
+            onClick={() => setView("kanban")}
+          >
+            カンバン
+          </span>
+        </div>
+        <div className="tb-actions">
+          <MonthSelector selectedMonth={selectedMonth} availableMonths={availableMonths} onChange={setSelectedMonth} />
         </div>
       </div>
 
       {view === "kanban" ? (
         <div className="kanban">
           {KANBAN_COLS.map((col) => (
-            <div key={col.key} className="kb-col">
+            <div
+              key={col.key}
+              className={`kb-col${dragOverCol === col.key ? " kb-col-dragover" : ""}`}
+              onDragOver={(e) => handleDragOver(e, col.key)}
+              onDragLeave={handleDragLeave}
+              onDrop={() => handleDrop(col.key)}
+            >
               <div className="kb-col-head">
                 <span className={`tag ${col.tone}`}>{col.label}</span>
                 <span className="mono" style={{ fontSize: 11, color: "var(--ink-4)" }}>{byStatus[col.key].length}</span>
@@ -103,7 +152,13 @@ export default function MaintenanceTable({ data, initialFilter }: MaintenanceTab
                 <div className="tn-board-empty">該当なし</div>
               ) : (
                 byStatus[col.key].map((item) => (
-                  <Link key={item.id} href={`/maintenance/${item.id}`} className="kb-card">
+                  <div
+                    key={item.id}
+                    className="kb-card"
+                    draggable
+                    onDragStart={() => handleDragStart(item.id)}
+                    style={{ cursor: "grab" }}
+                  >
                     <div className="kb-card-prio">
                       <StatusBadge status={item.priority} />
                       {item.category && (
@@ -112,13 +167,15 @@ export default function MaintenanceTable({ data, initialFilter }: MaintenanceTab
                         </span>
                       )}
                     </div>
-                    <div className="kb-card-title">{item.title}</div>
+                    <Link href={`/maintenance/${item.id}`} className="kb-card-title" style={{ textDecoration: "none", color: "inherit" }}>
+                      {item.title}
+                    </Link>
                     <div className="kb-card-prop">{item.property?.name} {item.unit?.unit_number || "共用部"}</div>
                     <div className="kb-card-foot">
                       <span className="mono">{item.reported_date}</span>
                       <span>{item.vendor_name || "業者未定"}</span>
                     </div>
-                  </Link>
+                  </div>
                 ))
               )}
             </div>

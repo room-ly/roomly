@@ -35,7 +35,7 @@ export const propertySchema = z.object({
   name: z.string().min(1, "物件名は必須です"),
   name_kana: optionalString,
   property_code: optionalString,
-  property_type: z.enum(["apartment", "house", "commercial", "parking"], {
+  property_type: z.enum(["apartment", "apart", "house", "commercial", "parking", "land"], {
     message: "物件種別を選択してください",
   }),
   owner_id: z.string().uuid("オーナーを選択してください").optional().or(z.literal("")),
@@ -96,6 +96,9 @@ export const propertySchema = z.object({
   building_coverage_ratio: optionalNumber,
   floor_area_ratio: optionalNumber,
   zoning: optionalString,
+  // 管理手数料
+  management_fee_rate: z.coerce.number().min(0, "0以上を入力してください").max(100, "100以下を入力してください").optional()
+    .or(z.literal("").transform(() => undefined)),
   // 取引
   transaction_type: z.enum(["owner", "agent", "intermediary", "sublet"]).optional()
     .or(z.literal("").transform(() => undefined)),
@@ -265,11 +268,12 @@ export const ownerSchema = z.object({
   postal_code: z.string().optional().or(z.literal("")),
   address: z.string().optional().or(z.literal("")),
   bank_name: z.string().optional().or(z.literal("")),
+  bank_code: z.string().max(4).optional().or(z.literal("")),
   bank_branch: z.string().optional().or(z.literal("")),
+  bank_branch_code: z.string().max(3).optional().or(z.literal("")),
   bank_account_type: z.string().optional().or(z.literal("")),
-  bank_account_number: z.string().optional().or(z.literal("")),
+  bank_account_number: z.string().max(7).optional().or(z.literal("")),
   bank_account_holder: z.string().optional().or(z.literal("")),
-  management_fee_rate: z.coerce.number().min(0, "0以上を入力してください").max(100, "100以下を入力してください"),
   notes: z.string().optional().or(z.literal("")),
 });
 

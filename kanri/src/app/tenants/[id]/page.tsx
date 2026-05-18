@@ -205,29 +205,6 @@ export default async function TenantDetailPage({
             </div>
           )}
 
-          <div className="section">
-            <div className="section-head-bar"><h2>関連</h2></div>
-            <div className="section-body">
-              <div className="related-list">
-                {activeContract?.unit?.property && (
-                  <Link href={`/properties/${activeContract.unit.property.id}`} className="related-row">
-                    <div>
-                      <div className="related-label">物件詳細</div>
-                      <div className="related-sub">{activeContract.unit.property.name}</div>
-                    </div>
-                    <span className="related-arrow">↗</span>
-                  </Link>
-                )}
-                <Link href="/rent" className="related-row">
-                  <div>
-                    <div className="related-label">家賃台帳</div>
-                    <div className="related-sub">{tenant.name}の入金履歴</div>
-                  </div>
-                  <span className="related-arrow">↗</span>
-                </Link>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </>

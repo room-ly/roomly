@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, FileText } from "lucide-react";
 import ContractFormModal from "./ContractFormModal";
 
 interface SelectOption {
@@ -30,6 +30,18 @@ export default function ContractDetailClient({ contract, units, tenants }: Contr
   return (
     <>
       <div className="flex items-center gap-2">
+        {contract.status === "active" && (
+          <a
+            href={`/api/contracts/${contract.id}/move-out-notice`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-secondary flex items-center gap-1.5 text-[13px]"
+            style={{ color: "var(--warn)" }}
+          >
+            <FileText size={13} />
+            退去届出力
+          </a>
+        )}
         <button
           onClick={() => setModalOpen(true)}
           className="btn btn-secondary flex items-center gap-1.5 text-[13px]"
@@ -46,6 +58,7 @@ export default function ContractDetailClient({ contract, units, tenants }: Contr
       </div>
 
       <ContractFormModal
+        key={modalOpen ? "open" : "closed"}
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         units={units}

@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { getContracts, getUnitsForSelect, getTenantsForSelect, getCompany } from "@/lib/queries";
 import PageHeader from "@/components/PageHeader";
 import ContractsPageClient from "@/components/ContractsPageClient";
@@ -19,14 +18,12 @@ export default async function ContractsPage() {
       <PageHeader
         eyebrow="Contracts"
         title="契約"
-        em="管理"
-        description={`${contracts.length}件の契約`}
+        em={`${contracts.length}件`}
+        description="入居者との賃貸借契約一覧。更新期限・退去申請をひと目で把握できます。"
         action={<ContractsPageClient units={units} tenants={tenants} />}
       />
 
-      <Suspense>
-        <ContractsTable data={contracts} alertDays={alertDays} />
-      </Suspense>
+      <ContractsTable data={contracts} alertDays={alertDays} />
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { formatPhone } from "@/lib/phone";
 
 export async function GET(
@@ -9,6 +9,7 @@ export async function GET(
   try {
     const { id } = await params;
     const supabase = await createClient();
+    const companyId = await getCompanyId();
 
     const { data: contract, error } = await supabase
       .from("contracts")
@@ -28,6 +29,7 @@ export async function GET(
     const { data: company } = await supabase
       .from("companies")
       .select("name, postal_code, address, phone, email")
+      .eq("id", companyId)
       .single();
 
     const tenant = contract.tenant as Record<string, string> | null;
@@ -155,7 +157,7 @@ export async function GET(
   <h1>解約通知書（退去届）</h1>
 
   <div class="to-block">
-    <p class="company-name">${companyName} 御中</p>
+    <p class="company-name">${companyName || "（設定画面で会社名を入力してください）"} 御中</p>
     ${companyAddress ? `<p>${companyPostalCode ? "〒" + companyPostalCode + " " : ""}${companyAddress}</p>` : ""}
     ${companyPhone ? `<p>TEL: ${companyPhone}</p>` : ""}
   </div>

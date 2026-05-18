@@ -224,29 +224,6 @@ export default async function UnitDetailPage({
             </div>
           )}
 
-          <div className="section">
-            <div className="section-head-bar"><h2>関連</h2></div>
-            <div className="section-body">
-              <div className="related-list">
-                <Link href={`/properties/${id}`} className="related-row">
-                  <div>
-                    <div className="related-label">物件詳細</div>
-                    <div className="related-sub">{unit.property?.name}</div>
-                  </div>
-                  <span className="related-arrow">↗</span>
-                </Link>
-                {activeContract && (
-                  <Link href={`/contracts/${activeContract.id}`} className="related-row">
-                    <div>
-                      <div className="related-label">契約詳細</div>
-                      <div className="related-sub">{activeContract.tenant?.name}</div>
-                    </div>
-                    <span className="related-arrow">↗</span>
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </>

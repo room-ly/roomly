@@ -42,8 +42,8 @@ export default async function ExpenseDetailPage({
         </div>
       </div>
 
-      <div className="detail-grid">
-        <div className="detail-col-main">
+      <div>
+        <div>
           {/* 金額 */}
           <div className="section">
             <div className="section-head-bar"><h2>金額</h2></div>
@@ -110,39 +110,6 @@ export default async function ExpenseDetailPage({
           </div>
         </div>
 
-        {/* サイドカラム */}
-        <div className="detail-col-side">
-          <div className="section">
-            <div className="section-head-bar"><h2>関連</h2></div>
-            <div className="section-body">
-              <div className="related-list">
-                {expense.property?.id && (
-                  <Link href={`/properties/${expense.property.id}`} className="related-row">
-                    <div>
-                      <div className="related-label">物件詳細</div>
-                      <div className="related-sub">{expense.property.name}</div>
-                    </div>
-                    <span className="related-arrow">↗</span>
-                  </Link>
-                )}
-                <Link href="/expenses" className="related-row">
-                  <div>
-                    <div className="related-label">経費一覧</div>
-                    <div className="related-sub">全経費データ</div>
-                  </div>
-                  <span className="related-arrow">↗</span>
-                </Link>
-                <Link href="/remittances" className="related-row">
-                  <div>
-                    <div className="related-label">オーナー送金</div>
-                    <div className="related-sub">経費控除の確認</div>
-                  </div>
-                  <span className="related-arrow">↗</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </>
   );

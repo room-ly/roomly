@@ -205,7 +205,7 @@ export async function getContractDetail(id: string) {
     .single();
   if (error || !contract) return null;
 
-  const [{ data: billings }, { data: moveOutRequests }] = await Promise.all([
+  const [{ data: billings }, { data: moveOutRequests }, { data: unitContracts }] = await Promise.all([
     supabase
       .from("rent_billings")
       .select("id, billing_month, total_amount, status")
@@ -217,9 +217,17 @@ export async function getContractDetail(id: string) {
       .select("*")
       .eq("contract_id", id)
       .order("created_at", { ascending: false }),
+    contract.unit_id
+      ? supabase
+          .from("contracts")
+          .select("id, start_date, end_date, rent, status, contract_type, tenant:tenants(id, name)")
+          .eq("unit_id", contract.unit_id)
+          .neq("id", id)
+          .order("start_date", { ascending: false })
+      : Promise.resolve({ data: [] }),
   ]);
 
-  return { contract, billings: billings ?? [], moveOutRequests: moveOutRequests ?? [] };
+  return { contract, billings: billings ?? [], moveOutRequests: moveOutRequests ?? [], unitContracts: unitContracts ?? [] };
 }
 
 // 入居者詳細（契約・物件・家賃請求付き）
@@ -284,7 +292,7 @@ export async function getOwnerDetail(id: string) {
   const supabase = await createClient();
   const { data: owner, error } = await supabase
     .from("owners")
-    .select("*, properties(id, name, units(id, status, rent))")
+    .select("*, properties(id, name, management_fee_rate, units(id, status, rent))")
     .eq("id", id)
     .single();
   if (error || !owner) return null;
@@ -399,7 +407,7 @@ export async function getOwners() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("owners")
-    .select("*, properties(id, name, units(id, status, rent))")
+    .select("*, properties(id, name, management_fee_rate, units(id, status, rent))")
     .order("name");
   if (error) throw error;
   return (data ?? []) as Row[];
@@ -633,19 +641,21 @@ export async function getUnitsForSelect() {
 }
 
 // 入居者セレクトリスト（有効な契約がある入居者は除外）
-export async function getTenantsForSelect() {
+export async function getTenantsForSelect(excludeContractId?: string) {
   const supabase = await createClient();
 
   const [{ data: tenants, error: tErr }, { data: activeContracts, error: cErr }] =
     await Promise.all([
       supabase.from("tenants").select("id, name").order("name"),
-      supabase.from("contracts").select("tenant_id").eq("status", "active"),
+      supabase.from("contracts").select("id, tenant_id").eq("status", "active"),
     ]);
   if (tErr) throw tErr;
   if (cErr) throw cErr;
 
   const activeTenantIds = new Set(
-    (activeContracts ?? []).map((c: Row) => c.tenant_id)
+    (activeContracts ?? [])
+      .filter((c: Row) => c.id !== excludeContractId)
+      .map((c: Row) => c.tenant_id)
   );
 
   return (tenants ?? [])

@@ -78,9 +78,6 @@ export default function OwnerCard({ owner }: OwnerCardProps) {
           </div>
           <div className="flex-1">
             <h3 className="text-[14px] font-semibold">{owner.name}</h3>
-            <span className="text-[11px] text-ink-3">
-              手数料 {Number(owner.management_fee_rate)}%
-            </span>
           </div>
         </div>
 

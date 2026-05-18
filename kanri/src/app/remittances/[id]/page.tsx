@@ -220,29 +220,6 @@ export default async function RemittanceDetailPage({
             </div>
           )}
 
-          <div className="section">
-            <div className="section-head-bar"><h2>関連</h2></div>
-            <div className="section-body">
-              <div className="related-list">
-                {owner?.id && (
-                  <Link href={`/owners/${owner.id}`} className="related-row">
-                    <div>
-                      <div className="related-label">オーナー詳細</div>
-                      <div className="related-sub">{owner.name}</div>
-                    </div>
-                    <span className="related-arrow">↗</span>
-                  </Link>
-                )}
-                <Link href="/remittances" className="related-row">
-                  <div>
-                    <div className="related-label">送金一覧</div>
-                    <div className="related-sub">全送金データ</div>
-                  </div>
-                  <span className="related-arrow">↗</span>
-                </Link>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </>

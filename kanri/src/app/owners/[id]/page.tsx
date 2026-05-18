@@ -37,7 +37,7 @@ export default async function OwnerDetailPage({
           </span>
           <div>
             <h1 className="detail-title">{owner.name}</h1>
-            <div className="detail-kana">手数料率 {Number(owner.management_fee_rate)}%</div>
+            <div className="detail-kana">{ownerProps.length}物件</div>
           </div>
         </div>
         <div className="detail-header-actions">
@@ -217,27 +217,6 @@ export default async function OwnerDetailPage({
             </div>
           )}
 
-          <div className="section">
-            <div className="section-head-bar"><h2>関連</h2></div>
-            <div className="section-body">
-              <div className="related-list">
-                <Link href="/remittances" className="related-row">
-                  <div>
-                    <div className="related-label">オーナー送金</div>
-                    <div className="related-sub">送金履歴一覧</div>
-                  </div>
-                  <span className="related-arrow">↗</span>
-                </Link>
-                <Link href="/expenses" className="related-row">
-                  <div>
-                    <div className="related-label">経費管理</div>
-                    <div className="related-sub">オーナー負担経費</div>
-                  </div>
-                  <span className="related-arrow">↗</span>
-                </Link>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </>

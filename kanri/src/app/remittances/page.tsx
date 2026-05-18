@@ -1,6 +1,5 @@
 import { Fragment } from "react";
 import { getOwners, getExpenses, getRemittances } from "@/lib/queries";
-import PageHeader from "@/components/PageHeader";
 import RemittancesPageClient from "@/components/RemittancesPageClient";
 
 export default async function RemittancesPage() {
@@ -28,20 +27,17 @@ export default async function RemittancesPage() {
 
   const ownersWithBreakdown = owners.map((o: Record<string, any>) => {
     const ownerProps = o.properties || [];
-    const ownerUnits = ownerProps.flatMap((p: any) => p.units || []);
-    const occupiedUnits = ownerUnits.filter((u: any) => u.status === "occupied");
-    const totalRent = occupiedUnits.reduce((s: number, u: any) => s + Number(u.rent), 0);
-    const managementFee = Math.round(totalRent * (Number(o.management_fee_rate) / 100));
-    const expenseDeducted = ownerExpenses[o.id] || 0;
 
     const propertyBreakdown = ownerProps.map((p: any) => {
       const pUnits = (p.units || []).filter((u: any) => u.status === "occupied");
       const pRent = pUnits.reduce((s: number, u: any) => s + Number(u.rent), 0);
-      const pFee = Math.round(pRent * (Number(o.management_fee_rate) / 100));
+      const pFeeRate = Number(p.management_fee_rate) || 0;
+      const pFee = Math.round(pRent * (pFeeRate / 100));
       const pExpense = propertyExpenses[p.id] || 0;
       return {
         propertyId: p.id,
         propertyName: p.name,
+        feeRate: pFeeRate,
         unitCount: (p.units || []).length,
         occupiedCount: pUnits.length,
         rent: pRent,
@@ -50,6 +46,10 @@ export default async function RemittancesPage() {
         net: pRent - pFee - pExpense,
       };
     });
+
+    const totalRent = propertyBreakdown.reduce((s: number, p: any) => s + p.rent, 0);
+    const managementFee = propertyBreakdown.reduce((s: number, p: any) => s + p.fee, 0);
+    const expenseDeducted = ownerExpenses[o.id] || 0;
 
     return {
       ...o,
@@ -67,11 +67,14 @@ export default async function RemittancesPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Remittances"
-        title="送金"
-        em="管理"
-        description="オーナーへの月次送金明細の作成・管理"
+      <RemittancesPageClient
+        owners={owners.map((o: Record<string, any>) => ({ id: o.id, name: o.name }))}
+        remittances={remittances}
+        ownerSummaries={ownersWithBreakdown.map((o: Record<string, any>) => ({
+          id: o.id,
+          name: o.name,
+          netAmount: o.netAmount,
+        }))}
       />
 
       {/* サマリー */}
@@ -133,14 +136,14 @@ export default async function RemittancesPage() {
                             <span className="tn-av" style={{ width: 24, height: 24, fontSize: 10, background: "var(--accent-tint)", color: "var(--accent-deep)" }}>
                               {o.name.charAt(0)}
                             </span>
-                            <div>
-                              <div>{o.name}</div>
-                              <div className="mono" style={{ fontSize: 10, color: "var(--ink-3)", fontWeight: 400 }}>手数料 {Number(o.management_fee_rate)}%</div>
-                            </div>
+                            <div>{o.name}</div>
                           </div>
                         </td>
                       )}
-                      <td style={{ color: "var(--ink-2)" }}>{p.propertyName}</td>
+                      <td style={{ color: "var(--ink-2)" }}>
+                        {p.propertyName}
+                        <span className="mono" style={{ fontSize: 10, color: "var(--ink-4)", marginLeft: 6 }}>{p.feeRate}%</span>
+                      </td>
                       <td className="mono" style={{ textAlign: "center" }}>{p.occupiedCount}/{p.unitCount}</td>
                       <td className="num">¥{p.rent.toLocaleString()}</td>
                       <td className="num" style={{ color: "var(--danger)" }}>-¥{p.fee.toLocaleString()}</td>
@@ -165,13 +168,6 @@ export default async function RemittancesPage() {
           </table>
         </div>
       </div>
-
-
-      {/* 送金履歴 + 作成・編集 */}
-      <RemittancesPageClient
-        owners={owners.map((o: Record<string, any>) => ({ id: o.id, name: o.name }))}
-        remittances={remittances}
-      />
     </>
   );
 }

@@ -30,7 +30,7 @@ export default function PropertiesPageClient({
           <Upload size={14} />
           CSVインポート
         </button>
-        <button className="btn btn-primary" onClick={() => setIsOpen(true)}>
+        <button className="btn btn-accent" onClick={() => setIsOpen(true)}>
           <Plus size={14} />
           物件を追加
         </button>

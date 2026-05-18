@@ -207,29 +207,6 @@ export default async function MaintenanceDetailPage({
             </div>
           </div>
 
-          <div className="section">
-            <div className="section-head-bar"><h2>関連</h2></div>
-            <div className="section-body">
-              <div className="related-list">
-                {request.property?.id && (
-                  <Link href={`/properties/${request.property.id}`} className="related-row">
-                    <div>
-                      <div className="related-label">物件詳細</div>
-                      <div className="related-sub">{request.property.name}</div>
-                    </div>
-                    <span className="related-arrow">↗</span>
-                  </Link>
-                )}
-                <Link href="/expenses" className="related-row">
-                  <div>
-                    <div className="related-label">経費管理</div>
-                    <div className="related-sub">修繕費の経費登録</div>
-                  </div>
-                  <span className="related-arrow">↗</span>
-                </Link>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </>

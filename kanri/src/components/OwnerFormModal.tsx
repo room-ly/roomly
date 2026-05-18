@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { ownerSchema, type OwnerFormData } from "@/lib/schemas";
 import type { ZodError } from "zod";
+import BankSuggest from "./BankSuggest";
 
 interface OwnerFormModalProps {
   isOpen: boolean;
@@ -21,6 +22,17 @@ export default function OwnerFormModal({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
+  const [bankName, setBankName] = useState(editData?.bank_name || "");
+  const [bankCode, setBankCode] = useState(editData?.bank_code || "");
+  const [branchName, setBranchName] = useState(editData?.bank_branch || "");
+  const [branchCode, setBranchCode] = useState(editData?.bank_branch_code || "");
+
+  useEffect(() => {
+    setBankName(editData?.bank_name || "");
+    setBankCode(editData?.bank_code || "");
+    setBranchName(editData?.bank_branch || "");
+    setBranchCode(editData?.bank_branch_code || "");
+  }, [editData, isOpen]);
 
   if (!isOpen) return null;
 
@@ -164,30 +176,16 @@ export default function OwnerFormModal({
 
           <div className="border-t border-line pt-4">
             <h3 className="text-[13px] font-medium text-ink-2 mb-3">振込先情報</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium text-ink-2 block mb-1">
-                  銀行名
-                </label>
-                <input
-                  name="bank_name"
-                  defaultValue={editData?.bank_name || ""}
-                  className="input"
-                  placeholder="例: 三菱UFJ銀行"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-ink-2 block mb-1">
-                  支店名
-                </label>
-                <input
-                  name="bank_branch"
-                  defaultValue={editData?.bank_branch || ""}
-                  className="input"
-                  placeholder="例: 新宿支店"
-                />
-              </div>
-            </div>
+            <BankSuggest
+              nameValue={bankName}
+              codeValue={bankCode}
+              onNameChange={setBankName}
+              onCodeChange={setBankCode}
+              branchNameValue={branchName}
+              branchCodeValue={branchCode}
+              onBranchNameChange={setBranchName}
+              onBranchCodeChange={setBranchCode}
+            />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">
@@ -216,7 +214,7 @@ export default function OwnerFormModal({
               </div>
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">
-                  口座名義
+                  口座名義（カナ）
                 </label>
                 <input
                   name="bank_account_holder"
@@ -226,23 +224,6 @@ export default function OwnerFormModal({
                 />
               </div>
             </div>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-ink-2 block mb-1">
-              管理手数料率 (%) <span className="text-danger">*</span>
-            </label>
-            <input
-              name="management_fee_rate"
-              type="number"
-              step="0.1"
-              defaultValue={editData?.management_fee_rate ?? "5"}
-              className="input"
-              placeholder="例: 5"
-            />
-            {errors.management_fee_rate && (
-              <p className="text-danger text-sm mt-1">{errors.management_fee_rate[0]}</p>
-            )}
           </div>
 
           <div>

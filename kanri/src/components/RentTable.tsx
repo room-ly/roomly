@@ -178,7 +178,7 @@ export default function RentTable({ data }: RentTableProps) {
           },
         ]}
         onRowClick={(item) => router.push(`/rent/${item.id}`)}
-        rowClassName={(item) => (item.status === "overdue" ? "bg-danger-tint" : "")}
+        rowClassName={(item) => (item.status === "overdue" || item.status === "partial" ? "bg-danger-tint" : "")}
       />
     </>
   );

@@ -6,7 +6,6 @@ import {
   Bell,
   Sun,
   Moon,
-  Search,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import { createClient } from "@/lib/supabase";
@@ -137,10 +136,6 @@ export default function Header() {
     });
   if (crumbs.length === 0) crumbs.push("ダッシュボード");
 
-  const openCommandPalette = () => {
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
-  };
-
   return (
     <header className="topbar">
       {/* パンくず */}
@@ -155,14 +150,7 @@ export default function Header() {
         ))}
       </nav>
 
-      {/* 検索ボタン */}
-      <button className="search-btn" onClick={openCommandPalette}>
-        <Search size={14} style={{ color: "var(--ink-3)", flexShrink: 0 }} />
-        <span className="search-placeholder">検索...</span>
-        <kbd>⌘K</kbd>
-      </button>
-
-      {/* アクション */}
+{/* アクション */}
       <div className="topbar-actions">
         {/* テーマ切替 */}
         <button

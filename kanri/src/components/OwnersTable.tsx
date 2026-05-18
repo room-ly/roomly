@@ -58,12 +58,6 @@ export default function OwnersTable({ owners }: OwnersTableProps) {
           },
         },
         {
-          key: "management_fee_rate",
-          label: "手数料率",
-          align: "right" as const,
-          render: (item) => <span className="num">{Number(item.management_fee_rate)}%</span>,
-        },
-        {
           key: "email",
           label: "メール",
           render: (item) => <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{item.email || "—"}</span>,

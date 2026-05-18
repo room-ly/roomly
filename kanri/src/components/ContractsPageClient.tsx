@@ -22,9 +22,9 @@ export default function ContractsPageClient({
 
   return (
     <>
-      <button className="btn btn-primary" onClick={() => setIsOpen(true)}>
+      <button className="btn btn-accent" onClick={() => setIsOpen(true)}>
         <Plus size={14} />
-        新規契約
+        契約を作成
       </button>
       <ContractFormModal
         isOpen={isOpen}

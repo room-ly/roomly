@@ -34,10 +34,12 @@ export default function PropertyCard({ property: prop, owners }: PropertyCardPro
     if (res.ok) router.refresh();
   }
 
-  const typeLabel = prop.property_type === "apartment" ? "マンション" :
-    prop.property_type === "house" ? "戸建て" :
-    prop.property_type === "commercial" ? "商業" : "駐車場";
-  const isApt = prop.property_type === "apartment";
+  const typeLabels: Record<string, string> = {
+    apartment: "マンション", apart: "アパート", house: "戸建て",
+    parking: "駐車場", land: "土地", commercial: "商業",
+  };
+  const typeLabel = typeLabels[prop.property_type] || prop.property_type;
+  const isApt = prop.property_type === "apartment" || prop.property_type === "apart";
 
   return (
     <>

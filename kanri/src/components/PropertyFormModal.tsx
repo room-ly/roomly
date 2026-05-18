@@ -218,9 +218,11 @@ export default function PropertyFormModal({
                   className="input"
                 >
                   <option value="apartment">マンション</option>
+                  <option value="apart">アパート</option>
                   <option value="house">戸建て</option>
-                  <option value="commercial">商業</option>
                   <option value="parking">駐車場</option>
+                  <option value="land">土地</option>
+                  <option value="commercial">商業</option>
                 </select>
                 <FieldError errors={errors} field="property_type" />
               </div>
@@ -573,7 +575,19 @@ export default function PropertyFormModal({
 
           {/* 管理・駐車場 */}
           <Section title="管理・駐車場">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <Label>管理手数料率（%）</Label>
+                <input
+                  name="management_fee_rate"
+                  type="number"
+                  step="0.1"
+                  defaultValue={editData?.management_fee_rate ?? "5"}
+                  className="input"
+                  placeholder="例: 5"
+                />
+                <FieldError errors={errors} field="management_fee_rate" />
+              </div>
               <div>
                 <Label>管理形態</Label>
                 <select
