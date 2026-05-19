@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     const { data: tenant, error } = await supabase
       .from("tenants")
-      .insert({ ...data, company_id })
+      .insert({ ...data, company_id } as any)
       .select()
       .single();
 

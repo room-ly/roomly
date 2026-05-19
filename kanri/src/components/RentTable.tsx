@@ -152,7 +152,21 @@ export default function RentTable({ data }: RentTableProps) {
             label: "金額",
             align: "right" as const,
             sortable: true,
-            render: (item) => <span className="num">¥{Number(item.total_amount).toLocaleString()}</span>,
+            render: (item) => {
+              const paid = (item.rent_payments as any[] || []).reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+              const diff = paid - Number(item.total_amount);
+              return (
+                <div>
+                  <span className="num">¥{Number(item.total_amount).toLocaleString()}</span>
+                  {paid > 0 && diff > 0 && (
+                    <div style={{ fontSize: 11, color: "#2b6cb0" }}>+¥{diff.toLocaleString()} 超過</div>
+                  )}
+                  {item.status !== "paid" && paid > 0 && diff < 0 && (
+                    <div style={{ fontSize: 11, color: "var(--danger)" }}>-¥{Math.abs(diff).toLocaleString()} 不足</div>
+                  )}
+                </div>
+              );
+            },
           },
           {
             key: "status",
@@ -168,7 +182,7 @@ export default function RentTable({ data }: RentTableProps) {
                   billing={{
                     id: item.id,
                     total_amount: Number(item.total_amount),
-                    paid_amount: item.status === "partial" ? Number(item.total_amount) * 0.5 : 0,
+                    paid_amount: (item.rent_payments as any[] || []).reduce((s: number, p: any) => s + Number(p.amount || 0), 0),
                     tenant_name: item.contract?.tenant?.name || "—",
                     unit_label: `${item.contract?.unit?.property?.name || ""} ${item.contract?.unit?.unit_number || ""}`,
                     billing_month: item.billing_month,

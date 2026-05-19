@@ -194,22 +194,22 @@ export default async function OwnerDetailPage({
                     <div className="field-label mono">銀行</div>
                     <div className="field-value field-plain">{owner.bank_name} {owner.bank_branch}</div>
                   </div>
-                  {owner.account_type && (
+                  {owner.bank_account_type && (
                     <div className="field">
                       <div className="field-label mono">種別</div>
-                      <div className="field-value field-plain">{owner.account_type === "ordinary" ? "普通" : owner.account_type === "current" ? "当座" : owner.account_type}</div>
+                      <div className="field-value field-plain">{owner.bank_account_type === "ordinary" ? "普通" : owner.bank_account_type === "current" ? "当座" : owner.bank_account_type}</div>
                     </div>
                   )}
-                  {owner.account_number && (
+                  {owner.bank_account_number && (
                     <div className="field">
                       <div className="field-label mono">口座番号</div>
-                      <div className="field-value field-plain mono">{owner.account_number}</div>
+                      <div className="field-value field-plain mono">{owner.bank_account_number}</div>
                     </div>
                   )}
-                  {owner.account_holder && (
+                  {owner.bank_account_holder && (
                     <div className="field">
                       <div className="field-label mono">名義</div>
-                      <div className="field-value field-plain">{owner.account_holder}</div>
+                      <div className="field-value field-plain">{owner.bank_account_holder}</div>
                     </div>
                   )}
                 </div>

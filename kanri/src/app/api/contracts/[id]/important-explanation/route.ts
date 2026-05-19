@@ -231,7 +231,7 @@ export async function GET(
   <table>
     <tr><th>賃料（月額）</th><td>${yen(contract.rent)}</td></tr>
     <tr><th>共益費・管理費</th><td>${yen(contract.management_fee)}</td></tr>
-    <tr><th>支払方法</th><td>${e(paymentMethodLabel[contract.payment_method] || "")}</td></tr>
+    <tr><th>支払方法</th><td>${e(contract.payment_method ? (paymentMethodLabel[contract.payment_method] || "") : "")}</td></tr>
     <tr><th>支払期日</th><td>${contract.payment_due_day ? `毎月${e(contract.payment_due_day)}日` : ""}</td></tr>
   </table>
 

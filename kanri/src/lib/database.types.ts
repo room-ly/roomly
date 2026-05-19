@@ -275,6 +275,63 @@ export type Database = {
         }
         Relationships: []
       }
+      move_out_checklist_items: {
+        Row: {
+          id: string
+          company_id: string
+          contract_id: string
+          category: string
+          item_name: string
+          is_checked: boolean
+          notes: string | null
+          checked_at: string | null
+          checked_by: string | null
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          contract_id: string
+          category?: string
+          item_name: string
+          is_checked?: boolean
+          notes?: string | null
+          checked_at?: string | null
+          checked_by?: string | null
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          contract_id?: string
+          category?: string
+          item_name?: string
+          is_checked?: boolean
+          notes?: string | null
+          checked_at?: string | null
+          checked_by?: string | null
+          sort_order?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "move_out_checklist_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "move_out_checklist_items_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           company_id: string
@@ -381,12 +438,14 @@ export type Database = {
           description: string
           expense_date: string
           id: string
+          invoice_number: string | null
           is_owner_charge: boolean
           notes: string | null
           owner_id: string | null
           property_id: string | null
           unit_id: string | null
           updated_at: string
+          vendor_name: string | null
         }
         Insert: {
           amount: number
@@ -396,12 +455,14 @@ export type Database = {
           description: string
           expense_date: string
           id?: string
+          invoice_number?: string | null
           is_owner_charge?: boolean
           notes?: string | null
           owner_id?: string | null
           property_id?: string | null
           unit_id?: string | null
           updated_at?: string
+          vendor_name?: string | null
         }
         Update: {
           amount?: number
@@ -411,12 +472,14 @@ export type Database = {
           description?: string
           expense_date?: string
           id?: string
+          invoice_number?: string | null
           is_owner_charge?: boolean
           notes?: string | null
           owner_id?: string | null
           property_id?: string | null
           unit_id?: string | null
           updated_at?: string
+          vendor_name?: string | null
         }
         Relationships: [
           {
@@ -668,6 +731,7 @@ export type Database = {
           priority: string
           property_id: string
           reported_date: string
+          scheduled_date: string | null
           source: string
           status: string
           tenant_id: string | null
@@ -675,6 +739,7 @@ export type Database = {
           unit_id: string | null
           updated_at: string
           vendor_name: string | null
+          vendor_phone: string | null
         }
         Insert: {
           actual_cost?: number | null
@@ -689,6 +754,7 @@ export type Database = {
           priority?: string
           property_id: string
           reported_date?: string
+          scheduled_date?: string | null
           source?: string
           status?: string
           tenant_id?: string | null
@@ -696,6 +762,7 @@ export type Database = {
           unit_id?: string | null
           updated_at?: string
           vendor_name?: string | null
+          vendor_phone?: string | null
         }
         Update: {
           actual_cost?: number | null
@@ -710,6 +777,7 @@ export type Database = {
           priority?: string
           property_id?: string
           reported_date?: string
+          scheduled_date?: string | null
           source?: string
           status?: string
           tenant_id?: string | null
@@ -717,6 +785,7 @@ export type Database = {
           unit_id?: string | null
           updated_at?: string
           vendor_name?: string | null
+          vendor_phone?: string | null
         }
         Relationships: [
           {
@@ -973,6 +1042,7 @@ export type Database = {
           sent_date: string | null
           status: string
           total_rent: number
+          transfer_date: string | null
           updated_at: string
         }
         Insert: {
@@ -991,6 +1061,7 @@ export type Database = {
           sent_date?: string | null
           status?: string
           total_rent?: number
+          transfer_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -1009,6 +1080,7 @@ export type Database = {
           sent_date?: string | null
           status?: string
           total_rent?: number
+          transfer_date?: string | null
           updated_at?: string
         }
         Relationships: [

@@ -83,8 +83,8 @@ export async function POST(request: NextRequest) {
     const rowsWithCompany = validRows.map((row) => ({ ...row, company_id }));
 
     const { data: inserted, error: dbError } = await supabase
-      .from(tableName)
-      .insert(rowsWithCompany)
+      .from(tableName as any)
+      .insert(rowsWithCompany as any)
       .select();
 
     if (dbError) {

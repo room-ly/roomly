@@ -166,7 +166,7 @@ export async function GET(
     <tr><th>礼金</th><td>${yen(contract.key_money)}</td></tr>
     <tr><th>更新料</th><td>${Number(contract.renewal_fee) > 0 ? yen(contract.renewal_fee) : "なし"}</td></tr>
     <tr><th>仲介手数料</th><td>${Number(contract.brokerage_fee) > 0 ? yen(contract.brokerage_fee) : "—"}</td></tr>
-    <tr><th>支払方法</th><td>${e(paymentMethodLabel[contract.payment_method] || "")}</td></tr>
+    <tr><th>支払方法</th><td>${e(contract.payment_method ? (paymentMethodLabel[contract.payment_method] || "") : "")}</td></tr>
     <tr><th>支払期日</th><td>${contract.payment_due_day ? `毎月${e(contract.payment_due_day)}日` : ""}</td></tr>
   </table>
 

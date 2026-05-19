@@ -50,6 +50,8 @@ export async function POST(request: NextRequest) {
         await supabase.from("rent_billings").insert({
           contract_id: contract.id,
           billing_month: billingMonth,
+          rent: Number(contract.rent),
+          management_fee: Number(contract.management_fee),
           total_amount: totalAmount,
           due_date: dueDate,
           status: "unpaid",

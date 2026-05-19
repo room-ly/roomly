@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase-server";
+import type { Database } from "./database.types";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-type Row = any;
+export type Tables = Database["public"]["Tables"];
+type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 // 課金状態を取得し、表示可能な区画IDセットを返す
 // 課金中 → null（制限なし）、課金切れで11区画以上 → 古い順10件のIDセット
@@ -68,6 +69,7 @@ export async function getProperties() {
 
   const thumbnailMap = new Map<string, string>();
   for (const img of images ?? []) {
+    if (!img.property_id) continue;
     if (img.is_primary || !thumbnailMap.has(img.property_id)) {
       thumbnailMap.set(
         img.property_id,
@@ -284,7 +286,7 @@ export async function getExpenseDetail(id: string) {
 export async function getRemittanceDetail(id: string) {
   const supabase = await createClient();
   const [{ data: remittance, error }, { data: items }] = await Promise.all([
-    supabase.from("owner_remittances").select("*, owner:owners(id, name, phone, email, bank_name, bank_branch, account_type, account_holder)").eq("id", id).single(),
+    supabase.from("owner_remittances").select("*, owner:owners(id, name, phone, email, bank_name, bank_branch, bank_account_type, bank_account_holder)").eq("id", id).single(),
     supabase.from("owner_remittance_items").select("*, property:properties(name), unit:units(unit_number)").eq("remittance_id", id).order("created_at"),
   ]);
   if (error || !remittance) return null;
@@ -300,7 +302,7 @@ export async function getRentBillings(page = 1, pageSize = 50): Promise<{ data: 
   const { data, error, count } = await supabase
     .from("rent_billings")
     .select(
-      "*, contract:contracts(id, tenant:tenants(name, phone), unit:units(unit_number, property:properties(name))), rent_payments(payment_date)",
+      "*, contract:contracts(id, tenant:tenants(name, phone), unit:units(unit_number, property:properties(name))), rent_payments(payment_date, amount)",
       { count: "exact" }
     )
     .order("billing_month", { ascending: false })
@@ -315,7 +317,7 @@ export async function getRentBillingDetail(id: string) {
   const { data: target, error: targetErr } = await supabase
     .from("rent_billings")
     .select(
-      "*, contract:contracts(id, tenant:tenants(name, phone, email), unit:units(unit_number, property:properties(name, address))), rent_payments(id, amount, payment_date, payment_method, notes, created_at)"
+      "*, contract:contracts(id, tenant:tenants(id, name, phone, email), unit:units(unit_number, property:properties(id, name, address))), rent_payments(id, amount, payment_date, payment_method, notes, created_at)"
     )
     .eq("id", id)
     .single();
