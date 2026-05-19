@@ -5,6 +5,7 @@ import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import ContractDetailClient from "@/components/ContractDetailClient";
 import MoveOutReviewClient from "@/components/MoveOutReviewClient";
+import MoveOutChecklist from "@/components/MoveOutChecklist";
 
 const contractTypeLabels: Record<string, string> = {
   fixed: "定期借家",
@@ -244,6 +245,11 @@ export default async function ContractDetailPage({
               </div>
             </div>
           )}
+          {/* 退去チェックリスト（退去申請がある場合に表示） */}
+          {moveOutRequests.length > 0 && (
+            <MoveOutChecklist contractId={contract.id} />
+          )}
+
           {/* この部屋の契約履歴 */}
           {unitContracts.length > 0 && (
             <div className="section">

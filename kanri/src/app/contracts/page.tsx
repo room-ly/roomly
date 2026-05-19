@@ -2,10 +2,19 @@ import { getContracts, getUnitsForSelect, getTenantsForSelect, getCompany } from
 import PageHeader from "@/components/PageHeader";
 import ContractsPageClient from "@/components/ContractsPageClient";
 import ContractsTable from "@/components/ContractsTable";
+import ServerPagination from "@/components/ServerPagination";
 
-export default async function ContractsPage() {
-  const [contracts, units, tenants, company] = await Promise.all([
-    getContracts(),
+const PAGE_SIZE = 50;
+
+export default async function ContractsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageStr } = await searchParams;
+  const page = Math.max(1, Number(pageStr) || 1);
+  const [{ data: contracts, total }, units, tenants, company] = await Promise.all([
+    getContracts(page, PAGE_SIZE),
     getUnitsForSelect(),
     getTenantsForSelect(),
     getCompany(),
@@ -18,12 +27,13 @@ export default async function ContractsPage() {
       <PageHeader
         eyebrow="Contracts"
         title="契約"
-        em={`${contracts.length}件`}
+        em={`${total}件`}
         description="入居者との賃貸借契約一覧。更新期限・退去申請をひと目で把握できます。"
         action={<ContractsPageClient units={units} tenants={tenants} />}
       />
 
       <ContractsTable data={contracts} alertDays={alertDays} />
+      <ServerPagination page={page} pageSize={PAGE_SIZE} total={total} />
     </>
   );
 }

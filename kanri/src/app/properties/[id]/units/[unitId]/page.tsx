@@ -125,73 +125,6 @@ export default async function UnitDetailPage({
             </div>
           )}
 
-          {/* 契約履歴 */}
-          {contracts.length > 0 && (
-            <div className="section">
-              <div className="section-head-bar">
-                <h2>契約履歴</h2>
-                <span className="desc">{contracts.length}件</span>
-              </div>
-              <div className="section-body flush">
-                <table className="tbl">
-                  <thead>
-                    <tr>
-                      <th>入居者</th>
-                      <th>開始日</th>
-                      <th>終了日</th>
-                      <th style={{ textAlign: "right" }}>賃料</th>
-                      <th>ステータス</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {contracts.map((c: any) => (
-                      <tr key={c.id} className="row-hover">
-                        <td>
-                          <Link href={`/contracts/${c.id}`} className="rlink">{c.tenant?.name || "—"}</Link>
-                        </td>
-                        <td className="mono" style={{ fontSize: 12, color: "var(--ink-3)" }}>{c.start_date || "—"}</td>
-                        <td className="mono" style={{ fontSize: 12, color: "var(--ink-3)" }}>{c.end_date || "—"}</td>
-                        <td className="num">{c.rent ? `¥${Number(c.rent).toLocaleString()}` : "—"}</td>
-                        <td><StatusBadge status={c.status} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* 修繕履歴 */}
-          {maintenanceRequests.length > 0 && (
-            <div className="section">
-              <div className="section-head-bar">
-                <h2>修繕履歴</h2>
-                <span className="desc">直近{maintenanceRequests.length}件</span>
-              </div>
-              <div className="section-body flush">
-                <table className="tbl">
-                  <thead>
-                    <tr>
-                      <th>報告日</th>
-                      <th>タイトル</th>
-                      <th>ステータス</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {maintenanceRequests.map((m: any) => (
-                      <tr key={m.id} className="row-hover">
-                        <td className="mono" style={{ fontSize: 12, color: "var(--ink-3)" }}>{m.reported_date || "—"}</td>
-                        <td>
-                          <Link href={`/maintenance/${m.id}`} className="rlink">{m.title || "—"}</Link>
-                        </td>
-                        <td><StatusBadge status={m.status} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* サイドカラム */}
@@ -219,6 +152,58 @@ export default async function UnitDetailPage({
                     <div className="field-label mono">契約終了</div>
                     <div className="field-value field-plain mono">{activeContract.end_date || "—"}</div>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="section">
+            <div className="section-head-bar">
+              <h2>契約履歴</h2>
+              <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--ink-4)" }}>{contracts.length}件</span>
+            </div>
+            <div className="section-body" style={{ padding: contracts.length === 0 ? undefined : "4px 16px 12px" }}>
+              {contracts.length === 0 ? (
+                <p style={{ fontSize: 12, color: "var(--ink-4)", textAlign: "center" }}>契約なし</p>
+              ) : (
+                <div className="related-list">
+                  {contracts.map((c: any) => (
+                    <Link key={c.id} href={`/contracts/${c.id}`} className="related-row" style={{ padding: "8px 8px", margin: "0 -8px" }}>
+                      <div>
+                        <div className="related-label" style={{ fontSize: 12.5 }}>{c.tenant?.name || "—"}</div>
+                        <div className="related-sub" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span className="mono">{c.start_date?.slice(0, 7)} 〜 {c.end_date?.slice(0, 7) || "—"}</span>
+                          <StatusBadge status={c.status} />
+                        </div>
+                      </div>
+                      <span className="related-arrow">↗</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {maintenanceRequests.length > 0 && (
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>修繕履歴</h2>
+                <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--ink-4)" }}>{maintenanceRequests.length}件</span>
+              </div>
+              <div className="section-body" style={{ padding: "4px 16px 12px" }}>
+                <div className="related-list">
+                  {maintenanceRequests.map((m: any) => (
+                    <Link key={m.id} href={`/maintenance/${m.id}`} className="related-row" style={{ padding: "8px 8px", margin: "0 -8px" }}>
+                      <div>
+                        <div className="related-label" style={{ fontSize: 12.5 }}>{m.title || "—"}</div>
+                        <div className="related-sub" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span className="mono">{m.reported_date}</span>
+                          <StatusBadge status={m.status} />
+                        </div>
+                      </div>
+                      <span className="related-arrow">↗</span>
+                    </Link>
+                  ))}
                 </div>
               </div>
             </div>

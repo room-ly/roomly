@@ -114,6 +114,8 @@ export default function MaintenanceTable({ data, initialFilter }: MaintenanceTab
 
   return (
     <>
+      <MonthSelector selectedMonth={selectedMonth} availableMonths={availableMonths} onChange={setSelectedMonth} />
+
       <div className="toolbar">
         <div className="tb-tabs">
           <span
@@ -128,9 +130,6 @@ export default function MaintenanceTable({ data, initialFilter }: MaintenanceTab
           >
             カンバン
           </span>
-        </div>
-        <div className="tb-actions">
-          <MonthSelector selectedMonth={selectedMonth} availableMonths={availableMonths} onChange={setSelectedMonth} />
         </div>
       </div>
 

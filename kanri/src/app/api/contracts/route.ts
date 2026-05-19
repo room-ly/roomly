@@ -35,6 +35,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 契約がactiveの場合、当月分の家賃請求を自動生成（後処理：失敗しても契約自体は成功）
+    if (contract.status === "active") {
+      try {
+        const startDate = new Date(contract.start_date);
+        const billingMonth = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}-01`;
+
+        // 翌月末日を計算
+        const nextMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 2, 0);
+        const dueDate = nextMonth.toISOString().slice(0, 10);
+
+        const totalAmount = Number(contract.rent) + Number(contract.management_fee);
+
+        await supabase.from("rent_billings").insert({
+          contract_id: contract.id,
+          billing_month: billingMonth,
+          total_amount: totalAmount,
+          due_date: dueDate,
+          status: "unpaid",
+          company_id,
+        });
+      } catch {
+        // 家賃請求の自動生成失敗は無視（契約作成は成功扱い）
+      }
+    }
+
     return NextResponse.json(contract, { status: 201 });
   } catch {
     return NextResponse.json(

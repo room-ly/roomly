@@ -150,18 +150,22 @@ export async function getTenantsWithInfo() {
   });
 }
 
-// 契約一覧（入居者・部屋・物件・退去申請付き）
-export async function getContracts() {
+// 契約一覧（入居者・部屋・物件・退去申請付き）— ページネーション対応
+export async function getContracts(page = 1, pageSize = 50): Promise<{ data: Row[]; total: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const { data, error, count } = await supabase
     .from("contracts")
     .select(
-      "*, tenant:tenants(name), unit:units(unit_number, property:properties(name)), move_out_requests(id, status, desired_move_out_date)"
+      "*, tenant:tenants(name), unit:units(id, unit_number, property_id, property:properties(id, name)), move_out_requests(id, status, desired_move_out_date)",
+      { count: "exact" }
     )
-    .order("start_date", { ascending: false });
+    .order("start_date", { ascending: false })
+    .range(from, to);
   if (error) throw error;
 
-  return (data ?? []).map((c: Row) => {
+  const rows = (data ?? []).map((c: Row) => {
     const reqs = (c.move_out_requests ?? []) as Row[];
     const pending = reqs.find((r: Row) => r.status === "pending");
     const approved = reqs.find((r: Row) => r.status === "approved");
@@ -171,6 +175,7 @@ export async function getContracts() {
       _move_out_date: pending?.desired_move_out_date ?? approved?.desired_move_out_date ?? null,
     };
   }) as Row[];
+  return { data: rows, total: count ?? 0 };
 }
 
 // 契約詳細（入居者・部屋・物件・家賃請求履歴付き）
@@ -215,7 +220,7 @@ export async function getTenantDetail(id: string) {
   const supabase = await createClient();
   const [{ data: tenant, error }, { data: contracts }] = await Promise.all([
     supabase.from("tenants").select("*").eq("id", id).single(),
-    supabase.from("contracts").select("*, unit:units(unit_number, property:properties(name))").eq("tenant_id", id).order("start_date", { ascending: false }),
+    supabase.from("contracts").select("*, unit:units(unit_number, property:properties(id, name))").eq("tenant_id", id).order("start_date", { ascending: false }),
   ]);
   if (error || !tenant) return null;
 
@@ -287,17 +292,21 @@ export async function getRemittanceDetail(id: string) {
   return { remittance, items: items ?? [] };
 }
 
-// 家賃請求一覧（契約・入居者・物件付き）
-export async function getRentBillings() {
+// 家賃請求一覧（契約・入居者・物件付き）— ページネーション対応
+export async function getRentBillings(page = 1, pageSize = 50): Promise<{ data: Row[]; total: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const { data, error, count } = await supabase
     .from("rent_billings")
     .select(
-      "*, contract:contracts(id, tenant:tenants(name, phone), unit:units(unit_number, property:properties(name))), rent_payments(payment_date)"
+      "*, contract:contracts(id, tenant:tenants(name, phone), unit:units(unit_number, property:properties(name))), rent_payments(payment_date)",
+      { count: "exact" }
     )
-    .order("billing_month", { ascending: false });
+    .order("billing_month", { ascending: false })
+    .range(from, to);
   if (error) throw error;
-  return (data ?? []) as Row[];
+  return { data: (data ?? []) as Row[], total: count ?? 0 };
 }
 
 // 家賃請求詳細 — 指定IDの請求を起点に、同一契約の全請求を時系列で返す
@@ -329,32 +338,39 @@ export async function getRentBillingDetail(id: string) {
   };
 }
 
-// 修繕依頼一覧（物件・部屋付き）
-export async function getMaintenanceRequests() {
+// 修繕依頼一覧（物件・部屋付き）— ページネーション対応
+export async function getMaintenanceRequests(page = 1, pageSize = 50): Promise<{ data: Row[]; total: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const { data, error, count } = await supabase
     .from("maintenance_requests")
-    .select("*, property:properties(name), unit:units(unit_number)")
-    .order("reported_date", { ascending: false });
+    .select("*, property:properties(name), unit:units(unit_number)", { count: "exact" })
+    .order("reported_date", { ascending: false })
+    .range(from, to);
   if (error) throw error;
-  return (data ?? []) as Row[];
+  return { data: (data ?? []) as Row[], total: count ?? 0 };
 }
 
-// 問い合わせ一覧（物件・部屋・入居者付き）
-export async function getInquiries() {
+// 問い合わせ一覧（物件・部屋・入居者付き）— ページネーション対応
+export async function getInquiries(page = 1, pageSize = 50): Promise<{ data: Row[]; total: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const { data, error, count } = await supabase
     .from("inquiries")
-    .select("*, property:properties(id, name), unit:units(unit_number, contracts(tenant_id, status, tenant:tenants(id, name, phone, email))), tenant:tenants(id, name, phone, email), inquiry_logs(id, content, action_type, created_at)")
-    .order("created_at", { ascending: false });
+    .select("*, property:properties(id, name), unit:units(unit_number, contracts(tenant_id, status, tenant:tenants(id, name, phone, email))), tenant:tenants(id, name, phone, email), inquiry_logs(id, content, action_type, created_at)", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(from, to);
   if (error) throw error;
-  return (data ?? []).map((row: Row) => {
+  const rows = (data ?? []).map((row: Row) => {
     if (!row.tenant && row.unit?.contracts) {
       const active = row.unit.contracts.find((c: Row) => c.status === "active");
       if (active?.tenant) row.tenant = active.tenant;
     }
     return row;
   }) as Row[];
+  return { data: rows, total: count ?? 0 };
 }
 
 // オーナー一覧（物件・部屋付き）
@@ -368,15 +384,30 @@ export async function getOwners() {
   return (data ?? []) as Row[];
 }
 
-// 経費一覧（物件・部屋・オーナー付き）
-export async function getExpenses() {
+// 経費一覧（物件・部屋・オーナー付き）— ページネーション対応
+export async function getExpenses(page = 1, pageSize = 50): Promise<{ data: Row[]; total: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const { data, error, count } = await supabase
     .from("expenses")
     .select(
-      "*, property:properties(name), unit:units(unit_number), owner:owners(name)"
+      "*, property:properties(name), unit:units(unit_number), owner:owners(name)",
+      { count: "exact" }
     )
-    .order("expense_date", { ascending: false });
+    .order("expense_date", { ascending: false })
+    .range(from, to);
+  if (error) throw error;
+  return { data: (data ?? []) as Row[], total: count ?? 0 };
+}
+
+// 書類一覧（物件・部屋・入居者付き）
+export async function getDocuments() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("documents")
+    .select("*, property:properties(name), unit:units(unit_number), tenant:tenants(name)")
+    .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as Row[];
 }
@@ -472,7 +503,9 @@ export async function getDashboardData() {
       .in("status", ["maintenance", "vacant"]),
     supabase
       .from("rent_billings")
-      .select("total_amount, status"),
+      .select("total_amount, status, billing_month")
+      .gte("billing_month", `${now.toISOString().slice(0, 7)}-01`)
+      .lt("billing_month", `${new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().slice(0, 10)}`),
   ]);
 
   const overdueBillings = (overdueBillingsRes.data ?? []) as Row[];

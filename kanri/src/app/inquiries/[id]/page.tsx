@@ -99,7 +99,7 @@ export default async function InquiryDetailPage({
       </div>
 
       {/* サイド情報 */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
+      <div className="detail-col-side" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 16, position: "static" }}>
         {inquiry.property && (
           <div className="section">
             <div className="section-head-bar"><h2>物件情報</h2></div>

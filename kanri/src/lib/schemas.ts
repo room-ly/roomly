@@ -102,6 +102,24 @@ export const propertySchema = z.object({
   // 取引
   transaction_type: z.enum(["owner", "agent", "intermediary", "sublet"]).optional()
     .or(z.literal("").transform(() => undefined)),
+  // 登記情報
+  registered_owner_name: optionalString,
+  mortgage_exists: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
+  mortgagee: optionalString,
+  mortgage_amount: z.coerce.number().min(0).optional()
+    .or(z.literal("").transform(() => undefined)),
+  // インフラ
+  water_supply: optionalString,
+  gas_type: optionalString,
+  electricity: optionalString,
+  sewage: optionalString,
+  septic_tank: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
+  // リスク調査
+  asbestos_survey: optionalString,
+  earthquake_resistance: optionalString,
+  flood_hazard_zone: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
+  landslide_hazard_zone: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
+  tsunami_hazard_zone: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
   // 自由入力
   notes: optionalString,
   appeal_points: optionalString,
@@ -137,20 +155,39 @@ export type UnitFormData = z.infer<typeof unitSchema>;
 
 // 入居者スキーマ
 export const tenantSchema = z.object({
+  // 基本情報
   name: z.string().min(1, "氏名は必須です"),
-  name_kana: z.string().optional(),
+  name_kana: optionalString,
+  date_of_birth: optionalString,
+  gender: optionalString,
+  nationality: optionalString,
   phone: phoneField,
   email: z
     .string()
     .email("メールアドレスの形式が正しくありません")
     .optional()
     .or(z.literal("")),
-  workplace: z.string().optional(),
-  emergency_contact_name: z.string().optional(),
+  postal_code: optionalString,
+  address: optionalString,
+  workplace: optionalString,
+  workplace_phone: phoneField,
+  annual_income: optionalPositiveInt,
+  // 緊急連絡先
+  emergency_contact_name: optionalString,
   emergency_contact_phone: phoneField,
-  guarantor_name: z.string().optional(),
+  emergency_contact_relation: optionalString,
+  // 保証人
+  guarantor_name: optionalString,
+  guarantor_name_kana: optionalString,
+  guarantor_date_of_birth: optionalString,
   guarantor_phone: phoneField,
-  guarantor_address: z.string().optional(),
+  guarantor_address: optionalString,
+  guarantor_workplace: optionalString,
+  guarantor_workplace_phone: phoneField,
+  guarantor_annual_income: optionalPositiveInt,
+  guarantor_relation: optionalString,
+  // 備考
+  notes: optionalString,
 });
 
 export type TenantFormData = z.infer<typeof tenantSchema>;
@@ -170,9 +207,26 @@ export const contractSchema = z
     management_fee: z.coerce
       .number()
       .min(0, "管理費は0以上を入力してください"),
+    deposit: z.coerce.number().min(0, "敷金は0以上を入力してください").optional()
+      .or(z.literal("").transform(() => undefined)),
+    key_money: z.coerce.number().min(0, "礼金は0以上を入力してください").optional()
+      .or(z.literal("").transform(() => undefined)),
+    renewal_fee: z.coerce.number().min(0, "更新料は0以上を入力してください").optional()
+      .or(z.literal("").transform(() => undefined)),
+    signed_date: optionalString,
+    important_explanation_date: optionalString,
+    payment_method: optionalString,
+    payment_due_day: optionalPositiveInt,
+    guarantor_name: optionalString,
+    guarantor_phone: phoneField,
+    insurance_company: optionalString,
+    brokerage_fee: z.coerce.number().min(0).optional()
+      .or(z.literal("").transform(() => undefined)),
+    special_terms: optionalString,
     status: z.enum(["active", "expired", "terminated", "pending"], {
       message: "状態を選択してください",
     }),
+    notes: optionalString,
   })
   .refine(
     (data) => {

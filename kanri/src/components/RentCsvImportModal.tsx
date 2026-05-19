@@ -12,6 +12,7 @@ interface MatchResult {
   unit_label: string | null;
   billing_month: string | null;
   total_amount: number | null;
+  remaining_amount: number | null;
   match_type: "exact" | "amount" | "name" | "none";
 }
 
@@ -32,6 +33,8 @@ export default function RentCsvImportModal({ isOpen, onClose }: Props) {
     applied: number;
     errors: string[];
   } | null>(null);
+  const [fileName, setFileName] = useState("");
+  const [dragging, setDragging] = useState(false);
 
   if (!isOpen) return null;
 
@@ -41,6 +44,8 @@ export default function RentCsvImportModal({ isOpen, onClose }: Props) {
     setSelected(new Set());
     setError("");
     setApplyResult(null);
+    setFileName("");
+    setDragging(false);
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -175,7 +180,7 @@ export default function RentCsvImportModal({ isOpen, onClose }: Props) {
       <div className="bg-surface rounded-2xl shadow-xl max-w-3xl w-full max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4 border-b border-line">
           <h2 className="text-[15px] font-semibold">
-            {step === "upload" && "CSV入金消込"}
+            {step === "upload" && "入金消込"}
             {step === "confirm" && "マッチング結果の確認"}
             {step === "done" && "一括入金完了"}
           </h2>
@@ -197,18 +202,42 @@ export default function RentCsvImportModal({ isOpen, onClose }: Props) {
           {step === "upload" && (
             <form onSubmit={handleUpload}>
               <p className="text-[13px] text-ink-2 mb-4">
-                銀行の入出金明細CSVをアップロードすると、振込人名義と金額から未入金の家賃請求と自動マッチングします。
+                銀行の入出金明細ファイルをアップロードすると、振込人名義と金額から未入金の家賃請求と自動マッチングします。
               </p>
-              <div className="border-2 border-dashed border-line rounded-xl p-8 text-center mb-4">
+              <div
+                onClick={() => fileRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragging(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file && fileRef.current) {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    fileRef.current.files = dt.files;
+                    setFileName(file.name);
+                  }
+                }}
+                className={`border-2 border-dashed rounded-xl p-8 text-center mb-4 cursor-pointer transition-colors ${
+                  dragging ? "border-accent bg-accent/5" : "border-line hover:border-ink-4"
+                }`}
+              >
                 <Upload size={32} className="mx-auto text-ink-4 mb-3" />
                 <input
                   ref={fileRef}
                   type="file"
-                  accept=".csv"
-                  className="block mx-auto text-sm text-ink-2"
+                  accept=".csv,.txt"
+                  className="hidden"
+                  onChange={(e) => setFileName(e.target.files?.[0]?.name || "")}
                 />
+                {fileName ? (
+                  <p className="text-sm text-ink font-medium">{fileName}</p>
+                ) : (
+                  <p className="text-sm text-ink-3">クリックまたはドラッグ&ドロップでファイルを選択</p>
+                )}
                 <p className="text-[11px] text-ink-4 mt-2">
-                  CSV形式（日付・金額・振込人名義カラムを含むもの）
+                  全銀フォーマット（.txt）またはCSV形式に対応
                 </p>
               </div>
               <div className="flex justify-end gap-2">
@@ -221,7 +250,7 @@ export default function RentCsvImportModal({ isOpen, onClose }: Props) {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !fileName}
                   className="btn btn-primary disabled:opacity-50"
                 >
                   {loading ? "解析中..." : "マッチング開始"}
@@ -234,7 +263,7 @@ export default function RentCsvImportModal({ isOpen, onClose }: Props) {
             <>
               <div className="flex items-center gap-4 mb-4 text-[13px] text-ink-2">
                 <span>
-                  CSV: <strong>{results.length}</strong>件
+                  取込データ: <strong>{results.length}</strong>件
                 </span>
                 <span>
                   マッチ済:{" "}
@@ -262,9 +291,9 @@ export default function RentCsvImportModal({ isOpen, onClose }: Props) {
                           onChange={toggleAll}
                         />
                       </th>
-                      <th className="py-2 px-2">CSV振込人</th>
-                      <th className="py-2 px-2">CSV日付</th>
-                      <th className="py-2 px-2 text-right">CSV金額</th>
+                      <th className="py-2 px-2">振込人</th>
+                      <th className="py-2 px-2">日付</th>
+                      <th className="py-2 px-2 text-right">金額</th>
                       <th className="py-2 px-2">マッチ</th>
                       <th className="py-2 px-2">入居者</th>
                       <th className="py-2 px-2">部屋</th>
@@ -293,7 +322,14 @@ export default function RentCsvImportModal({ isOpen, onClose }: Props) {
                         <td className="py-2 px-2 font-medium">{r.csv.name || "—"}</td>
                         <td className="py-2 px-2 mono text-ink-2">{r.csv.date}</td>
                         <td className="py-2 px-2 text-right tabular-nums">
-                          ¥{r.csv.amount.toLocaleString()}
+                          <div>¥{r.csv.amount.toLocaleString()}</div>
+                          {r.remaining_amount != null && r.csv.amount !== r.remaining_amount && (
+                            <div className={`text-[11px] ${r.csv.amount > r.remaining_amount ? "text-blue-600" : "text-danger"}`}>
+                              {r.csv.amount > r.remaining_amount
+                                ? `+¥${(r.csv.amount - r.remaining_amount).toLocaleString()} 超過`
+                                : `-¥${(r.remaining_amount - r.csv.amount).toLocaleString()} 不足`}
+                            </div>
+                          )}
                         </td>
                         <td className="py-2 px-2">{matchBadge(r.match_type)}</td>
                         <td className="py-2 px-2">

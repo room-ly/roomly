@@ -3,8 +3,9 @@
 ## プロジェクト構成
 
 ```
-estate/
-├── roomly/           ← メインアプリ（Next.js App Router + TypeScript）
+roomly/
+├── kanri/            ← 管理会社向けSaaS（Next.js App Router + TypeScript）
+├── portal/           ← 入居者向け物件検索ポータル（Next.js App Router + TypeScript）
 ├── hp/               ← ホームページ（Next.js）
 ├── lp/               ← ランディングページ（Vite + React + TS）
 ├── supabase/         ← 共有バックエンド（DB / Auth / Storage）
@@ -92,11 +93,44 @@ estate/
 | bg | #f7fafc | 背景 |
 | card | #ffffff | カード背景 |
 
+## portal（入居者向け物件検索ポータル）
+
+### 概要
+管理会社のDBから直接取得したリアルタイム空室情報を掲載する入居者向け物件検索サイト。
+おとり物件が構造的に発生しない仕組み。
+
+### ポジショニング
+- 管理会社が**仲介会社を介さず直接客付け**できるポータル
+- kanri導入会社の物件は**自動掲載**（追加作業ゼロ）
+- 競合: ウチコミ！（大家手動掲載）、OHEYAGO（ITANDI BB+連動・東京23区中心）、airdoor（API連携・1都3県）
+
+### 技術構成
+- Next.js App Router + TypeScript + Tailwind CSS
+- Supabase（kanriと同じDBを参照）
+- anon ロールのRLSポリシーで active な空室のみ公開
+
+### ページ構成
+| パス | 内容 |
+|------|------|
+| `/` | 物件検索（エリア・間取り・家賃上限）+ 空室一覧 |
+| `/rooms/[id]` | 物件詳細 + 問い合わせフォーム |
+| `/api/inquiry` | 問い合わせ保存API（kanriのinquiriesテーブルに【ポータル】タグ付きで保存） |
+
+### RLSポリシー（マイグレーション: 00033）
+- vacancies: `listing_status = 'active'` のみ公開
+- units: `status = 'vacant'` のみ公開
+- properties: 空室がある物件のみ公開
+
+### 将来の拡張
+- kanri側にポータル掲載トグルUI追加
+- kanriの物件データをAPI公開（外部サービス連携用）
+
 ## 開発ステータス
 
 | プロジェクト | 状態 | 優先度 |
 |------------|------|--------|
-| roomly | 全9画面UI実装済み（モック認証） | 最優先 |
+| kanri | 全9画面UI実装済み（モック認証） | 最優先 |
+| portal | 物件検索・詳細・問い合わせ実装済み（デプロイ前） | 高 |
 | supabase | デプロイ済み（grtiixrpqwsvxsfapsni / Tokyo） | ✅ |
 | hp / lp | セットアップのみ | 中 |
 | marketing | 記事テンプレート作成済み | 中 |

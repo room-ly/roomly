@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface ContractsTableProps {
   data: Record<string, any>[];
@@ -129,9 +130,21 @@ export default function ContractsTable({ data, alertDays = 90 }: ContractsTableP
                     <td>
                       <span className="strong">{c.tenant?.name}</span>
                     </td>
-                    <td>
-                      <span style={{ color: "var(--ink-2)" }}>{c.unit?.property?.name}</span>
-                      <span className="mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>#{c.unit?.unit_number}</span>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      {c.unit?.property?.id ? (
+                        <Link href={`/properties/${c.unit.property.id}`} className="rlink" style={{ color: "var(--ink-2)" }}>
+                          {c.unit.property.name}
+                        </Link>
+                      ) : (
+                        <span style={{ color: "var(--ink-2)" }}>{c.unit?.property?.name}</span>
+                      )}
+                      {c.unit?.id && c.unit?.property_id ? (
+                        <Link href={`/properties/${c.unit.property_id}/units/${c.unit.id}`} className="rlink mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>
+                          #{c.unit.unit_number}
+                        </Link>
+                      ) : (
+                        <span className="mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>#{c.unit?.unit_number}</span>
+                      )}
                     </td>
                     <td><span className="badge neutral">{CONTRACT_TYPE_LABEL[c.contract_type] || c.contract_type}</span></td>
                     <td>

@@ -2,10 +2,19 @@ import { getExpenses, getPropertiesForSelect, getOwnersForSelect } from "@/lib/q
 import PageHeader from "@/components/PageHeader";
 import ExpensesPageClient from "@/components/ExpensesPageClient";
 import ExpensesTable from "@/components/ExpensesTable";
+import ServerPagination from "@/components/ServerPagination";
 
-export default async function ExpensesPage() {
-  const [expenses, properties, owners] = await Promise.all([
-    getExpenses(),
+const PAGE_SIZE = 50;
+
+export default async function ExpensesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageStr } = await searchParams;
+  const page = Math.max(1, Number(pageStr) || 1);
+  const [{ data: expenses, total }, properties, owners] = await Promise.all([
+    getExpenses(page, PAGE_SIZE),
     getPropertiesForSelect(),
     getOwnersForSelect(),
   ]);
@@ -21,6 +30,7 @@ export default async function ExpensesPage() {
       />
 
       <ExpensesTable data={expenses} />
+      <ServerPagination page={page} pageSize={PAGE_SIZE} total={total} />
     </>
   );
 }

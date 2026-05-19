@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, FileText } from "lucide-react";
+import { Pencil, Trash2, FileText, FileCheck } from "lucide-react";
 import ContractFormModal from "./ContractFormModal";
 
 interface SelectOption {
@@ -36,7 +36,25 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <a
+          href={`/api/contracts/${contract.id}/contract-document`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-secondary flex items-center gap-1.5 text-[13px]"
+        >
+          <FileText size={13} />
+          契約書
+        </a>
+        <a
+          href={`/api/contracts/${contract.id}/important-explanation`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-secondary flex items-center gap-1.5 text-[13px]"
+        >
+          <FileCheck size={13} />
+          重説
+        </a>
         {contract.status === "active" && (
           <a
             href={`/api/contracts/${contract.id}/move-out-notice`}
@@ -46,7 +64,7 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
             style={{ color: "var(--warn)" }}
           >
             <FileText size={13} />
-            退去届出力
+            退去届
           </a>
         )}
         <button

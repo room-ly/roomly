@@ -42,8 +42,8 @@ export default async function ExpenseDetailPage({
         </div>
       </div>
 
-      <div>
-        <div>
+      <div className="detail-grid">
+        <div className="detail-col-main">
           {/* 金額 */}
           <div className="section">
             <div className="section-head-bar"><h2>金額</h2></div>
@@ -70,23 +70,6 @@ export default async function ExpenseDetailPage({
                   <div className="field-label mono">内容</div>
                   <div className="field-value field-plain">{expense.description}</div>
                 </div>
-                {expense.property && (
-                  <div className="field">
-                    <div className="field-label mono">物件</div>
-                    <div className="field-value">
-                      <Link href={`/properties/${expense.property.id}`} className="rlink">
-                        {expense.property.name}
-                      </Link>
-                      {expense.unit?.unit_number && <span style={{ marginLeft: 6, color: "var(--ink-3)", fontSize: 12 }}>{expense.unit.unit_number}</span>}
-                    </div>
-                  </div>
-                )}
-                {expense.owner?.name && (
-                  <div className="field">
-                    <div className="field-label mono">オーナー</div>
-                    <div className="field-value field-plain">{expense.owner.name}</div>
-                  </div>
-                )}
                 {expense.vendor_name && (
                   <div className="field">
                     <div className="field-label mono">業者</div>
@@ -110,6 +93,44 @@ export default async function ExpenseDetailPage({
           </div>
         </div>
 
+        <div className="detail-col-side">
+          {expense.property && (
+            <div className="section">
+              <div className="section-head-bar"><h2>物件</h2></div>
+              <div className="section-body">
+                <div className="kv-list">
+                  <div className="field">
+                    <div className="field-label mono">物件名</div>
+                    <div className="field-value">
+                      <Link href={`/properties/${expense.property.id}`} className="rlink">
+                        {expense.property.name}
+                      </Link>
+                    </div>
+                  </div>
+                  {expense.unit?.unit_number && (
+                    <div className="field">
+                      <div className="field-label mono">部屋</div>
+                      <div className="field-value field-plain mono">{expense.unit.unit_number}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          {expense.owner?.name && (
+            <div className="section">
+              <div className="section-head-bar"><h2>オーナー</h2></div>
+              <div className="section-body">
+                <div className="kv-list">
+                  <div className="field">
+                    <div className="field-label mono">氏名</div>
+                    <div className="field-value field-plain">{expense.owner.name}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

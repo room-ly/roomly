@@ -9,6 +9,74 @@ interface CsvRow {
   raw: string;
 }
 
+// 全銀フォーマット（固定長120バイト/行）パーサー
+function isZenginFormat(buffer: ArrayBuffer): boolean {
+  const bytes = new Uint8Array(buffer);
+  if (bytes.length < 120) return false;
+  // 先頭が "1"（ヘッダーレコード区分）で、120バイト目あたりにCRLFまたはEOFがある
+  if (bytes[0] !== 0x31) return false; // "1"
+  // 2行目の先頭が "2"（データレコード）であることを確認
+  let pos = 120;
+  if (pos < bytes.length && bytes[pos] === 0x0d) pos++;
+  if (pos < bytes.length && bytes[pos] === 0x0a) pos++;
+  return pos < bytes.length && bytes[pos] === 0x32; // "2"
+}
+
+function parseZenginFormat(buffer: ArrayBuffer): CsvRow[] {
+  const decoder = new TextDecoder("shift_jis");
+  const bytes = new Uint8Array(buffer);
+  const rows: CsvRow[] = [];
+
+  // CRLF or LFで分割してレコード単位で処理
+  let offset = 0;
+  const records: Uint8Array[] = [];
+  while (offset < bytes.length) {
+    // 次の改行を探す
+    let end = offset;
+    while (end < bytes.length && bytes[end] !== 0x0d && bytes[end] !== 0x0a) {
+      end++;
+    }
+    if (end > offset) {
+      records.push(bytes.slice(offset, end));
+    }
+    // CRLF or LF をスキップ
+    if (end < bytes.length && bytes[end] === 0x0d) end++;
+    if (end < bytes.length && bytes[end] === 0x0a) end++;
+    offset = end;
+  }
+
+  // ヘッダーから振込日（MMDD）を取得
+  let transferDate = "";
+  if (records.length > 0) {
+    const header = decoder.decode(records[0]);
+    const mmdd = header.substring(54, 58).trim();
+    if (/^\d{4}$/.test(mmdd)) {
+      const year = new Date().getFullYear();
+      transferDate = `${year}-${mmdd.substring(0, 2)}-${mmdd.substring(2, 4)}`;
+    }
+  }
+
+  for (const record of records) {
+    const line = decoder.decode(record);
+    if (line[0] !== "2") continue;
+
+    // 依頼人名: byte[50-79]（30バイト、半角カナ）
+    const nameRaw = decoder.decode(record.slice(50, 80)).trim();
+    // 金額: byte[80-90]（11桁）
+    const amountStr = decoder.decode(record.slice(80, 91)).trim();
+    const amount = Number(amountStr);
+    if (!amount || amount <= 0) continue;
+
+    rows.push({
+      date: transferDate,
+      amount,
+      name: nameRaw,
+      raw: line.trim(),
+    });
+  }
+  return rows;
+}
+
 interface MatchResult {
   csv: CsvRow;
   billing_id: string | null;
@@ -17,6 +85,7 @@ interface MatchResult {
   unit_label: string | null;
   billing_month: string | null;
   total_amount: number | null;
+  remaining_amount: number | null;
   match_type: "exact" | "amount" | "name" | "none";
 }
 
@@ -158,15 +227,34 @@ async function handleMatch(request: NextRequest) {
   const billingMonth = formData.get("billing_month") as string | null;
 
   if (!file) {
-    return NextResponse.json({ error: "CSVファイルが必要です" }, { status: 400 });
+    return NextResponse.json({ error: "ファイルが必要です" }, { status: 400 });
   }
 
-  const text = await file.text();
-  const csvRows = parseCsvLines(text);
+  const buffer = await file.arrayBuffer();
+  let csvRows: CsvRow[];
+
+  if (isZenginFormat(buffer)) {
+    csvRows = parseZenginFormat(buffer);
+  } else {
+    // Shift_JISの可能性を考慮: BOMなしでASCII外バイトがあればShift_JISを試行
+    const bytes = new Uint8Array(buffer);
+    const hasHighBytes = bytes.some((b) => b > 0x7f);
+    let text: string;
+    if (hasHighBytes) {
+      try {
+        text = new TextDecoder("shift_jis").decode(buffer);
+      } catch {
+        text = new TextDecoder("utf-8").decode(buffer);
+      }
+    } else {
+      text = new TextDecoder("utf-8").decode(buffer);
+    }
+    csvRows = parseCsvLines(text);
+  }
 
   if (csvRows.length === 0) {
     return NextResponse.json(
-      { error: "CSVから入金データを読み取れませんでした。日付・金額カラムを含むCSVをアップロードしてください。" },
+      { error: "入金データを読み取れませんでした。全銀フォーマット（.txt）またはCSV（日付・金額カラムを含むもの）をアップロードしてください。" },
       { status: 400 }
     );
   }
@@ -235,8 +323,14 @@ async function handleMatch(request: NextRequest) {
       }
     }
 
+    let remainingAmount: number | null = null;
     if (bestMatch) {
       usedBillingIds.add(bestMatch.id);
+      remainingAmount = Number(bestMatch.total_amount) -
+        ((bestMatch.rent_payments as any[]) || []).reduce(
+          (s: number, p: { amount: number }) => s + Number(p.amount),
+          0
+        );
     }
 
     const tenant = bestMatch ? (bestMatch.contract as any)?.tenant : null;
@@ -252,6 +346,7 @@ async function handleMatch(request: NextRequest) {
         : null,
       billing_month: bestMatch?.billing_month || null,
       total_amount: bestMatch ? Number(bestMatch.total_amount) : null,
+      remaining_amount: remainingAmount,
       match_type: matchType,
     };
   });

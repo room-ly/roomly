@@ -10,6 +10,7 @@ import {
   FileText,
   Banknote,
   Wrench,
+  FolderOpen,
   MessageSquare,
   UserCircle,
   Receipt,
@@ -44,6 +45,7 @@ const navGroups = [
     items: [
       { href: "/rent", label: "家賃", icon: Banknote },
       { href: "/maintenance", label: "修繕", icon: Wrench },
+      { href: "/documents", label: "書類", icon: FolderOpen },
       { href: "/expenses", label: "経費", icon: Receipt },
       { href: "/inquiries", label: "問い合わせ", icon: MessageSquare },
     ] as NavItem[],
@@ -257,11 +259,15 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
         </button>
 
         {userMenuOpen && (
-          <div className="absolute left-4 right-4 bottom-full mb-1.5 bg-surface rounded-[var(--r-lg)] border border-line shadow-lg z-50">
-            <div className="py-0.5">
+          <div className="absolute left-4 right-4 bottom-full mb-2 bg-surface rounded-[var(--r-lg)] border border-line shadow-lg z-50 overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-line">
+              <div className="text-[12px] font-medium text-ink-2 truncate">{displayUser.name || displayUser.email.split("@")[0] || "ユーザー"}</div>
+              <div className="text-[11px] text-ink-4 truncate mt-0.5">{displayUser.email}</div>
+            </div>
+            <div className="p-2">
               <button
                 onClick={() => { logout(); }}
-                className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-danger hover:bg-danger-tint transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-ink-2 hover:bg-danger-tint hover:text-danger rounded-[var(--r-md)] transition-colors cursor-pointer"
               >
                 <LogOut size={14} />
                 ログアウト
@@ -321,3 +327,4 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
     </>
   );
 }
+// poll-test

@@ -22,6 +22,22 @@ function avatarTone(name: string) {
   return AVATAR_TONES[h % AVATAR_TONES.length];
 }
 
+const GENDER_LABELS: Record<string, string> = {
+  male: "男性",
+  female: "女性",
+  other: "その他",
+};
+
+function Field({ label, value, mono }: { label: string; value?: string | number | null; mono?: boolean }) {
+  if (!value && value !== 0) return null;
+  return (
+    <div className="field">
+      <div className="field-label mono">{label}</div>
+      <div className={`field-value field-plain${mono ? " mono" : ""}`}>{value}</div>
+    </div>
+  );
+}
+
 export default async function TenantDetailPage({
   params,
 }: {
@@ -34,6 +50,11 @@ export default async function TenantDetailPage({
   const { tenant, contracts } = result;
   const activeContract = contracts.find((c: any) => c.status === "active");
   const tone = avatarTone(tenant.name || "");
+
+  const hasEmergency = tenant.emergency_contact_name || tenant.emergency_contact_phone || tenant.emergency_contact_relation;
+  const hasGuarantor = tenant.guarantor_name || tenant.guarantor_phone || tenant.guarantor_address
+    || tenant.guarantor_name_kana || tenant.guarantor_date_of_birth || tenant.guarantor_workplace
+    || tenant.guarantor_workplace_phone || tenant.guarantor_annual_income || tenant.guarantor_relation;
 
   return (
     <>
@@ -66,111 +87,65 @@ export default async function TenantDetailPage({
             <div className="section-head-bar"><h2>基本情報</h2></div>
             <div className="section-body">
               <div className="kv-grid">
-                <div className="field">
-                  <div className="field-label mono">氏名</div>
-                  <div className="field-value field-plain">{tenant.name}</div>
-                </div>
-                {tenant.name_kana && (
-                  <div className="field">
-                    <div className="field-label mono">フリガナ</div>
-                    <div className="field-value field-plain">{tenant.name_kana}</div>
-                  </div>
-                )}
-                {tenant.phone && (
-                  <div className="field">
-                    <div className="field-label mono">電話番号</div>
-                    <div className="field-value field-plain mono">{formatPhone(tenant.phone)}</div>
-                  </div>
-                )}
-                {tenant.email && (
-                  <div className="field">
-                    <div className="field-label mono">メール</div>
-                    <div className="field-value field-plain">{tenant.email}</div>
-                  </div>
-                )}
-                {tenant.workplace && (
-                  <div className="field">
-                    <div className="field-label mono">勤務先</div>
-                    <div className="field-value field-plain">{tenant.workplace}</div>
-                  </div>
-                )}
-                {tenant.emergency_contact && (
-                  <div className="field">
-                    <div className="field-label mono">緊急連絡先</div>
-                    <div className="field-value field-plain">{tenant.emergency_contact}</div>
-                  </div>
-                )}
-                {tenant.emergency_phone && (
-                  <div className="field">
-                    <div className="field-label mono">緊急連絡先電話</div>
-                    <div className="field-value field-plain mono">{formatPhone(tenant.emergency_phone)}</div>
-                  </div>
-                )}
-                {tenant.guarantor_name && (
-                  <div className="field">
-                    <div className="field-label mono">保証人</div>
-                    <div className="field-value field-plain">{tenant.guarantor_name}</div>
-                  </div>
-                )}
-                {tenant.guarantor_phone && (
-                  <div className="field">
-                    <div className="field-label mono">保証人電話</div>
-                    <div className="field-value field-plain mono">{formatPhone(tenant.guarantor_phone)}</div>
-                  </div>
-                )}
-                {tenant.guarantor_address && (
-                  <div className="field">
-                    <div className="field-label mono">保証人住所</div>
-                    <div className="field-value field-plain">{tenant.guarantor_address}</div>
-                  </div>
-                )}
+                <Field label="氏名" value={tenant.name} />
+                <Field label="フリガナ" value={tenant.name_kana} />
+                <Field label="生年月日" value={tenant.date_of_birth} mono />
+                <Field label="性別" value={tenant.gender ? GENDER_LABELS[tenant.gender] || tenant.gender : undefined} />
+                <Field label="国籍" value={tenant.nationality} />
+                <Field label="電話番号" value={tenant.phone ? formatPhone(tenant.phone) : undefined} mono />
+                <Field label="メール" value={tenant.email} />
+                <Field label="郵便番号" value={tenant.postal_code} mono />
+                <Field label="住所" value={tenant.address} />
+                <Field label="勤務先" value={tenant.workplace} />
+                <Field label="勤務先電話" value={tenant.workplace_phone ? formatPhone(tenant.workplace_phone) : undefined} mono />
+                <Field label="年収" value={tenant.annual_income ? `¥${Number(tenant.annual_income).toLocaleString()}` : undefined} />
               </div>
-              {tenant.notes && (
-                <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
-                  <span className="field-label mono">備考</span>
-                  <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{tenant.notes}</p>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* 契約履歴 */}
-          <div className="section">
-            <div className="section-head-bar">
-              <h2>契約履歴</h2>
-              <span className="desc">{contracts.length}件</span>
+          {/* 緊急連絡先 */}
+          {hasEmergency && (
+            <div className="section">
+              <div className="section-head-bar"><h2>緊急連絡先</h2></div>
+              <div className="section-body">
+                <div className="kv-grid">
+                  <Field label="氏名" value={tenant.emergency_contact_name} />
+                  <Field label="電話番号" value={tenant.emergency_contact_phone ? formatPhone(tenant.emergency_contact_phone) : undefined} mono />
+                  <Field label="続柄" value={tenant.emergency_contact_relation} />
+                </div>
+              </div>
             </div>
-            <div className="section-body flush">
-              {contracts.length === 0 ? (
-                <p style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "center", padding: "24px 0" }}>契約がありません</p>
-              ) : (
-                <table className="tbl">
-                  <thead>
-                    <tr>
-                      <th>物件・部屋</th>
-                      <th>契約期間</th>
-                      <th style={{ textAlign: "right" }}>賃料</th>
-                      <th>状態</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {contracts.map((c: any) => (
-                      <tr key={c.id} className="row-hover">
-                        <td>
-                          <Link href={`/contracts/${c.id}`} className="rlink">
-                            {c.unit?.property?.name} {c.unit?.unit_number}
-                          </Link>
-                        </td>
-                        <td className="mono" style={{ fontSize: 12, color: "var(--ink-3)" }}>{c.start_date} 〜 {c.end_date || "—"}</td>
-                        <td className="num">¥{Number(c.rent).toLocaleString()}</td>
-                        <td><StatusBadge status={c.status} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+          )}
+
+          {/* 保証人情報 */}
+          {hasGuarantor && (
+            <div className="section">
+              <div className="section-head-bar"><h2>保証人情報</h2></div>
+              <div className="section-body">
+                <div className="kv-grid">
+                  <Field label="氏名" value={tenant.guarantor_name} />
+                  <Field label="フリガナ" value={tenant.guarantor_name_kana} />
+                  <Field label="生年月日" value={tenant.guarantor_date_of_birth} mono />
+                  <Field label="電話番号" value={tenant.guarantor_phone ? formatPhone(tenant.guarantor_phone) : undefined} mono />
+                  <Field label="続柄" value={tenant.guarantor_relation} />
+                  <Field label="住所" value={tenant.guarantor_address} />
+                  <Field label="勤務先" value={tenant.guarantor_workplace} />
+                  <Field label="勤務先電話" value={tenant.guarantor_workplace_phone ? formatPhone(tenant.guarantor_workplace_phone) : undefined} mono />
+                  <Field label="年収" value={tenant.guarantor_annual_income ? `¥${Number(tenant.guarantor_annual_income).toLocaleString()}` : undefined} />
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* 備考 */}
+          {tenant.notes && (
+            <div className="section">
+              <div className="section-head-bar"><h2>備考</h2></div>
+              <div className="section-body">
+                <p style={{ fontSize: 13, whiteSpace: "pre-wrap" }}>{tenant.notes}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* サイドカラム */}
@@ -194,7 +169,7 @@ export default async function TenantDetailPage({
                   </div>
                   <div className="field">
                     <div className="field-label mono">賃料</div>
-                    <div className="field-value num">¥{Number(activeContract.rent).toLocaleString()}</div>
+                    <div className="field-value num" style={{ textAlign: "left" }}>¥{Number(activeContract.rent).toLocaleString()}</div>
                   </div>
                   <div className="field">
                     <div className="field-label mono">契約満了</div>
@@ -204,6 +179,35 @@ export default async function TenantDetailPage({
               </div>
             </div>
           )}
+
+          <div className="section">
+            <div className="section-head-bar">
+              <h2>契約履歴</h2>
+              <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--ink-4)" }}>{contracts.length}件</span>
+            </div>
+            <div className="section-body" style={{ padding: contracts.length === 0 ? undefined : "4px 16px 12px" }}>
+              {contracts.length === 0 ? (
+                <p style={{ fontSize: 12, color: "var(--ink-4)", textAlign: "center" }}>契約なし</p>
+              ) : (
+                <div className="related-list">
+                  {contracts.map((c: any) => (
+                    <Link key={c.id} href={`/contracts/${c.id}`} className="related-row" style={{ padding: "8px 8px", margin: "0 -8px" }}>
+                      <div>
+                        <div className="related-label" style={{ fontSize: 12.5 }}>
+                          {c.unit?.property?.name} {c.unit?.unit_number}
+                        </div>
+                        <div className="related-sub" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span className="mono">{c.start_date?.slice(0, 7)} 〜 {c.end_date?.slice(0, 7) || "—"}</span>
+                          <StatusBadge status={c.status} />
+                        </div>
+                      </div>
+                      <span className="related-arrow">↗</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
         </div>
       </div>

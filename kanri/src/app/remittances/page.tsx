@@ -3,11 +3,12 @@ import { getOwners, getExpenses, getRemittances } from "@/lib/queries";
 import RemittancesPageClient from "@/components/RemittancesPageClient";
 
 export default async function RemittancesPage() {
-  const [owners, expenses, remittances] = await Promise.all([
+  const [owners, expensesResult, remittances] = await Promise.all([
     getOwners(),
-    getExpenses(),
+    getExpenses(1, 10000),
     getRemittances(),
   ]);
+  const expenses = expensesResult.data;
 
   const ownerExpenses = expenses
     .filter((e: any) => e.is_owner_charge && e.owner_id)

@@ -161,19 +161,28 @@ export default async function RentDetailPage({
               <div style={{ marginTop: 20, marginBottom: 20 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
                   <span style={{ color: "var(--ink-3)" }}>入金済 ¥{currentPaidTotal.toLocaleString()}</span>
-                  <span style={{ fontWeight: 500, color: currentRemaining > 0 ? "var(--warn)" : "var(--accent-deep)" }}>
-                    {currentRemaining > 0 ? `残 ¥${currentRemaining.toLocaleString()}` : "完済"}
+                  <span style={{ fontWeight: 500, color: currentRemaining > 0 ? "var(--warn)" : currentRemaining < 0 ? "#2b6cb0" : "var(--accent-deep)" }}>
+                    {currentRemaining > 0
+                      ? `残 ¥${currentRemaining.toLocaleString()}`
+                      : currentRemaining < 0
+                        ? `超過 ¥${Math.abs(currentRemaining).toLocaleString()}`
+                        : "完済"}
                   </span>
                 </div>
                 <div style={{ height: 8, background: "var(--bg-2)", borderRadius: 99, overflow: "hidden" }}>
                   <div style={{
                     height: "100%",
                     borderRadius: 99,
-                    background: currentRemaining > 0 ? "var(--warn)" : "var(--accent-deep)",
+                    background: currentRemaining > 0 ? "var(--warn)" : currentRemaining < 0 ? "#2b6cb0" : "var(--accent-deep)",
                     width: `${Math.min(100, (currentPaidTotal / Number(current.total_amount)) * 100)}%`,
                     transition: "width 0.3s",
                   }} />
                 </div>
+                {currentRemaining < 0 && (
+                  <p style={{ fontSize: 11, color: "#2b6cb0", marginTop: 4 }}>
+                    請求額 ¥{Number(current.total_amount).toLocaleString()} に対して ¥{Math.abs(currentRemaining).toLocaleString()} 多く入金されています。返金または翌月充当の確認をしてください。
+                  </p>
+                )}
               </div>
 
               {/* 入金履歴 */}

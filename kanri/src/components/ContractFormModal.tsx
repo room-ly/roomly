@@ -282,6 +282,88 @@ export default function ContractFormModal({
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">敷金</label>
+              <input name="deposit" type="number" defaultValue={editData?.deposit ?? ""} className="input" placeholder="例: 80000" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">礼金</label>
+              <input name="key_money" type="number" defaultValue={editData?.key_money ?? ""} className="input" placeholder="例: 80000" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">更新料</label>
+              <input name="renewal_fee" type="number" defaultValue={editData?.renewal_fee ?? ""} className="input" placeholder="例: 80000" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">支払方法</label>
+              <select name="payment_method" defaultValue={editData?.payment_method || ""} className="input">
+                <option value="">未設定</option>
+                <option value="transfer">銀行振込</option>
+                <option value="debit">口座振替</option>
+                <option value="card">クレジットカード</option>
+                <option value="cash">現金</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">支払期日（毎月）</label>
+              <select name="payment_due_day" defaultValue={editData?.payment_due_day ?? ""} className="input">
+                <option value="">未設定</option>
+                <option value="25">25日</option>
+                <option value="27">27日</option>
+                <option value="28">末日前</option>
+                <option value="1">翌月1日</option>
+                <option value="5">翌月5日</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">契約締結日</label>
+              <input name="signed_date" type="date" defaultValue={editData?.signed_date || ""} className="input" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">重説実施日</label>
+              <input name="important_explanation_date" type="date" defaultValue={editData?.important_explanation_date || ""} className="input" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">保証人</label>
+              <input name="guarantor_name" type="text" defaultValue={editData?.guarantor_name || ""} className="input" placeholder="氏名" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">保証人電話</label>
+              <input name="guarantor_phone" type="tel" defaultValue={editData?.guarantor_phone || ""} className="input" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">保険会社</label>
+              <input name="insurance_company" type="text" defaultValue={editData?.insurance_company || ""} className="input" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">仲介手数料</label>
+              <input name="brokerage_fee" type="number" defaultValue={editData?.brokerage_fee ?? ""} className="input" placeholder="例: 80000" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-ink-2 block mb-1">特約事項</label>
+            <textarea name="special_terms" defaultValue={editData?.special_terms || ""} className="input" rows={3} placeholder="ペット不可、楽器演奏不可等" />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-ink-2 block mb-1">備考</label>
+            <textarea name="notes" defaultValue={editData?.notes || ""} className="input" rows={2} />
+          </div>
+
           <div className="flex justify-end gap-2 pt-3">
             <button
               type="button"

@@ -148,11 +148,29 @@ export interface Tenant {
   company_id: string;
   name: string;
   name_kana?: string;
+  date_of_birth?: string;
+  gender?: string;
+  nationality?: string;
   phone?: string;
   email?: string;
+  postal_code?: string;
+  address?: string;
   workplace?: string;
+  workplace_phone?: string;
+  annual_income?: number;
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
+  emergency_contact_relation?: string;
+  guarantor_name?: string;
+  guarantor_name_kana?: string;
+  guarantor_date_of_birth?: string;
+  guarantor_phone?: string;
+  guarantor_address?: string;
+  guarantor_workplace?: string;
+  guarantor_workplace_phone?: string;
+  guarantor_annual_income?: number;
+  guarantor_relation?: string;
+  notes?: string;
 }
 
 export interface Contract {

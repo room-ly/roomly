@@ -24,9 +24,12 @@ export default function RemittanceFormModal({
 }: RemittanceFormModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [calcLoading, setCalcLoading] = useState(false);
   const [apiError, setApiError] = useState("");
   const [manualOverride, setManualOverride] = useState(false);
   const [calcResult, setCalcResult] = useState<Record<string, any> | null>(null);
+  const [selectedOwnerId, setSelectedOwnerId] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("");
 
   const isEdit = !!editData;
 
@@ -37,21 +40,35 @@ export default function RemittanceFormModal({
     } else {
       setManualOverride(false);
       setCalcResult(null);
+      setSelectedOwnerId("");
+      setSelectedMonth("");
     }
   }, [editData, isOpen]);
 
   if (!isOpen) return null;
 
-  async function handleCalc(ownerId: string, month: string) {
-    if (!ownerId || !month) return;
+  async function handleCalc(ownerId?: string, month?: string) {
+    const oId = ownerId || selectedOwnerId;
+    const m = month || selectedMonth || defaultMonth;
+    if (!oId || !m) {
+      setApiError("オーナーと対象月を選択してください");
+      return;
+    }
+    setCalcLoading(true);
+    setApiError("");
     try {
-      const res = await fetch(`/api/remittances/calc?owner_id=${ownerId}&month=${month}-01`);
+      const res = await fetch(`/api/remittances/calc?owner_id=${oId}&month=${m}-01`);
       if (res.ok) {
         const data = await res.json();
         setCalcResult(data);
+      } else {
+        const err = await res.json();
+        setApiError(err.error || "計算に失敗しました");
       }
     } catch {
-      // 計算API未実装の場合は無視
+      setApiError("計算処理でエラーが発生しました");
+    } finally {
+      setCalcLoading(false);
     }
   }
 
@@ -152,41 +169,52 @@ export default function RemittanceFormModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isEdit ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium text-ink-2 block mb-1">
-                  オーナー <span className="text-danger">*</span>
-                </label>
-                <select
-                  name="owner_id"
-                  className="input"
-                  onChange={(e) => {
-                    const monthInput = document.querySelector<HTMLInputElement>('input[name="remittance_month"]');
-                    if (monthInput?.value) handleCalc(e.target.value, monthInput.value);
-                  }}
-                >
-                  <option value="">選択してください</option>
-                  {owners.map((o) => (
-                    <option key={o.id} value={o.id}>{o.name}</option>
-                  ))}
-                </select>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">
+                    オーナー <span className="text-danger">*</span>
+                  </label>
+                  <select
+                    name="owner_id"
+                    className="input"
+                    value={selectedOwnerId}
+                    onChange={(e) => {
+                      setSelectedOwnerId(e.target.value);
+                      setCalcResult(null);
+                    }}
+                  >
+                    <option value="">選択してください</option>
+                    {owners.map((o) => (
+                      <option key={o.id} value={o.id}>{o.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">
+                    対象月 <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    name="remittance_month"
+                    type="month"
+                    value={selectedMonth || defaultMonth}
+                    className="input"
+                    onChange={(e) => {
+                      setSelectedMonth(e.target.value);
+                      setCalcResult(null);
+                    }}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-ink-2 block mb-1">
-                  対象月 <span className="text-danger">*</span>
-                </label>
-                <input
-                  name="remittance_month"
-                  type="month"
-                  defaultValue={defaultMonth}
-                  className="input"
-                  onChange={(e) => {
-                    const ownerSelect = document.querySelector<HTMLSelectElement>('select[name="owner_id"]');
-                    if (ownerSelect?.value) handleCalc(ownerSelect.value, e.target.value);
-                  }}
-                />
-              </div>
-            </div>
+              <button
+                type="button"
+                onClick={() => handleCalc()}
+                disabled={calcLoading || (!selectedOwnerId)}
+                className="w-full bg-accent/10 text-accent font-medium rounded-lg px-4 py-2 text-sm hover:bg-accent/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {calcLoading ? "計算中..." : "自動計算"}
+              </button>
+            </>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -227,14 +255,40 @@ export default function RemittanceFormModal({
 
           {calcResult && !isEdit && (
             <div className="bg-bg-2 rounded-lg p-3 text-[13px] space-y-1">
+              <p className="text-xs font-medium text-ink-3 mb-2">自動計算結果（プレビュー）</p>
               <div className="flex justify-between">
-                <span className="text-ink-3">家賃収入（自動計算）</span>
+                <span className="text-ink-3">家賃収入</span>
                 <span className="tabular-nums">¥{Number(calcResult.total_rent).toLocaleString()}</span>
               </div>
-              <div className="flex justify-between font-medium">
+              <div className="flex justify-between">
+                <span className="text-ink-3">管理手数料</span>
+                <span className="text-danger tabular-nums">
+                  {Number(calcResult.management_fee_deducted) > 0 ? `-¥${Number(calcResult.management_fee_deducted).toLocaleString()}` : "¥0"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-3">経費控除（{calcResult.expense_count}件）</span>
+                <span className="text-warn tabular-nums">
+                  {Number(calcResult.expense_deducted) > 0 ? `-¥${Number(calcResult.expense_deducted).toLocaleString()}` : "¥0"}
+                </span>
+              </div>
+              <div className="flex justify-between font-medium border-t border-line pt-1 mt-1">
                 <span>送金額</span>
                 <span className="tabular-nums">¥{Number(calcResult.net_amount).toLocaleString()}</span>
               </div>
+              {calcResult.property_breakdown?.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-line space-y-0.5">
+                  <p className="text-xs text-ink-3">物件別内訳</p>
+                  {calcResult.property_breakdown.map((p: { name: string; rent: number; fee: number }, i: number) => (
+                    <div key={i} className="flex justify-between text-xs">
+                      <span className="text-ink-3 truncate mr-2">{p.name}</span>
+                      <span className="tabular-nums whitespace-nowrap">
+                        ¥{p.rent.toLocaleString()}（手数料 ¥{p.fee.toLocaleString()}）
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

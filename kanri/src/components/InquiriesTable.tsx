@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import MonthSelector from "./MonthSelector";
 import StatusBadge from "./StatusBadge";
 import { formatPhone } from "@/lib/phone";
 
@@ -56,6 +57,19 @@ const TYPE_LABELS: Record<string, string> = {
   facility: "設備",
 };
 
+function getAvailableMonths(data: Record<string, any>[]): string[] {
+  const set = new Set<string>();
+  for (const item of data) {
+    if (item.created_at) set.add(item.created_at.slice(0, 7));
+  }
+  return Array.from(set).sort().reverse();
+}
+
+function getCurrentMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export default function InquiriesTable({ inquiries, initialFilter }: InquiriesTableProps) {
   const router = useRouter();
   const [filter, setFilter] = useState<FilterTab>(() => {
@@ -65,8 +79,19 @@ export default function InquiriesTable({ inquiries, initialFilter }: InquiriesTa
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
+  const availableMonths = useMemo(() => getAvailableMonths(inquiries), [inquiries]);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const current = getCurrentMonth();
+    return availableMonths.includes(current) ? current : availableMonths[0] || current;
+  });
+
+  const monthFiltered = useMemo(() => {
+    if (selectedMonth === "all") return inquiries;
+    return inquiries.filter((q) => q.created_at?.startsWith(selectedMonth));
+  }, [inquiries, selectedMonth]);
+
   const filtered = useMemo(() => {
-    let list = inquiries;
+    let list = monthFiltered;
     if (filter === "open") list = list.filter((q) => q.status === "open");
     else if (filter === "in_progress") list = list.filter((q) => q.status === "in_progress");
     else if (filter === "resolved") list = list.filter((q) => q.status === "resolved" || q.status === "closed");
@@ -81,7 +106,7 @@ export default function InquiriesTable({ inquiries, initialFilter }: InquiriesTa
       );
     }
     return list;
-  }, [inquiries, filter, search]);
+  }, [monthFiltered, filter, search]);
 
   useEffect(() => {
     if (filtered.length && (!selectedId || !filtered.find((q) => q.id === selectedId))) {
@@ -92,10 +117,10 @@ export default function InquiriesTable({ inquiries, initialFilter }: InquiriesTa
   const selected = inquiries.find((q) => q.id === selectedId) || filtered[0] || null;
 
   const totals = {
-    all: inquiries.length,
-    open: inquiries.filter((q) => q.status === "open").length,
-    in_progress: inquiries.filter((q) => q.status === "in_progress").length,
-    resolved: inquiries.filter((q) => q.status === "resolved" || q.status === "closed").length,
+    all: monthFiltered.length,
+    open: monthFiltered.filter((q) => q.status === "open").length,
+    in_progress: monthFiltered.filter((q) => q.status === "in_progress").length,
+    resolved: monthFiltered.filter((q) => q.status === "resolved" || q.status === "closed").length,
   };
 
   const tabs: { key: FilterTab; label: string; count: number; danger?: boolean }[] = [
@@ -107,6 +132,8 @@ export default function InquiriesTable({ inquiries, initialFilter }: InquiriesTa
 
   return (
     <>
+      <MonthSelector selectedMonth={selectedMonth} availableMonths={availableMonths} onChange={setSelectedMonth} />
+
       <div className="toolbar">
         <div className="tb-tabs">
           {tabs.map((t) => (
@@ -422,16 +449,14 @@ function NotesEditor({ inquiryId, initialNotes }: { inquiryId: string; initialNo
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
       />
-      {changed && (
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="btn btn-primary btn-sm"
-          style={{ marginTop: 4, fontSize: 11 }}
-        >
-          {saving ? "保存中..." : "保存"}
-        </button>
-      )}
+      <button
+        onClick={handleSave}
+        disabled={!changed || saving}
+        className="btn btn-primary btn-sm"
+        style={{ marginTop: 4, fontSize: 11, opacity: changed ? 1 : 0.4 }}
+      >
+        {saving ? "保存中..." : "保存"}
+      </button>
     </div>
   );
 }
