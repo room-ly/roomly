@@ -10,7 +10,6 @@ import {
   FileText,
   Banknote,
   Wrench,
-  FolderOpen,
   MessageSquare,
   UserCircle,
   Receipt,
@@ -45,7 +44,6 @@ const navGroups = [
     items: [
       { href: "/rent", label: "家賃", icon: Banknote },
       { href: "/maintenance", label: "修繕", icon: Wrench },
-      { href: "/documents", label: "書類", icon: FolderOpen },
       { href: "/expenses", label: "経費", icon: Receipt },
       { href: "/inquiries", label: "問い合わせ", icon: MessageSquare },
     ] as NavItem[],

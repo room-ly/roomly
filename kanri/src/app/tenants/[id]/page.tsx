@@ -6,6 +6,7 @@ import { getTenantDetail } from "@/lib/queries";
 import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import TenantDetailClient from "@/components/TenantDetailClient";
+import DocumentSection from "@/components/DocumentSection";
 
 const AVATAR_TONES = [
   { bg: "#e8f0e8", fg: "#3f5a4c" },
@@ -146,6 +147,8 @@ export default async function TenantDetailPage({
               </div>
             </div>
           )}
+
+          <DocumentSection tenantId={id} />
         </div>
 
         {/* サイドカラム */}

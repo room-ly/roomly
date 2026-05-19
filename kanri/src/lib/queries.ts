@@ -403,17 +403,6 @@ export async function getExpenses(page = 1, pageSize = 50): Promise<{ data: Row[
   return { data: (data ?? []) as Row[], total: count ?? 0 };
 }
 
-// 書類一覧（物件・部屋・入居者付き）
-export async function getDocuments() {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("documents")
-    .select("*, property:properties(name), unit:units(unit_number), tenant:tenants(name)")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as Row[];
-}
-
 // 会社情報
 export async function getCompany() {
   const supabase = await createClient();

@@ -2,13 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { randomUUID } from "crypto";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase
+    const propertyId = request.nextUrl.searchParams.get("property_id");
+    const tenantId = request.nextUrl.searchParams.get("tenant_id");
+
+    let query = supabase
       .from("documents")
       .select("*, property:properties(name), tenant:tenants(name)")
       .order("created_at", { ascending: false });
+
+    if (propertyId) query = query.eq("property_id", propertyId);
+    if (tenantId) query = query.eq("tenant_id", tenantId);
+
+    const { data, error } = await query;
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);

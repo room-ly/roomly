@@ -6,6 +6,7 @@ import { formatBuiltYear } from "@/lib/wareki";
 import PropertyDetailClient from "@/components/PropertyDetailClient";
 import PropertyImages from "@/components/PropertyImages";
 import UnitTable from "@/components/UnitTable";
+import DocumentSection from "@/components/DocumentSection";
 
 export default async function PropertyDetailPage({
   params,
@@ -206,6 +207,8 @@ export default async function PropertyDetailPage({
       <PropertyImages propertyId={id} />
 
       <UnitTable propertyId={id} units={units} contracts={contracts} />
+
+      <DocumentSection propertyId={id} />
     </>
   );
 }
