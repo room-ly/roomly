@@ -261,11 +261,11 @@ export type RentBillingFormData = z.infer<typeof rentBillingSchema>;
 export const rentPaymentSchema = z.object({
   amount: z.coerce
     .number()
-    .positive("入金額は0より大きい値を入力してください"),
-  payment_method: z.enum(["transfer", "card", "cash", "debit"], {
+    .positive("金額は0より大きい値を入力してください"),
+  payment_method: z.enum(["transfer", "card", "cash", "debit", "refund"], {
     message: "支払方法を選択してください",
   }),
-  payment_date: z.string().min(1, "入金日は必須です"),
+  payment_date: z.string().min(1, "日付は必須です"),
   note: z.string().optional(),
 });
 

@@ -45,29 +45,31 @@ export async function PUT(
         (sum: number, p: { amount: number }) => sum + Number(p.amount),
         0
       );
-      const newTotal = existingPayments + parsed.data.amount;
+      const isRefund = parsed.data.payment_method === "refund";
+      const recordAmount = isRefund ? -parsed.data.amount : parsed.data.amount;
+      const newTotal = existingPayments + recordAmount;
       const totalAmount = Number(billing.total_amount);
 
       const { error: paymentError } = await supabase
         .from("rent_payments")
         .insert({
           billing_id: id,
-          amount: parsed.data.amount,
+          amount: recordAmount,
           payment_method: parsed.data.payment_method,
           payment_date: parsed.data.payment_date,
-          notes: parsed.data.note || null,
+          notes: parsed.data.note || (isRefund ? "返金" : null),
           company_id,
         });
 
       if (paymentError) {
         return NextResponse.json(
-          { error: "入金の登録に失敗しました" },
+          { error: isRefund ? "返金の登録に失敗しました" : "入金の登録に失敗しました" },
           { status: 500 }
         );
       }
 
       // 請求ステータスを更新
-      const newStatus = newTotal >= totalAmount ? "paid" : "partial";
+      const newStatus = newTotal >= totalAmount ? "paid" : newTotal > 0 ? "partial" : "unpaid";
       const { error: updateError } = await supabase
         .from("rent_billings")
         .update({ status: newStatus })
@@ -80,7 +82,7 @@ export async function PUT(
         );
       }
 
-      if (newStatus === "paid") {
+      if (newStatus === "paid" && !isRefund) {
         await createNotification({
           title: `入金完了: ${billing.billing_month}`,
           type: "info",

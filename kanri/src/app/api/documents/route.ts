@@ -36,18 +36,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "ファイルが必要です" }, { status: 400 });
     }
 
-    const documentType = (formData.get("document_type") as string) || "other";
+    const VALID_DOC_TYPES = ["contract", "photo", "key_receipt", "inspection", "other"];
+    const rawDocType = formData.get("document_type") as string;
+    const documentType = VALID_DOC_TYPES.includes(rawDocType) ? rawDocType : "other";
+
+    const ALLOWED_MIME: Record<string, string> = {
+      "application/pdf": "pdf",
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/gif": "gif",
+      "image/webp": "webp",
+    };
+    const normalizedMime = file.type.split(";")[0].trim();
+    if (!ALLOWED_MIME[normalizedMime]) {
+      return NextResponse.json({ error: "PDF・画像ファイルのみアップロード可能です" }, { status: 400 });
+    }
+
     const propertyId = formData.get("property_id") as string | null;
     const tenantId = formData.get("tenant_id") as string | null;
 
-    const ext = file.name.split(".").pop() || "";
+    const ext = ALLOWED_MIME[normalizedMime];
     const storagePath = `documents/${companyId}/${randomUUID()}.${ext}`;
 
     const buffer = await file.arrayBuffer();
     const { error: uploadError } = await supabase.storage
       .from("property-images")
       .upload(storagePath, buffer, {
-        contentType: file.type,
+        contentType: normalizedMime,
         upsert: false,
       });
 

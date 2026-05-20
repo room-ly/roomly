@@ -11,6 +11,7 @@ const paymentMethodLabels: Record<string, string> = {
   card: "クレジットカード",
   cash: "現金",
   debit: "口座引落",
+  refund: "返金",
 };
 
 export default async function RentDetailPage({
@@ -188,15 +189,18 @@ export default async function RentDetailPage({
               {/* 入金履歴 */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                 <h3 style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-2)" }}>入金履歴</h3>
-                {current.status !== "paid" && (
-                  <RentDetailClient billing={{
-                    id: current.id,
-                    total_amount: Number(current.total_amount),
-                    paid_amount: currentPaidTotal,
-                    tenant_name: tenant?.name || "—",
-                    unit_label: `${property?.name || ""} ${unit?.unit_number || ""}`,
-                    billing_month: current.billing_month,
-                  }} />
+                {(current.status !== "paid" || currentRemaining < 0) && (
+                  <RentDetailClient
+                    billing={{
+                      id: current.id,
+                      total_amount: Number(current.total_amount),
+                      paid_amount: currentPaidTotal,
+                      tenant_name: tenant?.name || "—",
+                      unit_label: `${property?.name || ""} ${unit?.unit_number || ""}`,
+                      billing_month: current.billing_month,
+                    }}
+                    showRefund={currentRemaining < 0}
+                  />
                 )}
               </div>
               {currentPayments.length === 0 ? (
@@ -214,14 +218,21 @@ export default async function RentDetailPage({
                   <tbody>
                     {currentPayments
                       .sort((a: any, b: any) => (a.payment_date > b.payment_date ? -1 : 1))
-                      .map((p: any) => (
-                      <tr key={p.id}>
-                        <td className="mono" style={{ fontSize: 12 }}>{p.payment_date}</td>
-                        <td>{paymentMethodLabels[p.payment_method] || p.payment_method}</td>
-                        <td className="num" style={{ fontWeight: 500 }}>¥{Number(p.amount).toLocaleString()}</td>
-                        <td style={{ color: "var(--ink-3)" }}>{p.notes || "—"}</td>
-                      </tr>
-                    ))}
+                      .map((p: any) => {
+                        const isRefund = p.payment_method === "refund" || Number(p.amount) < 0;
+                        return (
+                          <tr key={p.id} style={isRefund ? { background: "#eff6ff" } : undefined}>
+                            <td className="mono" style={{ fontSize: 12 }}>{p.payment_date}</td>
+                            <td style={isRefund ? { color: "#2b6cb0", fontWeight: 500 } : undefined}>
+                              {paymentMethodLabels[p.payment_method] || p.payment_method}
+                            </td>
+                            <td className="num" style={{ fontWeight: 500, color: isRefund ? "#2b6cb0" : undefined }}>
+                              {isRefund ? `-¥${Math.abs(Number(p.amount)).toLocaleString()}` : `¥${Number(p.amount).toLocaleString()}`}
+                            </td>
+                            <td style={{ color: "var(--ink-3)" }}>{p.notes || "—"}</td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               )}

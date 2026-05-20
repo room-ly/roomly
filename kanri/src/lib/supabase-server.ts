@@ -38,11 +38,9 @@ export async function getCompanyId(): Promise<string> {
   );
   const companyId = payload.company_id;
   if (!companyId) {
-    // フォールバック: user_metadataから取得
-    const { data: { user } } = await supabase.auth.getUser();
-    const fallback = user?.user_metadata?.company_id;
-    if (!fallback) throw new Error("company_id が取得できません");
-    return fallback;
+    // custom_access_token_hook が未設定の場合にここに到達する
+    // フォールバックは設けない（user_metadata は自己書き換え可能なため認可に使用不可）
+    throw new Error("company_id がJWTに存在しません。Supabase Dashboard で custom_access_token_hook を有効化してください");
   }
   return companyId;
 }

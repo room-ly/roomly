@@ -12,17 +12,19 @@ interface RentPaymentModalProps {
   billing: {
     id: string;
     total_amount: number;
-    paid_amount: number; // 既入金額
+    paid_amount: number;
     tenant_name: string;
     unit_label: string;
     billing_month: string;
   };
+  mode?: "payment" | "refund";
 }
 
 export default function RentPaymentModal({
   isOpen,
   onClose,
   billing,
+  mode = "payment",
 }: RentPaymentModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -31,7 +33,9 @@ export default function RentPaymentModal({
 
   if (!isOpen) return null;
 
+  const isRefund = mode === "refund";
   const remaining = billing.total_amount - billing.paid_amount;
+  const overpaid = Math.max(0, billing.paid_amount - billing.total_amount);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -79,7 +83,7 @@ export default function RentPaymentModal({
     >
       <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-md w-full">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-[15px] font-semibold">入金登録</h2>
+          <h2 className="text-[15px] font-semibold">{isRefund ? "返金登録" : "入金登録"}</h2>
           <button
             onClick={onClose}
             className="text-ink-3 hover:text-ink transition-colors"
@@ -117,9 +121,9 @@ export default function RentPaymentModal({
             </div>
           )}
           <div className="flex justify-between pt-1 border-t border-line">
-            <span className="font-medium">未入金額</span>
-            <span className="font-semibold text-accent tabular-nums">
-              ¥{remaining.toLocaleString()}
+            <span className="font-medium">{isRefund ? "超過額" : "未入金額"}</span>
+            <span className={`font-semibold tabular-nums ${isRefund ? "text-blue-700" : "text-accent"}`}>
+              ¥{isRefund ? overpaid.toLocaleString() : remaining.toLocaleString()}
             </span>
           </div>
         </div>
@@ -133,12 +137,12 @@ export default function RentPaymentModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm font-medium text-ink-2 block mb-1">
-              入金額 <span className="text-danger">*</span>
+              {isRefund ? "返金額" : "入金額"} <span className="text-danger">*</span>
             </label>
             <input
               name="amount"
               type="number"
-              defaultValue={remaining}
+              defaultValue={isRefund ? overpaid : remaining}
               className="input"
               placeholder="例: 80000"
             />
@@ -147,26 +151,30 @@ export default function RentPaymentModal({
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className={`grid grid-cols-1 ${isRefund ? "" : "sm:grid-cols-2"} gap-3`}>
+            {isRefund ? (
+              <input type="hidden" name="payment_method" value="refund" />
+            ) : (
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  支払方法 <span className="text-danger">*</span>
+                </label>
+                <select name="payment_method" defaultValue="transfer" className="input">
+                  <option value="transfer">銀行振込</option>
+                  <option value="card">クレジットカード</option>
+                  <option value="cash">現金</option>
+                  <option value="debit">口座引落</option>
+                </select>
+                {errors.payment_method && (
+                  <p className="text-danger text-sm mt-1">
+                    {errors.payment_method[0]}
+                  </p>
+                )}
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
-                支払方法 <span className="text-danger">*</span>
-              </label>
-              <select name="payment_method" defaultValue="transfer" className="input">
-                <option value="transfer">銀行振込</option>
-                <option value="card">クレジットカード</option>
-                <option value="cash">現金</option>
-                <option value="debit">口座引落</option>
-              </select>
-              {errors.payment_method && (
-                <p className="text-danger text-sm mt-1">
-                  {errors.payment_method[0]}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">
-                入金日 <span className="text-danger">*</span>
+                {isRefund ? "返金日" : "入金日"} <span className="text-danger">*</span>
               </label>
               <input
                 name="payment_date"
@@ -206,7 +214,7 @@ export default function RentPaymentModal({
               disabled={loading}
               className="btn btn-primary disabled:opacity-50"
             >
-              {loading ? "登録中..." : "入金を登録"}
+              {loading ? "登録中..." : isRefund ? "返金を登録" : "入金を登録"}
             </button>
           </div>
         </form>

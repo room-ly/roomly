@@ -12,17 +12,37 @@ interface RentDetailClientProps {
     unit_label: string;
     billing_month: string;
   };
+  showRefund?: boolean;
 }
 
-export default function RentDetailClient({ billing }: RentDetailClientProps) {
+export default function RentDetailClient({ billing, showRefund }: RentDetailClientProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [mode, setMode] = useState<"payment" | "refund">("payment");
 
   return (
     <>
-      <button className="btn btn-primary text-[12px]" onClick={() => setIsOpen(true)}>
-        入金登録
-      </button>
-      <RentPaymentModal isOpen={isOpen} onClose={() => setIsOpen(false)} billing={billing} />
+      <div className="flex gap-2">
+        {showRefund && (
+          <button
+            className="text-[12px] px-3 py-1.5 rounded-lg border border-blue-300 text-blue-700 hover:bg-blue-50 transition-colors"
+            onClick={() => { setMode("refund"); setIsOpen(true); }}
+          >
+            返金登録
+          </button>
+        )}
+        <button
+          className="btn btn-primary text-[12px]"
+          onClick={() => { setMode("payment"); setIsOpen(true); }}
+        >
+          入金登録
+        </button>
+      </div>
+      <RentPaymentModal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        billing={billing}
+        mode={mode}
+      />
     </>
   );
 }
