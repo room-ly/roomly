@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import ExpenseFormModal from "./ExpenseFormModal";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface SelectOption {
   id: string;
@@ -20,39 +21,29 @@ interface ExpenseDetailClientProps {
 export default function ExpenseDetailClient({ expense, properties, owners }: ExpenseDetailClientProps) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function handleDelete() {
-    if (!confirm("この経費を削除しますか？")) return;
+    setDeleting(true);
     const res = await fetch(`/api/expenses/${expense.id}`, { method: "DELETE" });
     if (res.ok) router.push("/expenses");
-    else alert("削除に失敗しました");
+    else { alert("削除に失敗しました"); setDeleting(false); }
   }
 
   return (
     <>
       <div className="flex items-center gap-2">
-        <button
-          onClick={() => setModalOpen(true)}
-          className="btn btn-secondary flex items-center gap-1.5 text-[13px]"
-        >
-          <Pencil size={13} />
-          編集
+        <button onClick={() => setModalOpen(true)} className="btn btn-secondary flex items-center gap-1.5 text-[13px]">
+          <Pencil size={13} /> 編集
         </button>
-        <button
-          onClick={handleDelete}
-          className="p-2 rounded text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors"
-        >
+        <button onClick={() => setDeleteOpen(true)} className="p-2 rounded text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors">
           <Trash2 size={15} />
         </button>
       </div>
 
-      <ExpenseFormModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        properties={properties}
-        owners={owners}
-        editData={expense}
-      />
+      <ExpenseFormModal isOpen={modalOpen} onClose={() => setModalOpen(false)} properties={properties} owners={owners} editData={expense} />
+      <ConfirmDialog isOpen={deleteOpen} title="経費を削除" message="この経費データを削除しますか？復元できません。" loading={deleting} onConfirm={handleDelete} onCancel={() => setDeleteOpen(false)} />
     </>
   );
 }

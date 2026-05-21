@@ -27,6 +27,56 @@ export async function createClient() {
   );
 }
 
+export class DemoLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DemoLimitError";
+  }
+}
+
+// デモアカウントの1週間あたり書き込み上限
+const DEMO_WEEKLY_WRITE_LIMIT = 100;
+
+/**
+ * デモ会社かどうか確認し、上限超過なら例外を投げる。
+ * 上限内なら書き込みログを記録して返す。
+ * 非デモ会社はそのまま通過。
+ */
+export async function checkDemoLimit(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  companyId: string,
+  tableName: string,
+  action: "create" | "update" | "delete"
+): Promise<void> {
+  const { data: company } = await supabase
+    .from("companies")
+    .select("is_demo")
+    .eq("id", companyId)
+    .single();
+
+  if (!company?.is_demo) return;
+
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // 直近の日曜
+  weekStart.setHours(0, 0, 0, 0);
+
+  const { count } = await supabase
+    .from("demo_write_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId)
+    .gte("created_at", weekStart.toISOString());
+
+  if ((count ?? 0) >= DEMO_WEEKLY_WRITE_LIMIT) {
+    throw new DemoLimitError(`デモアカウントは1週間に${DEMO_WEEKLY_WRITE_LIMIT}回まで操作できます。毎週月曜0時にリセットされます。`);
+  }
+
+  await supabase.from("demo_write_logs").insert({
+    company_id: companyId,
+    action,
+    table_name: tableName,
+  });
+}
+
 export async function getCompanyId(): Promise<string> {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();

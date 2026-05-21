@@ -153,17 +153,18 @@ export async function getTenantsWithInfo() {
 }
 
 // 契約一覧（入居者・部屋・物件・退去申請付き）— ページネーション対応
-export async function getContracts(page = 1, pageSize = 50): Promise<{ data: Row[]; total: number }> {
+export async function getContracts(page = 1, pageSize = 50, sort = "start_date:desc"): Promise<{ data: Row[]; total: number }> {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
+  const [sortCol, sortDir] = sort.split(":") as [string, string];
   const { data, error, count } = await supabase
     .from("contracts")
     .select(
       "*, tenant:tenants(name), unit:units(id, unit_number, property_id, property:properties(id, name)), move_out_requests(id, status, desired_move_out_date)",
       { count: "exact" }
     )
-    .order("start_date", { ascending: false })
+    .order(sortCol, { ascending: sortDir === "asc" })
     .range(from, to);
   if (error) throw error;
 
@@ -245,7 +246,7 @@ export async function getMaintenanceDetail(id: string) {
 export async function getInquiryDetail(id: string) {
   const supabase = await createClient();
   const [{ data: inquiry, error }, { data: logs }] = await Promise.all([
-    supabase.from("inquiries").select("*, property:properties(id, name), unit:units(unit_number, contracts(tenant_id, status, tenant:tenants(id, name, phone, email))), tenant:tenants(name, phone, email)").eq("id", id).single(),
+    supabase.from("inquiries").select("*, property:properties(id, name, owner:owners(id, name, phone, email)), unit:units(unit_number, contracts(tenant_id, status, tenant:tenants(id, name, phone, email))), tenant:tenants(name, phone, email)").eq("id", id).single(),
     supabase.from("inquiry_logs").select("*").eq("inquiry_id", id).order("created_at", { ascending: false }),
   ]);
   if (error || !inquiry) return null;
@@ -294,18 +295,49 @@ export async function getRemittanceDetail(id: string) {
   return { remittance, items: items ?? [] };
 }
 
+// 滞納エイジングレポート（30/60/90+日の滞納額・件数）
+export async function getOverdueAging(): Promise<{ bucket30: { count: number; amount: number }; bucket60: { count: number; amount: number }; bucket90: { count: number; amount: number } }> {
+  const supabase = await createClient();
+  const today = new Date();
+  const d30 = new Date(today); d30.setDate(d30.getDate() - 30);
+  const d60 = new Date(today); d60.setDate(d60.getDate() - 60);
+  const d90 = new Date(today); d90.setDate(d90.getDate() - 90);
+  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+
+  const { data } = await supabase
+    .from("rent_billings")
+    .select("due_date, total_amount")
+    .eq("status", "overdue")
+    .lt("due_date", fmt(today));
+
+  const result = {
+    bucket30: { count: 0, amount: 0 },
+    bucket60: { count: 0, amount: 0 },
+    bucket90: { count: 0, amount: 0 },
+  };
+  for (const row of data ?? []) {
+    const due = new Date(row.due_date);
+    const amt = Number(row.total_amount) || 0;
+    if (due < d90) { result.bucket90.count++; result.bucket90.amount += amt; }
+    else if (due < d60) { result.bucket60.count++; result.bucket60.amount += amt; }
+    else { result.bucket30.count++; result.bucket30.amount += amt; }
+  }
+  return result;
+}
+
 // 家賃請求一覧（契約・入居者・物件付き）— ページネーション対応
-export async function getRentBillings(page = 1, pageSize = 50): Promise<{ data: Row[]; total: number }> {
+export async function getRentBillings(page = 1, pageSize = 50, sort = "billing_month:desc"): Promise<{ data: Row[]; total: number }> {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
+  const [sortCol, sortDir] = sort.split(":") as [string, string];
   const { data, error, count } = await supabase
     .from("rent_billings")
     .select(
       "*, contract:contracts(id, tenant:tenants(name, phone), unit:units(unit_number, property:properties(name))), rent_payments(payment_date, amount)",
       { count: "exact" }
     )
-    .order("billing_month", { ascending: false })
+    .order(sortCol, { ascending: sortDir === "asc" })
     .range(from, to);
   if (error) throw error;
   return { data: (data ?? []) as Row[], total: count ?? 0 };
@@ -341,14 +373,15 @@ export async function getRentBillingDetail(id: string) {
 }
 
 // 修繕依頼一覧（物件・部屋付き）— ページネーション対応
-export async function getMaintenanceRequests(page = 1, pageSize = 50): Promise<{ data: Row[]; total: number }> {
+export async function getMaintenanceRequests(page = 1, pageSize = 50, sort = "reported_date:desc"): Promise<{ data: Row[]; total: number }> {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
+  const [sortCol, sortDir] = sort.split(":") as [string, string];
   const { data, error, count } = await supabase
     .from("maintenance_requests")
     .select("*, property:properties(name), unit:units(unit_number)", { count: "exact" })
-    .order("reported_date", { ascending: false })
+    .order(sortCol, { ascending: sortDir === "asc" })
     .range(from, to);
   if (error) throw error;
   return { data: (data ?? []) as Row[], total: count ?? 0 };
@@ -387,17 +420,18 @@ export async function getOwners() {
 }
 
 // 経費一覧（物件・部屋・オーナー付き）— ページネーション対応
-export async function getExpenses(page = 1, pageSize = 50): Promise<{ data: Row[]; total: number }> {
+export async function getExpenses(page = 1, pageSize = 50, sort = "expense_date:desc"): Promise<{ data: Row[]; total: number }> {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
+  const [sortCol, sortDir] = sort.split(":") as [string, string];
   const { data, error, count } = await supabase
     .from("expenses")
     .select(
       "*, property:properties(name), unit:units(unit_number), owner:owners(name)",
       { count: "exact" }
     )
-    .order("expense_date", { ascending: false })
+    .order(sortCol, { ascending: sortDir === "asc" })
     .range(from, to);
   if (error) throw error;
   return { data: (data ?? []) as Row[], total: count ?? 0 };
@@ -447,6 +481,8 @@ export async function getDashboardData() {
     pendingMoveOutRes,
     pipelineUnitsRes,
     billingSummaryRes,
+    monthlyExpensesRes,
+    pendingRemittancesRes,
   ] = await Promise.all([
     supabase.from("properties").select("id", { count: "exact", head: true }),
     supabase.from("units").select("id", { count: "exact", head: true }),
@@ -497,6 +533,15 @@ export async function getDashboardData() {
       .select("total_amount, status, billing_month")
       .gte("billing_month", `${now.toISOString().slice(0, 7)}-01`)
       .lt("billing_month", `${new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().slice(0, 10)}`),
+    supabase
+      .from("expenses")
+      .select("amount")
+      .gte("expense_date", `${now.toISOString().slice(0, 7)}-01`)
+      .lte("expense_date", `${new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)}`),
+    supabase
+      .from("owner_remittances")
+      .select("id, status")
+      .in("status", ["draft", "confirmed"]),
   ]);
 
   const overdueBillings = (overdueBillingsRes.data ?? []) as Row[];
@@ -506,6 +551,8 @@ export async function getDashboardData() {
   const pendingMoveOuts = (pendingMoveOutRes.data ?? []) as Row[];
   const allPipelineUnits = (pipelineUnitsRes.data ?? []) as Row[];
   const allBillings = (billingSummaryRes.data ?? []) as Row[];
+  const monthlyExpenses = (monthlyExpensesRes.data ?? []) as Row[];
+  const pendingRemittances = (pendingRemittancesRes.data ?? []) as Row[];
 
   const totalUnits = unitTotal.count ?? 0;
   const occupiedUnits = unitOccupied.count ?? 0;
@@ -513,6 +560,7 @@ export async function getDashboardData() {
   const overdueAmount = overdueBillings.reduce((s: number, b: Row) => s + Number(b.total_amount), 0);
   const totalExpected = allBillings.reduce((s: number, b: Row) => s + Number(b.total_amount), 0);
   const totalReceived = allBillings.filter((b: Row) => b.status === "paid").reduce((s: number, b: Row) => s + Number(b.total_amount), 0);
+  const monthlyExpenseTotal = monthlyExpenses.reduce((s: number, e: Row) => s + Number(e.amount), 0);
 
   return {
     stats: {
@@ -532,6 +580,8 @@ export async function getDashboardData() {
       alert_inquiries: alertInqRes.count ?? 0,
       expiring_contracts: expiringContracts.length,
       pending_move_outs: pendingMoveOuts.length,
+      monthly_expenses: monthlyExpenseTotal,
+      pending_remittances: pendingRemittances.length,
     },
     overdueBillings,
     activeMaintenance,

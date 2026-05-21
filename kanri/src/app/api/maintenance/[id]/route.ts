@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
-
-const ALLOWED_FIELDS = [
-  "title", "description", "category", "priority", "status",
-  "property_id", "unit_id", "vendor_name", "vendor_phone",
-  "estimated_cost", "actual_cost", "completed_date",
-] as const;
+import { maintenanceSchema } from "@/lib/schemas";
 
 export async function PUT(
   request: NextRequest,
@@ -14,17 +9,20 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
+    const parsed = maintenanceSchema.safeParse(body);
 
-    const updateData: Record<string, unknown> = {};
-    for (const key of ALLOWED_FIELDS) {
-      if (body[key] !== undefined) updateData[key] = body[key];
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "バリデーションエラー", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
 
     const supabase = await createClient();
     const companyId = await getCompanyId();
     const { data: maintenance, error } = await supabase
       .from("maintenance_requests")
-      .update(updateData)
+      .update(parsed.data)
       .eq("id", id)
       .eq("company_id", companyId)
       .select()
@@ -38,6 +36,37 @@ export async function PUT(
     }
 
     return NextResponse.json(maintenance);
+  } catch {
+    return NextResponse.json(
+      { error: "リクエストの処理に失敗しました" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+    const companyId = await getCompanyId();
+
+    const { error } = await supabase
+      .from("maintenance_requests")
+      .delete()
+      .eq("id", id)
+      .eq("company_id", companyId);
+
+    if (error) {
+      return NextResponse.json(
+        { error: "修繕依頼の削除に失敗しました" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
       { error: "リクエストの処理に失敗しました" },

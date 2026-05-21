@@ -3,6 +3,8 @@ import {
   Wrench,
   FileText,
   MessageSquare,
+  Receipt,
+  Send,
 } from "lucide-react";
 import Link from "next/link";
 import { getDashboardData, getMonthlyTrend } from "@/lib/queries";
@@ -120,6 +122,37 @@ export default async function DashboardPage() {
               </span>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* 経費・送金サマリー */}
+      <div className="cols-summary" style={{ marginBottom: 20 }}>
+        <div className="sum-card">
+          <span className="sum-label mono">入居率</span>
+          <span className="sum-value serif-i">{s.occupancy_rate}%</span>
+          <span className="sum-foot mono">{s.occupied_units}/{s.total_units}戸</span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">今月の経費</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>
+            <Link href="/expenses" className="rlink">¥{s.monthly_expenses.toLocaleString()}</Link>
+          </span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">未送金</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>
+            <Link href="/remittances" className="rlink">
+              {s.pending_remittances > 0 ? `${s.pending_remittances}件` : "—"}
+            </Link>
+          </span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">空室</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>
+            {s.vacant_units > 0 ? (
+              <Link href="/properties" className="rlink">{s.vacant_units}戸</Link>
+            ) : "0戸"}
+          </span>
         </div>
       </div>
 

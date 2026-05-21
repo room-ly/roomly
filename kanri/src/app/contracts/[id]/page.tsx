@@ -63,6 +63,30 @@ export default async function ContractDetailPage({
         </div>
       </div>
 
+      {/* サマリーカード */}
+      <div className="cols-summary" style={{ marginBottom: 24 }}>
+        <div className="sum-card">
+          <span className="sum-label mono">月額合計</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>¥{monthlyTotal.toLocaleString()}</span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">契約種別</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>{contractTypeLabels[contract.contract_type] || contract.contract_type}</span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">入居者</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>
+            <Link href={`/tenants/${tenant?.id}`} className="rlink">{tenant?.name || "—"}</Link>
+          </span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">残日数</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>
+            {remainingDays !== null ? (remainingDays <= 0 ? "期限切れ" : `${remainingDays}日`) : "—"}
+          </span>
+        </div>
+      </div>
+
       <div className="detail-grid">
         <div className="detail-col-main">
           {/* 賃料・費用 */}

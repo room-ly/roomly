@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getExpenseDetail, getPropertiesForSelect, getOwnersForSelect } from "@/lib/queries";
 import StatusBadge from "@/components/StatusBadge";
 import ExpenseDetailClient from "@/components/ExpenseDetailClient";
+import DocumentSection from "@/components/DocumentSection";
 
 export default async function ExpenseDetailPage({
   params,
@@ -39,6 +40,30 @@ export default async function ExpenseDetailPage({
         </div>
         <div className="detail-header-actions">
           <ExpenseDetailClient expense={expense} properties={properties} owners={owners} />
+        </div>
+      </div>
+
+      {/* サマリーカード */}
+      <div className="cols-summary" style={{ marginBottom: 24 }}>
+        <div className="sum-card">
+          <span className="sum-label mono">金額</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>¥{Number(expense.amount).toLocaleString()}</span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">カテゴリ</span>
+          <span className="sum-value"><StatusBadge status={expense.category} /></span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">負担</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>{expense.is_owner_charge ? "オーナー" : "管理会社"}</span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">物件</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>
+            {expense.property?.name ? (
+              <Link href={`/properties/${expense.property.id}`} className="rlink">{expense.property.name}</Link>
+            ) : "—"}
+          </span>
         </div>
       </div>
 
@@ -91,6 +116,9 @@ export default async function ExpenseDetailPage({
               )}
             </div>
           </div>
+          {expense.property?.id && (
+            <DocumentSection propertyId={expense.property.id} title="関連書類（レシート等）" />
+          )}
         </div>
 
         <div className="detail-col-side">

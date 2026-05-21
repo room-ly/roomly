@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, checkDemoLimit, DemoLimitError } from "@/lib/supabase-server";
 import { unitSchema } from "@/lib/schemas";
 
 export async function POST(request: NextRequest) {
@@ -46,6 +46,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 同一物件内の部屋番号重複チェック
+    const { data: dup } = await supabase
+      .from("units")
+      .select("id")
+      .eq("property_id", property_id)
+      .eq("unit_number", parsed.data.unit_number)
+      .limit(1);
+    if (dup && dup.length > 0) {
+      return NextResponse.json(
+        { error: `部屋番号「${parsed.data.unit_number}」は既にこの物件に存在します` },
+        { status: 409 }
+      );
+    }
+
     const { data: unit, error } = await supabase
       .from("units")
       .insert({ ...parsed.data, property_id, company_id })
@@ -60,7 +74,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(unit, { status: 201 });
-  } catch {
+  } catch (err) {
+    if (err instanceof DemoLimitError) {
+      return NextResponse.json({ error: err.message }, { status: 429 });
+    }
     return NextResponse.json(
       { error: "リクエストの処理に失敗しました" },
       { status: 500 }

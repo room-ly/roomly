@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, checkDemoLimit, DemoLimitError } from "@/lib/supabase-server";
 import { randomUUID } from "crypto";
 
 export async function GET(request: NextRequest) {
@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const companyId = await getCompanyId();
+    await checkDemoLimit(supabase, companyId, "documents", "create");
     const formData = await request.formData();
 
     const file = formData.get("file") as File | null;
@@ -87,7 +88,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    if (err instanceof DemoLimitError) {
+      return NextResponse.json({ error: (err as Error).message }, { status: 429 });
+    }
     return NextResponse.json({ error: "アップロード中にエラーが発生しました" }, { status: 500 });
   }
 }

@@ -38,7 +38,8 @@
       "WebSearch",
       "WebFetch",
       "mcp__analytics-mcp__*",
-      "mcp__gsc-server__*"
+      "mcp__gsc-server__*",
+      "mcp__playwright__*"
     ],
     "additionalDirectories": [
       "/Users/ryuichiueda/works/zh/roomly/app",

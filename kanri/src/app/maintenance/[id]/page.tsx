@@ -51,6 +51,30 @@ export default async function MaintenanceDetailPage({
         </div>
       </div>
 
+      {/* サマリーカード */}
+      <div className="cols-summary" style={{ marginBottom: 24 }}>
+        <div className="sum-card">
+          <span className="sum-label mono">状態</span>
+          <span className="sum-value"><StatusBadge status={request.status} /></span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">優先度</span>
+          <span className="sum-value"><StatusBadge status={request.priority} /></span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">見積</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>
+            {request.estimated_cost != null ? `¥${Number(request.estimated_cost).toLocaleString()}` : "—"}
+          </span>
+        </div>
+        <div className="sum-card">
+          <span className="sum-label mono">実費</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>
+            {request.actual_cost != null ? `¥${Number(request.actual_cost).toLocaleString()}` : "—"}
+          </span>
+        </div>
+      </div>
+
       <div className="detail-grid">
         <div className="detail-col-main">
           {/* 概要 */}
