@@ -12,11 +12,13 @@ interface SelectOption {
 interface ExpensesPageClientProps {
   properties: SelectOption[];
   owners: SelectOption[];
+  payees: SelectOption[];
 }
 
 export default function ExpensesPageClient({
   properties,
   owners,
+  payees,
 }: ExpensesPageClientProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -31,6 +33,7 @@ export default function ExpensesPageClient({
         onClose={() => setIsOpen(false)}
         properties={properties}
         owners={owners}
+        payees={payees}
       />
     </>
   );

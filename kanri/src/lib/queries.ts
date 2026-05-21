@@ -256,7 +256,30 @@ export async function getInquiryDetail(id: string) {
     if (active?.tenant) inquiry.tenant = active.tenant;
   }
 
-  return { inquiry, logs: logs ?? [] };
+  // マイグレーション適用後に追加されるリンクカラムを取得
+  const inquiryAny = inquiry as any;
+  let linked_maintenance = null;
+  let linked_move_out_request = null;
+
+  if (inquiryAny.linked_maintenance_id) {
+    const { data } = await supabase
+      .from("maintenance_requests")
+      .select("id, title, status")
+      .eq("id", inquiryAny.linked_maintenance_id)
+      .single();
+    linked_maintenance = data;
+  }
+
+  if (inquiryAny.linked_move_out_request_id) {
+    const { data } = await supabase
+      .from("move_out_requests")
+      .select("id, desired_move_out_date, status, contract_id")
+      .eq("id", inquiryAny.linked_move_out_request_id)
+      .single();
+    linked_move_out_request = data ? { ...data, contract: data.contract_id ? { id: data.contract_id } : null } : null;
+  }
+
+  return { inquiry: { ...inquiryAny, linked_maintenance, linked_move_out_request }, logs: logs ?? [] };
 }
 
 // オーナー詳細（物件・送金履歴付き）
@@ -725,6 +748,20 @@ export async function getOwnersForSelect() {
   return (data ?? []).map((o: Row) => ({
     id: o.id,
     label: o.name,
+  }));
+}
+
+export async function getPayeesForSelect() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payees")
+    .select("id, name, category")
+    .order("name");
+  if (error) throw error;
+  return (data ?? []).map((p: Row) => ({
+    id: p.id,
+    label: p.name,
+    category: p.category,
   }));
 }
 

@@ -12,11 +12,18 @@ interface SelectOption {
   owner_id?: string;
 }
 
+interface PayeeOption {
+  id: string;
+  label: string;
+  category?: string;
+}
+
 interface ExpenseFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   properties: SelectOption[];
   owners: SelectOption[];
+  payees?: PayeeOption[];
   editData?: Record<string, any> | null;
 }
 
@@ -25,6 +32,7 @@ export default function ExpenseFormModal({
   onClose,
   properties,
   owners,
+  payees = [],
   editData,
 }: ExpenseFormModalProps) {
   const router = useRouter();
@@ -221,6 +229,18 @@ export default function ExpenseFormModal({
               <p className="text-[11px] text-warn mt-1">送金時にオーナーへの送金額から控除されます</p>
             )}
           </div>
+
+          {payees.length > 0 && (
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">支払先</label>
+              <select name="payee_id" defaultValue={editData?.payee_id || ""} className="input">
+                <option value="">未指定</option>
+                {payees.map((p) => (
+                  <option key={p.id} value={p.id}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="text-sm font-medium text-ink-2 block mb-1">備考</label>

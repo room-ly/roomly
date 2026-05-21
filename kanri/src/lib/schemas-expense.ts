@@ -4,6 +4,7 @@ export const expenseSchema = z.object({
   property_id: z.string().optional().or(z.literal("")),
   unit_id: z.string().optional().or(z.literal("")),
   owner_id: z.string().optional().or(z.literal("")),
+  payee_id: z.string().optional().or(z.literal("")),
   category: z.enum(["repair", "cleaning", "insurance", "tax", "utility", "other"], {
     message: "カテゴリを選択してください",
   }),

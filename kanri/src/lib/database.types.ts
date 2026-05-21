@@ -1766,6 +1766,71 @@ export type Database = {
           },
         ]
       }
+      payees: {
+        Row: {
+          id: string
+          company_id: string
+          name: string
+          name_kana: string | null
+          category: string
+          phone: string | null
+          notes: string | null
+          bank_code: string | null
+          bank_name: string | null
+          branch_code: string | null
+          branch_name: string | null
+          account_type: string
+          account_number: string | null
+          account_holder_kana: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          name: string
+          name_kana?: string | null
+          category?: string
+          phone?: string | null
+          notes?: string | null
+          bank_code?: string | null
+          bank_name?: string | null
+          branch_code?: string | null
+          branch_name?: string | null
+          account_type?: string
+          account_number?: string | null
+          account_holder_kana?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          name?: string
+          name_kana?: string | null
+          category?: string
+          phone?: string | null
+          notes?: string | null
+          bank_code?: string | null
+          bank_name?: string | null
+          branch_code?: string | null
+          branch_name?: string | null
+          account_type?: string
+          account_number?: string | null
+          account_holder_kana?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vacancies: {
         Row: {
           ad_comment: string | null

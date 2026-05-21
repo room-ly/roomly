@@ -19,6 +19,8 @@ import {
   LogOut,
   MoreHorizontal,
   Settings,
+  BookUser,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import type { SidebarInitialData } from "./AppShell";
@@ -53,6 +55,8 @@ const navGroups = [
     items: [
       { href: "/owners", label: "オーナー", icon: UserCircle },
       { href: "/remittances", label: "送金", icon: Send },
+      { href: "/payments", label: "支払い出力", icon: CreditCard },
+      { href: "/payees", label: "支払先", icon: BookUser },
     ] as NavItem[],
   },
 ];
