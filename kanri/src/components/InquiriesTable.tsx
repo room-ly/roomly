@@ -12,6 +12,7 @@ interface InquiriesTableProps {
 }
 
 const TYPE_LABELS: Record<string, string> = {
+  maintenance: "修繕",
   move_out: "退去",
   complaint: "クレーム",
   other: "その他",

@@ -8,6 +8,7 @@ import InquiryDetailClient from "@/components/InquiryDetailClient";
 
 const TYPE_LABELS: Record<string, string> = {
   move_out: "退去",
+  maintenance: "修繕",
   complaint: "クレーム",
   other: "その他",
   general: "その他",
@@ -160,6 +161,62 @@ export default async function InquiryDetailPage({
                     <div className="field">
                       <div className="field-label mono">部屋</div>
                       <div className="field-value field-plain mono">#{inquiry.unit.unit_number}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {inquiry.linked_maintenance && (
+            <div className="section">
+              <div className="section-head-bar"><h2>連携: 修繕依頼</h2></div>
+              <div className="section-body">
+                <div className="kv-list">
+                  <div className="field">
+                    <div className="field-label mono">件名</div>
+                    <div className="field-value">
+                      <Link href={`/maintenance/${inquiry.linked_maintenance.id}`} className="rlink">
+                        {inquiry.linked_maintenance.title}
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">状態</div>
+                    <div className="field-value">
+                      <StatusBadge status={inquiry.linked_maintenance.status} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {inquiry.linked_move_out_request && (
+            <div className="section">
+              <div className="section-head-bar"><h2>連携: 退去申請</h2></div>
+              <div className="section-body">
+                <div className="kv-list">
+                  <div className="field">
+                    <div className="field-label mono">退去予定日</div>
+                    <div className="field-value field-plain mono">
+                      {inquiry.linked_move_out_request.desired_move_out_date}
+                    </div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">状態</div>
+                    <div className="field-value">
+                      <StatusBadge status={inquiry.linked_move_out_request.status} />
+                    </div>
+                  </div>
+                  {inquiry.linked_move_out_request.contract?.id && (
+                    <div className="field">
+                      <div className="field-label mono">契約</div>
+                      <div className="field-value">
+                        <Link href={`/contracts/${inquiry.linked_move_out_request.contract.id}`} className="rlink">
+                          契約詳細を確認 →
+                        </Link>
+                      </div>
                     </div>
                   )}
                 </div>

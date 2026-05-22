@@ -38,6 +38,7 @@ export default function InquiryFormModal({
   const [apiError, setApiError] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState(initial?.property_id || "");
   const [selectedUnitId, setSelectedUnitId] = useState(initial?.unit_id || "");
+  const [selectedType, setSelectedType] = useState(initial?.inquiry_type || "other");
   const [selectedTenantId, setSelectedTenantId] = useState(() => {
     if (initial?.tenant_id) return initial.tenant_id;
     if (initial?.unit_id) {
@@ -223,9 +224,11 @@ export default function InquiryFormModal({
               </label>
               <select
                 name="inquiry_type"
-                defaultValue={editData?.inquiry_type || "other"}
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
                 className="input"
               >
+                <option value="maintenance">修繕</option>
                 <option value="move_out">退去</option>
                 <option value="complaint">クレーム</option>
                 <option value="other">その他</option>
@@ -268,6 +271,23 @@ export default function InquiryFormModal({
                 <option value="resolved">解決済</option>
                 <option value="closed">クローズ</option>
               </select>
+            </div>
+          )}
+
+          {selectedType === "move_out" && (
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                退去予定日 <span className="text-danger">*</span>
+              </label>
+              <input
+                name="move_out_date"
+                type="date"
+                defaultValue={editData?.move_out_date || ""}
+                className="input"
+              />
+              {errors.move_out_date && (
+                <p className="text-danger text-sm mt-1">{errors.move_out_date[0]}</p>
+              )}
             </div>
           )}
 

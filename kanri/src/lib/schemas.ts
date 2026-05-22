@@ -300,11 +300,12 @@ export const inquirySchema = z.object({
   unit_id: z.string().optional().or(z.literal("")),
   tenant_id: z.string().optional().or(z.literal("")),
   inquiry_type: z.enum(
-    ["move_out", "complaint", "other"],
+    ["move_out", "maintenance", "complaint", "other"],
     {
       message: "種別を選択してください",
     }
   ),
+  move_out_date: z.string().optional().or(z.literal("")),
   title: z.string().min(1, "件名は必須です"),
   description: z.string().optional(),
   status: z

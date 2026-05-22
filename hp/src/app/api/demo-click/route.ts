@@ -27,6 +27,11 @@ export async function POST(request: NextRequest) {
 
     const forwarded = request.headers.get("x-forwarded-for");
     const ip = forwarded?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "";
+
+    // ローカルホストからのアクセスは記録しない
+    if (!ip || ip === "::1" || ip === "127.0.0.1" || ip.startsWith("::ffff:192.168.") || ip.startsWith("::ffff:10.") || ip.startsWith("::ffff:172.")) {
+      return NextResponse.json({ ok: true });
+    }
     const userAgent = request.headers.get("user-agent") || "";
     const referrer = request.headers.get("referer") || "";
     const country = request.headers.get("x-vercel-ip-country") || "";
