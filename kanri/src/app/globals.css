@@ -205,6 +205,10 @@
 .tbl tr.row-renewal td { background: var(--warn-tint); }
 .tbl tr.row-renewal td:first-child { box-shadow: inset 2px 0 0 var(--warn); }
 .tbl tr.row-renewal.row-hover:hover td { background: color-mix(in srgb, var(--warn-tint) 80%, var(--warn)); }
+/* 期限切れの行。更新間近より緊急度が高いので危険色で強調する */
+.tbl tr.row-expired td { background: var(--danger-tint); }
+.tbl tr.row-expired td:first-child { box-shadow: inset 2px 0 0 var(--danger); }
+.tbl tr.row-expired.row-hover:hover td { background: color-mix(in srgb, var(--danger-tint) 80%, var(--danger)); }
 .tbl tr.row-link td { padding: 0; }
 .tbl tr.row-link td a { display: block; padding: 12px 16px; }
 .tbl .num { font-family: var(--font-mono); text-align: right; font-size: 12.5px; }

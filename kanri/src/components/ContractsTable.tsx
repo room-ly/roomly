@@ -127,12 +127,15 @@ export default function ContractsTable({ data, alertDays = 90 }: ContractsTableP
                 const st = statusInfo[c._status] || statusInfo.active;
                 // 「更新間近」= サイドバーの契約バッジが数えている行。一覧で視認できるよう強調する
                 const isRenewal = c._status === "renewal";
+                // 「期限切れ」= 契約満了を過ぎた行。更新間近より緊急度が高いので危険色で強調する
+                const isExpired = c._status === "expired";
+                const rowTitle = isExpired ? "契約期間が満了しています" : isRenewal ? `契約満了まで${alertDays}日以内（サイドバーの契約バッジに計上）` : undefined;
                 return (
                   <tr
                     key={c.id}
-                    className={`row-hover${isRenewal ? " row-renewal" : ""}`}
+                    className={`row-hover${isExpired ? " row-expired" : isRenewal ? " row-renewal" : ""}`}
                     style={{ cursor: "pointer" }}
-                    title={isRenewal ? `契約満了まで${alertDays}日以内（サイドバーの契約バッジに計上）` : undefined}
+                    title={rowTitle}
                     onClick={(e) => { if ((e.target as HTMLElement).closest("a")) return; router.push(`/contracts/${c.id}`); }}
                   >
                     <td>
