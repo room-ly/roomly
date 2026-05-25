@@ -271,7 +271,9 @@ export async function GET(
     本書は${companyName}が管理するシステムより出力されました
   </p>
 
-  <script>window.print();</script>
+  <div class="no-print" style="text-align:center; margin: 32px 0 8px;">
+    <button onclick="window.print()" style="padding: 10px 32px; font-size: 14px; cursor: pointer; background: #1a365d; color: #fff; border: none; border-radius: 6px;">印刷 / PDF保存</button>
+  </div>
 </body>
 </html>`;
 

@@ -72,7 +72,7 @@ export async function GET(
 
     const { data: company } = await supabase
       .from("companies")
-      .select("name, postal_code, address, phone")
+      .select("name, postal_code, address, phone, estate_license, estate_agent_name, estate_agent_license")
       .eq("id", companyId)
       .single();
 
@@ -261,13 +261,28 @@ export async function GET(
   <h3>11. 管理の委託先</h3>
   <table>
     <tr><th>管理形態</th><td>${e(managementFormLabel[property?.management_form] || "")}</td></tr>
-    <tr><th>管理会社</th><td>${e(company?.name || "")}</td></tr>
+    <tr><th>管理会社名</th><td>${e(company?.name || "")}</td></tr>
+    <tr><th>免許番号</th><td>${e(company?.estate_license || "")}</td></tr>
     <tr><th>住所</th><td>${company?.postal_code ? "〒" + e(company.postal_code) + " " : ""}${e(company?.address || "")}</td></tr>
     <tr><th>電話番号</th><td>${e(formatPhone(company?.phone) || "")}</td></tr>
   </table>
 
+  <h3>12. 賃借人</h3>
+  <table>
+    <tr><th>氏名</th><td>${e(tenant?.name || "")}</td><th>フリガナ</th><td>${e(tenant?.name_kana || "")}</td></tr>
+    <tr><th>生年月日</th><td>${tenant?.date_of_birth ? dateStr(tenant.date_of_birth) : ""}</td><th>電話番号</th><td>${e(formatPhone(tenant?.phone) || "")}</td></tr>
+    <tr><th>住所（現住所）</th><td colspan="3">${e(tenant?.address || "")}</td></tr>
+    <tr><th>勤務先</th><td>${e(tenant?.workplace || "")}</td><th>勤務先電話</th><td>${e(formatPhone(tenant?.workplace_phone) || "")}</td></tr>
+  </table>
+
+  <h3>13. 既存の損傷・汚損の告知</h3>
+  <div style="border: 1px solid #999; padding: 8px; margin: 6px 0; min-height: 60px; font-size: 12px;">
+    ${e(unit?.damage_notes || "特記事項なし")}
+  </div>
+  <p class="note">※ 上記以外の損傷・汚損については、入居時チェックリストに記録します。</p>
+
   ${contract.special_terms ? `
-  <h3>12. 特約事項</h3>
+  <h3>14. 特約事項</h3>
   <div style="border: 1px solid #999; padding: 8px; margin: 6px 0; white-space: pre-wrap; font-size: 12px;">${e(contract.special_terms)}</div>` : ""}
 
   <div class="sig-block">
@@ -282,14 +297,15 @@ export async function GET(
     <div class="sig-row">
       <div class="sig-col">
         <div class="sig-label">説明した宅地建物取引士</div>
-        <p>取引士証番号：</p>
-        <p>氏名：<span class="seal-area">印</span></p>
         <p>所属：${e(company?.name || "")}</p>
+        <p>取引士証登録番号：${e(company?.estate_agent_license || "")}</p>
+        <p>氏名：${e(company?.estate_agent_name || "")}<span class="seal-area">印</span></p>
       </div>
       <div class="sig-col">
         <div class="sig-label">説明を受けた者（賃借人）</div>
         <p>住所：${e(tenant?.address || "")}</p>
         <p>氏名：${e(tenant?.name || "")}<span class="seal-area">印</span></p>
+        <p>電話：${e(formatPhone(tenant?.phone) || "")}</p>
       </div>
     </div>
   </div>
@@ -298,7 +314,9 @@ export async function GET(
     本書は${e(company?.name || "")}が管理するシステムより出力されました
   </p>
 
-  <script>window.print();</script>
+  <div class="no-print" style="text-align:center; margin: 32px 0 8px;">
+    <button onclick="window.print()" style="padding: 10px 32px; font-size: 14px; cursor: pointer; background: #1a365d; color: #fff; border: none; border-radius: 6px;">印刷 / PDF保存</button>
+  </div>
 </body>
 </html>`;
 

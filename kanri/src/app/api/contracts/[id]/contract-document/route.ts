@@ -55,7 +55,7 @@ export async function GET(
 
     const { data: company } = await supabase
       .from("companies")
-      .select("name, postal_code, address, phone")
+      .select("name, postal_code, address, phone, estate_license")
       .eq("id", companyId)
       .single();
 
@@ -219,11 +219,40 @@ export async function GET(
     <div class="article-body">
       乙は、本契約の終了時に、本物件を原状に回復した上で甲に明け渡すものとする。
       原状回復の範囲は、国土交通省「原状回復をめぐるトラブルとガイドライン」に準拠する。
+      乙は、明渡しと同時に本物件内の家財・残置物を全て撤去しなければならない。撤去しない場合、甲は乙の費用負担において処分することができる。
+    </div>
+  </div>
+
+  <h2>第10条（契約の更新）</h2>
+  <div class="article">
+    <div class="article-body">
+      ${contract.contract_type === "ordinary" ? `
+      本契約は、期間満了の6ヶ月前までに甲または乙から書面による更新拒絶の通知がなされない限り、同一条件にて2年間更新されるものとする。
+      更新の際、乙は更新料として${Number(contract.renewal_fee) > 0 ? `賃料の${yen(contract.renewal_fee)}相当額` : "別途定める額"}を甲に支払うものとする。
+      ` : `
+      本契約は定期建物賃貸借であり、期間満了により終了する。更新はない。
+      甲は、期間満了の1年前から6ヶ月前までの間に、乙に対し期間満了により契約が終了する旨を通知する。
+      `}
+    </div>
+  </div>
+
+  <h2>第11条（反社会的勢力の排除）</h2>
+  <div class="article">
+    <div class="article-body">
+      甲及び乙は、現在及び将来にわたって、反社会的勢力（暴力団、暴力団員、暴力団関係企業・団体等）に該当しないことを表明し、保証する。
+      乙が本条に違反した場合、甲は催告なく本契約を解除することができる。
+    </div>
+  </div>
+
+  <h2>第12条（合意管轄）</h2>
+  <div class="article">
+    <div class="article-body">
+      本契約に関する紛争については、本物件所在地を管轄する裁判所を第一審の専属的合意管轄裁判所とする。
     </div>
   </div>
 
   ${contract.special_terms ? `
-  <h2>第10条（特約事項）</h2>
+  <h2>第13条（特約事項）</h2>
   <div class="article">
     <div class="article-body" style="white-space: pre-wrap;">${e(contract.special_terms)}</div>
   </div>` : ""}
@@ -269,6 +298,7 @@ export async function GET(
       <div class="sig-col">
         <div class="sig-label">管理会社</div>
         <p>${e(company?.name || "")}</p>
+        ${company?.estate_license ? `<p>免許番号：${e(company.estate_license)}</p>` : ""}
         <p>住所：${company?.postal_code ? "〒" + e(company.postal_code) + " " : ""}${e(company?.address || "")}</p>
         <p>電話：${e(formatPhone(company?.phone) || "")}</p>
       </div>
@@ -285,7 +315,9 @@ export async function GET(
     本書は${e(company?.name || "")}が管理するシステムより出力されました
   </p>
 
-  <script>window.print();</script>
+  <div class="no-print" style="text-align:center; margin: 32px 0 8px;">
+    <button onclick="window.print()" style="padding: 10px 32px; font-size: 14px; cursor: pointer; background: #1a365d; color: #fff; border: none; border-radius: 6px;">印刷 / PDF保存</button>
+  </div>
 </body>
 </html>`;
 

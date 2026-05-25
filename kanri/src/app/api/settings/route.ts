@@ -8,7 +8,7 @@ export async function PUT(request: NextRequest) {
     const supabase = await createClient();
     const companyId = await getCompanyId();
 
-    const allowed = ["name", "phone", "address", "usage_type", "contract_alert_days"];
+    const allowed = ["name", "phone", "address", "postal_code", "usage_type", "contract_alert_days", "estate_license", "estate_agent_name", "estate_agent_license"];
     const update: Record<string, any> = {};
     for (const key of allowed) {
       if (key in body) update[key] = body[key];
