@@ -64,7 +64,12 @@ export default function OwnerFormModal({
 
       if (!res.ok) {
         const err = await res.json();
-        setApiError(err.error || "エラーが発生しました");
+        if (err.details) {
+          setErrors(err.details as Record<string, string[]>);
+          setApiError("入力内容を確認してください");
+        } else {
+          setApiError(err.error || "エラーが発生しました");
+        }
         return;
       }
 

@@ -74,12 +74,22 @@ export default function ContractFormModal({
 
       if (!res.ok) {
         const err = await res.json();
-        setApiError(err.error || "エラーが発生しました");
+        if (err.details) {
+          setErrors(err.details as Record<string, string[]>);
+          setApiError("入力内容を確認してください");
+        } else {
+          setApiError(err.error || "エラーが発生しました");
+        }
         return;
       }
 
-      onClose();
-      router.refresh();
+      if (!isEdit) {
+        const created = await res.json();
+        router.push(`/contracts/${created.id}`);
+      } else {
+        onClose();
+        router.refresh();
+      }
     } catch (err) {
       const zodErr = err as ZodError;
       if (zodErr.flatten) {

@@ -104,7 +104,7 @@ export const propertySchema = z.object({
     .or(z.literal("").transform(() => undefined)),
   // 登記情報
   registered_owner_name: optionalString,
-  mortgage_exists: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
+  mortgage_exists: z.union([z.boolean(), z.enum(["true", "false"]).transform((v) => v === "true")]).optional(),
   mortgagee: optionalString,
   mortgage_amount: z.coerce.number().min(0).optional()
     .or(z.literal("").transform(() => undefined)),
@@ -113,13 +113,13 @@ export const propertySchema = z.object({
   gas_type: optionalString,
   electricity: optionalString,
   sewage: optionalString,
-  septic_tank: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
+  septic_tank: z.union([z.boolean(), z.enum(["true", "false"]).transform((v) => v === "true")]).optional(),
   // リスク調査
   asbestos_survey: optionalString,
   earthquake_resistance: optionalString,
-  flood_hazard_zone: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
-  landslide_hazard_zone: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
-  tsunami_hazard_zone: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
+  flood_hazard_zone: z.union([z.boolean(), z.enum(["true", "false"]).transform((v) => v === "true")]).optional(),
+  landslide_hazard_zone: z.union([z.boolean(), z.enum(["true", "false"]).transform((v) => v === "true")]).optional(),
+  tsunami_hazard_zone: z.union([z.boolean(), z.enum(["true", "false"]).transform((v) => v === "true")]).optional(),
   // 自由入力
   notes: optionalString,
   appeal_points: optionalString,

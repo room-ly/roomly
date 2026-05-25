@@ -31,7 +31,7 @@ function ContractMeter({ startDate, endDate, alertDays }: { startDate?: string; 
   const elapsed = Math.max(0, (now - start) / (end - start));
   const remainingDays = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
   const remainingMonths = Math.max(0, Math.ceil(remainingDays / 30));
-  const pct = Math.min(100, Math.max(0, elapsed * 100));
+  const pct = Math.round(Math.min(100, Math.max(0, elapsed * 100)) * 10000) / 10000;
   const isExpired = remainingDays <= 0;
   const isUrgent = remainingDays > 0 && remainingDays <= 30;
   const color = isExpired ? "var(--danger)" : isUrgent ? "var(--danger)" : remainingDays <= alertDays ? "var(--warn)" : "var(--accent)";
@@ -126,9 +126,9 @@ export default function ContractsTable({ data, alertDays = 90 }: ContractsTableP
                 };
                 const st = statusInfo[c._status] || statusInfo.active;
                 return (
-                  <tr key={c.id} className="row-hover" style={{ cursor: "pointer" }} onClick={() => router.push(`/contracts/${c.id}`)}>
+                  <tr key={c.id} className="row-hover" style={{ cursor: "pointer" }} onClick={(e) => { if ((e.target as HTMLElement).closest("a")) return; router.push(`/contracts/${c.id}`); }}>
                     <td>
-                      <span className="strong">{c.tenant?.name}</span>
+                      <Link href={`/contracts/${c.id}`} className="strong" style={{ color: "inherit", textDecoration: "none" }} onClick={(e) => e.stopPropagation()}>{c.tenant?.name}</Link>
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       {c.unit?.property?.id ? (
