@@ -7,11 +7,12 @@ import UnitFormModal from "./UnitFormModal";
 
 interface UnitTableProps {
   propertyId: string;
+  propertyType?: string | null;
   units: Record<string, any>[];
   contracts: Record<string, any>[];
 }
 
-export default function UnitTable({ propertyId, units, contracts }: UnitTableProps) {
+export default function UnitTable({ propertyId, propertyType, units, contracts }: UnitTableProps) {
   const router = useRouter();
   const [editUnit, setEditUnit] = useState<Record<string, any> | null>(null);
 
@@ -108,6 +109,7 @@ export default function UnitTable({ propertyId, units, contracts }: UnitTablePro
         isOpen={!!editUnit}
         onClose={() => setEditUnit(null)}
         propertyId={propertyId}
+        propertyType={propertyType}
         editData={editUnit}
       />
     </div>

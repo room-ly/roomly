@@ -64,6 +64,7 @@ export default function UnitDetailClient({
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         propertyId={propertyId}
+        propertyType={unit.property?.property_type}
         editData={unit}
       />
     </>

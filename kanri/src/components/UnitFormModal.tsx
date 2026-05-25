@@ -10,6 +10,7 @@ interface UnitFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   propertyId: string;
+  propertyType?: string | null;
   editData?: Record<string, any> | null;
 }
 
@@ -17,6 +18,7 @@ export default function UnitFormModal({
   isOpen,
   onClose,
   propertyId,
+  propertyType,
   editData,
 }: UnitFormModalProps) {
   const router = useRouter();
@@ -27,6 +29,9 @@ export default function UnitFormModal({
   if (!isOpen) return null;
 
   const isEdit = !!editData;
+  // 戸建ては1建物=1区画。部屋番号・階の概念が薄いので表示を切り替える
+  const isHouse = propertyType === "house";
+  const unitWord = isHouse ? "区画" : "部屋";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,6 +43,11 @@ export default function UnitFormModal({
     formData.forEach((value, key) => {
       data[key] = value;
     });
+
+    // 戸建ては部屋番号が任意。空欄なら既定値「本棟」で補完（DBはNOT NULL）
+    if (isHouse && (!data.unit_number || String(data.unit_number).trim() === "")) {
+      data.unit_number = "本棟";
+    }
 
     try {
       const parsed = unitSchema.parse(data) as UnitFormData;
@@ -83,7 +93,7 @@ export default function UnitFormModal({
       <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">
-            {isEdit ? "部屋を編集" : "部屋を追加"}
+            {isEdit ? `${unitWord}を編集` : `${unitWord}を追加`}
           </h2>
           <button
             onClick={onClose}
@@ -103,13 +113,19 @@ export default function UnitFormModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
-                部屋番号 <span className="text-danger">*</span>
+                {isHouse ? (
+                  <>号棟・棟名 <span className="text-ink-4">(任意)</span></>
+                ) : (
+                  <>部屋番号 <span className="text-danger">*</span></>
+                )}
               </label>
               <input
                 name="unit_number"
-                defaultValue={editData?.unit_number || ""}
+                defaultValue={
+                  editData?.unit_number || (isHouse && !isEdit ? "本棟" : "")
+                }
                 className="input"
-                placeholder="例: 101"
+                placeholder={isHouse ? "例: 本棟 / A棟" : "例: 101"}
               />
               {errors.unit_number && (
                 <p className="text-danger text-sm mt-1">
@@ -117,18 +133,20 @@ export default function UnitFormModal({
                 </p>
               )}
             </div>
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">
-                階
-              </label>
-              <input
-                name="floor"
-                type="number"
-                defaultValue={editData?.floor || ""}
-                className="input"
-                placeholder="例: 1"
-              />
-            </div>
+            {!isHouse && (
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  階
+                </label>
+                <input
+                  name="floor"
+                  type="number"
+                  defaultValue={editData?.floor || ""}
+                  className="input"
+                  placeholder="例: 1"
+                />
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -207,6 +225,19 @@ export default function UnitFormModal({
               <option value="reserved">申込中</option>
               <option value="maintenance">メンテ中</option>
             </select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-ink-2 block mb-1">
+              既存の損傷・汚損メモ
+            </label>
+            <textarea
+              name="damage_notes"
+              defaultValue={editData?.damage_notes || ""}
+              className="input"
+              rows={3}
+              placeholder="重要事項説明書の「既存の損傷・汚損の告知」欄に印字されます"
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-3">

@@ -176,7 +176,7 @@ export default async function PropertyDetailPage({
 
           <PropertyImages propertyId={id} />
 
-          <UnitTable propertyId={id} units={units} contracts={contracts} />
+          <UnitTable propertyId={id} propertyType={property.property_type} units={units} contracts={contracts} />
 
           <DocumentSection propertyId={id} />
         </div>
