@@ -46,3 +46,9 @@ properties_sample.csv
 .playwright-mcp/
 # UI確認用スクショ（ルート直下のPNG）
 /*.png
+
+# DBバックアップ（顧客データ・コミット厳禁）
+supabase/backups/
+
+# 巻き直し前の旧マイグレーション（ローカル参照専用・適用済み）
+supabase/migrations/_archive/
