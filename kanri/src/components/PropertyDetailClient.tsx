@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, ArrowRight, Pencil } from "lucide-react";
+import { Plus, ArrowRight, Pencil, Upload } from "lucide-react";
 import UnitFormModal from "./UnitFormModal";
 import PropertyFormModal from "./PropertyFormModal";
+import CsvImportModal from "./CsvImportModal";
 
 interface PlanOption {
   priceId: string;
@@ -37,9 +38,13 @@ export default function PropertyDetailClient({
 }: PropertyDetailClientProps) {
   const [unitModalOpen, setUnitModalOpen] = useState(false);
   const [propertyModalOpen, setPropertyModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [checking, setChecking] = useState(false);
   const [limitInfo, setLimitInfo] = useState<LimitInfo | null>(null);
   const [upgrading, setUpgrading] = useState(false);
+
+  // 戸建ては1建物=1区画。複数部屋の一括取込は不要なのでCSVインポートは出さない
+  const isHouse = property.property_type === "house";
 
   async function handleAddClick() {
     setChecking(true);
@@ -94,6 +99,15 @@ export default function PropertyDetailClient({
           <Pencil size={14} />
           物件を編集
         </button>
+        {!isHouse && (
+          <button
+            className="btn btn-secondary"
+            onClick={() => setImportModalOpen(true)}
+          >
+            <Upload size={14} />
+            部屋をCSVインポート
+          </button>
+        )}
         <button
           className="btn btn-primary disabled:opacity-50"
           onClick={handleAddClick}
@@ -116,6 +130,13 @@ export default function PropertyDetailClient({
         onClose={() => setUnitModalOpen(false)}
         propertyId={propertyId}
         propertyType={property.property_type}
+      />
+
+      <CsvImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        type="units"
+        propertyId={propertyId}
       />
 
       {limitInfo && (

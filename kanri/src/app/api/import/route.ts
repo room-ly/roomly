@@ -5,12 +5,17 @@ import {
   mapRowToDb,
   PROPERTY_COLUMNS,
   TENANT_COLUMNS,
+  UNIT_COLUMNS,
 } from "@/lib/csv-import";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, csvText } = body as { type: string; csvText: string };
+    const { type, csvText, property_id } = body as {
+      type: string;
+      csvText: string;
+      property_id?: string;
+    };
 
     if (!type || !csvText) {
       return NextResponse.json(
@@ -24,11 +29,21 @@ export async function POST(request: NextRequest) {
         ? PROPERTY_COLUMNS
         : type === "tenants"
           ? TENANT_COLUMNS
-          : null;
+          : type === "units"
+            ? UNIT_COLUMNS
+            : null;
 
     if (!columns) {
       return NextResponse.json(
-        { error: "無効なインポート種別です（properties / tenants）" },
+        { error: "無効なインポート種別です（properties / tenants / units）" },
+        { status: 400 }
+      );
+    }
+
+    // 部屋インポートは物件IDが必須
+    if (type === "units" && !property_id) {
+      return NextResponse.json(
+        { error: "部屋のインポートには物件IDが必要です" },
         { status: 400 }
       );
     }
@@ -57,12 +72,90 @@ export async function POST(request: NextRequest) {
       const { data, errors } = mapRowToDb(
         rows[i],
         columns,
-        type as "properties" | "tenants"
+        type as "properties" | "tenants" | "units"
       );
       if (errors.length > 0) {
         rowErrors.push({ row: i + 2, errors }); // +2: ヘッダー行 + 0-index
       } else {
         validRows.push(data);
+      }
+    }
+
+    const supabase = await createClient();
+    const company_id = await getCompanyId();
+
+    // 部屋インポートの追加チェック（プラン上限・部屋番号重複）
+    if (type === "units") {
+      // CSV内で複数回出現する部屋番号を特定（出現する全行をエラー扱いし登録しない）
+      const counts = new Map<string, number>();
+      for (const row of validRows) {
+        const num = String(row.unit_number);
+        counts.set(num, (counts.get(num) ?? 0) + 1);
+      }
+      const dupNumbers = new Set(
+        [...counts.entries()].filter(([, c]) => c > 1).map(([num]) => num)
+      );
+
+      // 既存DBの同一物件内の部屋番号と突合
+      const { data: existing } = await supabase
+        .from("units")
+        .select("unit_number")
+        .eq("property_id", property_id!);
+      const existingNumbers = new Set(
+        (existing ?? []).map((u) => String(u.unit_number))
+      );
+
+      const filtered: Record<string, unknown>[] = [];
+      validRows.forEach((row, idx) => {
+        const num = String(row.unit_number);
+        if (dupNumbers.has(num)) {
+          rowErrors.push({
+            row: idx + 2,
+            errors: [`部屋番号「${num}」がCSV内で重複しています`],
+          });
+          return;
+        }
+        if (existingNumbers.has(num)) {
+          rowErrors.push({
+            row: idx + 2,
+            errors: [`部屋番号「${num}」は既にこの物件に存在します`],
+          });
+          return;
+        }
+        filtered.push(row);
+      });
+      validRows.length = 0;
+      validRows.push(...filtered);
+
+      // プラン上限チェック（会社全体の区画数 + 今回追加分）
+      const [companyRes, unitsRes] = await Promise.all([
+        supabase
+          .from("companies")
+          .select(
+            "max_units, subscription_status, subscription_current_period_end"
+          )
+          .eq("id", company_id)
+          .single(),
+        supabase.from("units").select("id", { count: "exact", head: true }),
+      ]);
+      const comp = companyRes.data;
+      const isSubActive =
+        comp?.subscription_status === "active" &&
+        (!comp.subscription_current_period_end ||
+          new Date(comp.subscription_current_period_end) > new Date());
+      const effectiveMax = isSubActive ? (comp?.max_units ?? 50) : 10;
+      const currentUnits = unitsRes.count ?? 0;
+      const remaining = effectiveMax - currentUnits;
+      if (validRows.length > remaining) {
+        return NextResponse.json(
+          {
+            error: isSubActive
+              ? `現在のプランの区画数上限（${effectiveMax}区画）を超えます。残り${Math.max(remaining, 0)}区画まで登録できます。`
+              : `フリープランの上限（10区画）を超えます。残り${Math.max(remaining, 0)}区画まで登録できます。プロプランにアップグレードしてください。`,
+            rowErrors: rowErrors.length > 0 ? rowErrors : undefined,
+          },
+          { status: 403 }
+        );
       }
     }
 
@@ -77,14 +170,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
-    const company_id = await getCompanyId();
-    const tableName = type === "properties" ? "properties" : "tenants";
-    const rowsWithCompany = validRows.map((row) => ({ ...row, company_id }));
+    const tableName =
+      type === "properties"
+        ? "properties"
+        : type === "units"
+          ? "units"
+          : "tenants";
+    // 空欄（null）のキーは送らず、DBのカラム既定値に委ねる。
+    // NOT NULL かつ DEFAULT 付きのカラム（例: management_fee_rate）に
+    // null を渡して制約違反になるのを防ぐ。
+    const rowsWithCompany = validRows.map((row) => {
+      const cleaned: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(row)) {
+        if (v !== null && v !== undefined) cleaned[k] = v;
+      }
+      return {
+        ...cleaned,
+        company_id,
+        ...(type === "units" ? { property_id } : {}),
+      };
+    });
 
+    // defaultToNull:false で、行ごとに欠けたキーをNULLではなくカラム既定値で埋める。
+    // （PostgRESTの一括INSERTは既定でキーを全行で揃えNULL補完するため、
+    //  NOT NULL + DEFAULT のカラム（例: management_fee_rate）で制約違反になる）
     const { data: inserted, error: dbError } = await supabase
       .from(tableName as any)
-      .insert(rowsWithCompany as any)
+      .insert(rowsWithCompany as any, { defaultToNull: false })
       .select();
 
     if (dbError) {

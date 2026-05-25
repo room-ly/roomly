@@ -7,12 +7,15 @@ import {
   generateSampleCsv,
   PROPERTY_COLUMNS,
   TENANT_COLUMNS,
+  UNIT_COLUMNS,
 } from "@/lib/csv-import";
 
 interface CsvImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type: "properties" | "tenants";
+  type: "properties" | "tenants" | "units";
+  // 部屋(units)インポート時に必須。取り込み先の物件ID
+  propertyId?: string;
 }
 
 type ImportState = "select" | "preview" | "importing" | "done" | "error";
@@ -28,6 +31,7 @@ export default function CsvImportModal({
   isOpen,
   onClose,
   type,
+  propertyId,
 }: CsvImportModalProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,8 +43,14 @@ export default function CsvImportModal({
 
   if (!isOpen) return null;
 
-  const label = type === "properties" ? "物件" : "入居者";
-  const columns = type === "properties" ? PROPERTY_COLUMNS : TENANT_COLUMNS;
+  const label =
+    type === "properties" ? "物件" : type === "units" ? "部屋" : "入居者";
+  const columns =
+    type === "properties"
+      ? PROPERTY_COLUMNS
+      : type === "units"
+        ? UNIT_COLUMNS
+        : TENANT_COLUMNS;
 
   function handleClose() {
     setState("select");
@@ -98,7 +108,7 @@ export default function CsvImportModal({
       const res = await fetch("/api/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, csvText }),
+        body: JSON.stringify({ type, csvText, property_id: propertyId }),
       });
 
       const data = await res.json();
