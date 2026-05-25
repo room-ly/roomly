@@ -21,7 +21,8 @@ const breadcrumbMap: Record<string, string> = {
   "/expenses": "経費",
   "/owners": "オーナー",
   "/remittances": "送金",
-  "/reports": "レポート",
+  "/payments": "支払い出力",
+  "/payees": "支払先",
   "/settings": "設定",
 };
 
