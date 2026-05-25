@@ -40,3 +40,9 @@ next-env.d.ts
 zengin_*.txt
 properties_sample.csv
 *.zip
+
+# Local tooling artifacts
+.mcp.json
+.playwright-mcp/
+# UI確認用スクショ（ルート直下のPNG）
+/*.png
