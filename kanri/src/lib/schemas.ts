@@ -38,7 +38,7 @@ export const propertySchema = z.object({
   property_type: z.enum(["apartment", "apart", "house", "commercial", "parking", "land"], {
     message: "物件種別を選択してください",
   }),
-  owner_id: z.string().uuid("オーナーを選択してください").optional().or(z.literal("")),
+  owner_id: z.guid("オーナーを選択してください").optional().or(z.literal("")),
   // 所在地
   postal_code: optionalString,
   address: z.string().min(1, "住所は必須です"),
@@ -195,8 +195,8 @@ export type TenantFormData = z.infer<typeof tenantSchema>;
 // 契約スキーマ
 export const contractSchema = z
   .object({
-    unit_id: z.string().uuid("部屋を選択してください"),
-    tenant_id: z.string().uuid("入居者を選択してください"),
+    unit_id: z.guid("部屋を選択してください"),
+    tenant_id: z.guid("入居者を選択してください"),
     contract_type: z.enum(["fixed", "ordinary"], {
       message: "契約種別を選択してください",
     }),
@@ -273,7 +273,7 @@ export type RentPaymentFormData = z.infer<typeof rentPaymentSchema>;
 
 // 修繕依頼スキーマ
 export const maintenanceSchema = z.object({
-  property_id: z.string().uuid("物件を選択してください"),
+  property_id: z.guid("物件を選択してください"),
   unit_id: z.string().optional().or(z.literal("")),
   title: z.string().min(1, "件名は必須です"),
   description: z.string().optional(),

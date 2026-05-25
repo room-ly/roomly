@@ -20,10 +20,13 @@ export async function PUT(
 
     const supabase = await createClient();
     const companyId = await getCompanyId();
+    // date型カラムは空文字をnullに正規化する（""はPostgresのdate変換でエラーになる）
     const data = {
       ...parsed.data,
       end_date: parsed.data.end_date || null,
       move_out_date: parsed.data.move_out_date || null,
+      signed_date: parsed.data.signed_date || null,
+      important_explanation_date: parsed.data.important_explanation_date || null,
     };
 
     const { data: oldContract } = await supabase
