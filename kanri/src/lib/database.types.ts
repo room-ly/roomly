@@ -14,12 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      demo_write_logs: {
+        Row: {
+          action: string
+          company_id: string
+          created_at: string
+          id: string
+          table_name: string
+        }
+        Insert: {
+          action: string
+          company_id: string
+          created_at?: string
+          id?: string
+          table_name: string
+        }
+        Update: {
+          action?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_write_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       companies: {
         Row: {
           address: string | null
           contract_alert_days: number
           created_at: string
+          estate_agent_license: string | null
+          estate_agent_name: string | null
+          estate_license: string | null
           id: string
+          is_demo: boolean
           max_units: number
           name: string
           phone: string | null
@@ -36,7 +72,11 @@ export type Database = {
           address?: string | null
           contract_alert_days?: number
           created_at?: string
+          estate_agent_license?: string | null
+          estate_agent_name?: string | null
+          estate_license?: string | null
           id?: string
+          is_demo?: boolean
           max_units?: number
           name: string
           phone?: string | null
@@ -53,7 +93,11 @@ export type Database = {
           address?: string | null
           contract_alert_days?: number
           created_at?: string
+          estate_agent_license?: string | null
+          estate_agent_name?: string | null
+          estate_license?: string | null
           id?: string
+          is_demo?: boolean
           max_units?: number
           name?: string
           phone?: string | null
@@ -132,6 +176,7 @@ export type Database = {
           created_at: string
           deposit: number
           end_date: string | null
+          expiry_notified_at: string | null
           guarantor_name: string | null
           guarantor_phone: string | null
           id: string
@@ -161,6 +206,7 @@ export type Database = {
           created_at?: string
           deposit?: number
           end_date?: string | null
+          expiry_notified_at?: string | null
           guarantor_name?: string | null
           guarantor_phone?: string | null
           id?: string
@@ -190,6 +236,7 @@ export type Database = {
           created_at?: string
           deposit?: number
           end_date?: string | null
+          expiry_notified_at?: string | null
           guarantor_name?: string | null
           guarantor_phone?: string | null
           id?: string
@@ -1404,6 +1451,7 @@ export type Database = {
           management_fee: number
           other_amount: number
           other_description: string | null
+          overdue_notified_at: string | null
           rent: number
           status: string
           total_amount: number
@@ -1419,6 +1467,7 @@ export type Database = {
           management_fee?: number
           other_amount?: number
           other_description?: string | null
+          overdue_notified_at?: string | null
           rent: number
           status?: string
           total_amount: number
@@ -1434,6 +1483,7 @@ export type Database = {
           management_fee?: number
           other_amount?: number
           other_description?: string | null
+          overdue_notified_at?: string | null
           rent?: number
           status?: string
           total_amount?: number

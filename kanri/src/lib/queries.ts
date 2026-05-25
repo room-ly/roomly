@@ -234,7 +234,7 @@ export async function getTenantDetail(id: string) {
 export async function getMaintenanceDetail(id: string) {
   const supabase = await createClient();
   const [{ data: request, error }, { data: logs }] = await Promise.all([
-    supabase.from("maintenance_requests").select("*, property:properties(id, name, address), unit:units(unit_number)").eq("id", id).single(),
+    supabase.from("maintenance_requests").select("*, property:properties(id, name, address, owner:owners(id, name, email)), unit:units(unit_number)").eq("id", id).single(),
     supabase.from("maintenance_logs").select("*").eq("request_id", id).order("logged_at", { ascending: false }),
   ]);
   if (error || !request) return null;
@@ -811,9 +811,11 @@ export async function getBadgeCounts() {
   const today = new Date().toISOString().slice(0, 10);
   const alertDateStr = alertDate.toISOString().slice(0, 10);
 
+  // 「更新間近」= 満了がアラート期間内の有効契約。ただし退去予告（pending/approved）が
+  // 出ている契約はもう更新しないので除外する（契約一覧の「更新間近」タブと定義を揃える）。
   const contractsPromise = supabase
     .from("contracts")
-    .select("id", { count: "exact", head: true })
+    .select("id, move_out_requests(status)")
     .eq("status", "active")
     .gte("end_date", today)
     .lte("end_date", alertDateStr);
@@ -830,7 +832,10 @@ export async function getBadgeCounts() {
   const rent = overdueRes.count ?? 0;
   const maintenance = (maintenanceUrgentRes.count ?? 0) + (maintenanceStaleRes.count ?? 0);
   const inquiries = (inquiriesUrgentRes.count ?? 0) + (inquiriesStaleRes.count ?? 0);
-  const contracts = contractsRes.count ?? 0;
+  const contracts = ((contractsRes.data ?? []) as Row[]).filter((c: Row) => {
+    const reqs = (c.move_out_requests ?? []) as Row[];
+    return !reqs.some((r: Row) => r.status === "pending" || r.status === "approved");
+  }).length;
   const dashboard = rent + maintenance + inquiries + contracts;
 
   return {
