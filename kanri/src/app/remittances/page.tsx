@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { getOwners, getExpenses, getRemittances } from "@/lib/queries";
+import { effectiveFeeRate } from "@/lib/remittance-calc";
 import RemittancesPageClient from "@/components/RemittancesPageClient";
 
 export default async function RemittancesPage() {
@@ -32,7 +33,7 @@ export default async function RemittancesPage() {
     const propertyBreakdown = ownerProps.map((p: any) => {
       const pUnits = (p.units || []).filter((u: any) => u.status === "occupied");
       const pRent = pUnits.reduce((s: number, u: any) => s + Number(u.rent), 0);
-      const pFeeRate = Number(p.management_fee_rate) || 0;
+      const pFeeRate = effectiveFeeRate(p.management_fee_rate, p.management_form);
       const pFee = Math.round(pRent * (pFeeRate / 100));
       const pExpense = propertyExpenses[p.id] || 0;
       return {

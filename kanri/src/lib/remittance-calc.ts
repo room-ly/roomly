@@ -1,5 +1,15 @@
 // オーナー送金計算ロジック（純粋関数として抽出）
 
+// 自主管理は管理会社への委託手数料が発生しないため、手数料率を実効0%にする。
+// それ以外の形態（全部委託・一部委託・サブリース・未設定）は登録された手数料率をそのまま使う。
+export function effectiveFeeRate(
+  feeRate: number | null | undefined,
+  managementForm: string | null | undefined
+): number {
+  if (managementForm === "self") return 0;
+  return Number(feeRate) || 0;
+}
+
 export interface RemittanceProperty {
   propertyId: string;
   propertyName: string;

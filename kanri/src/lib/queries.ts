@@ -116,7 +116,7 @@ export async function getUnitDetail(unitId: string) {
   const supabase = await createClient();
 
   const [{ data: unit, error }, { data: contracts }, { data: maintenanceRequests }] = await Promise.all([
-    supabase.from("units").select("*, property:properties(id, name, address)").eq("id", unitId).single(),
+    supabase.from("units").select("*, property:properties(id, name, address, property_type)").eq("id", unitId).single(),
     supabase.from("contracts").select("*, tenant:tenants(id, name, phone, email)").eq("unit_id", unitId).order("start_date", { ascending: false }),
     supabase.from("maintenance_requests").select("*").eq("unit_id", unitId).order("reported_date", { ascending: false }).limit(5),
   ]);
@@ -286,7 +286,7 @@ export async function getInquiryDetail(id: string) {
 export async function getOwnerDetail(id: string) {
   const supabase = await createClient();
   const [{ data: owner, error }, { data: remittances }] = await Promise.all([
-    supabase.from("owners").select("*, properties(id, name, management_fee_rate, units(id, status, rent))").eq("id", id).single(),
+    supabase.from("owners").select("*, properties(id, name, management_fee_rate, management_form, units(id, status, rent))").eq("id", id).single(),
     supabase.from("owner_remittances").select("id, remittance_month, total_rent, management_fee_deducted, expense_deducted, net_amount, status").eq("owner_id", id).order("remittance_month", { ascending: false }).limit(12),
   ]);
   if (error || !owner) return null;
@@ -436,7 +436,7 @@ export async function getOwners() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("owners")
-    .select("*, properties(id, name, management_fee_rate, units(id, status, rent))")
+    .select("*, properties(id, name, management_fee_rate, management_form, units(id, status, rent))")
     .order("name");
   if (error) throw error;
   return (data ?? []) as Row[];

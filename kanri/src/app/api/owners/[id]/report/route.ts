@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { effectiveFeeRate } from "@/lib/remittance-calc";
 
 export async function GET(
   _request: NextRequest,
@@ -16,7 +17,7 @@ export async function GET(
 
     const { data: owner, error: ownerError } = await supabase
       .from("owners")
-      .select("name, properties(id, name, management_fee_rate, units(id, unit_number, rent, status))")
+      .select("name, properties(id, name, management_fee_rate, management_form, units(id, unit_number, rent, status))")
       .eq("id", id)
       .single();
 
@@ -57,7 +58,7 @@ export async function GET(
       const unpaidAmount = pBillings
         .filter((b: any) => b.status !== "paid")
         .reduce((s: number, b: any) => s + Number(b.total_amount), 0);
-      const feeRate = Number(p.management_fee_rate) || 0;
+      const feeRate = effectiveFeeRate(p.management_fee_rate, p.management_form);
       const managementFee = Math.floor(rentIncome * feeRate / 100);
       const pExpenses = (expenses || []).filter((e: any) => e.property_id === p.id);
       const expenseTotal = pExpenses.reduce((s: number, e: any) => s + Number(e.amount), 0);

@@ -104,6 +104,12 @@ export default function PropertyFormModal({
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>(
     () => editData?.common_facilities || []
   );
+  // 自主管理は管理会社への委託手数料が発生しないため、手数料率を無効化する
+  const [managementForm, setManagementForm] = useState(editData?.management_form || "");
+  const [managementFeeRate, setManagementFeeRate] = useState(
+    String(editData?.management_fee_rate ?? "5")
+  );
+  const isSelfManaged = managementForm === "self";
 
   if (!isOpen) return null;
 
@@ -126,6 +132,10 @@ export default function PropertyFormModal({
       data[key] = value;
     });
     data.common_facilities = selectedFacilities;
+    // 自主管理時は手数料率入力がdisabledでFormDataに含まれないため明示的に0を保存
+    if (isSelfManaged) {
+      data.management_fee_rate = 0;
+    }
 
     try {
       const parsed = propertySchema.parse(data) as PropertyFormData;
@@ -587,17 +597,25 @@ export default function PropertyFormModal({
                   name="management_fee_rate"
                   type="number"
                   step="0.1"
-                  defaultValue={editData?.management_fee_rate ?? "5"}
+                  // 自主管理時は委託手数料が発生しないため0固定・編集不可
+                  value={isSelfManaged ? "0" : managementFeeRate}
+                  onChange={(e) => setManagementFeeRate(e.target.value)}
+                  disabled={isSelfManaged}
                   className="input"
                   placeholder="例: 5"
                 />
-                <FieldError errors={errors} field="management_fee_rate" />
+                {isSelfManaged ? (
+                  <p className="text-xs text-ink-3 mt-1">自主管理のため手数料は発生しません</p>
+                ) : (
+                  <FieldError errors={errors} field="management_fee_rate" />
+                )}
               </div>
               <div>
                 <Label>管理形態</Label>
                 <select
                   name="management_form"
-                  defaultValue={editData?.management_form || ""}
+                  value={managementForm}
+                  onChange={(e) => setManagementForm(e.target.value)}
                   className="input"
                 >
                   <option value="">選択してください</option>

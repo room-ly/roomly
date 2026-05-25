@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { effectiveFeeRate } from "@/lib/remittance-calc";
 
 // GET: 送金額のプレビュー計算（DBには保存しない）
 export async function GET(request: NextRequest) {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     // オーナーの物件・部屋を取得（手数料率は物件単位）
     const { data: properties } = await supabase
       .from("properties")
-      .select("id, name, management_fee_rate, units(id, unit_number, rent, management_fee, status)")
+      .select("id, name, management_fee_rate, management_form, units(id, unit_number, rent, management_fee, status)")
       .eq("owner_id", owner_id);
 
     // 当月のアクティブ契約の家賃請求を取得（入金済み分のみ）
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
         return contract && pUnitIds.includes(contract.unit_id);
       });
       const pRent = pBillings.reduce((s: number, b: any) => s + Number(b.total_amount), 0);
-      const pFeeRate = Number(p.management_fee_rate) || 0;
+      const pFeeRate = effectiveFeeRate(p.management_fee_rate, p.management_form);
       const pFee = Math.round(pRent * (pFeeRate / 100));
       totalRent += pRent;
       managementFeeDeducted += pFee;
