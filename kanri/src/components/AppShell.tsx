@@ -7,6 +7,7 @@ import CommandPalette from "./CommandPalette";
 
 export interface SidebarInitialData {
   badgeCounts: Record<string, number>;
+  contractAlertDays: number;
   companyName: string;
   userName: string;
   userEmail: string;

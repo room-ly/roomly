@@ -66,6 +66,7 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
   const { logout, user: authUser } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>(initialData?.badgeCounts ?? {});
+  const [alertDays, setAlertDays] = useState<number>(initialData?.contractAlertDays ?? 90);
   const [companyName, setCompanyName] = useState<string>(initialData?.companyName ?? "");
   const [displayUser, setDisplayUser] = useState<{ name: string; email: string }>({
     name: initialData?.userName ?? "",
@@ -82,13 +83,14 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
         return res.json();
       })
       .then((data) => {
-        const { company_name, user_name, user_email, contract_alert_days: _, ...counts } = data;
+        const { company_name, user_name, user_email, contract_alert_days, ...counts } = data;
         const hasData = Object.values(counts).some((v) => (v as number) > 0) || user_name || user_email;
         if (!hasData && retryCount < 2) {
           setTimeout(() => fetchBadgeCounts(retryCount + 1), 1500);
           return;
         }
         setBadgeCounts(counts as Record<string, number>);
+        if (typeof contract_alert_days === "number") setAlertDays(contract_alert_days);
         if (company_name) setCompanyName(company_name);
         if (user_name || user_email) {
           setDisplayUser({ name: user_name || "", email: user_email || "" });
@@ -144,6 +146,24 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
     if (href === "/inquiries") return "danger";
     if (href === "/contracts") return "warn";
     return undefined;
+  };
+
+  // バッジが何を集計しているかの説明（ホバー時のツールチップ用）
+  const getBadgeTitle = (href: string, count: number): string => {
+    switch (href) {
+      case "/":
+        return `要対応 合計 ${count}件（家賃滞納・緊急/放置中の修繕・問い合わせ・更新間近の契約）`;
+      case "/rent":
+        return `滞納中の家賃請求 ${count}件`;
+      case "/maintenance":
+        return `緊急、または3日以上放置されている修繕依頼 ${count}件`;
+      case "/inquiries":
+        return `緊急、または3日以上放置されている問い合わせ ${count}件`;
+      case "/contracts":
+        return `契約満了まで${alertDays}日以内の有効契約 ${count}件`;
+      default:
+        return `${count}件`;
+    }
   };
 
   const sidebarContent = (
@@ -203,13 +223,16 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
                     </span>
                     <span className="flex-1">{item.label}</span>
                     {badge && badge > 0 && (
-                      <span className={`font-mono text-[10px] px-1.5 py-px rounded-full border ${
-                        badgeKind === "danger"
-                          ? "bg-danger-tint text-danger border-transparent"
-                          : badgeKind === "warn"
-                          ? "bg-warn-tint text-warn border-transparent"
-                          : "bg-bg text-ink-2 border-line"
-                      }`}>
+                      <span
+                        title={getBadgeTitle(item.href, badge)}
+                        className={`font-mono text-[10px] px-1.5 py-px rounded-full border cursor-help ${
+                          badgeKind === "danger"
+                            ? "bg-danger-tint text-danger border-transparent"
+                            : badgeKind === "warn"
+                            ? "bg-warn-tint text-warn border-transparent"
+                            : "bg-bg text-ink-2 border-line"
+                        }`}
+                      >
                         {badge}
                       </span>
                     )}

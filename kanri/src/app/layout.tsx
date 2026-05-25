@@ -25,6 +25,7 @@ export default async function RootLayout({
 }>) {
   let sidebarData: {
     badgeCounts: Record<string, number>;
+    contractAlertDays: number;
     companyName: string;
     userName: string;
     userEmail: string;
@@ -32,9 +33,10 @@ export default async function RootLayout({
 
   try {
     const data = await getBadgeCounts();
-    const { company_name, user_name, user_email, contract_alert_days: _, ...counts } = data;
+    const { company_name, user_name, user_email, contract_alert_days, ...counts } = data;
     sidebarData = {
       badgeCounts: counts as Record<string, number>,
+      contractAlertDays: contract_alert_days,
       companyName: company_name,
       userName: user_name,
       userEmail: user_email,
