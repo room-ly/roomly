@@ -14,10 +14,15 @@ const CONTRACT_TYPE_LABEL: Record<string, string> = { fixed: "定期", ordinary:
 type FilterKey = "active" | "renewal" | "ending" | "all";
 
 function getContractStatus(c: Record<string, any>, alertDays: number) {
-  if (c._move_out_status === "approved" || c._move_out_status === "pending") return "ending";
+  // 期限切れ（契約満了超過）は退去予告より緊急度が高いので最優先で判定する。
+  // 退去予告を先に返すと、満了を過ぎても「退去予告」のまま色・文言が戻ってしまう。
   if (c.end_date) {
     const remaining = Math.ceil((new Date(c.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
     if (remaining <= 0) return "expired";
+  }
+  if (c._move_out_status === "approved" || c._move_out_status === "pending") return "ending";
+  if (c.end_date) {
+    const remaining = Math.ceil((new Date(c.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
     if (remaining <= alertDays) return "renewal";
   }
   return "active";
@@ -119,10 +124,10 @@ export default function ContractsTable({ data, alertDays = 90 }: ContractsTableP
             <tbody>
               {filtered.map((c) => {
                 const statusInfo: Record<string, { label: string; tone: string }> = {
-                  active: { label: "有効", tone: "ok" },
-                  renewal: { label: "更新間近", tone: "warn" },
-                  ending: { label: "退去予告", tone: "warn" },
-                  expired: { label: "終了", tone: "neutral" },
+                  active: { label: "有効", tone: "badge-ok" },
+                  renewal: { label: "更新間近", tone: "badge-warn" },
+                  ending: { label: "退去予告", tone: "badge-warn" },
+                  expired: { label: "期限切れ", tone: "badge-danger" },
                 };
                 const st = statusInfo[c._status] || statusInfo.active;
                 // 「更新間近」= サイドバーの契約バッジが数えている行。一覧で視認できるよう強調する
@@ -157,12 +162,12 @@ export default function ContractsTable({ data, alertDays = 90 }: ContractsTableP
                         <span className="mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>#{c.unit?.unit_number}</span>
                       )}
                     </td>
-                    <td><span className="badge neutral">{CONTRACT_TYPE_LABEL[c.contract_type] || c.contract_type}</span></td>
+                    <td><span className="badge badge-neutral">{CONTRACT_TYPE_LABEL[c.contract_type] || c.contract_type}</span></td>
                     <td>
                       <ContractMeter startDate={c.start_date} endDate={c.end_date} alertDays={alertDays} />
                     </td>
                     <td className="num">¥{Number(c.rent).toLocaleString()}</td>
-                    <td><span className={`badge ${st.tone}`}><span className="dot" />{st.label}</span></td>
+                    <td><span className={`badge ${st.tone}`}><span className="dot" />{st.label}</span></td>{/* st.tone は badge-ok / badge-warn / badge-danger 等の完全クラス名 */}
                   </tr>
                 );
               })}
