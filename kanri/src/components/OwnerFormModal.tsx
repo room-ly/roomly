@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { ownerSchema, type OwnerFormData } from "@/lib/schemas";
 import type { ZodError } from "zod";
 import BankSuggest from "./BankSuggest";
+import PostalCodeInput from "./PostalCodeInput";
 
 interface OwnerFormModalProps {
   isOpen: boolean;
@@ -26,12 +27,14 @@ export default function OwnerFormModal({
   const [bankCode, setBankCode] = useState(editData?.bank_code || "");
   const [branchName, setBranchName] = useState(editData?.bank_branch || "");
   const [branchCode, setBranchCode] = useState(editData?.bank_branch_code || "");
+  const [address, setAddress] = useState(editData?.address || "");
 
   useEffect(() => {
     setBankName(editData?.bank_name || "");
     setBankCode(editData?.bank_code || "");
     setBranchName(editData?.bank_branch || "");
     setBranchCode(editData?.bank_branch_code || "");
+    setAddress(editData?.address || "");
   }, [editData, isOpen]);
 
   if (!isOpen) return null;
@@ -159,11 +162,9 @@ export default function OwnerFormModal({
               <label className="text-sm font-medium text-ink-2 block mb-1">
                 郵便番号
               </label>
-              <input
-                name="postal_code"
+              <PostalCodeInput
                 defaultValue={editData?.postal_code || ""}
-                className="input"
-                placeholder="例: 160-0023"
+                onResolved={(r) => setAddress(r.address)}
               />
             </div>
             <div>
@@ -172,7 +173,8 @@ export default function OwnerFormModal({
               </label>
               <input
                 name="address"
-                defaultValue={editData?.address || ""}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
                 className="input"
                 placeholder="例: 東京都新宿区西新宿1-1-1"
               />

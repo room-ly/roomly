@@ -161,6 +161,10 @@ export interface Tenant {
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
   emergency_contact_relation?: string;
+  guarantee_type?: "company" | "individual" | "none";
+  guarantee_company_name?: string;
+  guarantee_contract_number?: string;
+  guarantee_fee?: number;
   guarantor_name?: string;
   guarantor_name_kana?: string;
   guarantor_date_of_birth?: string;

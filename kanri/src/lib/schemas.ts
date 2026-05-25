@@ -27,7 +27,22 @@ const optionalNumber = z.coerce
   .optional()
   .or(z.literal("").transform(() => undefined));
 
+// 年収（万円単位）。上限は現実的な範囲（10万＝10億円）に設定し、
+// 円単位での誤入力（例: 5000000）を弾く
+const optionalManYen = z.coerce
+  .number()
+  .int()
+  .min(0, "0以上を入力してください")
+  .max(100000, "万円単位で入力してください（例: 500）")
+  .optional()
+  .or(z.literal("").transform(() => undefined));
+
 const optionalString = z.string().optional().or(z.literal(""));
+// 駅コード（stations への FK）。未選択の空文字は null に変換して FK 制約違反を防ぐ。
+const optionalStationId = z
+  .string()
+  .optional()
+  .or(z.literal("").transform(() => undefined));
 
 // 物件スキーマ
 export const propertySchema = z.object({
@@ -51,11 +66,16 @@ export const propertySchema = z.object({
   longitude: z.coerce.number().min(-180).max(180).optional()
     .or(z.literal("").transform(() => undefined)),
   // 交通
+  // nearest_station* は表示用の駅名テキスト（路線つき）、nearest_station*_id は駅マスタ参照。
+  // 駅IDは未選択時に空文字だとFK制約違反になるため null に変換する。
   nearest_station: optionalString,
+  nearest_station_id: optionalStationId,
   walk_minutes: optionalPositiveInt,
   nearest_station_2: optionalString,
+  nearest_station_2_id: optionalStationId,
   walk_minutes_2: optionalPositiveInt,
   nearest_station_3: optionalString,
+  nearest_station_3_id: optionalStationId,
   walk_minutes_3: optionalPositiveInt,
   bus_station: optionalString,
   bus_minutes: optionalPositiveInt,
@@ -149,6 +169,7 @@ export const unitSchema = z.object({
   status: z.enum(["vacant", "occupied", "reserved", "maintenance"], {
     message: "状態を選択してください",
   }),
+  damage_notes: z.string().optional(),
 });
 
 export type UnitFormData = z.infer<typeof unitSchema>;
@@ -171,12 +192,19 @@ export const tenantSchema = z.object({
   address: optionalString,
   workplace: optionalString,
   workplace_phone: phoneField,
-  annual_income: optionalPositiveInt,
+  annual_income: optionalManYen,
   // 緊急連絡先
   emergency_contact_name: optionalString,
   emergency_contact_phone: phoneField,
   emergency_contact_relation: optionalString,
-  // 保証人
+  // 保証方式: company（保証会社）/ individual（個人連帯保証）/ none（なし）
+  guarantee_type: z.enum(["company", "individual", "none"]).optional()
+    .or(z.literal("").transform(() => undefined)),
+  // 保証会社
+  guarantee_company_name: optionalString,
+  guarantee_contract_number: optionalString,
+  guarantee_fee: optionalPositiveInt,
+  // 保証人（個人連帯保証）
   guarantor_name: optionalString,
   guarantor_name_kana: optionalString,
   guarantor_date_of_birth: optionalString,
@@ -184,7 +212,7 @@ export const tenantSchema = z.object({
   guarantor_address: optionalString,
   guarantor_workplace: optionalString,
   guarantor_workplace_phone: phoneField,
-  guarantor_annual_income: optionalPositiveInt,
+  guarantor_annual_income: optionalManYen,
   guarantor_relation: optionalString,
   // 備考
   notes: optionalString,

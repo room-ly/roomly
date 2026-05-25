@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { propertySchema, type PropertyFormData } from "@/lib/schemas";
 import { toWareki } from "@/lib/wareki";
+import PostalCodeInput from "./PostalCodeInput";
+import StationInput from "./StationInput";
 import type { ZodError } from "zod";
 
 interface Owner {
@@ -104,6 +106,11 @@ export default function PropertyFormModal({
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>(
     () => editData?.common_facilities || []
   );
+  // 郵便番号補完で書き換わる所在地フィールド（制御コンポーネント化）
+  const [prefecture, setPrefecture] = useState(editData?.prefecture || "");
+  const [city, setCity] = useState(editData?.city || "");
+  const [town, setTown] = useState(editData?.town || "");
+  const [address, setAddress] = useState(editData?.address || "");
   // 自主管理は管理会社への委託手数料が発生しないため、手数料率を無効化する
   const [managementForm, setManagementForm] = useState(editData?.management_form || "");
   const [managementFeeRate, setManagementFeeRate] = useState(
@@ -274,18 +281,22 @@ export default function PropertyFormModal({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
                 <Label>郵便番号</Label>
-                <input
-                  name="postal_code"
+                <PostalCodeInput
                   defaultValue={editData?.postal_code || ""}
-                  className="input"
-                  placeholder="例: 160-0023"
+                  onResolved={(r) => {
+                    setPrefecture(r.prefecture);
+                    setCity(r.city);
+                    setTown(r.town);
+                    setAddress(r.address);
+                  }}
                 />
               </div>
               <div>
                 <Label>都道府県</Label>
                 <input
                   name="prefecture"
-                  defaultValue={editData?.prefecture || ""}
+                  value={prefecture}
+                  onChange={(e) => setPrefecture(e.target.value)}
                   className="input"
                   placeholder="例: 東京都"
                 />
@@ -294,7 +305,8 @@ export default function PropertyFormModal({
                 <Label>市区町村</Label>
                 <input
                   name="city"
-                  defaultValue={editData?.city || ""}
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
                   className="input"
                   placeholder="例: 新宿区"
                 />
@@ -303,7 +315,8 @@ export default function PropertyFormModal({
                 <Label>町名</Label>
                 <input
                   name="town"
-                  defaultValue={editData?.town || ""}
+                  value={town}
+                  onChange={(e) => setTown(e.target.value)}
                   className="input"
                   placeholder="例: 西新宿"
                 />
@@ -315,7 +328,8 @@ export default function PropertyFormModal({
                 <Label required>住所</Label>
                 <input
                   name="address"
-                  defaultValue={editData?.address || ""}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
                   className="input"
                   placeholder="例: 東京都新宿区西新宿1-1-1"
                 />
@@ -363,11 +377,11 @@ export default function PropertyFormModal({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>最寄り駅①</Label>
-                <input
+                <StationInput
                   name="nearest_station"
+                  idName="nearest_station_id"
                   defaultValue={editData?.nearest_station || ""}
-                  className="input"
-                  placeholder="例: JR山手線 新宿駅"
+                  defaultId={editData?.nearest_station_id || ""}
                 />
               </div>
               <div>
@@ -385,11 +399,11 @@ export default function PropertyFormModal({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>最寄り駅②</Label>
-                <input
+                <StationInput
                   name="nearest_station_2"
+                  idName="nearest_station_2_id"
                   defaultValue={editData?.nearest_station_2 || ""}
-                  className="input"
-                  placeholder="例: 都営大江戸線 都庁前駅"
+                  defaultId={editData?.nearest_station_2_id || ""}
                 />
               </div>
               <div>
@@ -407,11 +421,11 @@ export default function PropertyFormModal({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>最寄り駅③</Label>
-                <input
+                <StationInput
                   name="nearest_station_3"
+                  idName="nearest_station_3_id"
                   defaultValue={editData?.nearest_station_3 || ""}
-                  className="input"
-                  placeholder="例: 丸ノ内線 西新宿駅"
+                  defaultId={editData?.nearest_station_3_id || ""}
                 />
               </div>
               <div>

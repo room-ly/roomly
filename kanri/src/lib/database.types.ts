@@ -1258,6 +1258,9 @@ export type Database = {
           nearest_station: string | null
           nearest_station_2: string | null
           nearest_station_3: string | null
+          nearest_station_id: string | null
+          nearest_station_2_id: string | null
+          nearest_station_3_id: string | null
           notes: string | null
           owner_id: string | null
           parking: string | null
@@ -1327,6 +1330,9 @@ export type Database = {
           nearest_station?: string | null
           nearest_station_2?: string | null
           nearest_station_3?: string | null
+          nearest_station_id?: string | null
+          nearest_station_2_id?: string | null
+          nearest_station_3_id?: string | null
           notes?: string | null
           owner_id?: string | null
           parking?: string | null
@@ -1396,6 +1402,9 @@ export type Database = {
           nearest_station?: string | null
           nearest_station_2?: string | null
           nearest_station_3?: string | null
+          nearest_station_id?: string | null
+          nearest_station_2_id?: string | null
+          nearest_station_3_id?: string | null
           notes?: string | null
           owner_id?: string | null
           parking?: string | null
@@ -1608,6 +1617,10 @@ export type Database = {
           emergency_contact_phone: string | null
           emergency_contact_relation: string | null
           gender: string | null
+          guarantee_company_name: string | null
+          guarantee_contract_number: string | null
+          guarantee_fee: number | null
+          guarantee_type: string | null
           guarantor_address: string | null
           guarantor_annual_income: number | null
           guarantor_date_of_birth: string | null
@@ -1639,6 +1652,10 @@ export type Database = {
           emergency_contact_phone?: string | null
           emergency_contact_relation?: string | null
           gender?: string | null
+          guarantee_company_name?: string | null
+          guarantee_contract_number?: string | null
+          guarantee_fee?: number | null
+          guarantee_type?: string | null
           guarantor_address?: string | null
           guarantor_annual_income?: number | null
           guarantor_date_of_birth?: string | null
@@ -1670,6 +1687,10 @@ export type Database = {
           emergency_contact_phone?: string | null
           emergency_contact_relation?: string | null
           gender?: string | null
+          guarantee_company_name?: string | null
+          guarantee_contract_number?: string | null
+          guarantee_fee?: number | null
+          guarantee_type?: string | null
           guarantor_address?: string | null
           guarantor_annual_income?: number | null
           guarantor_date_of_birth?: string | null
@@ -1705,6 +1726,7 @@ export type Database = {
           area_sqm: number | null
           company_id: string
           created_at: string
+          damage_notes: string | null
           deposit: number
           equipment: string[] | null
           floor: number | null
@@ -1723,6 +1745,7 @@ export type Database = {
           area_sqm?: number | null
           company_id: string
           created_at?: string
+          damage_notes?: string | null
           deposit?: number
           equipment?: string[] | null
           floor?: number | null
@@ -1741,6 +1764,7 @@ export type Database = {
           area_sqm?: number | null
           company_id?: string
           created_at?: string
+          damage_notes?: string | null
           deposit?: number
           equipment?: string[] | null
           floor?: number | null
@@ -1929,6 +1953,74 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "units"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      train_lines: {
+        Row: {
+          line_cd: number
+          company_name: string | null
+          line_name: string
+          lon: number | null
+          lat: number | null
+          created_at: string
+        }
+        Insert: {
+          line_cd: number
+          company_name?: string | null
+          line_name: string
+          lon?: number | null
+          lat?: number | null
+          created_at?: string
+        }
+        Update: {
+          line_cd?: number
+          company_name?: string | null
+          line_name?: string
+          lon?: number | null
+          lat?: number | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      stations: {
+        Row: {
+          station_cd: string
+          station_name: string
+          line_cd: number | null
+          station_g_cd: string | null
+          pref_cd: string | null
+          lon: number | null
+          lat: number | null
+          created_at: string
+        }
+        Insert: {
+          station_cd: string
+          station_name: string
+          line_cd?: number | null
+          station_g_cd?: string | null
+          pref_cd?: string | null
+          lon?: number | null
+          lat?: number | null
+          created_at?: string
+        }
+        Update: {
+          station_cd?: string
+          station_name?: string
+          line_cd?: number | null
+          station_g_cd?: string | null
+          pref_cd?: string | null
+          lon?: number | null
+          lat?: number | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stations_line_cd_fkey"
+            columns: ["line_cd"]
+            isOneToOne: false
+            referencedRelation: "train_lines"
+            referencedColumns: ["line_cd"]
           },
         ]
       }
