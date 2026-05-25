@@ -5,6 +5,7 @@ import { getInquiryDetail, getPropertiesForSelect, getUnitsForSelect, getAllTena
 import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import InquiryDetailClient from "@/components/InquiryDetailClient";
+import InquiryLogSection from "@/components/InquiryLogSection";
 
 const TYPE_LABELS: Record<string, string> = {
   move_out: "退去",
@@ -58,40 +59,7 @@ export default async function InquiryDetailPage({
       <div className="detail-grid">
         <div className="detail-col-main">
           {/* 対応記録 */}
-          <div className="section">
-            <div className="section-head-bar">
-              <h2>対応記録</h2>
-              <span className="desc">{logs.length}件</span>
-            </div>
-            <div className="section-body">
-              {inquiry.description && (
-                <TimelineEntry
-                  label={inquiry.tenant?.name || "入居者"}
-                  tag="入居者"
-                  tagColor="info"
-                  content={inquiry.description}
-                  time={inquiry.created_at?.slice(0, 16).replace("T", " ")}
-                />
-              )}
-              {logs.map((log: any) => {
-                const isCustomer = log.action_type === "customer_reply";
-                const isNote = log.action_type === "note";
-                return (
-                  <TimelineEntry
-                    key={log.id}
-                    label={isCustomer ? (inquiry.tenant?.name || "入居者") : isNote ? "メモ" : "スタッフ"}
-                    tag={isCustomer ? "入居者" : isNote ? "メモ" : "対応"}
-                    tagColor={isCustomer ? "info" : isNote ? "neutral" : "accent"}
-                    content={log.content}
-                    time={log.created_at?.slice(0, 16).replace("T", " ")}
-                  />
-                );
-              })}
-              {logs.length === 0 && !inquiry.description && (
-                <p style={{ fontSize: 13, color: "var(--ink-4)", textAlign: "center", padding: "16px 0" }}>まだ対応記録がありません</p>
-              )}
-            </div>
-          </div>
+          <InquiryLogSection inquiry={inquiry} logs={logs} />
 
           {/* 備考 */}
           {inquiry.notes && (
@@ -265,30 +233,3 @@ export default async function InquiryDetailPage({
   );
 }
 
-function TimelineEntry({ label, tag, tagColor, content, time }: {
-  label: string; tag: string; tagColor: string; content: string; time: string;
-}) {
-  const colors: Record<string, { bg: string; fg: string }> = {
-    info: { bg: "var(--info-tint)", fg: "var(--info)" },
-    accent: { bg: "var(--accent-tint)", fg: "var(--accent-deep)" },
-    neutral: { bg: "var(--bg-2)", fg: "var(--ink-3)" },
-  };
-  const c = colors[tagColor] || colors.neutral;
-  return (
-    <div style={{ display: "flex", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
-      <div style={{ width: 64, flexShrink: 0, fontSize: 11, color: "var(--ink-4)", fontFamily: "var(--font-mono)", lineHeight: "20px", paddingTop: 1 }}>
-        {time?.slice(5)}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>{label}</span>
-          <span style={{
-            fontSize: 10, padding: "1px 6px", borderRadius: 4,
-            background: c.bg, color: c.fg, fontWeight: 500,
-          }}>{tag}</span>
-        </div>
-        <p style={{ fontSize: 13, color: "var(--ink)", margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{content}</p>
-      </div>
-    </div>
-  );
-}

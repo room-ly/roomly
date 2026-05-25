@@ -44,3 +44,33 @@ export async function PUT(
     );
   }
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+    const companyId = await getCompanyId();
+    const { error } = await supabase
+      .from("inquiries")
+      .delete()
+      .eq("id", id)
+      .eq("company_id", companyId);
+
+    if (error) {
+      return NextResponse.json(
+        { error: "問い合わせの削除に失敗しました" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json(
+      { error: "リクエストの処理に失敗しました" },
+      { status: 500 }
+    );
+  }
+}
