@@ -40,7 +40,7 @@ function ContractMeter({ startDate, endDate, alertDays = 90 }: { startDate?: str
   const elapsed = Math.max(0, (now - start) / (end - start));
   const remainingDays = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
   const remainingMonths = Math.max(0, Math.ceil(remainingDays / 30));
-  const pct = Math.min(100, Math.max(0, elapsed * 100));
+  const pct = Math.round(Math.min(100, Math.max(0, elapsed * 100)) * 10000) / 10000;
   const color = remainingDays <= 0 ? "var(--danger)" : remainingDays <= 90 ? "var(--warn)" : "var(--accent)";
   return (
     <div className="tn-contract-cell">

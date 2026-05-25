@@ -56,6 +56,9 @@ export default async function TenantDetailPage({
   const hasGuarantor = tenant.guarantor_name || tenant.guarantor_phone || tenant.guarantor_address
     || tenant.guarantor_name_kana || tenant.guarantor_date_of_birth || tenant.guarantor_workplace
     || tenant.guarantor_workplace_phone || tenant.guarantor_annual_income || tenant.guarantor_relation;
+  const hasGuaranteeCompany = tenant.guarantee_company_name || tenant.guarantee_contract_number || tenant.guarantee_fee;
+  // 保証方式（未設定の場合は、個人保証人情報があれば個人連帯保証として扱う）
+  const guaranteeType = tenant.guarantee_type || (hasGuarantor ? "individual" : null);
 
   return (
     <>
@@ -99,7 +102,7 @@ export default async function TenantDetailPage({
                 <Field label="住所" value={tenant.address} />
                 <Field label="勤務先" value={tenant.workplace} />
                 <Field label="勤務先電話" value={tenant.workplace_phone ? formatPhone(tenant.workplace_phone) : undefined} mono />
-                <Field label="年収" value={tenant.annual_income ? `¥${Number(tenant.annual_income).toLocaleString()}` : undefined} />
+                <Field label="年収" value={tenant.annual_income ? `${Number(tenant.annual_income).toLocaleString()}万円` : undefined} />
               </div>
             </div>
           </div>
@@ -118,8 +121,22 @@ export default async function TenantDetailPage({
             </div>
           )}
 
-          {/* 保証人情報 */}
-          {hasGuarantor && (
+          {/* 保証会社 */}
+          {guaranteeType === "company" && hasGuaranteeCompany && (
+            <div className="section">
+              <div className="section-head-bar"><h2>保証会社</h2></div>
+              <div className="section-body">
+                <div className="kv-grid">
+                  <Field label="保証会社名" value={tenant.guarantee_company_name} />
+                  <Field label="契約番号" value={tenant.guarantee_contract_number} mono />
+                  <Field label="保証料" value={tenant.guarantee_fee ? `¥${Number(tenant.guarantee_fee).toLocaleString()}` : undefined} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 保証人情報（個人連帯保証） */}
+          {guaranteeType === "individual" && hasGuarantor && (
             <div className="section">
               <div className="section-head-bar"><h2>保証人情報</h2></div>
               <div className="section-body">
@@ -132,7 +149,7 @@ export default async function TenantDetailPage({
                   <Field label="住所" value={tenant.guarantor_address} />
                   <Field label="勤務先" value={tenant.guarantor_workplace} />
                   <Field label="勤務先電話" value={tenant.guarantor_workplace_phone ? formatPhone(tenant.guarantor_workplace_phone) : undefined} mono />
-                  <Field label="年収" value={tenant.guarantor_annual_income ? `¥${Number(tenant.guarantor_annual_income).toLocaleString()}` : undefined} />
+                  <Field label="年収" value={tenant.guarantor_annual_income ? `${Number(tenant.guarantor_annual_income).toLocaleString()}万円` : undefined} />
                 </div>
               </div>
             </div>

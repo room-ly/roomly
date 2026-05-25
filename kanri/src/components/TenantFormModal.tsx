@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { tenantSchema, type TenantFormData } from "@/lib/schemas";
+import PostalCodeInput from "./PostalCodeInput";
 import type { ZodError } from "zod";
 
 interface TenantFormModalProps {
@@ -29,6 +30,15 @@ export default function TenantFormModal({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
+  // 郵便番号補完で書き換わる住所（本人・保証人）
+  const [address, setAddress] = useState(editData?.address || "");
+  const [guarantorAddress, setGuarantorAddress] = useState(
+    editData?.guarantor_address || ""
+  );
+  // 保証方式: company（保証会社）/ individual（個人連帯保証）/ none（なし）
+  const [guaranteeType, setGuaranteeType] = useState<string>(
+    editData?.guarantee_type || "company"
+  );
 
   if (!isOpen) return null;
 
@@ -158,11 +168,15 @@ export default function TenantFormModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">郵便番号</label>
-              <input name="postal_code" defaultValue={editData?.postal_code || ""} className="input" placeholder="例: 1600022" />
+              <PostalCodeInput
+                defaultValue={editData?.postal_code || ""}
+                placeholder="例: 1600022"
+                onResolved={(r) => setAddress(r.address)}
+              />
             </div>
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">住所</label>
-              <input name="address" defaultValue={editData?.address || ""} className="input" placeholder="例: 東京都新宿区新宿1-1-1" />
+              <input name="address" value={address} onChange={(e) => setAddress(e.target.value)} className="input" placeholder="例: 東京都新宿区新宿1-1-1" />
             </div>
           </div>
 
@@ -177,8 +191,8 @@ export default function TenantFormModal({
               {errors.workplace_phone && <p className="text-danger text-sm mt-1">{errors.workplace_phone[0]}</p>}
             </div>
             <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">年収</label>
-              <input name="annual_income" type="number" defaultValue={editData?.annual_income || ""} className="input" placeholder="例: 5000000" />
+              <label className="text-sm font-medium text-ink-2 block mb-1">年収（万円）</label>
+              <input name="annual_income" type="number" defaultValue={editData?.annual_income ?? ""} className="input" placeholder="例: 500" />
               {errors.annual_income && <p className="text-danger text-sm mt-1">{errors.annual_income[0]}</p>}
             </div>
           </div>
@@ -201,56 +215,94 @@ export default function TenantFormModal({
             </div>
           </div>
 
-          {/* ── 保証人情報 ── */}
-          <SectionLabel>保証人情報</SectionLabel>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">氏名</label>
-              <input name="guarantor_name" defaultValue={editData?.guarantor_name || ""} className="input" placeholder="例: 山田一郎" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">フリガナ</label>
-              <input name="guarantor_name_kana" defaultValue={editData?.guarantor_name_kana || ""} className="input" placeholder="例: ヤマダイチロウ" />
-            </div>
+          {/* ── 保証 ── */}
+          <SectionLabel>保証</SectionLabel>
+          <div className="max-w-xs">
+            <label className="text-sm font-medium text-ink-2 block mb-1">保証方式</label>
+            <select
+              name="guarantee_type"
+              value={guaranteeType}
+              onChange={(e) => setGuaranteeType(e.target.value)}
+              className="input"
+            >
+              <option value="company">保証会社</option>
+              <option value="individual">個人連帯保証</option>
+              <option value="none">なし</option>
+            </select>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">生年月日</label>
-              <input name="guarantor_date_of_birth" type="date" defaultValue={editData?.guarantor_date_of_birth || ""} className="input" />
+          {/* 保証会社の場合 */}
+          {guaranteeType === "company" && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">保証会社名</label>
+                <input name="guarantee_company_name" defaultValue={editData?.guarantee_company_name || ""} className="input" placeholder="例: 全保連株式会社" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">契約番号</label>
+                <input name="guarantee_contract_number" defaultValue={editData?.guarantee_contract_number || ""} className="input" placeholder="例: AB-12345678" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">保証料（円）</label>
+                <input name="guarantee_fee" type="number" defaultValue={editData?.guarantee_fee ?? ""} className="input" placeholder="例: 50000" />
+                {errors.guarantee_fee && <p className="text-danger text-sm mt-1">{errors.guarantee_fee[0]}</p>}
+              </div>
             </div>
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">電話番号</label>
-              <input name="guarantor_phone" defaultValue={editData?.guarantor_phone || ""} className="input" placeholder="例: 0312345678" />
-              {errors.guarantor_phone && <p className="text-danger text-sm mt-1">{errors.guarantor_phone[0]}</p>}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">続柄</label>
-              <input name="guarantor_relation" defaultValue={editData?.guarantor_relation || ""} className="input" placeholder="例: 父" />
-            </div>
-          </div>
+          )}
 
-          <div>
-            <label className="text-sm font-medium text-ink-2 block mb-1">住所</label>
-            <input name="guarantor_address" defaultValue={editData?.guarantor_address || ""} className="input" placeholder="例: 東京都新宿区..." />
-          </div>
+          {/* 個人連帯保証の場合 */}
+          {guaranteeType === "individual" && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">氏名</label>
+                  <input name="guarantor_name" defaultValue={editData?.guarantor_name || ""} className="input" placeholder="例: 山田一郎" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">フリガナ</label>
+                  <input name="guarantor_name_kana" defaultValue={editData?.guarantor_name_kana || ""} className="input" placeholder="例: ヤマダイチロウ" />
+                </div>
+              </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">勤務先</label>
-              <input name="guarantor_workplace" defaultValue={editData?.guarantor_workplace || ""} className="input" placeholder="例: 株式会社サンプル" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">勤務先電話</label>
-              <input name="guarantor_workplace_phone" defaultValue={editData?.guarantor_workplace_phone || ""} className="input" placeholder="例: 0312345678" />
-              {errors.guarantor_workplace_phone && <p className="text-danger text-sm mt-1">{errors.guarantor_workplace_phone[0]}</p>}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">年収</label>
-              <input name="guarantor_annual_income" type="number" defaultValue={editData?.guarantor_annual_income || ""} className="input" placeholder="例: 6000000" />
-              {errors.guarantor_annual_income && <p className="text-danger text-sm mt-1">{errors.guarantor_annual_income[0]}</p>}
-            </div>
-          </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">生年月日</label>
+                  <input name="guarantor_date_of_birth" type="date" defaultValue={editData?.guarantor_date_of_birth || ""} className="input" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">電話番号</label>
+                  <input name="guarantor_phone" defaultValue={editData?.guarantor_phone || ""} className="input" placeholder="例: 0312345678" />
+                  {errors.guarantor_phone && <p className="text-danger text-sm mt-1">{errors.guarantor_phone[0]}</p>}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">続柄</label>
+                  <input name="guarantor_relation" defaultValue={editData?.guarantor_relation || ""} className="input" placeholder="例: 父" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">住所</label>
+                <input name="guarantor_address" value={guarantorAddress} onChange={(e) => setGuarantorAddress(e.target.value)} className="input" placeholder="例: 東京都新宿区..." />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">勤務先</label>
+                  <input name="guarantor_workplace" defaultValue={editData?.guarantor_workplace || ""} className="input" placeholder="例: 株式会社サンプル" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">勤務先電話</label>
+                  <input name="guarantor_workplace_phone" defaultValue={editData?.guarantor_workplace_phone || ""} className="input" placeholder="例: 0312345678" />
+                  {errors.guarantor_workplace_phone && <p className="text-danger text-sm mt-1">{errors.guarantor_workplace_phone[0]}</p>}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">年収（万円）</label>
+                  <input name="guarantor_annual_income" type="number" defaultValue={editData?.guarantor_annual_income ?? ""} className="input" placeholder="例: 600" />
+                  {errors.guarantor_annual_income && <p className="text-danger text-sm mt-1">{errors.guarantor_annual_income[0]}</p>}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* ── 備考 ── */}
           <SectionLabel>備考</SectionLabel>
