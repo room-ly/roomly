@@ -15,8 +15,8 @@
 ## サービス概要
 
 - **サービス名**：Roomly（ルームリー）
-- **ホームページ**：https://hp.roomly.jp
-- **サービス**：https://kanri.roomly.jp
+- **ホームページ**：https://hp.roomly.jp?utm_source=prtimes&utm_medium=press_release&utm_campaign=launch
+- **サービス**：https://kanri.roomly.jp?utm_source=prtimes&utm_medium=press_release&utm_campaign=launch
 - **対象**：賃貸管理会社、自主管理オーナー
 - **提供形態**：クラウドSaaS（ブラウザのみ・インストール不要）
 - **価格**：10区画まで無料 / 11〜50区画 ¥5,000（税込）/月〜
@@ -29,7 +29,7 @@
 
 アナログ側にいたころ、エンジニアが専門用語を並べて説明してくる場面に、イライラしていました。エンジニアになった今は、アナログ側の人間が専門用語を使うなと言いながら自分では調べようとしない姿勢にイライラしています。どちらのイライラも経験しているからこそ、両方の気持ちが分かった上で仕事ができる。
 
-最初から賃貸管理と決めていたわけではなく、AIエージェント「Claude Code」を活用して5つのプロダクトを同時並行で開発する中で、最初に形になったのがRoomlyでした。一人で開発しているからこそ、判断が早く、必要なものを揃えた上でシンプルにリリースまで持っていけました。アナログ側にいた時間が長かったからこそ、料金体系の分かりにくさや試せない不安が導入の壁になることは身をもって知っています。デジタル側に移った今は、説明が不要なほど料金をシンプルに、営業トークに流されて後悔する契約がないようにデモを無料で開放しています。ぜひ一度、触ってみてください。https://kanri.roomly.jp/login?demo=1
+最初から賃貸管理と決めていたわけではなく、AIエージェント「Claude Code」を活用して5つのプロダクトを同時並行で開発する中で、最初に形になったのがRoomlyでした。一人で開発しているからこそ、判断が早く、必要なものを揃えた上でシンプルにリリースまで持っていけました。アナログ側にいた時間が長かったからこそ、料金体系の分かりにくさや試せない不安が導入の壁になることは身をもって知っています。デジタル側に移った今は、説明が不要なほど料金をシンプルに、営業トークに流されて後悔する契約がないようにデモを無料で開放しています。ぜひ一度、触ってみてください。https://kanri.roomly.jp/login?demo=1&utm_source=prtimes&utm_medium=press_release&utm_campaign=launch
 
 ---
 
@@ -52,10 +52,8 @@
 
 ## 料金プラン
 
-| プラン | 区画数 | 月額料金 |
-|--------|--------|----------|
-| フリー | 10区画まで | 無料 |
-| スタンダード | 11〜50区画 | ¥5,000（税込）/月〜 |
+- **フリープラン**：10区画まで　無料
+- **スタンダードプラン**：11〜50区画　¥5,000（税込）/月〜
 
 ※区画数に応じた従量課金。
 
@@ -66,9 +64,9 @@
 - **屋号**：zh
 - **形態**：個人事業主
 - **事業内容**：SaaSプロダクトの開発・運営
-- **URL**：https://hp.roomly.jp
-- **お問い合わせ**：https://hp.roomly.jp/contact
+- **URL**：https://hp.roomly.jp?utm_source=prtimes&utm_medium=press_release&utm_campaign=launch
+- **お問い合わせ**：https://hp.roomly.jp/contact?utm_source=prtimes&utm_medium=press_release&utm_campaign=launch
 
 ---
 
-*本プレスリリースに関するお問い合わせは、https://hp.roomly.jp/contact よりご連絡ください。*
+*本プレスリリースに関するお問い合わせは、https://hp.roomly.jp/contact?utm_source=prtimes&utm_medium=press_release&utm_campaign=launch よりご連絡ください。*
