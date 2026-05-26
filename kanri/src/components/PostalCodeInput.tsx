@@ -11,9 +11,12 @@ interface PostalCodeResult {
 }
 
 interface PostalCodeInputProps {
-  // input の name 属性（FormData で送信されるキー）
+  // input の name 属性（FormData で送信されるキー）。非制御モードで使う。
   name?: string;
   defaultValue?: string;
+  // 制御モード: value と onChange を渡すと親が値を保持する。
+  value?: string;
+  onChange?: (value: string) => void;
   placeholder?: string;
   className?: string;
   // 住所が取得できたときに呼ばれる。各フォームで分割代入するか address にまとめるか決める
@@ -22,14 +25,23 @@ interface PostalCodeInputProps {
 
 // 郵便番号を入力 → /api/postal-code を叩いて住所を取得するコンポーネント。
 // 入力欄の右に検索ボタンを置き、Enter キーでも検索できる。
+// value + onChange を渡せば制御モード、無ければ defaultValue + name の非制御モード。
 export default function PostalCodeInput({
   name = "postal_code",
   defaultValue = "",
+  value: controlledValue,
+  onChange,
   placeholder = "例: 160-0023",
   className = "input",
   onResolved,
 }: PostalCodeInputProps) {
-  const [value, setValue] = useState(defaultValue);
+  const isControlled = controlledValue !== undefined;
+  const [innerValue, setInnerValue] = useState(defaultValue);
+  const value = isControlled ? controlledValue : innerValue;
+  const setValue = (v: string) => {
+    if (isControlled) onChange?.(v);
+    else setInnerValue(v);
+  };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 

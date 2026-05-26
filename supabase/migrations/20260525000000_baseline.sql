@@ -729,6 +729,7 @@ CREATE TABLE IF NOT EXISTS "public"."tenants" (
     "guarantor_name" "text",
     "guarantor_phone" "text",
     "guarantor_address" "text",
+    "guarantor_postal_code" "text",
     "notes" "text",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
@@ -740,7 +741,12 @@ CREATE TABLE IF NOT EXISTS "public"."tenants" (
     "guarantor_workplace" "text",
     "guarantor_workplace_phone" "text",
     "guarantor_annual_income" integer,
-    "guarantor_relation" "text"
+    "guarantor_relation" "text",
+    "guarantee_type" "text",
+    "guarantee_company_name" "text",
+    "guarantee_contract_number" "text",
+    "guarantee_fee" integer,
+    CONSTRAINT "tenants_guarantee_type_check" CHECK (("guarantee_type" = ANY (ARRAY['company'::"text", 'individual'::"text", 'none'::"text"])))
 );
 
 
