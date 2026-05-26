@@ -209,6 +209,7 @@ export const tenantSchema = z.object({
   guarantor_name_kana: optionalString,
   guarantor_date_of_birth: optionalString,
   guarantor_phone: phoneField,
+  guarantor_postal_code: optionalString,
   guarantor_address: optionalString,
   guarantor_workplace: optionalString,
   guarantor_workplace_phone: phoneField,

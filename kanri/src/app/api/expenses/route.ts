@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId, checkDemoLimit, DemoLimitError } from "@/lib/supabase-server";
+import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { expenseSchema } from "@/lib/schemas-expense";
 
 export async function POST(request: NextRequest) {
@@ -39,9 +39,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(expense, { status: 201 });
   } catch (err) {
-    if (err instanceof DemoLimitError) {
-      return NextResponse.json({ error: err.message }, { status: 429 });
-    }
     return NextResponse.json(
       { error: "リクエストの処理に失敗しました" },
       { status: 500 }

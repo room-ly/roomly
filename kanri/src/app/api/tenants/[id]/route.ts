@@ -33,8 +33,9 @@ export async function PUT(
       .single();
 
     if (error) {
+      console.error("tenants update error", error);
       return NextResponse.json(
-        { error: "入居者の更新に失敗しました" },
+        { error: `入居者の更新に失敗しました: ${error.message}` },
         { status: 500 }
       );
     }

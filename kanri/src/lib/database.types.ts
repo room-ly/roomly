@@ -12,40 +12,33 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
-      demo_write_logs: {
-        Row: {
-          action: string
-          company_id: string
-          created_at: string
-          id: string
-          table_name: string
-        }
-        Insert: {
-          action: string
-          company_id: string
-          created_at?: string
-          id?: string
-          table_name: string
-        }
-        Update: {
-          action?: string
-          company_id?: string
-          created_at?: string
-          id?: string
-          table_name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "demo_write_logs_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       companies: {
         Row: {
           address: string | null
@@ -322,63 +315,6 @@ export type Database = {
         }
         Relationships: []
       }
-      move_out_checklist_items: {
-        Row: {
-          id: string
-          company_id: string
-          contract_id: string
-          category: string
-          item_name: string
-          is_checked: boolean
-          notes: string | null
-          checked_at: string | null
-          checked_by: string | null
-          sort_order: number
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          contract_id: string
-          category?: string
-          item_name: string
-          is_checked?: boolean
-          notes?: string | null
-          checked_at?: string | null
-          checked_by?: string | null
-          sort_order?: number
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          contract_id?: string
-          category?: string
-          item_name?: string
-          is_checked?: boolean
-          notes?: string | null
-          checked_at?: string | null
-          checked_by?: string | null
-          sort_order?: number
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "move_out_checklist_items_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "move_out_checklist_items_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       documents: {
         Row: {
           company_id: string
@@ -489,6 +425,7 @@ export type Database = {
           is_owner_charge: boolean
           notes: string | null
           owner_id: string | null
+          payee_id: string | null
           property_id: string | null
           unit_id: string | null
           updated_at: string
@@ -506,6 +443,7 @@ export type Database = {
           is_owner_charge?: boolean
           notes?: string | null
           owner_id?: string | null
+          payee_id?: string | null
           property_id?: string | null
           unit_id?: string | null
           updated_at?: string
@@ -523,6 +461,7 @@ export type Database = {
           is_owner_charge?: boolean
           notes?: string | null
           owner_id?: string | null
+          payee_id?: string | null
           property_id?: string | null
           unit_id?: string | null
           updated_at?: string
@@ -541,6 +480,13 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "owners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "payees"
             referencedColumns: ["id"]
           },
           {
@@ -566,6 +512,8 @@ export type Database = {
           description: string | null
           id: string
           inquiry_type: string
+          linked_maintenance_id: string | null
+          linked_move_out_request_id: string | null
           notes: string | null
           priority: string
           property_id: string | null
@@ -581,6 +529,8 @@ export type Database = {
           description?: string | null
           id?: string
           inquiry_type?: string
+          linked_maintenance_id?: string | null
+          linked_move_out_request_id?: string | null
           notes?: string | null
           priority?: string
           property_id?: string | null
@@ -596,6 +546,8 @@ export type Database = {
           description?: string | null
           id?: string
           inquiry_type?: string
+          linked_maintenance_id?: string | null
+          linked_move_out_request_id?: string | null
           notes?: string | null
           priority?: string
           property_id?: string | null
@@ -611,6 +563,20 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_linked_maintenance_id_fkey"
+            columns: ["linked_maintenance_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_linked_move_out_request_id_fkey"
+            columns: ["linked_move_out_request_id"]
+            isOneToOne: false
+            referencedRelation: "move_out_requests"
             referencedColumns: ["id"]
           },
           {
@@ -775,6 +741,7 @@ export type Database = {
           estimated_cost: number | null
           id: string
           notes: string | null
+          payee_id: string | null
           priority: string
           property_id: string
           reported_date: string
@@ -798,6 +765,7 @@ export type Database = {
           estimated_cost?: number | null
           id?: string
           notes?: string | null
+          payee_id?: string | null
           priority?: string
           property_id: string
           reported_date?: string
@@ -821,6 +789,7 @@ export type Database = {
           estimated_cost?: number | null
           id?: string
           notes?: string | null
+          payee_id?: string | null
           priority?: string
           property_id?: string
           reported_date?: string
@@ -843,6 +812,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "maintenance_requests_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "payees"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "maintenance_requests_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
@@ -861,6 +837,70 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      move_out_checklist_items: {
+        Row: {
+          category: string
+          checked_at: string | null
+          checked_by: string | null
+          company_id: string
+          contract_id: string
+          created_at: string
+          id: string
+          is_checked: boolean
+          item_name: string
+          notes: string | null
+          sort_order: number
+        }
+        Insert: {
+          category?: string
+          checked_at?: string | null
+          checked_by?: string | null
+          company_id: string
+          contract_id: string
+          created_at?: string
+          id?: string
+          is_checked?: boolean
+          item_name: string
+          notes?: string | null
+          sort_order?: number
+        }
+        Update: {
+          category?: string
+          checked_at?: string | null
+          checked_by?: string | null
+          company_id?: string
+          contract_id?: string
+          created_at?: string
+          id?: string
+          is_checked?: boolean
+          item_name?: string
+          notes?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "move_out_checklist_items_checked_by_fkey"
+            columns: ["checked_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "move_out_checklist_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "move_out_checklist_items_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
         ]
@@ -1215,6 +1255,71 @@ export type Database = {
           },
         ]
       }
+      payees: {
+        Row: {
+          account_holder_kana: string | null
+          account_number: string | null
+          account_type: string
+          bank_code: string | null
+          bank_name: string | null
+          branch_code: string | null
+          branch_name: string | null
+          category: string
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+          name_kana: string | null
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_holder_kana?: string | null
+          account_number?: string | null
+          account_type?: string
+          bank_code?: string | null
+          bank_name?: string | null
+          branch_code?: string | null
+          branch_name?: string | null
+          category?: string
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+          name_kana?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_holder_kana?: string | null
+          account_number?: string | null
+          account_type?: string
+          bank_code?: string | null
+          bank_name?: string | null
+          branch_code?: string | null
+          branch_name?: string | null
+          category?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          name_kana?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       properties: {
         Row: {
           address: string
@@ -1257,10 +1362,10 @@ export type Database = {
           name_kana: string | null
           nearest_station: string | null
           nearest_station_2: string | null
-          nearest_station_3: string | null
-          nearest_station_id: string | null
           nearest_station_2_id: string | null
+          nearest_station_3: string | null
           nearest_station_3_id: string | null
+          nearest_station_id: string | null
           notes: string | null
           owner_id: string | null
           parking: string | null
@@ -1329,10 +1434,10 @@ export type Database = {
           name_kana?: string | null
           nearest_station?: string | null
           nearest_station_2?: string | null
-          nearest_station_3?: string | null
-          nearest_station_id?: string | null
           nearest_station_2_id?: string | null
+          nearest_station_3?: string | null
           nearest_station_3_id?: string | null
+          nearest_station_id?: string | null
           notes?: string | null
           owner_id?: string | null
           parking?: string | null
@@ -1401,10 +1506,10 @@ export type Database = {
           name_kana?: string | null
           nearest_station?: string | null
           nearest_station_2?: string | null
-          nearest_station_3?: string | null
-          nearest_station_id?: string | null
           nearest_station_2_id?: string | null
+          nearest_station_3?: string | null
           nearest_station_3_id?: string | null
+          nearest_station_id?: string | null
           notes?: string | null
           owner_id?: string | null
           parking?: string | null
@@ -1439,6 +1544,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_nearest_station_2_id_fkey"
+            columns: ["nearest_station_2_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["station_cd"]
+          },
+          {
+            foreignKeyName: "properties_nearest_station_3_id_fkey"
+            columns: ["nearest_station_3_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["station_cd"]
+          },
+          {
+            foreignKeyName: "properties_nearest_station_id_fkey"
+            columns: ["nearest_station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["station_cd"]
           },
           {
             foreignKeyName: "properties_owner_id_fkey"
@@ -1563,6 +1689,47 @@ export type Database = {
           },
         ]
       }
+      stations: {
+        Row: {
+          created_at: string | null
+          lat: number | null
+          line_cd: number | null
+          lon: number | null
+          pref_cd: string | null
+          station_cd: string
+          station_g_cd: string | null
+          station_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          lat?: number | null
+          line_cd?: number | null
+          lon?: number | null
+          pref_cd?: string | null
+          station_cd: string
+          station_g_cd?: string | null
+          station_name: string
+        }
+        Update: {
+          created_at?: string | null
+          lat?: number | null
+          line_cd?: number | null
+          lon?: number | null
+          pref_cd?: string | null
+          station_cd?: string
+          station_g_cd?: string | null
+          station_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stations_line_cd_fkey"
+            columns: ["line_cd"]
+            isOneToOne: false
+            referencedRelation: "train_lines"
+            referencedColumns: ["line_cd"]
+          },
+        ]
+      }
       tenant_auth_users: {
         Row: {
           auth_user_id: string
@@ -1627,6 +1794,7 @@ export type Database = {
           guarantor_name: string | null
           guarantor_name_kana: string | null
           guarantor_phone: string | null
+          guarantor_postal_code: string | null
           guarantor_relation: string | null
           guarantor_workplace: string | null
           guarantor_workplace_phone: string | null
@@ -1662,6 +1830,7 @@ export type Database = {
           guarantor_name?: string | null
           guarantor_name_kana?: string | null
           guarantor_phone?: string | null
+          guarantor_postal_code?: string | null
           guarantor_relation?: string | null
           guarantor_workplace?: string | null
           guarantor_workplace_phone?: string | null
@@ -1697,6 +1866,7 @@ export type Database = {
           guarantor_name?: string | null
           guarantor_name_kana?: string | null
           guarantor_phone?: string | null
+          guarantor_postal_code?: string | null
           guarantor_relation?: string | null
           guarantor_workplace?: string | null
           guarantor_workplace_phone?: string | null
@@ -1721,12 +1891,38 @@ export type Database = {
           },
         ]
       }
+      train_lines: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          lat: number | null
+          line_cd: number
+          line_name: string
+          lon: number | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string | null
+          lat?: number | null
+          line_cd: number
+          line_name: string
+          lon?: number | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string | null
+          lat?: number | null
+          line_cd?: number
+          line_name?: string
+          lon?: number | null
+        }
+        Relationships: []
+      }
       units: {
         Row: {
           area_sqm: number | null
           company_id: string
           created_at: string
-          damage_notes: string | null
           deposit: number
           equipment: string[] | null
           floor: number | null
@@ -1745,7 +1941,6 @@ export type Database = {
           area_sqm?: number | null
           company_id: string
           created_at?: string
-          damage_notes?: string | null
           deposit?: number
           equipment?: string[] | null
           floor?: number | null
@@ -1764,7 +1959,6 @@ export type Database = {
           area_sqm?: number | null
           company_id?: string
           created_at?: string
-          damage_notes?: string | null
           deposit?: number
           equipment?: string[] | null
           floor?: number | null
@@ -1840,71 +2034,6 @@ export type Database = {
           },
         ]
       }
-      payees: {
-        Row: {
-          id: string
-          company_id: string
-          name: string
-          name_kana: string | null
-          category: string
-          phone: string | null
-          notes: string | null
-          bank_code: string | null
-          bank_name: string | null
-          branch_code: string | null
-          branch_name: string | null
-          account_type: string
-          account_number: string | null
-          account_holder_kana: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          name: string
-          name_kana?: string | null
-          category?: string
-          phone?: string | null
-          notes?: string | null
-          bank_code?: string | null
-          bank_name?: string | null
-          branch_code?: string | null
-          branch_name?: string | null
-          account_type?: string
-          account_number?: string | null
-          account_holder_kana?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          name?: string
-          name_kana?: string | null
-          category?: string
-          phone?: string | null
-          notes?: string | null
-          bank_code?: string | null
-          bank_name?: string | null
-          branch_code?: string | null
-          branch_name?: string | null
-          account_type?: string
-          account_number?: string | null
-          account_holder_kana?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payees_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       vacancies: {
         Row: {
           ad_comment: string | null
@@ -1956,74 +2085,6 @@ export type Database = {
           },
         ]
       }
-      train_lines: {
-        Row: {
-          line_cd: number
-          company_name: string | null
-          line_name: string
-          lon: number | null
-          lat: number | null
-          created_at: string
-        }
-        Insert: {
-          line_cd: number
-          company_name?: string | null
-          line_name: string
-          lon?: number | null
-          lat?: number | null
-          created_at?: string
-        }
-        Update: {
-          line_cd?: number
-          company_name?: string | null
-          line_name?: string
-          lon?: number | null
-          lat?: number | null
-          created_at?: string
-        }
-        Relationships: []
-      }
-      stations: {
-        Row: {
-          station_cd: string
-          station_name: string
-          line_cd: number | null
-          station_g_cd: string | null
-          pref_cd: string | null
-          lon: number | null
-          lat: number | null
-          created_at: string
-        }
-        Insert: {
-          station_cd: string
-          station_name: string
-          line_cd?: number | null
-          station_g_cd?: string | null
-          pref_cd?: string | null
-          lon?: number | null
-          lat?: number | null
-          created_at?: string
-        }
-        Update: {
-          station_cd?: string
-          station_name?: string
-          line_cd?: number | null
-          station_g_cd?: string | null
-          pref_cd?: string | null
-          lon?: number | null
-          lat?: number | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stations_line_cd_fkey"
-            columns: ["line_cd"]
-            isOneToOne: false
-            referencedRelation: "train_lines"
-            referencedColumns: ["line_cd"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -2032,6 +2093,7 @@ export type Database = {
       company_id: { Args: never; Returns: string }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       is_subscription_active: { Args: { company_id: string }; Returns: boolean }
+      reset_demo_data: { Args: { demo_company_id: string }; Returns: undefined }
       tenant_id: { Args: never; Returns: string }
       user_role: { Args: never; Returns: string }
       user_type: { Args: never; Returns: string }
@@ -2163,6 +2225,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

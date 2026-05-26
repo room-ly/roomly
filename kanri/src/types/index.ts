@@ -169,6 +169,7 @@ export interface Tenant {
   guarantor_name_kana?: string;
   guarantor_date_of_birth?: string;
   guarantor_phone?: string;
+  guarantor_postal_code?: string;
   guarantor_address?: string;
   guarantor_workplace?: string;
   guarantor_workplace_phone?: string;
