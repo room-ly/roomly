@@ -83,7 +83,7 @@ export default function PostalCodeInput({
               lookup();
             }
           }}
-          className={className}
+          className={`${className} min-w-0 flex-1`}
           placeholder={placeholder}
           inputMode="numeric"
         />

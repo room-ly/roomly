@@ -106,10 +106,7 @@ export default function PropertyFormModal({
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>(
     () => editData?.common_facilities || []
   );
-  // 郵便番号補完で書き換わる所在地フィールド（制御コンポーネント化）
-  const [prefecture, setPrefecture] = useState(editData?.prefecture || "");
-  const [city, setCity] = useState(editData?.city || "");
-  const [town, setTown] = useState(editData?.town || "");
+  // 郵便番号補完で書き換わる住所フィールド（制御コンポーネント化）
   const [address, setAddress] = useState(editData?.address || "");
   // 自主管理は管理会社への委託手数料が発生しないため、手数料率を無効化する
   const [managementForm, setManagementForm] = useState(editData?.management_form || "");
@@ -278,72 +275,34 @@ export default function PropertyFormModal({
 
           {/* 所在地 */}
           <Section title="所在地" defaultOpen>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div>
-                <Label>郵便番号</Label>
-                <PostalCodeInput
-                  defaultValue={editData?.postal_code || ""}
-                  onResolved={(r) => {
-                    setPrefecture(r.prefecture);
-                    setCity(r.city);
-                    setTown(r.town);
-                    setAddress(r.address);
-                  }}
-                />
-              </div>
-              <div>
-                <Label>都道府県</Label>
-                <input
-                  name="prefecture"
-                  value={prefecture}
-                  onChange={(e) => setPrefecture(e.target.value)}
-                  className="input"
-                  placeholder="例: 東京都"
-                />
-              </div>
-              <div>
-                <Label>市区町村</Label>
-                <input
-                  name="city"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="input"
-                  placeholder="例: 新宿区"
-                />
-              </div>
-              <div>
-                <Label>町名</Label>
-                <input
-                  name="town"
-                  value={town}
-                  onChange={(e) => setTown(e.target.value)}
-                  className="input"
-                  placeholder="例: 西新宿"
-                />
-              </div>
+            <div>
+              <Label>郵便番号</Label>
+              <PostalCodeInput
+                defaultValue={editData?.postal_code || ""}
+                onResolved={(r) => setAddress(r.address)}
+              />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <Label required>住所</Label>
-                <input
-                  name="address"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="input"
-                  placeholder="例: 東京都新宿区西新宿1-1-1"
-                />
-                <FieldError errors={errors} field="address" />
-              </div>
-              <div>
-                <Label>建物番号</Label>
-                <input
-                  name="building_number"
-                  defaultValue={editData?.building_number || ""}
-                  className="input"
-                  placeholder="例: 1-1-1"
-                />
-              </div>
+            <div>
+              <Label required>住所</Label>
+              <input
+                name="address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="input"
+                placeholder="例: 東京都新宿区西新宿1-1-1"
+              />
+              <FieldError errors={errors} field="address" />
+            </div>
+
+            <div>
+              <Label>建物番号</Label>
+              <input
+                name="building_number"
+                defaultValue={editData?.building_number || ""}
+                className="input"
+                placeholder="例: 1-1-1"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
