@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
-import { effectiveFeeRate } from "@/lib/remittance-calc";
+import { calcPropertyManagementFee } from "@/lib/remittance-calc";
 
 export async function GET(
   _request: NextRequest,
@@ -17,7 +17,7 @@ export async function GET(
 
     const { data: owner, error: ownerError } = await supabase
       .from("owners")
-      .select("name, properties(id, name, management_fee_rate, management_form, units(id, unit_number, rent, status))")
+      .select("name, properties(id, name, management_fee_type, management_fee_rate, management_fee_amount, management_form, units(id, unit_number, rent, status))")
       .eq("id", id)
       .single();
 
@@ -58,8 +58,19 @@ export async function GET(
       const unpaidAmount = pBillings
         .filter((b: any) => b.status !== "paid")
         .reduce((s: number, b: any) => s + Number(b.total_amount), 0);
-      const feeRate = effectiveFeeRate(p.management_fee_rate, p.management_form);
-      const managementFee = Math.floor(rentIncome * feeRate / 100);
+      const managementFee = calcPropertyManagementFee({
+        rent: rentIncome,
+        feeType: p.management_fee_type,
+        feeRate: p.management_fee_rate,
+        feeAmount: p.management_fee_amount,
+        managementForm: p.management_form,
+      });
+      // レポート表示用ラベル（"5%" or "固定額"）。自主管理時は表示しない
+      const feeLabel = p.management_form === "self"
+        ? ""
+        : p.management_fee_type === "fixed"
+          ? "固定"
+          : `${Number(p.management_fee_rate) || 0}%`;
       const pExpenses = (expenses || []).filter((e: any) => e.property_id === p.id);
       const expenseTotal = pExpenses.reduce((s: number, e: any) => s + Number(e.amount), 0);
       const netAmount = rentIncome - managementFee - expenseTotal;
@@ -71,7 +82,7 @@ export async function GET(
         occupied,
         rentIncome,
         unpaidAmount,
-        managementFeeRate: feeRate,
+        managementFeeLabel: feeLabel,
         managementFee,
         expenses: pExpenses.map((e: any) => ({
           description: e.description,
@@ -108,7 +119,7 @@ interface PropertyReportItem {
   occupied: number;
   rentIncome: number;
   unpaidAmount: number;
-  managementFeeRate: number;
+  managementFeeLabel: string;
   managementFee: number;
   expenses: { description: string; amount: number }[];
   expenseTotal: number;
@@ -133,7 +144,7 @@ function renderReportHtml(
         <td style="padding:10px 12px;font-weight:600">${p.name}</td>
         <td style="text-align:center">${p.occupied}/${p.totalUnits}</td>
         <td style="text-align:right">${fmt(p.rentIncome)}</td>
-        <td style="text-align:right;color:#c53030">-${fmt(p.managementFee)}<span style="font-size:11px;color:#999"> (${p.managementFeeRate}%)</span></td>
+        <td style="text-align:right;color:#c53030">-${fmt(p.managementFee)}${p.managementFeeLabel ? `<span style="font-size:11px;color:#999"> (${p.managementFeeLabel})</span>` : ""}</td>
         <td style="text-align:right;color:#c05621">${p.expenseTotal > 0 ? `-${fmt(p.expenseTotal)}` : "—"}</td>
         <td style="text-align:right;font-weight:600;color:#2b6cb0">${fmt(p.netAmount)}</td>
       </tr>

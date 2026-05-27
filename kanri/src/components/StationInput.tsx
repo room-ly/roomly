@@ -134,7 +134,7 @@ export default function StationInput({
       </div>
 
       {open && options.length > 0 && (
-        <ul className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-lg border border-line bg-card shadow-lg text-sm">
+        <ul className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-lg border border-line bg-surface shadow-lg text-sm">
           {options.map((o, i) => (
             <li
               key={o.station_cd}

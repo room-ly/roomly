@@ -5,6 +5,8 @@ interface NotifyParams {
   type?: "info" | "warning" | "danger";
   link?: string;
   body?: string;
+  // 指定すると「この社員だけに見える」通知になる。未指定は会社全体共通。
+  user_id?: string | null;
 }
 
 export async function createNotification(params: NotifyParams) {
@@ -13,6 +15,7 @@ export async function createNotification(params: NotifyParams) {
     const company_id = await getCompanyId();
     await supabase.from("notifications").insert({
       company_id,
+      user_id: params.user_id ?? null,
       title: params.title,
       type: params.type ?? "info",
       link: params.link ?? null,

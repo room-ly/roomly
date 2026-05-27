@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Phone, Mail } from "lucide-react";
+import { Phone, Mail, Printer, Smartphone } from "lucide-react";
 import { getOwnerDetail } from "@/lib/queries";
 import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
@@ -151,6 +151,52 @@ export default async function OwnerDetailPage({
 
         {/* サイドカラム */}
         <div className="detail-col-side">
+          {(owner.owner_type === "corporate" || owner.name_kana || owner.birth_date) && (
+            <div className="section">
+              <div className="section-head-bar"><h2>基本情報</h2></div>
+              <div className="section-body">
+                <div className="kv-list">
+                  <div className="field">
+                    <div className="field-label mono">区分</div>
+                    <div className="field-value field-plain">
+                      {owner.owner_type === "corporate" ? "法人" : "個人"}
+                    </div>
+                  </div>
+                  {owner.owner_type === "corporate" && owner.company_name && (
+                    <div className="field">
+                      <div className="field-label mono">法人名</div>
+                      <div className="field-value field-plain">{owner.company_name}</div>
+                    </div>
+                  )}
+                  {owner.owner_type === "corporate" && owner.company_name_kana && (
+                    <div className="field">
+                      <div className="field-label mono">法人名カナ</div>
+                      <div className="field-value field-plain">{owner.company_name_kana}</div>
+                    </div>
+                  )}
+                  {owner.owner_type === "corporate" && owner.representative_name && (
+                    <div className="field">
+                      <div className="field-label mono">代表者</div>
+                      <div className="field-value field-plain">{owner.representative_name}</div>
+                    </div>
+                  )}
+                  {owner.name_kana && (
+                    <div className="field">
+                      <div className="field-label mono">フリガナ</div>
+                      <div className="field-value field-plain">{owner.name_kana}</div>
+                    </div>
+                  )}
+                  {owner.birth_date && (
+                    <div className="field">
+                      <div className="field-label mono">生年月日</div>
+                      <div className="field-value field-plain mono">{owner.birth_date}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="section">
             <div className="section-head-bar"><h2>連絡先</h2></div>
             <div className="section-body">
@@ -162,6 +208,24 @@ export default async function OwnerDetailPage({
                       <a href={`tel:${owner.phone}`} className="rlink" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                         <Phone size={13} /> <span className="mono">{formatPhone(owner.phone)}</span>
                       </a>
+                    </div>
+                  </div>
+                )}
+                {owner.mobile_phone && (
+                  <div className="field">
+                    <div className="field-label mono">携帯</div>
+                    <div className="field-value">
+                      <a href={`tel:${owner.mobile_phone}`} className="rlink" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <Smartphone size={13} /> <span className="mono">{formatPhone(owner.mobile_phone)}</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {owner.fax && (
+                  <div className="field">
+                    <div className="field-label mono">FAX</div>
+                    <div className="field-value field-plain" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <Printer size={13} /> <span className="mono">{formatPhone(owner.fax)}</span>
                     </div>
                   </div>
                 )}
@@ -181,9 +245,70 @@ export default async function OwnerDetailPage({
                     <div className="field-value field-plain" style={{ fontSize: 12 }}>{owner.address}</div>
                   </div>
                 )}
+                {owner.mailing_address && (
+                  <div className="field">
+                    <div className="field-label mono">書類送付先</div>
+                    <div className="field-value field-plain" style={{ fontSize: 12 }}>{owner.mailing_address}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
+
+          {(owner.emergency_contact_name || owner.emergency_contact_phone) && (
+            <div className="section">
+              <div className="section-head-bar"><h2>緊急連絡先</h2></div>
+              <div className="section-body">
+                <div className="kv-list">
+                  {owner.emergency_contact_name && (
+                    <div className="field">
+                      <div className="field-label mono">氏名</div>
+                      <div className="field-value field-plain">
+                        {owner.emergency_contact_name}
+                        {owner.emergency_contact_relation && (
+                          <span style={{ color: "var(--ink-3)", marginLeft: 8 }}>
+                            （{owner.emergency_contact_relation}）
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {owner.emergency_contact_phone && (
+                    <div className="field">
+                      <div className="field-label mono">電話</div>
+                      <div className="field-value">
+                        <a href={`tel:${owner.emergency_contact_phone}`} className="rlink" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <Phone size={13} /> <span className="mono">{formatPhone(owner.emergency_contact_phone)}</span>
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(owner.invoice_number || owner.withholding_required) && (
+            <div className="section">
+              <div className="section-head-bar"><h2>税務情報</h2></div>
+              <div className="section-body">
+                <div className="kv-list">
+                  {owner.invoice_number && (
+                    <div className="field">
+                      <div className="field-label mono">インボイス番号</div>
+                      <div className="field-value field-plain mono">{owner.invoice_number}</div>
+                    </div>
+                  )}
+                  {owner.withholding_required && (
+                    <div className="field">
+                      <div className="field-label mono">源泉徴収</div>
+                      <div className="field-value field-plain">必要</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {owner.bank_name && (
             <div className="section">

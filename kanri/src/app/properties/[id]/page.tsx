@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
-import { getPropertyDetail, getOwnersForSelect } from "@/lib/queries";
+import { getPropertyDetail, getOwnersForSelect, getUsersForSelect } from "@/lib/queries";
 import { formatBuiltYear } from "@/lib/wareki";
 import PropertyDetailClient from "@/components/PropertyDetailClient";
 import PropertyImages from "@/components/PropertyImages";
@@ -14,9 +14,10 @@ export default async function PropertyDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [result, ownersRaw] = await Promise.all([
+  const [result, ownersRaw, users] = await Promise.all([
     getPropertyDetail(id),
     getOwnersForSelect(),
+    getUsersForSelect(),
   ]);
   if (!result) notFound();
 
@@ -55,7 +56,7 @@ export default async function PropertyDetailPage({
           </div>
         </div>
         <div className="detail-header-actions">
-          <PropertyDetailClient propertyId={id} property={property} owners={owners} />
+          <PropertyDetailClient propertyId={id} property={property} owners={owners} users={users} />
         </div>
       </div>
 

@@ -27,6 +27,18 @@ export async function createClient() {
   );
 }
 
+export async function getCurrentUserRole(): Promise<{ user_id: string; role: string } | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  return { user_id: user.id, role: data?.role ?? "viewer" };
+}
+
 export async function getCompanyId(): Promise<string> {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();

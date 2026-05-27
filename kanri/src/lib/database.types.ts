@@ -47,6 +47,7 @@ export type Database = {
           estate_agent_license: string | null
           estate_agent_name: string | null
           estate_license: string | null
+          expense_approval_threshold: number
           id: string
           is_demo: boolean
           max_units: number
@@ -68,6 +69,7 @@ export type Database = {
           estate_agent_license?: string | null
           estate_agent_name?: string | null
           estate_license?: string | null
+          expense_approval_threshold?: number
           id?: string
           is_demo?: boolean
           max_units?: number
@@ -89,6 +91,7 @@ export type Database = {
           estate_agent_license?: string | null
           estate_agent_name?: string | null
           estate_license?: string | null
+          expense_approval_threshold?: number
           id?: string
           is_demo?: boolean
           max_units?: number
@@ -415,54 +418,93 @@ export type Database = {
       expenses: {
         Row: {
           amount: number
+          approved_at: string | null
+          approved_by: string | null
           category: string
+          company_amount: number
           company_id: string
+          contract_id: string | null
           created_at: string
           description: string
           expense_date: string
           id: string
           invoice_number: string | null
-          is_owner_charge: boolean
+          maintenance_request_id: string | null
           notes: string | null
+          owner_amount: number
           owner_id: string | null
+          paid_at: string | null
           payee_id: string | null
+          payment_due_date: string | null
           property_id: string | null
+          rejected_reason: string | null
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          tax_category: string
+          tenant_amount: number
           unit_id: string | null
           updated_at: string
           vendor_name: string | null
         }
         Insert: {
           amount: number
+          approved_at?: string | null
+          approved_by?: string | null
           category: string
+          company_amount?: number
           company_id: string
+          contract_id?: string | null
           created_at?: string
           description: string
           expense_date: string
           id?: string
           invoice_number?: string | null
-          is_owner_charge?: boolean
+          maintenance_request_id?: string | null
           notes?: string | null
+          owner_amount?: number
           owner_id?: string | null
+          paid_at?: string | null
           payee_id?: string | null
+          payment_due_date?: string | null
           property_id?: string | null
+          rejected_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          tax_category?: string
+          tenant_amount?: number
           unit_id?: string | null
           updated_at?: string
           vendor_name?: string | null
         }
         Update: {
           amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
           category?: string
+          company_amount?: number
           company_id?: string
+          contract_id?: string | null
           created_at?: string
           description?: string
           expense_date?: string
           id?: string
           invoice_number?: string | null
-          is_owner_charge?: boolean
+          maintenance_request_id?: string | null
           notes?: string | null
+          owner_amount?: number
           owner_id?: string | null
+          paid_at?: string | null
           payee_id?: string | null
+          payment_due_date?: string | null
           property_id?: string | null
+          rejected_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          tax_category?: string
+          tenant_amount?: number
           unit_id?: string | null
           updated_at?: string
           vendor_name?: string | null
@@ -501,6 +543,185 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_maintenance_request_id_fkey"
+            columns: ["maintenance_request_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_allocations: {
+        Row: {
+          allocation_method: string
+          amount: number
+          company_amount: number
+          company_id: string
+          created_at: string
+          expense_id: string
+          id: string
+          notes: string | null
+          owner_amount: number
+          owner_id: string | null
+          share_ratio: number | null
+          tenant_amount: number
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          allocation_method?: string
+          amount?: number
+          company_amount?: number
+          company_id: string
+          created_at?: string
+          expense_id: string
+          id?: string
+          notes?: string | null
+          owner_amount?: number
+          owner_id?: string | null
+          share_ratio?: number | null
+          tenant_amount?: number
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          allocation_method?: string
+          amount?: number
+          company_amount?: number
+          company_id?: string
+          created_at?: string
+          expense_id?: string
+          id?: string
+          notes?: string | null
+          owner_amount?: number
+          owner_id?: string | null
+          share_ratio?: number | null
+          tenant_amount?: number
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_allocations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_allocations_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_allocations_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_allocations_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deposit_transactions: {
+        Row: {
+          amount: number
+          billing_id: string | null
+          company_id: string
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          expense_id: string | null
+          id: string
+          notes: string | null
+          occurred_at: string
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          billing_id?: string | null
+          company_id: string
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string | null
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          billing_id?: string | null
+          company_id?: string
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string | null
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deposit_transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_transactions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_transactions_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_transactions_billing_id_fkey"
+            columns: ["billing_id"]
+            isOneToOne: false
+            referencedRelation: "rent_billings"
             referencedColumns: ["id"]
           },
         ]
@@ -1114,6 +1335,8 @@ export type Database = {
       }
       owner_remittances: {
         Row: {
+          carryover_from_prev: number
+          carryover_to_next: number
           company_id: string
           created_at: string
           expense_deducted: number
@@ -1133,6 +1356,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          carryover_from_prev?: number
+          carryover_to_next?: number
           company_id: string
           created_at?: string
           expense_deducted?: number
@@ -1152,6 +1377,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          carryover_from_prev?: number
+          carryover_to_next?: number
           company_id?: string
           created_at?: string
           expense_deducted?: number
@@ -1197,15 +1424,30 @@ export type Database = {
           bank_branch_code: string | null
           bank_code: string | null
           bank_name: string | null
+          birth_date: string | null
           company_id: string
+          company_name: string | null
+          company_name_kana: string | null
           created_at: string
           email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
+          fax: string | null
           id: string
+          invoice_number: string | null
+          mailing_address: string | null
+          mailing_postal_code: string | null
+          mobile_phone: string | null
           name: string
+          name_kana: string | null
           notes: string | null
+          owner_type: string
           phone: string | null
           postal_code: string | null
+          representative_name: string | null
           updated_at: string
+          withholding_required: boolean
         }
         Insert: {
           address?: string | null
@@ -1216,15 +1458,30 @@ export type Database = {
           bank_branch_code?: string | null
           bank_code?: string | null
           bank_name?: string | null
+          birth_date?: string | null
           company_id: string
+          company_name?: string | null
+          company_name_kana?: string | null
           created_at?: string
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          fax?: string | null
           id?: string
+          invoice_number?: string | null
+          mailing_address?: string | null
+          mailing_postal_code?: string | null
+          mobile_phone?: string | null
           name: string
+          name_kana?: string | null
           notes?: string | null
+          owner_type?: string
           phone?: string | null
           postal_code?: string | null
+          representative_name?: string | null
           updated_at?: string
+          withholding_required?: boolean
         }
         Update: {
           address?: string | null
@@ -1235,15 +1492,30 @@ export type Database = {
           bank_branch_code?: string | null
           bank_code?: string | null
           bank_name?: string | null
+          birth_date?: string | null
           company_id?: string
+          company_name?: string | null
+          company_name_kana?: string | null
           created_at?: string
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          fax?: string | null
           id?: string
+          invoice_number?: string | null
+          mailing_address?: string | null
+          mailing_postal_code?: string | null
+          mobile_phone?: string | null
           name?: string
+          name_kana?: string | null
           notes?: string | null
+          owner_type?: string
           phone?: string | null
           postal_code?: string | null
+          representative_name?: string | null
           updated_at?: string
+          withholding_required?: boolean
         }
         Relationships: [
           {
@@ -1338,6 +1610,7 @@ export type Database = {
           common_facilities: string[] | null
           company_id: string
           created_at: string
+          default_allocation_method: string
           earthquake_resistance: string | null
           electricity: string | null
           flood_hazard_zone: boolean | null
@@ -1410,6 +1683,7 @@ export type Database = {
           common_facilities?: string[] | null
           company_id: string
           created_at?: string
+          default_allocation_method?: string
           earthquake_resistance?: string | null
           electricity?: string | null
           flood_hazard_zone?: boolean | null
@@ -1482,6 +1756,7 @@ export type Database = {
           common_facilities?: string[] | null
           company_id?: string
           created_at?: string
+          default_allocation_method?: string
           earthquake_resistance?: string | null
           electricity?: string | null
           flood_hazard_zone?: boolean | null

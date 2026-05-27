@@ -23,6 +23,7 @@ export async function PUT(
     const data = {
       ...parsed.data,
       owner_id: parsed.data.owner_id || null,
+      approver_user_id: parsed.data.approver_user_id || null,
     };
 
     const { data: property, error } = await supabase

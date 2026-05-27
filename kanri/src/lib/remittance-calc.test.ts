@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calcRemittance, type RemittanceCalcInput } from "./remittance-calc";
+import { calcPropertyManagementFee, calcRemittance, type RemittanceCalcInput } from "./remittance-calc";
 
 describe("calcRemittance", () => {
   const baseInput: RemittanceCalcInput = {
@@ -104,5 +104,57 @@ describe("calcRemittance", () => {
     };
     const result = calcRemittance(input);
     expect(result.totalRent).toBe(85000 + 108000);
+  });
+});
+
+describe("calcPropertyManagementFee", () => {
+  it("rate方式: 家賃の%を四捨五入", () => {
+    expect(calcPropertyManagementFee({
+      rent: 100000,
+      feeType: "rate",
+      feeRate: 5,
+      feeAmount: 0,
+      managementForm: "full_management",
+    })).toBe(5000);
+  });
+
+  it("rate方式: feeType未設定でもrate扱い（後方互換）", () => {
+    expect(calcPropertyManagementFee({
+      rent: 100000,
+      feeType: null,
+      feeRate: 5,
+      feeAmount: 0,
+      managementForm: "full_management",
+    })).toBe(5000);
+  });
+
+  it("fixed方式: 固定額をそのまま返す（家賃に依存しない）", () => {
+    expect(calcPropertyManagementFee({
+      rent: 100000,
+      feeType: "fixed",
+      feeRate: 0,
+      feeAmount: 3000,
+      managementForm: "full_management",
+    })).toBe(3000);
+  });
+
+  it("fixed方式でも家賃0なら手数料0（入金がない月）", () => {
+    expect(calcPropertyManagementFee({
+      rent: 0,
+      feeType: "fixed",
+      feeRate: 0,
+      feeAmount: 3000,
+      managementForm: "full_management",
+    })).toBe(0);
+  });
+
+  it("自主管理は方式に関わらず0", () => {
+    expect(calcPropertyManagementFee({
+      rent: 100000,
+      feeType: "fixed",
+      feeRate: 5,
+      feeAmount: 3000,
+      managementForm: "self",
+    })).toBe(0);
   });
 });

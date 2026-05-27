@@ -9,9 +9,16 @@ interface Owner {
   name: string;
 }
 
+interface UserOption {
+  id: string;
+  label: string;
+  role?: string;
+}
+
 interface PropertiesGridProps {
   properties: Record<string, any>[];
   owners: Owner[];
+  users?: UserOption[];
 }
 
 type FilterKey = "all" | "apartment" | "apart" | "house" | "parking" | "land" | "commercial";
@@ -49,7 +56,7 @@ function stats(p: Record<string, any>) {
   return { unitCount: units.length, occupied, vacant, totalRent, occupancyRate };
 }
 
-export default function PropertiesGrid({ properties, owners }: PropertiesGridProps) {
+export default function PropertiesGrid({ properties, owners, users = [] }: PropertiesGridProps) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortAsc, setSortAsc] = useState(true);
@@ -236,7 +243,7 @@ export default function PropertiesGrid({ properties, owners }: PropertiesGridPro
 
       <div className="prop-grid">
         {filtered.map((prop) => (
-          <PropertyCard key={prop.id} property={prop} owners={owners} />
+          <PropertyCard key={prop.id} property={prop} owners={owners} users={users} />
         ))}
         {filtered.length === 0 && (
           <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px 16px", color: "var(--ink-3)" }}>

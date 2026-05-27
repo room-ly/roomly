@@ -10,12 +10,20 @@ interface Owner {
   name: string;
 }
 
+interface UserOption {
+  id: string;
+  label: string;
+  role?: string;
+}
+
 interface PropertiesPageClientProps {
   owners: Owner[];
+  users?: UserOption[];
 }
 
 export default function PropertiesPageClient({
   owners,
+  users = [],
 }: PropertiesPageClientProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -39,6 +47,7 @@ export default function PropertiesPageClient({
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         owners={owners}
+        users={users}
       />
       <CsvImportModal
         isOpen={isImportOpen}

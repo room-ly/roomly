@@ -12,12 +12,19 @@ interface Owner {
   name: string;
 }
 
+interface UserOption {
+  id: string;
+  label: string;
+  role?: string;
+}
+
 interface PropertyCardProps {
   property: Record<string, any>;
   owners: Owner[];
+  users?: UserOption[];
 }
 
-export default function PropertyCard({ property: prop, owners }: PropertyCardProps) {
+export default function PropertyCard({ property: prop, owners, users = [] }: PropertyCardProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -152,6 +159,7 @@ export default function PropertyCard({ property: prop, owners }: PropertyCardPro
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
         owners={owners}
+        users={users}
         editData={prop}
       />
     </>

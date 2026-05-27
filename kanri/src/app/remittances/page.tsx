@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { getOwners, getExpenses, getRemittances } from "@/lib/queries";
-import { effectiveFeeRate } from "@/lib/remittance-calc";
+import { calcPropertyManagementFee } from "@/lib/remittance-calc";
 import RemittancesPageClient from "@/components/RemittancesPageClient";
 
 export default async function RemittancesPage() {
@@ -11,21 +11,25 @@ export default async function RemittancesPage() {
   ]);
   const expenses = expensesResult.data;
 
-  const ownerExpenses = expenses
-    .filter((e: any) => e.is_owner_charge && e.owner_id)
+  // 承認済み(approved/ordered/completed/paid) の owner_amount のみ送金から控除
+  const APPROVED_STATUSES = new Set(["approved", "ordered", "completed", "paid"]);
+  const eligibleExpenses = expenses.filter(
+    (e: any) => APPROVED_STATUSES.has(e.status) && Number(e.owner_amount) > 0,
+  );
+
+  const ownerExpenses = eligibleExpenses
+    .filter((e: any) => e.owner_id)
     .reduce((acc: Record<string, number>, e: any) => {
-      acc[e.owner_id] = (acc[e.owner_id] || 0) + Number(e.amount);
+      acc[e.owner_id] = (acc[e.owner_id] || 0) + Number(e.owner_amount);
       return acc;
     }, {} as Record<string, number>);
 
-  const propertyExpenses = expenses
-    .filter((e: any) => e.is_owner_charge)
-    .reduce((acc: Record<string, number>, e: any) => {
-      if (e.property_id) {
-        acc[e.property_id] = (acc[e.property_id] || 0) + Number(e.amount);
-      }
-      return acc;
-    }, {} as Record<string, number>);
+  const propertyExpenses = eligibleExpenses.reduce((acc: Record<string, number>, e: any) => {
+    if (e.property_id) {
+      acc[e.property_id] = (acc[e.property_id] || 0) + Number(e.owner_amount);
+    }
+    return acc;
+  }, {} as Record<string, number>);
 
   const ownersWithBreakdown = owners.map((o: Record<string, any>) => {
     const ownerProps = o.properties || [];
@@ -33,13 +37,24 @@ export default async function RemittancesPage() {
     const propertyBreakdown = ownerProps.map((p: any) => {
       const pUnits = (p.units || []).filter((u: any) => u.status === "occupied");
       const pRent = pUnits.reduce((s: number, u: any) => s + Number(u.rent), 0);
-      const pFeeRate = effectiveFeeRate(p.management_fee_rate, p.management_form);
-      const pFee = Math.round(pRent * (pFeeRate / 100));
+      const pFee = calcPropertyManagementFee({
+        rent: pRent,
+        feeType: p.management_fee_type,
+        feeRate: p.management_fee_rate,
+        feeAmount: p.management_fee_amount,
+        managementForm: p.management_form,
+      });
+      // 一覧表示用ラベル: 率なら「5%」、固定なら「固定」、自主管理なら空
+      const feeLabel = p.management_form === "self"
+        ? ""
+        : p.management_fee_type === "fixed"
+          ? "固定"
+          : `${Number(p.management_fee_rate) || 0}%`;
       const pExpense = propertyExpenses[p.id] || 0;
       return {
         propertyId: p.id,
         propertyName: p.name,
-        feeRate: pFeeRate,
+        feeLabel,
         unitCount: (p.units || []).length,
         occupiedCount: pUnits.length,
         rent: pRent,
@@ -63,7 +78,9 @@ export default async function RemittancesPage() {
     };
   });
 
-  const totalNet = ownersWithBreakdown.reduce((s: number, o: any) => s + o.netAmount, 0);
+  // 送金額合計は実際に送る金額（マイナスはゼロに丸める）。差分は未収金として翌月繰越の対象
+  const totalNet = ownersWithBreakdown.reduce((s: number, o: any) => s + Math.max(0, o.netAmount), 0);
+  const totalShortfall = ownersWithBreakdown.reduce((s: number, o: any) => s + Math.max(0, -o.netAmount), 0);
   const totalRent = ownersWithBreakdown.reduce((s: number, o: any) => s + o.totalRent, 0);
   const totalFee = ownersWithBreakdown.reduce((s: number, o: any) => s + o.managementFee, 0);
 
@@ -101,7 +118,14 @@ export default async function RemittancesPage() {
         <div className="sum-card sum-card-em">
           <span className="sum-label mono">送金額合計</span>
           <span className="sum-value serif-i" style={{ color: "var(--accent-deep)" }}>¥{totalNet.toLocaleString()}</span>
-          <span className="sum-foot mono">{owners.length}名に送金</span>
+          <span className="sum-foot mono">
+            {owners.length}名に送金
+            {totalShortfall > 0 && (
+              <span style={{ color: "var(--warn)", marginLeft: 6 }}>
+                ／未収金 ¥{totalShortfall.toLocaleString()}（翌月繰越予定）
+              </span>
+            )}
+          </span>
         </div>
       </div>
 
@@ -144,7 +168,9 @@ export default async function RemittancesPage() {
                       )}
                       <td style={{ color: "var(--ink-2)" }}>
                         {p.propertyName}
-                        <span className="mono" style={{ fontSize: 10, color: "var(--ink-4)", marginLeft: 6 }}>{p.feeRate}%</span>
+                        {p.feeLabel && (
+                          <span className="mono" style={{ fontSize: 10, color: "var(--ink-4)", marginLeft: 6 }}>{p.feeLabel}</span>
+                        )}
                       </td>
                       <td className="mono" style={{ textAlign: "center" }}>{p.occupiedCount}/{p.unitCount}</td>
                       <td className="num">¥{p.rent.toLocaleString()}</td>
@@ -152,7 +178,13 @@ export default async function RemittancesPage() {
                       <td className="num" style={{ color: "var(--warn)" }}>
                         {p.expense > 0 ? `-¥${p.expense.toLocaleString()}` : "—"}
                       </td>
-                      <td className="num strong">¥{p.net.toLocaleString()}</td>
+                      <td
+                        className="num strong"
+                        style={p.net < 0 ? { color: "var(--warn)" } : undefined}
+                        title={p.net < 0 ? "経費が家賃を超過しています。翌月に繰越されます" : undefined}
+                      >
+                        ¥{p.net.toLocaleString()}
+                      </td>
                     </tr>
                   ))}
                   <tr key={`${o.id}-total`} className="tbl-total">
@@ -162,7 +194,13 @@ export default async function RemittancesPage() {
                     <td className="num" style={{ color: "var(--warn)" }}>
                       {o.expenseDeducted > 0 ? `-¥${o.expenseDeducted.toLocaleString()}` : "—"}
                     </td>
-                    <td className="num" style={{ color: "var(--accent-deep)", fontWeight: 600 }}>¥{o.netAmount.toLocaleString()}</td>
+                    <td
+                      className="num"
+                      style={{ color: o.netAmount < 0 ? "var(--warn)" : "var(--accent-deep)", fontWeight: 600 }}
+                      title={o.netAmount < 0 ? "経費が家賃を超過。翌月繰越されます" : undefined}
+                    >
+                      ¥{o.netAmount.toLocaleString()}
+                    </td>
                   </tr>
                 </Fragment>
               ))}

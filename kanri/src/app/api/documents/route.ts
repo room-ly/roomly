@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     const tenantId = formData.get("tenant_id") as string | null;
 
     const ext = ALLOWED_MIME[normalizedMime];
-    const storagePath = `documents/${companyId}/${randomUUID()}.${ext}`;
+    const storagePath = `${companyId}/documents/${randomUUID()}.${ext}`;
 
     const buffer = await file.arrayBuffer();
     const { error: uploadError } = await supabase.storage

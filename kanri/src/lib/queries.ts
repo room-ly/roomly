@@ -184,7 +184,7 @@ export async function getContracts(page = 1, pageSize = 50, sort = "start_date:d
 // 契約詳細（入居者・部屋・物件・家賃請求履歴付き）
 export async function getContractDetail(id: string) {
   const supabase = await createClient();
-  const [{ data: contract, error }, { data: billings }, { data: moveOutRequests }] = await Promise.all([
+  const [{ data: contract, error }, { data: billings }, { data: moveOutRequests }, { data: depositTxs }] = await Promise.all([
     supabase
       .from("contracts")
       .select("*, tenant:tenants(id, name, name_kana, phone, email, workplace), unit:units(id, unit_number, area_sqm, layout, property:properties(id, name, address))")
@@ -201,6 +201,11 @@ export async function getContractDetail(id: string) {
       .select("*")
       .eq("contract_id", id)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("deposit_transactions")
+      .select("*, expense:expenses(id, description), billing:rent_billings(id, billing_month)")
+      .eq("contract_id", id)
+      .order("occurred_at", { ascending: false }),
   ]);
   if (error || !contract) return null;
 
@@ -215,7 +220,13 @@ export async function getContractDetail(id: string) {
     unitContracts = data ?? [];
   }
 
-  return { contract, billings: billings ?? [], moveOutRequests: moveOutRequests ?? [], unitContracts };
+  return {
+    contract,
+    billings: billings ?? [],
+    moveOutRequests: moveOutRequests ?? [],
+    unitContracts,
+    depositTransactions: (depositTxs ?? []) as Row[],
+  };
 }
 
 // 入居者詳細（契約・物件・家賃請求付き）
@@ -286,7 +297,7 @@ export async function getInquiryDetail(id: string) {
 export async function getOwnerDetail(id: string) {
   const supabase = await createClient();
   const [{ data: owner, error }, { data: remittances }] = await Promise.all([
-    supabase.from("owners").select("*, properties(id, name, management_fee_rate, management_form, units(id, status, rent))").eq("id", id).single(),
+    supabase.from("owners").select("*, properties(id, name, management_fee_type, management_fee_rate, management_fee_amount, management_form, units(id, status, rent))").eq("id", id).single(),
     supabase.from("owner_remittances").select("id, remittance_month, total_rent, management_fee_deducted, expense_deducted, net_amount, status").eq("owner_id", id).order("remittance_month", { ascending: false }).limit(12),
   ]);
   if (error || !owner) return null;
@@ -294,16 +305,115 @@ export async function getOwnerDetail(id: string) {
   return { owner, remittances: remittances ?? [] };
 }
 
-// 経費詳細
+// 経費詳細（按分明細・修繕・契約・敷金トランザクション付き）
 export async function getExpenseDetail(id: string) {
   const supabase = await createClient();
   const { data: expense, error } = await supabase
     .from("expenses")
-    .select("*, property:properties(id, name, address), unit:units(unit_number), owner:owners(name)")
+    .select(
+      [
+        "*",
+        "property:properties(id, name, address, default_allocation_method, approver_user_id, approver:users!properties_approver_user_id_fkey(id, name))",
+        "unit:units(unit_number)",
+        "owner:owners(id, name)",
+        "payee:payees(id, name)",
+        "approver:users!expenses_approved_by_fkey(id, name)",
+        "submitter:users!expenses_submitted_by_fkey(id, name)",
+        "maintenance:maintenance_requests(id, title, status)",
+        "contract:contracts(id, deposit, tenant:tenants(id, name))",
+        "allocations:expense_allocations(*, unit:units(unit_number), owner:owners(name))",
+      ].join(", "),
+    )
     .eq("id", id)
     .single();
   if (error || !expense) return null;
-  return expense;
+
+  // 紐付く契約の敷金トランザクションをまとめて取得
+  let depositTxs: Row[] = [];
+  const contractId = (expense as Row).contract?.id;
+  if (contractId) {
+    const { data } = await supabase
+      .from("deposit_transactions")
+      .select("*")
+      .eq("contract_id", contractId)
+      .order("occurred_at", { ascending: false });
+    depositTxs = (data ?? []) as Row[];
+  }
+
+  // 承認者の解決: 物件指名 → 会社デフォルト
+  const expenseRow = expense as Row;
+  const propertyApproverId = expenseRow.property?.approver_user_id ?? null;
+  const propertyApprover = expenseRow.property?.approver ?? null;
+  let effectiveApprover: { id: string; name: string } | null = propertyApprover;
+  if (!effectiveApprover && expenseRow.company_id) {
+    const { data: company } = await supabase
+      .from("companies")
+      .select("default_approver_user_id, default_approver:users!companies_default_approver_user_id_fkey(id, name)")
+      .eq("id", expenseRow.company_id)
+      .single();
+    if (company?.default_approver_user_id) {
+      effectiveApprover = (company as Row).default_approver ?? null;
+    }
+  }
+
+  return {
+    ...expenseRow,
+    deposit_transactions: depositTxs,
+    effective_approver: effectiveApprover,
+    approver_source: propertyApproverId ? "property" : effectiveApprover ? "company" : null,
+  } as Row;
+}
+
+// 承認待ち経費一覧
+export async function getExpensesPendingApproval() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("expenses")
+    .select(
+      "*, property:properties(name), unit:units(unit_number), owner:owners(name), submitter:users!expenses_submitted_by_fkey(name)",
+    )
+    .eq("status", "pending_approval")
+    .order("submitted_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Row[];
+}
+
+// 修繕依頼セレクタ用
+export async function getMaintenanceForSelect(propertyId?: string | null) {
+  const supabase = await createClient();
+  let q = supabase
+    .from("maintenance_requests")
+    .select("id, title, status, property_id, unit_id, property:properties(name), unit:units(unit_number)")
+    .order("reported_date", { ascending: false })
+    .limit(50);
+  if (propertyId) q = q.eq("property_id", propertyId);
+  const { data } = await q;
+  return (data ?? []) as Row[];
+}
+
+// 契約セレクタ用（アクティブな契約のみ）
+export async function getContractsForSelect(unitId?: string | null) {
+  const supabase = await createClient();
+  let q = supabase
+    .from("contracts")
+    .select("id, unit_id, deposit, status, tenant:tenants(name), unit:units(unit_number, property:properties(name))")
+    .eq("status", "active")
+    .order("start_date", { ascending: false });
+  if (unitId) q = q.eq("unit_id", unitId);
+  const { data } = await q;
+  return (data ?? []) as Row[];
+}
+
+// 敷金サマリ（残高計算用のトランザクション取得）
+export async function getDepositTransactions(contractId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("deposit_transactions")
+    .select("*, expense:expenses(id, description), billing:rent_billings(id, billing_month)")
+    .eq("contract_id", contractId)
+    .order("occurred_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Row[];
 }
 
 // 送金詳細（オーナー・明細付き）
@@ -436,7 +546,7 @@ export async function getOwners() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("owners")
-    .select("*, properties(id, name, management_fee_rate, management_form, units(id, status, rent))")
+    .select("*, properties(id, name, management_fee_type, management_fee_rate, management_fee_amount, management_form, units(id, status, rent))")
     .order("name");
   if (error) throw error;
   return (data ?? []) as Row[];
@@ -716,13 +826,29 @@ export async function getPropertiesForSelect() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("properties")
-    .select("id, name, owner_id")
+    .select("id, name, owner_id, default_allocation_method")
     .order("name");
   if (error) throw error;
   return (data ?? []).map((p: Row) => ({
     id: p.id,
     label: p.name,
     owner_id: p.owner_id,
+    default_allocation_method: p.default_allocation_method,
+  }));
+}
+
+// 社内ユーザーセレクトリスト（承認者選択など用途）
+export async function getUsersForSelect() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, name, role")
+    .order("name");
+  if (error) throw error;
+  return (data ?? []).map((u: Row) => ({
+    id: u.id,
+    label: u.name,
+    role: u.role,
   }));
 }
 

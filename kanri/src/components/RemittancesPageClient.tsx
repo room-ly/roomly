@@ -93,6 +93,22 @@ export default function RemittancesPageClient({ owners, remittances, ownerSummar
                     <td className="num strong" style={{ color: "var(--accent-deep)" }}>
                       ¥{Number(r.net_amount).toLocaleString()}
                       {r.manual_override && <span style={{ fontSize: 10, color: "var(--warn)", marginLeft: 4 }}>手動</span>}
+                      {Number(r.carryover_to_next) > 0 && (
+                        <span
+                          title={`翌月繰越 ¥${Number(r.carryover_to_next).toLocaleString()}`}
+                          style={{ fontSize: 10, color: "var(--warn)", marginLeft: 4 }}
+                        >
+                          ▶¥{Number(r.carryover_to_next).toLocaleString()}
+                        </span>
+                      )}
+                      {Number(r.carryover_from_prev) > 0 && (
+                        <span
+                          title={`前月繰越 ¥${Number(r.carryover_from_prev).toLocaleString()} を控除済`}
+                          style={{ fontSize: 10, color: "var(--ink-3)", marginLeft: 4 }}
+                        >
+                          ◀¥{Number(r.carryover_from_prev).toLocaleString()}
+                        </span>
+                      )}
                     </td>
                     <td style={{ fontSize: 12, color: "var(--ink-2)" }}>{paymentMethodLabel[r.payment_method] || "振込"}</td>
                     <td><StatusBadge status={r.status} /></td>

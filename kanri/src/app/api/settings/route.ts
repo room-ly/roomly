@@ -8,7 +8,7 @@ export async function PUT(request: NextRequest) {
     const supabase = await createClient();
     const companyId = await getCompanyId();
 
-    const allowed = ["name", "phone", "address", "postal_code", "usage_type", "contract_alert_days", "estate_license", "estate_agent_name", "estate_agent_license"];
+    const allowed = ["name", "phone", "address", "postal_code", "usage_type", "contract_alert_days", "estate_license", "estate_agent_name", "estate_agent_license", "default_approver_user_id", "expense_approval_threshold"];
     const update: Record<string, any> = {};
     for (const key of allowed) {
       if (key in body) update[key] = body[key];
@@ -18,6 +18,12 @@ export async function PUT(request: NextRequest) {
     }
     if (update.contract_alert_days !== undefined) {
       update.contract_alert_days = Number(update.contract_alert_days);
+    }
+    if (update.default_approver_user_id !== undefined) {
+      update.default_approver_user_id = update.default_approver_user_id || null;
+    }
+    if (update.expense_approval_threshold !== undefined) {
+      update.expense_approval_threshold = Number(update.expense_approval_threshold) || 0;
     }
 
     const { error } = await supabase

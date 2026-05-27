@@ -28,6 +28,10 @@ export default function OwnerFormModal({
   const [branchName, setBranchName] = useState(editData?.bank_branch || "");
   const [branchCode, setBranchCode] = useState(editData?.bank_branch_code || "");
   const [address, setAddress] = useState(editData?.address || "");
+  const [mailingAddress, setMailingAddress] = useState(editData?.mailing_address || "");
+  const [ownerType, setOwnerType] = useState<"individual" | "corporate">(
+    (editData?.owner_type as "individual" | "corporate") || "individual"
+  );
 
   useEffect(() => {
     setBankName(editData?.bank_name || "");
@@ -35,6 +39,8 @@ export default function OwnerFormModal({
     setBranchName(editData?.bank_branch || "");
     setBranchCode(editData?.bank_branch_code || "");
     setAddress(editData?.address || "");
+    setMailingAddress(editData?.mailing_address || "");
+    setOwnerType((editData?.owner_type as "individual" | "corporate") || "individual");
   }, [editData, isOpen]);
 
   if (!isOpen) return null;
@@ -93,7 +99,7 @@ export default function OwnerFormModal({
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">
             {isEdit ? "オーナーを編集" : "オーナーを追加"}
@@ -114,19 +120,111 @@ export default function OwnerFormModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-ink-2 block mb-1">
-              氏名 <span className="text-danger">*</span>
-            </label>
-            <input
-              name="name"
-              defaultValue={editData?.name || ""}
-              className="input"
-              placeholder="例: 山田太郎"
-            />
-            {errors.name && (
-              <p className="text-danger text-sm mt-1">{errors.name[0]}</p>
-            )}
+            <label className="text-sm font-medium text-ink-2 block mb-1">区分</label>
+            <div className="flex gap-4 text-sm">
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="owner_type"
+                  value="individual"
+                  checked={ownerType === "individual"}
+                  onChange={() => setOwnerType("individual")}
+                />
+                個人
+              </label>
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="owner_type"
+                  value="corporate"
+                  checked={ownerType === "corporate"}
+                  onChange={() => setOwnerType("corporate")}
+                />
+                法人
+              </label>
+            </div>
           </div>
+
+          {ownerType === "corporate" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  法人名
+                </label>
+                <input
+                  name="company_name"
+                  defaultValue={editData?.company_name || ""}
+                  className="input"
+                  placeholder="例: 株式会社山田不動産"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  法人名（カナ）
+                </label>
+                <input
+                  name="company_name_kana"
+                  defaultValue={editData?.company_name_kana || ""}
+                  className="input"
+                  placeholder="例: カブシキガイシャヤマダフドウサン"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  代表者氏名
+                </label>
+                <input
+                  name="representative_name"
+                  defaultValue={editData?.representative_name || ""}
+                  className="input"
+                  placeholder="例: 山田太郎"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                {ownerType === "corporate" ? "担当者氏名" : "氏名"}
+                <span className="text-danger"> *</span>
+              </label>
+              <input
+                name="name"
+                defaultValue={editData?.name || ""}
+                className="input"
+                placeholder="例: 山田太郎"
+              />
+              {errors.name && (
+                <p className="text-danger text-sm mt-1">{errors.name[0]}</p>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                フリガナ
+              </label>
+              <input
+                name="name_kana"
+                defaultValue={editData?.name_kana || ""}
+                className="input"
+                placeholder="例: ヤマダタロウ"
+              />
+            </div>
+          </div>
+
+          {ownerType === "individual" && (
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                生年月日
+              </label>
+              <input
+                name="birth_date"
+                type="date"
+                defaultValue={editData?.birth_date || ""}
+                className="input sm:max-w-[14rem]"
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -138,6 +236,26 @@ export default function OwnerFormModal({
                 defaultValue={editData?.phone || ""}
                 className="input"
                 placeholder="例: 0312345678"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                携帯電話
+              </label>
+              <input
+                name="mobile_phone"
+                defaultValue={editData?.mobile_phone || ""}
+                className="input"
+                placeholder="例: 09012345678"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">FAX</label>
+              <input
+                name="fax"
+                defaultValue={editData?.fax || ""}
+                className="input"
+                placeholder="例: 0312345679"
               />
             </div>
             <div>
@@ -178,6 +296,103 @@ export default function OwnerFormModal({
                 className="input"
                 placeholder="例: 東京都新宿区西新宿1-1-1"
               />
+            </div>
+          </div>
+
+          <div className="border-t border-line pt-4">
+            <h3 className="text-[13px] font-medium text-ink-2 mb-3">
+              書類送付先（住所と異なる場合）
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  送付先郵便番号
+                </label>
+                <PostalCodeInput
+                  name="mailing_postal_code"
+                  defaultValue={editData?.mailing_postal_code || ""}
+                  onResolved={(r) => setMailingAddress(r.address)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  送付先住所
+                </label>
+                <input
+                  name="mailing_address"
+                  value={mailingAddress}
+                  onChange={(e) => setMailingAddress(e.target.value)}
+                  className="input"
+                  placeholder="例: 神奈川県横浜市..."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-line pt-4">
+            <h3 className="text-[13px] font-medium text-ink-2 mb-3">緊急連絡先</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  氏名
+                </label>
+                <input
+                  name="emergency_contact_name"
+                  defaultValue={editData?.emergency_contact_name || ""}
+                  className="input"
+                  placeholder="例: 山田花子"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  続柄
+                </label>
+                <input
+                  name="emergency_contact_relation"
+                  defaultValue={editData?.emergency_contact_relation || ""}
+                  className="input"
+                  placeholder="例: 配偶者"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  電話番号
+                </label>
+                <input
+                  name="emergency_contact_phone"
+                  defaultValue={editData?.emergency_contact_phone || ""}
+                  className="input"
+                  placeholder="例: 09012345678"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-line pt-4">
+            <h3 className="text-[13px] font-medium text-ink-2 mb-3">税務情報</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  インボイス登録番号
+                </label>
+                <input
+                  name="invoice_number"
+                  defaultValue={editData?.invoice_number || ""}
+                  className="input"
+                  placeholder="例: T1234567890123"
+                />
+              </div>
+              <div className="flex items-end pb-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="withholding_required"
+                    value="true"
+                    defaultChecked={!!editData?.withholding_required}
+                  />
+                  源泉徴収が必要（非居住者など）
+                </label>
+              </div>
             </div>
           </div>
 

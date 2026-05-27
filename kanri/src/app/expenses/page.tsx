@@ -1,5 +1,12 @@
 import { Suspense } from "react";
-import { getExpenses, getPropertiesForSelect, getOwnersForSelect, getPayeesForSelect } from "@/lib/queries";
+import {
+  getExpenses,
+  getPropertiesForSelect,
+  getOwnersForSelect,
+  getPayeesForSelect,
+  getMaintenanceForSelect,
+  getContractsForSelect,
+} from "@/lib/queries";
 import PageHeader from "@/components/PageHeader";
 import ExpensesPageClient from "@/components/ExpensesPageClient";
 import ExpensesTable from "@/components/ExpensesTable";
@@ -22,12 +29,28 @@ export default async function ExpensesPage({
   const { page: pageStr, sort } = await searchParams;
   const page = Math.max(1, Number(pageStr) || 1);
   const sortValue = sort || "expense_date:desc";
-  const [{ data: expenses, total }, properties, owners, payees] = await Promise.all([
-    getExpenses(page, PAGE_SIZE, sortValue),
-    getPropertiesForSelect(),
-    getOwnersForSelect(),
-    getPayeesForSelect(),
-  ]);
+  const [{ data: expenses, total }, properties, owners, payees, maintenance, contracts] =
+    await Promise.all([
+      getExpenses(page, PAGE_SIZE, sortValue),
+      getPropertiesForSelect(),
+      getOwnersForSelect(),
+      getPayeesForSelect(),
+      getMaintenanceForSelect(),
+      getContractsForSelect(),
+    ]);
+
+  const maintenanceOptions = (maintenance as any[]).map((m) => ({
+    id: m.id,
+    label: `${m.property?.name ?? ""} ${m.unit?.unit_number ?? ""} ${m.title}`.trim(),
+    property_id: m.property_id,
+  }));
+
+  const contractOptions = (contracts as any[]).map((c) => ({
+    id: c.id,
+    label: `${c.unit?.property?.name ?? ""} ${c.unit?.unit_number ?? ""} ${c.tenant?.name ?? ""}`.trim(),
+    unit_id: c.unit_id,
+    deposit: c.deposit,
+  }));
 
   return (
     <>
@@ -36,11 +59,21 @@ export default async function ExpensesPage({
         title="経費"
         em="管理"
         description="物件経費・オーナー負担の管理。送金時にオーナー負担分が自動で控除されます。"
-        action={<ExpensesPageClient properties={properties} owners={owners} payees={payees} />}
+        action={
+          <ExpensesPageClient
+            properties={properties}
+            owners={owners}
+            payees={payees}
+            maintenance={maintenanceOptions}
+            contracts={contractOptions}
+          />
+        }
       />
 
       <div className="flex justify-end mb-3">
-        <Suspense><SortSelect options={SORT_OPTIONS} defaultValue={sortValue} /></Suspense>
+        <Suspense>
+          <SortSelect options={SORT_OPTIONS} defaultValue={sortValue} />
+        </Suspense>
       </div>
       <ExpensesTable data={expenses} />
       <ServerPagination page={page} pageSize={PAGE_SIZE} total={total} />

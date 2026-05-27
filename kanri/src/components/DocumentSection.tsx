@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Upload, Download, Trash2, X, Paperclip } from "lucide-react";
+import { Upload, Download, Trash2, X, Paperclip, FileText, File as FileIcon } from "lucide-react";
 
 interface DocumentSectionProps {
   propertyId?: string;
@@ -23,12 +23,25 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   other: "その他",
 };
 
+function fileUrl(filePath: string) {
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/property-images/${filePath}`;
+}
+
+function isImageMime(mime?: string | null) {
+  return !!mime && mime.startsWith("image/");
+}
+
+function isPdfMime(mime?: string | null) {
+  return mime === "application/pdf";
+}
+
 export default function DocumentSection({ propertyId, tenantId, title = "書類" }: DocumentSectionProps) {
   const [docs, setDocs] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [previewDoc, setPreviewDoc] = useState<Record<string, any> | null>(null);
 
   const fetchDocs = useCallback(async () => {
     const params = new URLSearchParams();
@@ -97,47 +110,100 @@ export default function DocumentSection({ propertyId, tenantId, title = "書類"
 
         {docs.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-            {docs.map((d) => (
-              <div
-                key={d.id}
-                style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  padding: "8px 0", borderBottom: "1px solid var(--line)",
-                }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {d.file_name}
-                  </div>
-                  <div style={{ fontSize: 11, color: "var(--ink-3)", display: "flex", gap: 8, marginTop: 2 }}>
-                    <span>{DOC_TYPE_LABELS[d.document_type] || d.document_type}</span>
-                    {d.file_size && <span className="mono">{formatFileSize(d.file_size)}</span>}
-                    <span className="mono">{d.created_at?.slice(0, 10)}</span>
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 2 }}>
-                  {d.file_path && (
-                    <a
-                      href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/property-images/${d.file_path}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-1 rounded text-ink-3 hover:text-accent hover:bg-accent/10 transition-colors"
-                    >
-                      <Download size={14} />
-                    </a>
-                  )}
+            {docs.map((d) => {
+              const url = d.file_path ? fileUrl(d.file_path) : null;
+              const isImage = isImageMime(d.mime_type);
+              const isPdf = isPdfMime(d.mime_type);
+              const canPreview = !!url && isImage;
+              return (
+                <div
+                  key={d.id}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "8px 0", borderBottom: "1px solid var(--line)",
+                  }}
+                >
                   <button
-                    onClick={() => handleDelete(d.id, d.file_name)}
-                    className="p-1 rounded text-ink-3 hover:text-danger hover:bg-danger/10 transition-colors"
+                    type="button"
+                    onClick={() => canPreview && setPreviewDoc(d)}
+                    disabled={!canPreview}
+                    style={{
+                      width: 44, height: 44, flexShrink: 0,
+                      borderRadius: 6, overflow: "hidden",
+                      background: "var(--bg-2)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      border: "1px solid var(--line)",
+                      cursor: canPreview ? "zoom-in" : "default",
+                      padding: 0,
+                    }}
+                    aria-label={canPreview ? "プレビューを表示" : d.file_name}
                   >
-                    <Trash2 size={14} />
+                    {isImage && url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={url} alt={d.file_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : isPdf ? (
+                      <FileText size={20} className="text-ink-3" />
+                    ) : (
+                      <FileIcon size={20} className="text-ink-3" />
+                    )}
                   </button>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {d.file_name}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--ink-3)", display: "flex", gap: 8, marginTop: 2 }}>
+                      <span>{DOC_TYPE_LABELS[d.document_type] || d.document_type}</span>
+                      {d.file_size && <span className="mono">{formatFileSize(d.file_size)}</span>}
+                      <span className="mono">{d.created_at?.slice(0, 10)}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 2 }}>
+                    {url && (
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 rounded text-ink-3 hover:text-accent hover:bg-accent/10 transition-colors"
+                      >
+                        <Download size={14} />
+                      </a>
+                    )}
+                    <button
+                      onClick={() => handleDelete(d.id, d.file_name)}
+                      className="p-1 rounded text-ink-3 hover:text-danger hover:bg-danger/10 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+
+      {previewDoc && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4"
+          onClick={() => setPreviewDoc(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewDoc(null)}
+            className="absolute top-4 right-4 text-white/80 hover:text-white"
+            aria-label="閉じる"
+          >
+            <X size={24} />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={fileUrl(previewDoc.file_path)}
+            alt={previewDoc.file_name}
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "92vw", maxHeight: "88vh", objectFit: "contain", borderRadius: 4 }}
+          />
+        </div>
+      )}
 
       {uploadOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && setUploadOpen(false)}>

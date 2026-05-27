@@ -6,6 +6,7 @@ import StatusBadge from "@/components/StatusBadge";
 import ContractDetailClient from "@/components/ContractDetailClient";
 import MoveOutReviewClient from "@/components/MoveOutReviewClient";
 import MoveOutChecklist from "@/components/MoveOutChecklist";
+import DepositBalancePanel from "@/components/DepositBalancePanel";
 
 const contractTypeLabels: Record<string, string> = {
   fixed: "定期借家",
@@ -25,7 +26,7 @@ export default async function ContractDetailPage({
   ]);
   if (!result) notFound();
 
-  const { contract, billings, moveOutRequests, unitContracts } = result;
+  const { contract, billings, moveOutRequests, unitContracts, depositTransactions } = result;
   const tenant = contract.tenant;
   const unit = contract.unit;
   const property = unit?.property;
@@ -269,6 +270,15 @@ export default async function ContractDetailPage({
               </div>
             </div>
           )}
+          {/* 敷金残高（敷金がある契約のみ） */}
+          {Number(contract.deposit) > 0 && (
+            <DepositBalancePanel
+              contractId={contract.id}
+              initialDeposit={Number(contract.deposit)}
+              transactions={depositTransactions as any[]}
+            />
+          )}
+
           {/* 退去チェックリスト（退去申請がある場合に表示） */}
           {moveOutRequests.length > 0 && (
             <MoveOutChecklist contractId={contract.id} />

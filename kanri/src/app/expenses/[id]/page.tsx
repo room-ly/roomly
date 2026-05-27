@@ -1,9 +1,22 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getExpenseDetail, getPropertiesForSelect, getOwnersForSelect } from "@/lib/queries";
+import {
+  getExpenseDetail,
+  getPropertiesForSelect,
+  getOwnersForSelect,
+} from "@/lib/queries";
+import { getCurrentUserRole } from "@/lib/supabase-server";
 import StatusBadge from "@/components/StatusBadge";
 import ExpenseDetailClient from "@/components/ExpenseDetailClient";
 import DocumentSection from "@/components/DocumentSection";
+import ExpenseApprovalPanel from "@/components/ExpenseApprovalPanel";
+import DepositBalancePanel from "@/components/DepositBalancePanel";
+import {
+  EXPENSE_STATUS_LABELS,
+  TAX_CATEGORY_LABELS,
+  type ExpenseStatus,
+  type TaxCategory,
+} from "@/lib/schemas-expense";
 
 export default async function ExpenseDetailPage({
   params,
@@ -11,31 +24,71 @@ export default async function ExpenseDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [expense, properties, owners] = await Promise.all([
+  const [expense, properties, owners, me] = await Promise.all([
     getExpenseDetail(id),
     getPropertiesForSelect(),
     getOwnersForSelect(),
+    getCurrentUserRole(),
   ]);
   if (!expense) notFound();
+
+  const approver = (expense.effective_approver ?? null) as { id: string; name: string } | null;
+  const approverSource = (expense.approver_source ?? null) as "property" | "company" | null;
+  const isApprover = !!approver && !!me && approver.id === me.user_id;
+  const status = (expense.status as ExpenseStatus) || "draft";
+  const taxCategory = (expense.tax_category as TaxCategory) || "taxable";
+  const allocations = (expense.allocations ?? []) as any[];
+  const depositTxs = (expense.deposit_transactions ?? []) as any[];
 
   return (
     <>
       <div className="detail-back">
-        <Link href="/expenses" className="rlink is-muted is-back">← 経費一覧に戻る</Link>
+        <Link href="/expenses" className="rlink is-muted is-back">
+          ← 経費一覧に戻る
+        </Link>
       </div>
 
       <div className="detail-header">
         <div className="detail-header-main">
           <div>
             <h1 className="detail-title">{expense.description}</h1>
-            <div className="detail-kana">{expense.expense_date} — {expense.property?.name || "物件未指定"}</div>
+            <div className="detail-kana">
+              {expense.expense_date} — {expense.property?.name || "物件未指定"}
+            </div>
           </div>
-          <div style={{ marginLeft: 8, display: "flex", gap: 6, alignItems: "center" }}>
+          <div style={{ marginLeft: 8, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
             <StatusBadge status={expense.category} />
-            <span className={`charge-tag ${expense.is_owner_charge ? "warn" : "accent"}`}>
-              <span className="dot" />
-              {expense.is_owner_charge ? "オーナー負担" : "管理会社負担"}
+            <span
+              className={`charge-tag ${
+                status === "pending_approval"
+                  ? "warn"
+                  : status === "approved" || status === "paid"
+                    ? "accent"
+                    : status === "rejected"
+                      ? "danger"
+                      : ""
+              }`}
+            >
+              {EXPENSE_STATUS_LABELS[status]}
             </span>
+            {Number(expense.owner_amount) > 0 && (
+              <span className="charge-tag warn">
+                <span className="dot" />
+                オーナー ¥{Number(expense.owner_amount).toLocaleString()}
+              </span>
+            )}
+            {Number(expense.tenant_amount) > 0 && (
+              <span className="charge-tag danger">
+                <span className="dot" />
+                入居者 ¥{Number(expense.tenant_amount).toLocaleString()}
+              </span>
+            )}
+            {Number(expense.company_amount) > 0 && (
+              <span className="charge-tag accent">
+                <span className="dot" />
+                自社 ¥{Number(expense.company_amount).toLocaleString()}
+              </span>
+            )}
           </div>
         </div>
         <div className="detail-header-actions">
@@ -44,34 +97,54 @@ export default async function ExpenseDetailPage({
       </div>
 
       {/* サマリーカード */}
-      <div className="cols-summary" style={{ marginBottom: 24 }}>
+      <div className="cols-summary" style={{ marginBottom: 24, gridTemplateColumns: "repeat(3, 1fr)" }}>
         <div className="sum-card">
           <span className="sum-label mono">金額</span>
-          <span className="sum-value" style={{ fontSize: 16 }}>¥{Number(expense.amount).toLocaleString()}</span>
+          <span className="sum-value" style={{ fontSize: 16 }}>
+            ¥{Number(expense.amount).toLocaleString()}
+          </span>
         </div>
         <div className="sum-card">
           <span className="sum-label mono">カテゴリ</span>
-          <span className="sum-value"><StatusBadge status={expense.category} /></span>
+          <span className="sum-value">
+            <StatusBadge status={expense.category} />
+          </span>
         </div>
         <div className="sum-card">
-          <span className="sum-label mono">負担</span>
-          <span className="sum-value" style={{ fontSize: 16 }}>{expense.is_owner_charge ? "オーナー" : "管理会社"}</span>
-        </div>
-        <div className="sum-card">
-          <span className="sum-label mono">物件</span>
-          <span className="sum-value" style={{ fontSize: 16 }}>
-            {expense.property?.name ? (
-              <Link href={`/properties/${expense.property.id}`} className="rlink">{expense.property.name}</Link>
-            ) : "—"}
+          <span className="sum-label mono">税区分</span>
+          <span className="sum-value" style={{ fontSize: 14 }}>
+            {TAX_CATEGORY_LABELS[taxCategory]}
           </span>
         </div>
       </div>
 
+      {/* 稟議パネル */}
+      <ExpenseApprovalPanel
+        expenseId={expense.id}
+        status={status}
+        isApprover={isApprover}
+        approverName={approver?.name ?? null}
+        approverSource={approverSource}
+      />
+
+      {status === "rejected" && expense.rejected_reason && (
+        <div className="section">
+          <div className="section-head-bar">
+            <h2>却下理由</h2>
+          </div>
+          <div className="section-body">
+            <p style={{ whiteSpace: "pre-wrap" }}>{expense.rejected_reason}</p>
+          </div>
+        </div>
+      )}
+
       <div className="detail-grid">
         <div className="detail-col-main">
-          {/* 金額 */}
+          {/* 内訳 */}
           <div className="section">
-            <div className="section-head-bar"><h2>金額</h2></div>
+            <div className="section-head-bar">
+              <h2>内訳</h2>
+            </div>
             <div className="section-body">
               <div className="cfee-grid">
                 <div className="cfee-main">
@@ -79,12 +152,73 @@ export default async function ExpenseDetailPage({
                   <div className="cfee-value">¥{Number(expense.amount).toLocaleString()}</div>
                 </div>
               </div>
+              <table className="tbl" style={{ marginTop: 12 }}>
+                <thead>
+                  <tr>
+                    <th>区分</th>
+                    <th style={{ textAlign: "right" }}>金額</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>オーナー負担</td>
+                    <td className="num" style={{ color: "var(--warn)" }}>
+                      ¥{Number(expense.owner_amount).toLocaleString()}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>入居者負担</td>
+                    <td className="num" style={{ color: "var(--danger)" }}>
+                      ¥{Number(expense.tenant_amount).toLocaleString()}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>自社負担</td>
+                    <td className="num">¥{Number(expense.company_amount).toLocaleString()}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
+          {/* 按分明細 */}
+          {allocations.length > 0 && (
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>按分明細</h2>
+              </div>
+              <div className="section-body">
+                <table className="tbl" style={{ fontSize: 12 }}>
+                  <thead>
+                    <tr>
+                      <th>部屋</th>
+                      <th style={{ textAlign: "right" }}>オーナー</th>
+                      <th style={{ textAlign: "right" }}>入居者</th>
+                      <th style={{ textAlign: "right" }}>自社</th>
+                      <th style={{ textAlign: "right" }}>合計</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allocations.map((a) => (
+                      <tr key={a.id}>
+                        <td>{a.unit?.unit_number ?? a.owner?.name ?? "—"}</td>
+                        <td className="num">¥{Number(a.owner_amount).toLocaleString()}</td>
+                        <td className="num">¥{Number(a.tenant_amount).toLocaleString()}</td>
+                        <td className="num">¥{Number(a.company_amount).toLocaleString()}</td>
+                        <td className="num strong">¥{Number(a.amount).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* 詳細 */}
           <div className="section">
-            <div className="section-head-bar"><h2>経費情報</h2></div>
+            <div className="section-head-bar">
+              <h2>経費情報</h2>
+            </div>
             <div className="section-body">
               <div className="kv-grid">
                 <div className="field">
@@ -95,10 +229,32 @@ export default async function ExpenseDetailPage({
                   <div className="field-label mono">内容</div>
                   <div className="field-value field-plain">{expense.description}</div>
                 </div>
-                {expense.vendor_name && (
+                {expense.payment_due_date && (
                   <div className="field">
-                    <div className="field-label mono">業者</div>
-                    <div className="field-value field-plain">{expense.vendor_name}</div>
+                    <div className="field-label mono">支払期日</div>
+                    <div className="field-value field-plain mono">{expense.payment_due_date}</div>
+                  </div>
+                )}
+                {expense.paid_at && (
+                  <div className="field">
+                    <div className="field-label mono">支払日</div>
+                    <div className="field-value field-plain mono">{expense.paid_at}</div>
+                  </div>
+                )}
+                {expense.payee?.name && (
+                  <div className="field">
+                    <div className="field-label mono">支払先</div>
+                    <div className="field-value field-plain">{expense.payee.name}</div>
+                  </div>
+                )}
+                {expense.maintenance && (
+                  <div className="field">
+                    <div className="field-label mono">紐付け修繕</div>
+                    <div className="field-value field-plain">
+                      <Link href={`/maintenance/${expense.maintenance.id}`} className="rlink">
+                        {expense.maintenance.title}
+                      </Link>
+                    </div>
                   </div>
                 )}
                 {expense.invoice_number && (
@@ -107,52 +263,103 @@ export default async function ExpenseDetailPage({
                     <div className="field-value field-plain mono">{expense.invoice_number}</div>
                   </div>
                 )}
+                {expense.approver && (
+                  <div className="field">
+                    <div className="field-label mono">承認者</div>
+                    <div className="field-value field-plain">{expense.approver.name}</div>
+                  </div>
+                )}
+                {expense.approved_at && (
+                  <div className="field">
+                    <div className="field-label mono">承認日時</div>
+                    <div className="field-value field-plain mono">
+                      {new Date(expense.approved_at).toLocaleString("ja-JP")}
+                    </div>
+                  </div>
+                )}
               </div>
               {expense.notes && (
                 <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
                   <span className="field-label mono">備考</span>
-                  <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{expense.notes}</p>
+                  <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>
+                    {expense.notes}
+                  </p>
                 </div>
               )}
             </div>
           </div>
+
+          {/* 敷金パネル */}
+          {expense.contract?.id && (
+            <DepositBalancePanel
+              contractId={expense.contract.id}
+              initialDeposit={Number(expense.contract.deposit || 0)}
+              transactions={depositTxs}
+              expenseId={expense.id}
+              showAdditionalBilling
+            />
+          )}
+
           {expense.property?.id && (
             <DocumentSection propertyId={expense.property.id} title="関連書類（レシート等）" />
           )}
         </div>
 
         <div className="detail-col-side">
-          {expense.property && (
+          {expense.unit?.unit_number && (
             <div className="section">
-              <div className="section-head-bar"><h2>物件</h2></div>
+              <div className="section-head-bar">
+                <h2>部屋</h2>
+              </div>
               <div className="section-body">
                 <div className="kv-list">
                   <div className="field">
-                    <div className="field-label mono">物件名</div>
-                    <div className="field-value">
-                      <Link href={`/properties/${expense.property.id}`} className="rlink">
-                        {expense.property.name}
-                      </Link>
+                    <div className="field-label mono">部屋番号</div>
+                    <div className="field-value field-plain mono">
+                      {expense.unit.unit_number}
                     </div>
                   </div>
-                  {expense.unit?.unit_number && (
-                    <div className="field">
-                      <div className="field-label mono">部屋</div>
-                      <div className="field-value field-plain mono">{expense.unit.unit_number}</div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
           )}
           {expense.owner?.name && (
             <div className="section">
-              <div className="section-head-bar"><h2>オーナー</h2></div>
+              <div className="section-head-bar">
+                <h2>オーナー</h2>
+              </div>
               <div className="section-body">
                 <div className="kv-list">
                   <div className="field">
                     <div className="field-label mono">氏名</div>
-                    <div className="field-value field-plain">{expense.owner.name}</div>
+                    <div className="field-value">
+                      {expense.owner.id ? (
+                        <Link href={`/owners/${expense.owner.id}`} className="rlink">
+                          {expense.owner.name}
+                        </Link>
+                      ) : (
+                        expense.owner.name
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {expense.contract?.tenant && (
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>契約・入居者</h2>
+              </div>
+              <div className="section-body">
+                <div className="kv-list">
+                  <div className="field">
+                    <div className="field-label mono">入居者</div>
+                    <div className="field-value field-plain">
+                      <Link href={`/tenants/${expense.contract.tenant.id}`} className="rlink">
+                        {expense.contract.tenant.name}
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>

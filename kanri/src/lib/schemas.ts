@@ -116,8 +116,12 @@ export const propertySchema = z.object({
   building_coverage_ratio: optionalNumber,
   floor_area_ratio: optionalNumber,
   zoning: optionalString,
-  // 管理手数料
+  // 管理手数料（rate=家賃の%、fixed=固定額（円））
+  management_fee_type: z.enum(["rate", "fixed"]).optional()
+    .or(z.literal("").transform(() => undefined)),
   management_fee_rate: z.coerce.number().min(0, "0以上を入力してください").max(100, "100以下を入力してください").optional()
+    .or(z.literal("").transform(() => undefined)),
+  management_fee_amount: z.coerce.number().min(0, "0以上を入力してください").optional()
     .or(z.literal("").transform(() => undefined)),
   // 取引
   transaction_type: z.enum(["owner", "agent", "intermediary", "sublet"]).optional()
@@ -140,6 +144,8 @@ export const propertySchema = z.object({
   flood_hazard_zone: z.union([z.boolean(), z.enum(["true", "false"]).transform((v) => v === "true")]).optional(),
   landslide_hazard_zone: z.union([z.boolean(), z.enum(["true", "false"]).transform((v) => v === "true")]).optional(),
   tsunami_hazard_zone: z.union([z.boolean(), z.enum(["true", "false"]).transform((v) => v === "true")]).optional(),
+  // 経費承認者（社内ユーザー。未指定なら会社デフォルトにフォールバック）
+  approver_user_id: z.guid().optional().or(z.literal("").transform(() => undefined)),
   // 自由入力
   notes: optionalString,
   appeal_points: optionalString,
@@ -348,10 +354,29 @@ export type InquiryFormData = z.infer<typeof inquirySchema>;
 // オーナースキーマ
 export const ownerSchema = z.object({
   name: z.string().min(1, "氏名は必須です"),
+  name_kana: z.string().optional().or(z.literal("")),
+  owner_type: z.enum(["individual", "corporate"]).optional(),
+  company_name: z.string().optional().or(z.literal("")),
+  company_name_kana: z.string().optional().or(z.literal("")),
+  representative_name: z.string().optional().or(z.literal("")),
+  birth_date: z.string().optional().or(z.literal("")),
   phone: phoneField,
+  mobile_phone: phoneField,
+  fax: phoneField,
   email: z.string().email("メールアドレスの形式が正しくありません").optional().or(z.literal("")),
   postal_code: z.string().optional().or(z.literal("")),
   address: z.string().optional().or(z.literal("")),
+  mailing_postal_code: z.string().optional().or(z.literal("")),
+  mailing_address: z.string().optional().or(z.literal("")),
+  emergency_contact_name: z.string().optional().or(z.literal("")),
+  emergency_contact_phone: phoneField,
+  emergency_contact_relation: z.string().optional().or(z.literal("")),
+  invoice_number: z.string().optional().or(z.literal("")),
+  withholding_required: z.union([z.boolean(), z.string()]).optional().transform((v) => {
+    if (typeof v === "boolean") return v;
+    if (v === "true" || v === "on") return true;
+    return false;
+  }),
   bank_name: z.string().optional().or(z.literal("")),
   bank_code: z.string().max(4).optional().or(z.literal("")),
   bank_branch: z.string().optional().or(z.literal("")),

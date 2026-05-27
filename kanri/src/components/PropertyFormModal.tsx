@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { propertySchema, type PropertyFormData } from "@/lib/schemas";
@@ -14,10 +14,17 @@ interface Owner {
   name: string;
 }
 
+interface UserOption {
+  id: string;
+  label: string;
+  role?: string;
+}
+
 interface PropertyFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   owners: Owner[];
+  users?: UserOption[];
   editData?: Record<string, any> | null;
 }
 
@@ -93,6 +100,7 @@ export default function PropertyFormModal({
   isOpen,
   onClose,
   owners,
+  users = [],
   editData,
 }: PropertyFormModalProps) {
   const router = useRouter();
@@ -100,7 +108,8 @@ export default function PropertyFormModal({
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
   const [builtYearWareki, setBuiltYearWareki] = useState(() => {
-    const y = editData?.built_year;
+    // 編集時は既存値、新規作成時は今年をデフォルトにして和暦も初期表示
+    const y = editData?.built_year ?? new Date().getFullYear();
     return y ? toWareki(y) : "";
   });
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>(
@@ -110,12 +119,40 @@ export default function PropertyFormModal({
   const [address, setAddress] = useState(editData?.address || "");
   // 自主管理は管理会社への委託手数料が発生しないため、手数料率を無効化する
   const [managementForm, setManagementForm] = useState(editData?.management_form || "");
+  // 管理手数料の方式（率 or 固定額）と各値
+  const [managementFeeType, setManagementFeeType] = useState<"rate" | "fixed">(
+    (editData?.management_fee_type as "rate" | "fixed") || "rate"
+  );
   const [managementFeeRate, setManagementFeeRate] = useState(
     String(editData?.management_fee_rate ?? "5")
   );
+  const [managementFeeAmount, setManagementFeeAmount] = useState(
+    String(editData?.management_fee_amount ?? "")
+  );
   const isSelfManaged = managementForm === "self";
 
-  if (!isOpen) return null;
+  const formRef = useRef<HTMLFormElement>(null);
+  // 編集対象が切り替わった時のみフォーム状態をリセットする。
+  // 同じ対象の閉じ直しでは入力を保持して、誤クローズで内容を失わないようにする。
+  const lastTargetRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const target = editData?.id ?? "__new__";
+    if (lastTargetRef.current === target) return;
+    lastTargetRef.current = target;
+
+    const y = editData?.built_year ?? new Date().getFullYear();
+    setBuiltYearWareki(y ? toWareki(y) : "");
+    setSelectedFacilities(editData?.common_facilities || []);
+    setAddress(editData?.address || "");
+    setManagementForm(editData?.management_form || "");
+    setManagementFeeType((editData?.management_fee_type as "rate" | "fixed") || "rate");
+    setManagementFeeRate(String(editData?.management_fee_rate ?? "5"));
+    setManagementFeeAmount(String(editData?.management_fee_amount ?? ""));
+    setErrors({});
+    setApiError("");
+    formRef.current?.reset();
+  }, [isOpen, editData]);
 
   const isEdit = !!editData;
 
@@ -136,9 +173,19 @@ export default function PropertyFormModal({
       data[key] = value;
     });
     data.common_facilities = selectedFacilities;
-    // 自主管理時は手数料率入力がdisabledでFormDataに含まれないため明示的に0を保存
+    // 自主管理時は手数料が発生しないため率・固定額ともに0で保存（入力はdisabledでFormDataに含まれない）
     if (isSelfManaged) {
+      data.management_fee_type = "rate";
       data.management_fee_rate = 0;
+      data.management_fee_amount = 0;
+    } else {
+      // 選択されていない方式の値は0にする（残骸を残さない）
+      data.management_fee_type = managementFeeType;
+      if (managementFeeType === "rate") {
+        data.management_fee_amount = 0;
+      } else {
+        data.management_fee_rate = 0;
+      }
     }
 
     try {
@@ -167,6 +214,8 @@ export default function PropertyFormModal({
         return;
       }
 
+      // 送信成功時は次回オープン時に必ず再初期化されるよう、対象記録をリセット
+      lastTargetRef.current = null;
       onClose();
       router.refresh();
     } catch (err) {
@@ -181,7 +230,9 @@ export default function PropertyFormModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 ${
+        isOpen ? "" : "hidden"
+      }`}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -203,7 +254,12 @@ export default function PropertyFormModal({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form
+          ref={formRef}
+          key={editData?.id ?? "__new__"}
+          onSubmit={handleSubmit}
+          className="space-y-3"
+        >
           {/* 基本情報（常に開いた状態） */}
           <Section title="基本情報" defaultOpen>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -270,6 +326,25 @@ export default function PropertyFormModal({
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <Label>経費承認者</Label>
+              <select
+                name="approver_user_id"
+                defaultValue={editData?.approver_user_id || ""}
+                className="input"
+              >
+                <option value="">会社のデフォルト承認者を使う</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-ink-3 mt-1">
+                この物件の経費が承認待ちになった際にボタンが出る人を指定します。未指定なら会社設定の「デフォルト承認者」が使われます。
+              </p>
             </div>
           </Section>
 
@@ -473,7 +548,7 @@ export default function PropertyFormModal({
                 <input
                   name="built_year"
                   type="number"
-                  defaultValue={editData?.built_year || ""}
+                  defaultValue={editData?.built_year || new Date().getFullYear()}
                   className="input"
                   placeholder="例: 2020"
                   onChange={(e) => {
@@ -563,26 +638,7 @@ export default function PropertyFormModal({
 
           {/* 管理・駐車場 */}
           <Section title="管理・駐車場">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <Label>管理手数料率（%）</Label>
-                <input
-                  name="management_fee_rate"
-                  type="number"
-                  step="0.1"
-                  // 自主管理時は委託手数料が発生しないため0固定・編集不可
-                  value={isSelfManaged ? "0" : managementFeeRate}
-                  onChange={(e) => setManagementFeeRate(e.target.value)}
-                  disabled={isSelfManaged}
-                  className="input"
-                  placeholder="例: 5"
-                />
-                {isSelfManaged ? (
-                  <p className="text-xs text-ink-3 mt-1">自主管理のため手数料は発生しません</p>
-                ) : (
-                  <FieldError errors={errors} field="management_fee_rate" />
-                )}
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label>管理形態</Label>
                 <select
@@ -606,6 +662,58 @@ export default function PropertyFormModal({
                   className="input"
                   placeholder="例: ○○管理株式会社"
                 />
+              </div>
+            </div>
+
+            {/* 管理手数料: 率（%）or 固定額（円）を選択 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label>管理手数料の方式</Label>
+                <select
+                  value={managementFeeType}
+                  onChange={(e) => setManagementFeeType(e.target.value as "rate" | "fixed")}
+                  disabled={isSelfManaged}
+                  className="input"
+                >
+                  <option value="rate">家賃の割合（%）</option>
+                  <option value="fixed">固定額（円）</option>
+                </select>
+              </div>
+              <div>
+                <Label>
+                  {managementFeeType === "rate" ? "管理手数料率（%）" : "管理手数料（円／月）"}
+                </Label>
+                {managementFeeType === "rate" ? (
+                  <input
+                    name="management_fee_rate"
+                    type="number"
+                    step="0.1"
+                    // 自主管理時は委託手数料が発生しないため0固定・編集不可
+                    value={isSelfManaged ? "0" : managementFeeRate}
+                    onChange={(e) => setManagementFeeRate(e.target.value)}
+                    disabled={isSelfManaged}
+                    className="input"
+                    placeholder="例: 5"
+                  />
+                ) : (
+                  <input
+                    name="management_fee_amount"
+                    type="number"
+                    step="1"
+                    value={isSelfManaged ? "0" : managementFeeAmount}
+                    onChange={(e) => setManagementFeeAmount(e.target.value)}
+                    disabled={isSelfManaged}
+                    className="input"
+                    placeholder="例: 5000"
+                  />
+                )}
+                {isSelfManaged ? (
+                  <p className="text-xs text-ink-3 mt-1">自主管理のため手数料は発生しません</p>
+                ) : managementFeeType === "rate" ? (
+                  <FieldError errors={errors} field="management_fee_rate" />
+                ) : (
+                  <FieldError errors={errors} field="management_fee_amount" />
+                )}
               </div>
             </div>
 

@@ -1,12 +1,13 @@
-import { getProperties, getOwners } from "@/lib/queries";
+import { getProperties, getOwners, getUsersForSelect } from "@/lib/queries";
 import PageHeader from "@/components/PageHeader";
 import PropertiesPageClient from "@/components/PropertiesPageClient";
 import PropertiesGrid from "@/components/PropertiesGrid";
 
 export default async function PropertiesPage() {
-  const [properties, owners] = await Promise.all([
+  const [properties, owners, users] = await Promise.all([
     getProperties(),
     getOwners(),
+    getUsersForSelect(),
   ]);
 
   const ownerOptions = owners.map((o: Record<string, any>) => ({
@@ -21,10 +22,10 @@ export default async function PropertiesPage() {
         title="物件"
         em={`${properties.length}棟`}
         description="管理中の物件を一覧。物件カードから入居状況・収支・修繕履歴をまとめて確認できます。"
-        action={<PropertiesPageClient owners={ownerOptions} />}
+        action={<PropertiesPageClient owners={ownerOptions} users={users} />}
       />
 
-      <PropertiesGrid properties={properties} owners={ownerOptions} />
+      <PropertiesGrid properties={properties} owners={ownerOptions} users={users} />
     </>
   );
 }

@@ -244,12 +244,22 @@ export default function RemittanceFormModal({
                   {Number(editData?.expense_deducted) > 0 ? `-¥${Number(editData?.expense_deducted).toLocaleString()}` : "—"}
                 </span>
               </div>
+              {Number(editData?.carryover_from_prev) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-ink-3">前月繰越（未収金）</span>
+                  <span className="text-warn tabular-nums">-¥{Number(editData?.carryover_from_prev).toLocaleString()}</span>
+                </div>
+              )}
               <div className="flex justify-between font-medium border-t border-line pt-1 mt-1">
-                <span>自動計算額</span>
-                <span className="tabular-nums">
-                  ¥{(Number(editData?.total_rent) - Number(editData?.management_fee_deducted) - Number(editData?.expense_deducted)).toLocaleString()}
-                </span>
+                <span>送金額</span>
+                <span className="tabular-nums">¥{Number(editData?.net_amount).toLocaleString()}</span>
               </div>
+              {Number(editData?.carryover_to_next) > 0 && (
+                <div className="flex justify-between text-warn">
+                  <span>翌月繰越（未収金）</span>
+                  <span className="tabular-nums">¥{Number(editData?.carryover_to_next).toLocaleString()}</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -272,10 +282,21 @@ export default function RemittanceFormModal({
                   {Number(calcResult.expense_deducted) > 0 ? `-¥${Number(calcResult.expense_deducted).toLocaleString()}` : "¥0"}
                 </span>
               </div>
+              {Number(calcResult.carryover_from_prev) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-ink-3">前月繰越（未収金）</span>
+                  <span className="text-warn tabular-nums">-¥{Number(calcResult.carryover_from_prev).toLocaleString()}</span>
+                </div>
+              )}
               <div className="flex justify-between font-medium border-t border-line pt-1 mt-1">
                 <span>送金額</span>
                 <span className="tabular-nums">¥{Number(calcResult.net_amount).toLocaleString()}</span>
               </div>
+              {Number(calcResult.carryover_to_next) > 0 && (
+                <div className="flex justify-between text-warn text-xs mt-1 px-2 py-1 bg-warn-tint rounded">
+                  <span>※ 経費が家賃を超過。不足分 ¥{Number(calcResult.carryover_to_next).toLocaleString()} は翌月に繰越</span>
+                </div>
+              )}
               {calcResult.property_breakdown?.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-line space-y-0.5">
                   <p className="text-xs text-ink-3">物件別内訳</p>

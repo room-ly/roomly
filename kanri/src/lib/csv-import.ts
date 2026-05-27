@@ -120,6 +120,8 @@ export const PROPERTY_COLUMNS: ColumnMapping[] = [
   { csvHeader: "管理形態", dbField: "management_form" },
   { csvHeader: "管理会社", dbField: "management_company" },
   { csvHeader: "管理手数料率（%）", dbField: "management_fee_rate" },
+  { csvHeader: "管理手数料方式", dbField: "management_fee_type" },
+  { csvHeader: "管理手数料固定額（円）", dbField: "management_fee_amount" },
   { csvHeader: "駐車場", dbField: "parking" },
   { csvHeader: "駐車場料金", dbField: "parking_fee" },
   { csvHeader: "駐輪場", dbField: "bicycle_parking" },
@@ -232,6 +234,7 @@ const INT_FIELDS = new Set([
 // 小数を許容する数値フィールド
 const NUMBER_FIELDS = new Set([
   "management_fee_rate",
+  "management_fee_amount",
   "parking_fee",
   "building_area_sqm",
   "land_area_sqm",
@@ -383,6 +386,8 @@ export function generateSampleCsv(columns: ColumnMapping[]): string {
     管理形態: ["全部委託", "自主管理"],
     管理会社: ["サンプル管理株式会社", ""],
     "管理手数料率（%）": ["5", ""],
+    管理手数料方式: ["rate", "rate"],
+    "管理手数料固定額（円）": ["", ""],
     駐車場: ["有（空き2台）", "無"],
     駐車場料金: ["15000", ""],
     駐輪場: ["有", "無"],

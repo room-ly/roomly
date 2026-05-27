@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
 import { expenseSchema } from "@/lib/schemas-expense";
+import { saveExpense } from "@/lib/expense-service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,38 +11,24 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "バリデーションエラー", details: parsed.error.flatten().fieldErrors },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const supabase = await createClient();
     const company_id = await getCompanyId();
-    const data = {
-      ...parsed.data,
-      property_id: parsed.data.property_id || null,
-      unit_id: parsed.data.unit_id || null,
-      owner_id: parsed.data.owner_id || null,
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const result = await saveExpense(supabase, {
+      input: parsed.data,
       company_id,
-    };
-
-    const { data: expense, error } = await supabase
-      .from("expenses")
-      .insert(data)
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json(
-        { error: "経費の登録に失敗しました" },
-        { status: 500 }
-      );
+      user_id: user?.id ?? null,
+    });
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
-
-    return NextResponse.json(expense, { status: 201 });
-  } catch (err) {
-    return NextResponse.json(
-      { error: "リクエストの処理に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json(result.expense, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "リクエストの処理に失敗しました" }, { status: 500 });
   }
 }

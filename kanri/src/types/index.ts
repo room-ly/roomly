@@ -115,8 +115,10 @@ export interface Property {
   building_coverage_ratio?: number;
   floor_area_ratio?: number;
   zoning?: string;
-  // 管理手数料
+  // 管理手数料（rate=家賃の%、fixed=固定額（円））
+  management_fee_type?: "rate" | "fixed";
   management_fee_rate?: number;
+  management_fee_amount?: number;
   // 取引
   transaction_type?: TransactionType;
   // 自由入力

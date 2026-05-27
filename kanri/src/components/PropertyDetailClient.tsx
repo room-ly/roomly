@@ -25,16 +25,24 @@ interface Owner {
   name: string;
 }
 
+interface UserOption {
+  id: string;
+  label: string;
+  role?: string;
+}
+
 interface PropertyDetailClientProps {
   propertyId: string;
   property: Record<string, any>;
   owners: Owner[];
+  users?: UserOption[];
 }
 
 export default function PropertyDetailClient({
   propertyId,
   property,
   owners,
+  users = [],
 }: PropertyDetailClientProps) {
   const [unitModalOpen, setUnitModalOpen] = useState(false);
   const [propertyModalOpen, setPropertyModalOpen] = useState(false);
@@ -122,6 +130,7 @@ export default function PropertyDetailClient({
         isOpen={propertyModalOpen}
         onClose={() => setPropertyModalOpen(false)}
         owners={owners}
+        users={users}
         editData={property}
       />
 

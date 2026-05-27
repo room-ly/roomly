@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     const data = {
       ...parsed.data,
       owner_id: parsed.data.owner_id || null,
+      approver_user_id: parsed.data.approver_user_id || null,
       company_id,
     };
 
