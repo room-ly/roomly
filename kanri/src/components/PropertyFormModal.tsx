@@ -7,6 +7,8 @@ import { propertySchema, type PropertyFormData } from "@/lib/schemas";
 import { toWareki } from "@/lib/wareki";
 import PostalCodeInput from "./PostalCodeInput";
 import StationInput from "./StationInput";
+import PropertyImages from "./PropertyImages";
+import UnitTable from "./UnitTable";
 import type { ZodError } from "zod";
 
 interface Owner {
@@ -26,6 +28,9 @@ interface PropertyFormModalProps {
   owners: Owner[];
   users?: UserOption[];
   editData?: Record<string, any> | null;
+  // 編集時に画像・部屋一覧セクションを表示するために親から渡す（新規作成時は省略）
+  units?: Record<string, any>[];
+  contracts?: Record<string, any>[];
 }
 
 const COMMON_FACILITIES = [
@@ -102,6 +107,8 @@ export default function PropertyFormModal({
   owners,
   users = [],
   editData,
+  units,
+  contracts,
 }: PropertyFormModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -235,7 +242,7 @@ export default function PropertyFormModal({
       }`}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 pb-0 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">
             {isEdit ? "物件を編集" : "物件を追加"}
@@ -251,6 +258,27 @@ export default function PropertyFormModal({
         {apiError && (
           <div className="bg-danger-tint text-danger text-sm rounded-lg px-3 py-2 mb-4">
             {apiError}
+          </div>
+        )}
+
+        {/* 編集時のみ：画像セクション（モーダル内で直接アップロード可能） */}
+        {isEdit && editData && (
+          <div className="mb-4">
+            <p className="text-[13px] font-medium text-ink-2 mb-2">物件画像</p>
+            <PropertyImages propertyId={editData.id} />
+          </div>
+        )}
+
+        {/* 編集時のみ：部屋一覧＋追加ボタン */}
+        {isEdit && editData && units && contracts && (
+          <div className="mb-4">
+            <UnitTable
+              propertyId={editData.id}
+              propertyType={editData.property_type}
+              units={units}
+              contracts={contracts}
+              showAddButton
+            />
           </div>
         )}
 
@@ -1109,7 +1137,7 @@ export default function PropertyFormModal({
             </div>
           </Section>
 
-          <div className="flex justify-end gap-2 pt-3">
+          <div className="sticky bottom-0 -mx-6 px-6 py-3 bg-surface border-t border-line flex justify-end gap-2 z-10">
             <button
               type="button"
               onClick={onClose}

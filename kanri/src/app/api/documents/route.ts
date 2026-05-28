@@ -16,6 +16,10 @@ export async function GET(request: NextRequest) {
     if (propertyId) query = query.eq("property_id", propertyId);
     if (tenantId) query = query.eq("tenant_id", tenantId);
 
+    // 物件画像（document_type='photo'かつunit_idなし）は別UI(PropertyImages)で扱うため除外
+    // 部屋画像（document_type='photo'かつunit_id有り）も同様
+    query = query.neq("document_type", "photo");
+
     const { data, error } = await query;
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

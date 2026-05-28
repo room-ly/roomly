@@ -10,8 +10,7 @@ export async function GET() {
       {
         "/": 0,
         "/rent": 0,
-        "/maintenance": 0,
-        "/inquiries": 0,
+        "/cases": 0,
         "/contracts": 0,
         company_name: "",
         contract_alert_days: 90,

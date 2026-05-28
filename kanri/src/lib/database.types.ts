@@ -12,38 +12,174 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
+      case_logs: {
+        Row: {
+          action: string
+          case_id: string
+          company_id: string
+          id: string
+          logged_at: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          case_id: string
+          company_id: string
+          id?: string
+          logged_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          case_id?: string
+          company_id?: string
+          id?: string
+          logged_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_logs_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cases: {
+        Row: {
+          actual_cost: number | null
+          category: string
+          company_id: string
+          completed_date: string | null
+          created_at: string
+          description: string | null
+          estimated_cost: number | null
+          id: string
+          notes: string | null
+          payee_id: string | null
+          priority: string
+          property_id: string | null
+          reported_date: string
+          scheduled_date: string | null
+          source: string
+          status: string
+          tenant_id: string | null
+          title: string
+          unit_id: string | null
+          updated_at: string
+          vendor_name: string | null
+          vendor_phone: string | null
+        }
+        Insert: {
+          actual_cost?: number | null
+          category?: string
+          company_id: string
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          notes?: string | null
+          payee_id?: string | null
+          priority?: string
+          property_id?: string | null
+          reported_date?: string
+          scheduled_date?: string | null
+          source?: string
+          status?: string
+          tenant_id?: string | null
+          title: string
+          unit_id?: string | null
+          updated_at?: string
+          vendor_name?: string | null
+          vendor_phone?: string | null
+        }
+        Update: {
+          actual_cost?: number | null
+          category?: string
+          company_id?: string
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          notes?: string | null
+          payee_id?: string | null
+          priority?: string
+          property_id?: string | null
+          reported_date?: string
+          scheduled_date?: string | null
+          source?: string
+          status?: string
+          tenant_id?: string | null
+          title?: string
+          unit_id?: string | null
+          updated_at?: string
+          vendor_name?: string | null
+          vendor_phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cases_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cases_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "payees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cases_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cases_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cases_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
           contract_alert_days: number
           created_at: string
+          default_approver_user_id: string | null
           estate_agent_license: string | null
           estate_agent_name: string | null
           estate_license: string | null
@@ -66,6 +202,7 @@ export type Database = {
           address?: string | null
           contract_alert_days?: number
           created_at?: string
+          default_approver_user_id?: string | null
           estate_agent_license?: string | null
           estate_agent_name?: string | null
           estate_license?: string | null
@@ -88,6 +225,7 @@ export type Database = {
           address?: string | null
           contract_alert_days?: number
           created_at?: string
+          default_approver_user_id?: string | null
           estate_agent_license?: string | null
           estate_agent_name?: string | null
           estate_license?: string | null
@@ -106,7 +244,15 @@ export type Database = {
           updated_at?: string
           usage_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_default_approver_user_id_fkey"
+            columns: ["default_approver_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_bank_accounts: {
         Row: {
@@ -318,6 +464,84 @@ export type Database = {
         }
         Relationships: []
       }
+      deposit_transactions: {
+        Row: {
+          amount: number
+          billing_id: string | null
+          company_id: string
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          expense_id: string | null
+          id: string
+          notes: string | null
+          occurred_at: string
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          billing_id?: string | null
+          company_id: string
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string | null
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          billing_id?: string | null
+          company_id?: string
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string | null
+          id?: string
+          notes?: string | null
+          occurred_at?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deposit_transactions_billing_id_fkey"
+            columns: ["billing_id"]
+            isOneToOne: false
+            referencedRelation: "rent_billings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_transactions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_transactions_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           company_id: string
@@ -415,166 +639,6 @@ export type Database = {
           },
         ]
       }
-      expenses: {
-        Row: {
-          amount: number
-          approved_at: string | null
-          approved_by: string | null
-          category: string
-          company_amount: number
-          company_id: string
-          contract_id: string | null
-          created_at: string
-          description: string
-          expense_date: string
-          id: string
-          invoice_number: string | null
-          maintenance_request_id: string | null
-          notes: string | null
-          owner_amount: number
-          owner_id: string | null
-          paid_at: string | null
-          payee_id: string | null
-          payment_due_date: string | null
-          property_id: string | null
-          rejected_reason: string | null
-          status: string
-          submitted_at: string | null
-          submitted_by: string | null
-          tax_category: string
-          tenant_amount: number
-          unit_id: string | null
-          updated_at: string
-          vendor_name: string | null
-        }
-        Insert: {
-          amount: number
-          approved_at?: string | null
-          approved_by?: string | null
-          category: string
-          company_amount?: number
-          company_id: string
-          contract_id?: string | null
-          created_at?: string
-          description: string
-          expense_date: string
-          id?: string
-          invoice_number?: string | null
-          maintenance_request_id?: string | null
-          notes?: string | null
-          owner_amount?: number
-          owner_id?: string | null
-          paid_at?: string | null
-          payee_id?: string | null
-          payment_due_date?: string | null
-          property_id?: string | null
-          rejected_reason?: string | null
-          status?: string
-          submitted_at?: string | null
-          submitted_by?: string | null
-          tax_category?: string
-          tenant_amount?: number
-          unit_id?: string | null
-          updated_at?: string
-          vendor_name?: string | null
-        }
-        Update: {
-          amount?: number
-          approved_at?: string | null
-          approved_by?: string | null
-          category?: string
-          company_amount?: number
-          company_id?: string
-          contract_id?: string | null
-          created_at?: string
-          description?: string
-          expense_date?: string
-          id?: string
-          invoice_number?: string | null
-          maintenance_request_id?: string | null
-          notes?: string | null
-          owner_amount?: number
-          owner_id?: string | null
-          paid_at?: string | null
-          payee_id?: string | null
-          payment_due_date?: string | null
-          property_id?: string | null
-          rejected_reason?: string | null
-          status?: string
-          submitted_at?: string | null
-          submitted_by?: string | null
-          tax_category?: string
-          tenant_amount?: number
-          unit_id?: string | null
-          updated_at?: string
-          vendor_name?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "expenses_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expenses_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "owners"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expenses_payee_id_fkey"
-            columns: ["payee_id"]
-            isOneToOne: false
-            referencedRelation: "payees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expenses_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expenses_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expenses_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expenses_maintenance_request_id_fkey"
-            columns: ["maintenance_request_id"]
-            isOneToOne: false
-            referencedRelation: "maintenance_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expenses_approved_by_fkey"
-            columns: ["approved_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expenses_submitted_by_fkey"
-            columns: ["submitted_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       expense_allocations: {
         Row: {
           allocation_method: string
@@ -640,182 +704,14 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "expense_allocations_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "expense_allocations_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "owners"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      deposit_transactions: {
-        Row: {
-          amount: number
-          billing_id: string | null
-          company_id: string
-          contract_id: string
-          created_at: string
-          created_by: string | null
-          expense_id: string | null
-          id: string
-          notes: string | null
-          occurred_at: string
-          transaction_type: string
-        }
-        Insert: {
-          amount: number
-          billing_id?: string | null
-          company_id: string
-          contract_id: string
-          created_at?: string
-          created_by?: string | null
-          expense_id?: string | null
-          id?: string
-          notes?: string | null
-          occurred_at?: string
-          transaction_type: string
-        }
-        Update: {
-          amount?: number
-          billing_id?: string | null
-          company_id?: string
-          contract_id?: string
-          created_at?: string
-          created_by?: string | null
-          expense_id?: string | null
-          id?: string
-          notes?: string | null
-          occurred_at?: string
-          transaction_type?: string
-        }
-        Relationships: [
           {
-            foreignKeyName: "deposit_transactions_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "deposit_transactions_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "deposit_transactions_expense_id_fkey"
-            columns: ["expense_id"]
-            isOneToOne: false
-            referencedRelation: "expenses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "deposit_transactions_billing_id_fkey"
-            columns: ["billing_id"]
-            isOneToOne: false
-            referencedRelation: "rent_billings"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      inquiries: {
-        Row: {
-          company_id: string
-          created_at: string
-          description: string | null
-          id: string
-          inquiry_type: string
-          linked_maintenance_id: string | null
-          linked_move_out_request_id: string | null
-          notes: string | null
-          priority: string
-          property_id: string | null
-          status: string
-          tenant_id: string | null
-          title: string
-          unit_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          company_id: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          inquiry_type?: string
-          linked_maintenance_id?: string | null
-          linked_move_out_request_id?: string | null
-          notes?: string | null
-          priority?: string
-          property_id?: string | null
-          status?: string
-          tenant_id?: string | null
-          title: string
-          unit_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          company_id?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          inquiry_type?: string
-          linked_maintenance_id?: string | null
-          linked_move_out_request_id?: string | null
-          notes?: string | null
-          priority?: string
-          property_id?: string | null
-          status?: string
-          tenant_id?: string | null
-          title?: string
-          unit_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "inquiries_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inquiries_linked_maintenance_id_fkey"
-            columns: ["linked_maintenance_id"]
-            isOneToOne: false
-            referencedRelation: "maintenance_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inquiries_linked_move_out_request_id_fkey"
-            columns: ["linked_move_out_request_id"]
-            isOneToOne: false
-            referencedRelation: "move_out_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inquiries_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inquiries_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inquiries_unit_id_fkey"
+            foreignKeyName: "expense_allocations_unit_id_fkey"
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
@@ -823,57 +719,162 @@ export type Database = {
           },
         ]
       }
-      inquiry_logs: {
+      expenses: {
         Row: {
-          action_type: string
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          case_id: string | null
+          category: string
+          company_amount: number
           company_id: string
-          content: string | null
+          contract_id: string | null
           created_at: string
+          description: string
+          expense_date: string
           id: string
-          inquiry_id: string
-          logged_at: string
-          user_id: string | null
+          invoice_number: string | null
+          notes: string | null
+          owner_amount: number
+          owner_id: string | null
+          paid_at: string | null
+          payee_id: string | null
+          payment_due_date: string | null
+          property_id: string | null
+          rejected_reason: string | null
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          tax_category: string
+          tenant_amount: number
+          unit_id: string | null
+          updated_at: string
+          vendor_name: string | null
         }
         Insert: {
-          action_type: string
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          case_id?: string | null
+          category: string
+          company_amount?: number
           company_id: string
-          content?: string | null
+          contract_id?: string | null
           created_at?: string
+          description: string
+          expense_date: string
           id?: string
-          inquiry_id: string
-          logged_at?: string
-          user_id?: string | null
+          invoice_number?: string | null
+          notes?: string | null
+          owner_amount?: number
+          owner_id?: string | null
+          paid_at?: string | null
+          payee_id?: string | null
+          payment_due_date?: string | null
+          property_id?: string | null
+          rejected_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          tax_category?: string
+          tenant_amount?: number
+          unit_id?: string | null
+          updated_at?: string
+          vendor_name?: string | null
         }
         Update: {
-          action_type?: string
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          case_id?: string | null
+          category?: string
+          company_amount?: number
           company_id?: string
-          content?: string | null
+          contract_id?: string | null
           created_at?: string
+          description?: string
+          expense_date?: string
           id?: string
-          inquiry_id?: string
-          logged_at?: string
-          user_id?: string | null
+          invoice_number?: string | null
+          notes?: string | null
+          owner_amount?: number
+          owner_id?: string | null
+          paid_at?: string | null
+          payee_id?: string | null
+          payment_due_date?: string | null
+          property_id?: string | null
+          rejected_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          tax_category?: string
+          tenant_amount?: number
+          unit_id?: string | null
+          updated_at?: string
+          vendor_name?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "inquiry_logs_company_id_fkey"
+            foreignKeyName: "expenses_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "inquiry_logs_inquiry_id_fkey"
-            columns: ["inquiry_id"]
+            foreignKeyName: "expenses_contract_id_fkey"
+            columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "inquiries"
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "inquiry_logs_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "expenses_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "payees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_submitted_by_fkey"
+            columns: ["submitted_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
             referencedColumns: ["id"]
           },
         ]
@@ -901,166 +902,6 @@ export type Database = {
           success?: boolean
         }
         Relationships: []
-      }
-      maintenance_logs: {
-        Row: {
-          action: string
-          company_id: string
-          id: string
-          logged_at: string
-          request_id: string
-          user_id: string | null
-        }
-        Insert: {
-          action: string
-          company_id: string
-          id?: string
-          logged_at?: string
-          request_id: string
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          company_id?: string
-          id?: string
-          logged_at?: string
-          request_id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "maintenance_logs_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_logs_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "maintenance_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      maintenance_requests: {
-        Row: {
-          actual_cost: number | null
-          category: string
-          company_id: string
-          completed_date: string | null
-          created_at: string
-          description: string | null
-          estimated_cost: number | null
-          id: string
-          notes: string | null
-          payee_id: string | null
-          priority: string
-          property_id: string
-          reported_date: string
-          scheduled_date: string | null
-          source: string
-          status: string
-          tenant_id: string | null
-          title: string
-          unit_id: string | null
-          updated_at: string
-          vendor_name: string | null
-          vendor_phone: string | null
-        }
-        Insert: {
-          actual_cost?: number | null
-          category?: string
-          company_id: string
-          completed_date?: string | null
-          created_at?: string
-          description?: string | null
-          estimated_cost?: number | null
-          id?: string
-          notes?: string | null
-          payee_id?: string | null
-          priority?: string
-          property_id: string
-          reported_date?: string
-          scheduled_date?: string | null
-          source?: string
-          status?: string
-          tenant_id?: string | null
-          title: string
-          unit_id?: string | null
-          updated_at?: string
-          vendor_name?: string | null
-          vendor_phone?: string | null
-        }
-        Update: {
-          actual_cost?: number | null
-          category?: string
-          company_id?: string
-          completed_date?: string | null
-          created_at?: string
-          description?: string | null
-          estimated_cost?: number | null
-          id?: string
-          notes?: string | null
-          payee_id?: string | null
-          priority?: string
-          property_id?: string
-          reported_date?: string
-          scheduled_date?: string | null
-          source?: string
-          status?: string
-          tenant_id?: string | null
-          title?: string
-          unit_id?: string | null
-          updated_at?: string
-          vendor_name?: string | null
-          vendor_phone?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "maintenance_requests_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_requests_payee_id_fkey"
-            columns: ["payee_id"]
-            isOneToOne: false
-            referencedRelation: "payees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_requests_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_requests_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_requests_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       move_out_checklist_items: {
         Row: {
@@ -1335,8 +1176,6 @@ export type Database = {
       }
       owner_remittances: {
         Row: {
-          carryover_from_prev: number
-          carryover_to_next: number
           company_id: string
           created_at: string
           expense_deducted: number
@@ -1356,8 +1195,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          carryover_from_prev?: number
-          carryover_to_next?: number
           company_id: string
           created_at?: string
           expense_deducted?: number
@@ -1377,8 +1214,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          carryover_from_prev?: number
-          carryover_to_next?: number
           company_id?: string
           created_at?: string
           expense_deducted?: number
@@ -1596,6 +1431,7 @@ export type Database = {
         Row: {
           address: string
           appeal_points: string | null
+          approver_user_id: string | null
           asbestos_survey: string | null
           bicycle_parking: string | null
           bike_parking: string | null
@@ -1626,7 +1462,9 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           management_company: string | null
+          management_fee_amount: number
           management_fee_rate: number
+          management_fee_type: string
           management_form: string | null
           mortgage_amount: number | null
           mortgage_exists: boolean | null
@@ -1669,6 +1507,7 @@ export type Database = {
         Insert: {
           address: string
           appeal_points?: string | null
+          approver_user_id?: string | null
           asbestos_survey?: string | null
           bicycle_parking?: string | null
           bike_parking?: string | null
@@ -1699,7 +1538,9 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           management_company?: string | null
+          management_fee_amount?: number
           management_fee_rate?: number
+          management_fee_type?: string
           management_form?: string | null
           mortgage_amount?: number | null
           mortgage_exists?: boolean | null
@@ -1742,6 +1583,7 @@ export type Database = {
         Update: {
           address?: string
           appeal_points?: string | null
+          approver_user_id?: string | null
           asbestos_survey?: string | null
           bicycle_parking?: string | null
           bike_parking?: string | null
@@ -1772,7 +1614,9 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           management_company?: string | null
+          management_fee_amount?: number
           management_fee_rate?: number
+          management_fee_type?: string
           management_form?: string | null
           mortgage_amount?: number | null
           mortgage_exists?: boolean | null
@@ -1813,6 +1657,13 @@ export type Database = {
           zoning?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "properties_approver_user_id_fkey"
+            columns: ["approver_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "properties_company_id_fkey"
             columns: ["company_id"]
@@ -2500,9 +2351,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

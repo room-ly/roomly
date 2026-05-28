@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, Mail } from "lucide-react";
-import MaintenanceFormModal from "./MaintenanceFormModal";
+import CaseFormModal from "./CaseFormModal";
 import ConfirmDialog from "./ConfirmDialog";
 
 interface SelectOption {
@@ -11,12 +11,12 @@ interface SelectOption {
   label: string;
 }
 
-interface MaintenanceDetailClientProps {
-  request: Record<string, any>;
+interface CaseDetailClientProps {
+  caseRow: Record<string, any>;
   properties: SelectOption[];
 }
 
-export default function MaintenanceDetailClient({ request, properties }: MaintenanceDetailClientProps) {
+export default function CaseDetailClient({ caseRow, properties }: CaseDetailClientProps) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -24,20 +24,20 @@ export default function MaintenanceDetailClient({ request, properties }: Mainten
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [notifying, setNotifying] = useState(false);
 
-  const owner = request.property?.owner;
+  const owner = caseRow.property?.owner;
   const ownerEmail = owner?.email as string | undefined;
 
   async function handleDelete() {
     setDeleting(true);
-    const res = await fetch(`/api/maintenance/${request.id}`, { method: "DELETE" });
-    if (res.ok) router.push("/maintenance");
+    const res = await fetch(`/api/cases/${caseRow.id}`, { method: "DELETE" });
+    if (res.ok) router.push("/cases");
     else { alert("削除に失敗しました"); setDeleting(false); }
   }
 
   async function handleNotifyOwner() {
     setNotifying(true);
     try {
-      const res = await fetch(`/api/maintenance/${request.id}/notify-owner`, { method: "POST" });
+      const res = await fetch(`/api/cases/${caseRow.id}/notify-owner`, { method: "POST" });
       if (res.ok) {
         setNotifyOpen(false);
         alert(`${owner?.name || "オーナー"}様にメールを送信しました`);
@@ -66,10 +66,9 @@ export default function MaintenanceDetailClient({ request, properties }: Mainten
         </button>
       </div>
 
-      <MaintenanceFormModal isOpen={modalOpen} onClose={() => setModalOpen(false)} properties={properties} editData={request} />
-      <ConfirmDialog isOpen={deleteOpen} title="修繕依頼を削除" message="この修繕依頼を削除しますか？対応履歴も含めて復元できません。" loading={deleting} onConfirm={handleDelete} onCancel={() => setDeleteOpen(false)} />
+      <CaseFormModal isOpen={modalOpen} onClose={() => setModalOpen(false)} properties={properties} editData={caseRow} />
+      <ConfirmDialog isOpen={deleteOpen} title="対応案件を削除" message="この対応案件を削除しますか？対応履歴も含めて復元できません。" loading={deleting} onConfirm={handleDelete} onCancel={() => setDeleteOpen(false)} />
 
-      {/* オーナー通知の確認ダイアログ（破壊的操作ではないのでシンプルな確認） */}
       {notifyOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && setNotifyOpen(false)}>
           <div className="bg-surface rounded-2xl shadow-xl max-w-sm w-full p-6">
@@ -78,9 +77,9 @@ export default function MaintenanceDetailClient({ request, properties }: Mainten
                 <Mail size={20} className="text-accent" />
               </div>
               <div>
-                <h3 className="text-[15px] font-semibold mb-1">オーナーに修繕を通知</h3>
+                <h3 className="text-[15px] font-semibold mb-1">オーナーに通知</h3>
                 <p className="text-[13px] text-ink-2">
-                  {owner?.name || "オーナー"}様（<span className="mono">{ownerEmail}</span>）に、この修繕依頼の内容をメールで送信します。
+                  {owner?.name || "オーナー"}様（<span className="mono">{ownerEmail}</span>）に、この対応案件の内容をメールで送信します。
                 </p>
               </div>
             </div>

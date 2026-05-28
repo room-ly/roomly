@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
-import { maintenanceSchema, type MaintenanceFormData } from "@/lib/schemas";
+import { caseSchema, type CaseFormData } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase";
 import type { ZodError } from "zod";
 
@@ -12,19 +12,32 @@ interface SelectOption {
   label: string;
 }
 
-interface MaintenanceFormModalProps {
+interface CaseFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   properties: SelectOption[];
   editData?: Record<string, any> | null;
 }
 
-export default function MaintenanceFormModal({
+const CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: "repair", label: "設備修繕（水回り・電気・設備故障など）" },
+  { value: "key", label: "鍵対応（紛失・閉じ込め）" },
+  { value: "common_area", label: "共用部（電球・清掃・植栽）" },
+  { value: "tenant_trouble", label: "入居者間トラブル（騒音・ペット・ゴミ）" },
+  { value: "neighbor", label: "近隣対応（外部からの苦情）" },
+  { value: "inspection", label: "点検立会（消防・貯水槽・害虫駆除）" },
+  { value: "inquiry", label: "質問・相談（契約確認・設備使い方）" },
+  { value: "request", label: "要望（家賃減額・設備追加）" },
+  { value: "complaint", label: "クレーム（管理対応への苦情）" },
+  { value: "other", label: "その他" },
+];
+
+export default function CaseFormModal({
   isOpen,
   onClose,
   properties,
   editData,
-}: MaintenanceFormModalProps) {
+}: CaseFormModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -34,7 +47,6 @@ export default function MaintenanceFormModal({
   );
   const [units, setUnits] = useState<SelectOption[]>([]);
 
-  // 物件が選択されたら部屋を取得
   useEffect(() => {
     if (!selectedPropertyId) {
       setUnits([]);
@@ -56,7 +68,21 @@ export default function MaintenanceFormModal({
       });
   }, [selectedPropertyId]);
 
-  if (!isOpen) return null;
+  const formRef = useRef<HTMLFormElement>(null);
+  // 編集対象が切り替わった時のみフォーム状態をリセットする。
+  // 同じ対象の閉じ直しでは入力を保持して、誤クローズで内容を失わないようにする。
+  const lastTargetRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const target = editData?.id ?? "__new__";
+    if (lastTargetRef.current === target) return;
+    lastTargetRef.current = target;
+
+    setSelectedPropertyId(editData?.property_id || "");
+    setErrors({});
+    setApiError("");
+    formRef.current?.reset();
+  }, [isOpen, editData]);
 
   const isEdit = !!editData;
 
@@ -72,12 +98,12 @@ export default function MaintenanceFormModal({
     });
 
     try {
-      const parsed = maintenanceSchema.parse(data) as MaintenanceFormData;
+      const parsed = caseSchema.parse(data) as CaseFormData;
       setLoading(true);
 
       const url = isEdit
-        ? `/api/maintenance/${editData!.id}`
-        : "/api/maintenance";
+        ? `/api/cases/${editData!.id}`
+        : "/api/cases";
       const method = isEdit ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -97,6 +123,9 @@ export default function MaintenanceFormModal({
         return;
       }
 
+      // 登録/更新が完了したらドラフトをリセット（次回開いた時は初期状態）
+      lastTargetRef.current = null;
+      formRef.current?.reset();
       onClose();
       router.refresh();
     } catch (err) {
@@ -112,12 +141,13 @@ export default function MaintenanceFormModal({
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      style={{ display: isOpen ? "flex" : "none" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">
-            {isEdit ? "修繕依頼を編集" : "修繕依頼を登録"}
+            {isEdit ? "対応案件を編集" : "対応案件を登録"}
           </h2>
           <button
             onClick={onClose}
@@ -133,11 +163,11 @@ export default function MaintenanceFormModal({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
-                物件 <span className="text-danger">*</span>
+                物件
               </label>
               <select
                 name="property_id"
@@ -145,7 +175,7 @@ export default function MaintenanceFormModal({
                 onChange={(e) => setSelectedPropertyId(e.target.value)}
                 className="input"
               >
-                <option value="">選択してください</option>
+                <option value="">物件特定不可</option>
                 {properties.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.label}
@@ -166,6 +196,7 @@ export default function MaintenanceFormModal({
                 name="unit_id"
                 defaultValue={editData?.unit_id || ""}
                 className="input"
+                disabled={!selectedPropertyId}
               >
                 <option value="">共用部</option>
                 {units.map((u) => (
@@ -185,7 +216,7 @@ export default function MaintenanceFormModal({
               name="title"
               defaultValue={editData?.title || ""}
               className="input"
-              placeholder="例: 水漏れ修理"
+              placeholder="例: 水漏れ修理 / 鍵紛失 / 騒音苦情"
             />
             {errors.title && (
               <p className="text-danger text-sm mt-1">{errors.title[0]}</p>
@@ -207,7 +238,7 @@ export default function MaintenanceFormModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
-                カテゴリ <span className="text-danger">*</span>
+                種別 <span className="text-danger">*</span>
               </label>
               <select
                 name="category"
@@ -215,11 +246,9 @@ export default function MaintenanceFormModal({
                 className="input"
               >
                 <option value="">選択してください</option>
-                <option value="plumbing">水回り</option>
-                <option value="electrical">電気</option>
-                <option value="structural">構造</option>
-                <option value="equipment">設備</option>
-                <option value="other">その他</option>
+                {CATEGORY_OPTIONS.map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
               </select>
               {errors.category && (
                 <p className="text-danger text-sm mt-1">
@@ -244,24 +273,22 @@ export default function MaintenanceFormModal({
             </div>
           </div>
 
-          {isEdit && (
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">
-                状態
-              </label>
-              <select
-                name="status"
-                defaultValue={editData?.status || "open"}
-                className="input"
-              >
-                <option value="open">未対応</option>
-                <option value="in_progress">対応中</option>
-                <option value="waiting_parts">部品待ち</option>
-                <option value="completed">完了</option>
-                <option value="cancelled">キャンセル</option>
-              </select>
-            </div>
-          )}
+          <div>
+            <label className="text-sm font-medium text-ink-2 block mb-1">
+              状態
+            </label>
+            <select
+              name="status"
+              defaultValue={editData?.status || "open"}
+              className="input"
+            >
+              <option value="open">未対応</option>
+              <option value="in_progress">対応中</option>
+              <option value="on_hold">保留</option>
+              <option value="completed">完了</option>
+              <option value="cancelled">キャンセル</option>
+            </select>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>

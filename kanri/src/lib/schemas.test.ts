@@ -5,8 +5,7 @@ import {
   tenantSchema,
   contractSchema,
   rentBillingSchema,
-  maintenanceSchema,
-  inquirySchema,
+  caseSchema,
   rentPaymentSchema,
 } from "./schemas";
 
@@ -267,65 +266,53 @@ describe("rentPaymentSchema", () => {
   });
 });
 
-describe("maintenanceSchema", () => {
-  it("有効なデータを受け入れる", () => {
-    const result = maintenanceSchema.safeParse({
+describe("caseSchema", () => {
+  it("有効なデータを受け入れる（物件指定）", () => {
+    const result = caseSchema.safeParse({
       property_id: "550e8400-e29b-41d4-a716-446655440000",
       title: "水漏れ修理",
-      category: "plumbing",
+      category: "repair",
       priority: "high",
     });
     expect(result.success).toBe(true);
   });
 
-  it("件名が空でエラー", () => {
-    const result = maintenanceSchema.safeParse({
-      property_id: "550e8400-e29b-41d4-a716-446655440000",
-      title: "",
-      category: "plumbing",
-      priority: "high",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("カテゴリが空でエラー", () => {
-    const result = maintenanceSchema.safeParse({
-      property_id: "550e8400-e29b-41d4-a716-446655440000",
-      title: "水漏れ修理",
-      category: "",
-      priority: "high",
-    });
-    expect(result.success).toBe(false);
-  });
-});
-
-describe("inquirySchema", () => {
-  it("有効なデータを受け入れる", () => {
-    const result = inquirySchema.safeParse({
-      inquiry_type: "complaint",
-      title: "騒音の苦情",
-      priority: "high",
+  it("物件未指定（クレーム等）でも受け入れる", () => {
+    const result = caseSchema.safeParse({
+      title: "管理対応への苦情",
+      category: "complaint",
+      priority: "normal",
     });
     expect(result.success).toBe(true);
   });
 
   it("件名が空でエラー", () => {
-    const result = inquirySchema.safeParse({
-      inquiry_type: "other",
+    const result = caseSchema.safeParse({
       title: "",
+      category: "repair",
+      priority: "high",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("種別がenum外でエラー", () => {
+    const result = caseSchema.safeParse({
+      title: "水漏れ修理",
+      category: "plumbing",
+      priority: "high",
     });
     expect(result.success).toBe(false);
   });
 
   it("デフォルト値が設定される", () => {
-    const result = inquirySchema.safeParse({
-      inquiry_type: "other",
-      title: "テスト問い合わせ",
+    const result = caseSchema.safeParse({
+      title: "鍵紛失",
+      category: "key",
+      priority: "normal",
     });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.status).toBe("open");
-      expect(result.data.priority).toBe("normal");
     }
   });
 });

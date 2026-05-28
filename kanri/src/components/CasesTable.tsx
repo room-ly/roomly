@@ -8,21 +8,26 @@ import FilterableTable from "./FilterableTable";
 import StatusBadge from "./StatusBadge";
 
 const categoryLabels: Record<string, string> = {
-  plumbing: "水回り",
-  electrical: "電気",
-  structural: "構造",
-  equipment: "設備",
+  repair: "設備修繕",
+  key: "鍵対応",
+  common_area: "共用部",
+  tenant_trouble: "入居者間トラブル",
+  neighbor: "近隣対応",
+  inspection: "点検立会",
+  inquiry: "質問・相談",
+  request: "要望",
+  complaint: "クレーム",
   other: "その他",
 };
 
 const KANBAN_COLS = [
-  { key: "pending", label: "未対応", tone: "warn" },
+  { key: "open", label: "未対応", tone: "warn" },
   { key: "in_progress", label: "対応中", tone: "info" },
-  { key: "waiting_parts", label: "部品待ち", tone: "neutral" },
+  { key: "on_hold", label: "保留", tone: "neutral" },
   { key: "completed", label: "完了", tone: "accent" },
 ] as const;
 
-interface MaintenanceTableProps {
+interface CasesTableProps {
   data: Record<string, any>[];
   initialFilter?: string;
 }
@@ -40,7 +45,7 @@ function getCurrentMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export default function MaintenanceTable({ data, initialFilter }: MaintenanceTableProps) {
+export default function CasesTable({ data, initialFilter }: CasesTableProps) {
   const router = useRouter();
   const [view, setView] = useState<"table" | "kanban">("table");
   const [items, setItems] = useState(data);
@@ -67,9 +72,9 @@ export default function MaintenanceTable({ data, initialFilter }: MaintenanceTab
     const map: Record<string, Record<string, any>[]> = {};
     for (const col of KANBAN_COLS) map[col.key] = [];
     for (const item of sorted) {
-      const key = item.status || "pending";
+      const key = item.status || "open";
       if (map[key]) map[key].push(item);
-      else map.pending.push(item);
+      else map.open.push(item);
     }
     return map;
   }, [sorted]);
@@ -99,7 +104,7 @@ export default function MaintenanceTable({ data, initialFilter }: MaintenanceTab
     setItems((prev) => prev.map((m) => m.id === id ? { ...m, status: colKey } : m));
 
     try {
-      const res = await fetch(`/api/maintenance/${id}`, {
+      const res = await fetch(`/api/cases/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: colKey }),
@@ -166,10 +171,10 @@ export default function MaintenanceTable({ data, initialFilter }: MaintenanceTab
                         </span>
                       )}
                     </div>
-                    <Link href={`/maintenance/${item.id}`} className="kb-card-title" style={{ textDecoration: "none", color: "inherit" }}>
+                    <Link href={`/cases/${item.id}`} className="kb-card-title" style={{ textDecoration: "none", color: "inherit" }}>
                       {item.title}
                     </Link>
-                    <div className="kb-card-prop">{item.property?.name} {item.unit?.unit_number || "共用部"}</div>
+                    <div className="kb-card-prop">{item.property?.name || "物件未指定"} {item.unit?.unit_number || (item.property ? "共用部" : "")}</div>
                     <div className="kb-card-foot">
                       <span className="mono">{item.reported_date}</span>
                       <span>{item.vendor_name || "業者未定"}</span>
@@ -185,27 +190,33 @@ export default function MaintenanceTable({ data, initialFilter }: MaintenanceTab
           data={sorted}
           searchFields={["title", "property.name", "vendor_name"]}
           searchPlaceholder="件名・物件名で検索..."
-          initialFilters={initialFilter === "pending" ? { status: "pending" } : {}}
+          initialFilters={initialFilter === "open" ? { status: "open" } : {}}
           filters={[
             {
               key: "status",
               label: "状態",
               options: [
-                { value: "pending", label: "未対応" },
+                { value: "open", label: "未対応" },
                 { value: "in_progress", label: "対応中" },
+                { value: "on_hold", label: "保留" },
                 { value: "completed", label: "完了" },
                 { value: "cancelled", label: "キャンセル" },
               ],
             },
+            {
+              key: "category",
+              label: "種別",
+              options: Object.entries(categoryLabels).map(([value, label]) => ({ value, label })),
+            },
           ]}
           columns={[
             { key: "title", label: "件名", sortable: true, render: (item) => <span className="strong">{item.title}</span> },
-            { key: "property.name", label: "物件", render: (item) => <span style={{ color: "var(--ink-2)" }}>{item.property?.name}</span> },
-            { key: "unit.unit_number", label: "部屋", render: (item) => item.unit?.unit_number || "共用部" },
-            { key: "category", label: "カテゴリ", render: (item) => <span style={{ color: "var(--ink-2)" }}>{categoryLabels[item.category] || item.category}</span> },
+            { key: "property.name", label: "物件", render: (item) => <span style={{ color: "var(--ink-2)" }}>{item.property?.name || "—"}</span> },
+            { key: "unit.unit_number", label: "部屋", render: (item) => item.unit?.unit_number || (item.property ? "共用部" : "—") },
+            { key: "category", label: "種別", render: (item) => <span style={{ color: "var(--ink-2)" }}>{categoryLabels[item.category] || item.category}</span> },
             { key: "priority", label: "優先度", render: (item) => <StatusBadge status={item.priority} /> },
             { key: "status", label: "状態", render: (item) => <StatusBadge status={item.status} /> },
-            { key: "reported_date", label: "報告日", sortable: true },
+            { key: "reported_date", label: "受付日", sortable: true },
             { key: "vendor_name", label: "業者", render: (item) => <span style={{ color: "var(--ink-2)" }}>{item.vendor_name || "—"}</span> },
             {
               key: "estimated_cost",
@@ -218,7 +229,7 @@ export default function MaintenanceTable({ data, initialFilter }: MaintenanceTab
               ),
             },
           ]}
-          onRowClick={(item) => router.push(`/maintenance/${item.id}`)}
+          onRowClick={(item) => router.push(`/cases/${item.id}`)}
           rowClassName={(item) => item.priority === "urgent" ? "bg-danger-tint" : ""}
         />
       )}

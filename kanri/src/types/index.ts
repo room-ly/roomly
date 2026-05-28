@@ -12,24 +12,26 @@ export type BillingStatus = "unpaid" | "partial" | "paid" | "overdue";
 
 export type PaymentMethod = "transfer" | "card" | "cash" | "debit";
 
-export type MaintenancePriority = "low" | "normal" | "high" | "urgent";
+export type CasePriority = "low" | "normal" | "high" | "urgent";
 
-export type MaintenanceStatus =
+export type CaseStatus =
   | "open"
   | "in_progress"
-  | "waiting_parts"
+  | "on_hold"
   | "completed"
   | "cancelled";
 
-export type InquiryType =
-  | "general"
+export type CaseCategory =
+  | "repair"
+  | "key"
+  | "common_area"
+  | "tenant_trouble"
+  | "neighbor"
+  | "inspection"
+  | "inquiry"
+  | "request"
   | "complaint"
-  | "noise"
-  | "facility"
-  | "move_out"
   | "other";
-
-export type InquiryStatus = "open" | "in_progress" | "resolved" | "closed";
 
 export interface Company {
   id: string;
@@ -210,40 +212,25 @@ export interface RentBilling {
   contract?: Contract;
 }
 
-export interface MaintenanceRequest {
-  id: string;
-  company_id: string;
-  property_id: string;
-  unit_id?: string;
-  tenant_id?: string;
-  title: string;
-  description?: string;
-  category: string;
-  priority: MaintenancePriority;
-  status: MaintenanceStatus;
-  reported_date: string;
-  completed_date?: string;
-  vendor_name?: string;
-  estimated_cost?: number;
-  actual_cost?: number;
-  property?: Property;
-  unit?: Unit;
-  tenant?: Tenant;
-}
-
-export interface Inquiry {
+export interface Case {
   id: string;
   company_id: string;
   property_id?: string;
   unit_id?: string;
   tenant_id?: string;
-  inquiry_type: InquiryType;
   title: string;
   description?: string;
-  status: InquiryStatus;
-  priority: MaintenancePriority;
-  created_at: string;
+  category: CaseCategory;
+  priority: CasePriority;
+  status: CaseStatus;
+  reported_date: string;
+  completed_date?: string;
+  vendor_name?: string;
+  estimated_cost?: number;
+  actual_cost?: number;
+  source: "admin" | "tenant" | "portal";
   property?: Property;
+  unit?: Unit;
   tenant?: Tenant;
 }
 
@@ -270,7 +257,6 @@ export interface DashboardStats {
   collection_rate: number;
   overdue_count: number;
   overdue_amount: number;
-  open_maintenance: number;
-  open_inquiries: number;
+  open_cases: number;
   expiring_contracts: number; // 3ヶ月以内に満了
 }

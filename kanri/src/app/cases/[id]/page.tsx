@@ -1,147 +1,149 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getMaintenanceDetail, getPropertiesForSelect } from "@/lib/queries";
+import { getCaseDetail, getPropertiesForSelect } from "@/lib/queries";
 import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
-import MaintenanceDetailClient from "@/components/MaintenanceDetailClient";
+import CaseDetailClient from "@/components/CaseDetailClient";
 
 const categoryLabels: Record<string, string> = {
-  plumbing: "水回り",
-  electrical: "電気",
-  structural: "構造",
-  equipment: "設備",
+  repair: "設備修繕",
+  key: "鍵対応",
+  common_area: "共用部",
+  tenant_trouble: "入居者間トラブル",
+  neighbor: "近隣対応",
+  inspection: "点検立会",
+  inquiry: "質問・相談",
+  request: "要望",
+  complaint: "クレーム",
   other: "その他",
 };
 
-export default async function MaintenanceDetailPage({
+export default async function CaseDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
   const [result, properties] = await Promise.all([
-    getMaintenanceDetail(id),
+    getCaseDetail(id),
     getPropertiesForSelect(),
   ]);
   if (!result) notFound();
 
-  const { request, logs } = result;
+  const { case: caseRow, logs } = result;
 
   return (
     <>
       <div className="detail-back">
-        <Link href="/maintenance" className="rlink is-muted is-back">← 修繕一覧に戻る</Link>
+        <Link href="/cases" className="rlink is-muted is-back">← 対応案件一覧に戻る</Link>
       </div>
 
       <div className="detail-header">
         <div className="detail-header-main">
           <div>
-            <h1 className="detail-title">{request.title}</h1>
+            <h1 className="detail-title">{caseRow.title}</h1>
             <div className="detail-kana">
-              {request.property?.name}{request.unit?.unit_number ? ` ${request.unit.unit_number}` : " 共用部"}
+              {caseRow.property?.name || "物件未指定"}{caseRow.unit?.unit_number ? ` ${caseRow.unit.unit_number}` : caseRow.property ? " 共用部" : ""}
             </div>
           </div>
           <div style={{ marginLeft: 8, display: "flex", gap: 6 }}>
-            <StatusBadge status={request.status} />
-            <StatusBadge status={request.priority} />
+            <StatusBadge status={caseRow.status} />
+            <StatusBadge status={caseRow.priority} />
           </div>
         </div>
         <div className="detail-header-actions">
-          <MaintenanceDetailClient request={request} properties={properties} />
+          <CaseDetailClient caseRow={caseRow} properties={properties} />
         </div>
       </div>
 
-      {/* サマリーカード */}
       <div className="cols-summary" style={{ marginBottom: 24 }}>
         <div className="sum-card">
           <span className="sum-label mono">状態</span>
-          <span className="sum-value"><StatusBadge status={request.status} /></span>
+          <span className="sum-value"><StatusBadge status={caseRow.status} /></span>
         </div>
         <div className="sum-card">
           <span className="sum-label mono">優先度</span>
-          <span className="sum-value"><StatusBadge status={request.priority} /></span>
+          <span className="sum-value"><StatusBadge status={caseRow.priority} /></span>
         </div>
         <div className="sum-card">
           <span className="sum-label mono">見積</span>
           <span className="sum-value" style={{ fontSize: 16 }}>
-            {request.estimated_cost != null ? `¥${Number(request.estimated_cost).toLocaleString()}` : "—"}
+            {caseRow.estimated_cost != null ? `¥${Number(caseRow.estimated_cost).toLocaleString()}` : "—"}
           </span>
         </div>
         <div className="sum-card">
           <span className="sum-label mono">実費</span>
           <span className="sum-value" style={{ fontSize: 16 }}>
-            {request.actual_cost != null ? `¥${Number(request.actual_cost).toLocaleString()}` : "—"}
+            {caseRow.actual_cost != null ? `¥${Number(caseRow.actual_cost).toLocaleString()}` : "—"}
           </span>
         </div>
       </div>
 
       <div className="detail-grid">
         <div className="detail-col-main">
-          {/* 概要 */}
           <div className="section">
             <div className="section-head-bar"><h2>基本情報</h2></div>
             <div className="section-body">
               <div className="kv-grid">
                 <div className="field">
                   <div className="field-label mono">状態</div>
-                  <div className="field-value"><StatusBadge status={request.status} /></div>
+                  <div className="field-value"><StatusBadge status={caseRow.status} /></div>
                 </div>
                 <div className="field">
                   <div className="field-label mono">優先度</div>
-                  <div className="field-value"><StatusBadge status={request.priority} /></div>
+                  <div className="field-value"><StatusBadge status={caseRow.priority} /></div>
                 </div>
                 <div className="field">
-                  <div className="field-label mono">カテゴリ</div>
-                  <div className="field-value field-plain">{categoryLabels[request.category] || request.category}</div>
+                  <div className="field-label mono">種別</div>
+                  <div className="field-value field-plain">{categoryLabels[caseRow.category] || caseRow.category}</div>
                 </div>
                 <div className="field">
-                  <div className="field-label mono">報告日</div>
-                  <div className="field-value field-plain mono">{request.reported_date}</div>
+                  <div className="field-label mono">受付日</div>
+                  <div className="field-value field-plain mono">{caseRow.reported_date}</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* 費用・業者 */}
-          {(request.vendor_name || request.estimated_cost != null || request.actual_cost != null || request.scheduled_date || request.completed_date) && (
+          {(caseRow.vendor_name || caseRow.estimated_cost != null || caseRow.actual_cost != null || caseRow.scheduled_date || caseRow.completed_date) && (
             <div className="section">
               <div className="section-head-bar"><h2>費用・業者情報</h2></div>
               <div className="section-body">
                 <div className="kv-grid">
-                  {request.vendor_name && (
+                  {caseRow.vendor_name && (
                     <div className="field">
                       <div className="field-label mono">業者</div>
-                      <div className="field-value field-plain">{request.vendor_name}</div>
+                      <div className="field-value field-plain">{caseRow.vendor_name}</div>
                     </div>
                   )}
-                  {request.vendor_phone && (
+                  {caseRow.vendor_phone && (
                     <div className="field">
                       <div className="field-label mono">業者連絡先</div>
-                      <div className="field-value field-plain mono">{formatPhone(request.vendor_phone)}</div>
+                      <div className="field-value field-plain mono">{formatPhone(caseRow.vendor_phone)}</div>
                     </div>
                   )}
-                  {request.estimated_cost != null && (
+                  {caseRow.estimated_cost != null && (
                     <div className="field">
                       <div className="field-label mono">見積金額</div>
-                      <div className="field-value num">¥{Number(request.estimated_cost).toLocaleString()}</div>
+                      <div className="field-value num">¥{Number(caseRow.estimated_cost).toLocaleString()}</div>
                     </div>
                   )}
-                  {request.actual_cost != null && (
+                  {caseRow.actual_cost != null && (
                     <div className="field">
                       <div className="field-label mono">実費</div>
-                      <div className="field-value num">¥{Number(request.actual_cost).toLocaleString()}</div>
+                      <div className="field-value num">¥{Number(caseRow.actual_cost).toLocaleString()}</div>
                     </div>
                   )}
-                  {request.scheduled_date && (
+                  {caseRow.scheduled_date && (
                     <div className="field">
                       <div className="field-label mono">作業予定日</div>
-                      <div className="field-value field-plain mono">{request.scheduled_date}</div>
+                      <div className="field-value field-plain mono">{caseRow.scheduled_date}</div>
                     </div>
                   )}
-                  {request.completed_date && (
+                  {caseRow.completed_date && (
                     <div className="field">
                       <div className="field-label mono">完了日</div>
-                      <div className="field-value field-plain mono">{request.completed_date}</div>
+                      <div className="field-value field-plain mono">{caseRow.completed_date}</div>
                     </div>
                   )}
                 </div>
@@ -149,28 +151,26 @@ export default async function MaintenanceDetailPage({
             </div>
           )}
 
-          {/* 説明・備考 */}
-          {(request.description || request.notes) && (
+          {(caseRow.description || caseRow.notes) && (
             <div className="section">
               <div className="section-head-bar"><h2>詳細</h2></div>
               <div className="section-body">
-                {request.description && (
-                  <div style={{ marginBottom: request.notes ? 16 : 0 }}>
+                {caseRow.description && (
+                  <div style={{ marginBottom: caseRow.notes ? 16 : 0 }}>
                     <span className="field-label mono">説明</span>
-                    <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{request.description}</p>
+                    <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{caseRow.description}</p>
                   </div>
                 )}
-                {request.notes && (
-                  <div style={{ paddingTop: request.description ? 16 : 0, borderTop: request.description ? "1px solid var(--line)" : "none" }}>
+                {caseRow.notes && (
+                  <div style={{ paddingTop: caseRow.description ? 16 : 0, borderTop: caseRow.description ? "1px solid var(--line)" : "none" }}>
                     <span className="field-label mono">備考</span>
-                    <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{request.notes}</p>
+                    <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{caseRow.notes}</p>
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* 対応履歴 */}
           {logs.length > 0 && (
             <div className="section">
               <div className="section-head-bar">
@@ -203,7 +203,6 @@ export default async function MaintenanceDetailPage({
           )}
         </div>
 
-        {/* サイドカラム */}
         <div className="detail-col-side">
           <div className="section">
             <div className="section-head-bar"><h2>物件情報</h2></div>
@@ -212,21 +211,27 @@ export default async function MaintenanceDetailPage({
                 <div className="field">
                   <div className="field-label mono">物件</div>
                   <div className="field-value">
-                    <Link href={`/properties/${request.property?.id}`} className="rlink">
-                      {request.property?.name || "—"}
-                    </Link>
+                    {caseRow.property?.id ? (
+                      <Link href={`/properties/${caseRow.property.id}`} className="rlink">
+                        {caseRow.property.name}
+                      </Link>
+                    ) : (
+                      <span className="field-plain">—</span>
+                    )}
                   </div>
                 </div>
-                {request.property?.address && (
+                {caseRow.property?.address && (
                   <div className="field">
                     <div className="field-label mono">住所</div>
-                    <div className="field-value field-plain" style={{ fontSize: 12 }}>{request.property.address}</div>
+                    <div className="field-value field-plain" style={{ fontSize: 12 }}>{caseRow.property.address}</div>
                   </div>
                 )}
-                <div className="field">
-                  <div className="field-label mono">部屋</div>
-                  <div className="field-value field-plain mono">{request.unit?.unit_number || "共用部"}</div>
-                </div>
+                {caseRow.property && (
+                  <div className="field">
+                    <div className="field-label mono">部屋</div>
+                    <div className="field-value field-plain mono">{caseRow.unit?.unit_number || "共用部"}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

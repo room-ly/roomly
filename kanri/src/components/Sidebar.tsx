@@ -10,7 +10,6 @@ import {
   FileText,
   Banknote,
   Wrench,
-  MessageSquare,
   UserCircle,
   Receipt,
   Send,
@@ -45,9 +44,8 @@ const navGroups = [
     group: "Operations",
     items: [
       { href: "/rent", label: "家賃", icon: Banknote },
-      { href: "/maintenance", label: "修繕", icon: Wrench },
+      { href: "/cases", label: "対応案件", icon: Wrench },
       { href: "/expenses", label: "経費", icon: Receipt },
-      { href: "/inquiries", label: "問い合わせ", icon: MessageSquare },
     ] as NavItem[],
   },
   {
@@ -142,8 +140,7 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
   const getBadgeKind = (href: string): string | undefined => {
     if (href === "/") return "danger";
     if (href === "/rent") return "danger";
-    if (href === "/maintenance") return "danger";
-    if (href === "/inquiries") return "danger";
+    if (href === "/cases") return "danger";
     if (href === "/contracts") return "warn";
     return undefined;
   };
@@ -152,13 +149,11 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
   const getBadgeTitle = (href: string, count: number): string => {
     switch (href) {
       case "/":
-        return `要対応 合計 ${count}件（家賃滞納・緊急/放置中の修繕・問い合わせ・更新間近の契約）`;
+        return `要対応 合計 ${count}件（家賃滞納・緊急/放置中の対応案件・更新間近の契約）`;
       case "/rent":
         return `滞納中の家賃請求 ${count}件`;
-      case "/maintenance":
-        return `緊急、または3日以上放置されている修繕依頼 ${count}件`;
-      case "/inquiries":
-        return `緊急、または3日以上放置されている問い合わせ ${count}件`;
+      case "/cases":
+        return `緊急、または3日以上放置されている対応案件 ${count}件`;
       case "/contracts":
         return `契約満了まで${alertDays}日以内の有効契約 ${count}件`;
       default:
@@ -222,10 +217,10 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
                       <Icon size={16} />
                     </span>
                     <span className="flex-1">{item.label}</span>
-                    {badge && badge > 0 && (
+                    {typeof badge === "number" && badge > 0 && (
                       <span
-                        title={getBadgeTitle(item.href, badge)}
-                        className={`font-mono text-[10px] px-1.5 py-px rounded-full border cursor-help ${
+                        aria-label={getBadgeTitle(item.href, badge)}
+                        className={`font-mono text-[10px] px-1.5 py-px rounded-full border ${
                           badgeKind === "danger"
                             ? "bg-danger-tint text-danger border-transparent"
                             : badgeKind === "warn"

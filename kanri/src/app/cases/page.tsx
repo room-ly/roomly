@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { getMaintenanceRequests, getPropertiesForSelect } from "@/lib/queries";
+import { getCases, getPropertiesForSelect } from "@/lib/queries";
 import PageHeader from "@/components/PageHeader";
-import MaintenancePageClient from "@/components/MaintenancePageClient";
-import MaintenanceTable from "@/components/MaintenanceTable";
+import CasesPageClient from "@/components/CasesPageClient";
+import CasesTable from "@/components/CasesTable";
 import ServerPagination from "@/components/ServerPagination";
 import SortSelect from "@/components/SortSelect";
 
@@ -14,7 +14,7 @@ const SORT_OPTIONS = [
   { value: "estimated_cost:desc", label: "見積額（高い順）" },
 ];
 
-export default async function MaintenancePage({
+export default async function CasesPage({
   searchParams,
 }: {
   searchParams: Promise<{ filter?: string; page?: string; sort?: string }>;
@@ -22,25 +22,25 @@ export default async function MaintenancePage({
   const { filter, page: pageStr, sort } = await searchParams;
   const page = Math.max(1, Number(pageStr) || 1);
   const sortValue = sort || "reported_date:desc";
-  const [{ data: maintenanceRequests, total }, properties] = await Promise.all([
-    getMaintenanceRequests(page, PAGE_SIZE, sortValue),
+  const [{ data: cases, total }, properties] = await Promise.all([
+    getCases(page, PAGE_SIZE, sortValue),
     getPropertiesForSelect(),
   ]);
 
   return (
     <>
       <PageHeader
-        eyebrow="Maintenance"
-        title="修繕"
+        eyebrow="Cases"
+        title="対応案件"
         em="管理"
-        description={`${total}件の修繕依頼`}
-        action={<MaintenancePageClient properties={properties} />}
+        description={`${total}件の対応案件`}
+        action={<CasesPageClient properties={properties} />}
       />
 
       <div className="flex justify-end mb-3">
         <Suspense><SortSelect options={SORT_OPTIONS} defaultValue={sortValue} /></Suspense>
       </div>
-      <MaintenanceTable data={maintenanceRequests} initialFilter={filter} />
+      <CasesTable data={cases} initialFilter={filter} />
       <ServerPagination page={page} pageSize={PAGE_SIZE} total={total} />
     </>
   );

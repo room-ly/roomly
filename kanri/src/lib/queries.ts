@@ -115,17 +115,17 @@ export async function getPropertyDetail(id: string) {
 export async function getUnitDetail(unitId: string) {
   const supabase = await createClient();
 
-  const [{ data: unit, error }, { data: contracts }, { data: maintenanceRequests }] = await Promise.all([
+  const [{ data: unit, error }, { data: contracts }, { data: cases }] = await Promise.all([
     supabase.from("units").select("*, property:properties(id, name, address, property_type)").eq("id", unitId).single(),
     supabase.from("contracts").select("*, tenant:tenants(id, name, phone, email)").eq("unit_id", unitId).order("start_date", { ascending: false }),
-    supabase.from("maintenance_requests").select("*").eq("unit_id", unitId).order("reported_date", { ascending: false }).limit(5),
+    supabase.from("cases").select("*").eq("unit_id", unitId).order("reported_date", { ascending: false }).limit(5),
   ]);
   if (error || !unit) return null;
 
   return {
     unit,
     contracts: contracts ?? [],
-    maintenanceRequests: maintenanceRequests ?? [],
+    cases: cases ?? [],
   };
 }
 
@@ -241,56 +241,16 @@ export async function getTenantDetail(id: string) {
   return { tenant, contracts: contracts ?? [] };
 }
 
-// 修繕依頼詳細（物件・部屋・対応履歴付き）
-export async function getMaintenanceDetail(id: string) {
+// 対応案件詳細（物件・部屋・対応履歴付き）
+export async function getCaseDetail(id: string) {
   const supabase = await createClient();
-  const [{ data: request, error }, { data: logs }] = await Promise.all([
-    supabase.from("maintenance_requests").select("*, property:properties(id, name, address, owner:owners(id, name, email)), unit:units(unit_number)").eq("id", id).single(),
-    supabase.from("maintenance_logs").select("*").eq("request_id", id).order("logged_at", { ascending: false }),
+  const [{ data: caseRow, error }, { data: logs }] = await Promise.all([
+    supabase.from("cases").select("*, property:properties(id, name, address, owner:owners(id, name, email)), unit:units(unit_number), tenant:tenants(id, name, phone, email)").eq("id", id).single(),
+    supabase.from("case_logs").select("*").eq("case_id", id).order("logged_at", { ascending: false }),
   ]);
-  if (error || !request) return null;
+  if (error || !caseRow) return null;
 
-  return { request, logs: logs ?? [] };
-}
-
-// 問い合わせ詳細（物件・部屋・入居者・対応履歴付き）
-export async function getInquiryDetail(id: string) {
-  const supabase = await createClient();
-  const [{ data: inquiry, error }, { data: logs }] = await Promise.all([
-    supabase.from("inquiries").select("*, property:properties(id, name, owner:owners(id, name, phone, email)), unit:units(unit_number, contracts(tenant_id, status, tenant:tenants(id, name, phone, email))), tenant:tenants(name, phone, email)").eq("id", id).single(),
-    supabase.from("inquiry_logs").select("*").eq("inquiry_id", id).order("created_at", { ascending: false }),
-  ]);
-  if (error || !inquiry) return null;
-
-  if (!inquiry.tenant && inquiry.unit?.contracts) {
-    const active = inquiry.unit.contracts.find((c: Row) => c.status === "active");
-    if (active?.tenant) inquiry.tenant = active.tenant;
-  }
-
-  // マイグレーション適用後に追加されるリンクカラムを取得
-  const inquiryAny = inquiry as any;
-  let linked_maintenance = null;
-  let linked_move_out_request = null;
-
-  if (inquiryAny.linked_maintenance_id) {
-    const { data } = await supabase
-      .from("maintenance_requests")
-      .select("id, title, status")
-      .eq("id", inquiryAny.linked_maintenance_id)
-      .single();
-    linked_maintenance = data;
-  }
-
-  if (inquiryAny.linked_move_out_request_id) {
-    const { data } = await supabase
-      .from("move_out_requests")
-      .select("id, desired_move_out_date, status, contract_id")
-      .eq("id", inquiryAny.linked_move_out_request_id)
-      .single();
-    linked_move_out_request = data ? { ...data, contract: data.contract_id ? { id: data.contract_id } : null } : null;
-  }
-
-  return { inquiry: { ...inquiryAny, linked_maintenance, linked_move_out_request }, logs: logs ?? [] };
+  return { case: caseRow, logs: logs ?? [] };
 }
 
 // オーナー詳細（物件・送金履歴付き）
@@ -319,7 +279,7 @@ export async function getExpenseDetail(id: string) {
         "payee:payees(id, name)",
         "approver:users!expenses_approved_by_fkey(id, name)",
         "submitter:users!expenses_submitted_by_fkey(id, name)",
-        "maintenance:maintenance_requests(id, title, status)",
+        "case:cases(id, title, status)",
         "contract:contracts(id, deposit, tenant:tenants(id, name))",
         "allocations:expense_allocations(*, unit:units(unit_number), owner:owners(name))",
       ].join(", "),
@@ -378,11 +338,11 @@ export async function getExpensesPendingApproval() {
   return (data ?? []) as Row[];
 }
 
-// 修繕依頼セレクタ用
-export async function getMaintenanceForSelect(propertyId?: string | null) {
+// 対応案件セレクタ用
+export async function getCasesForSelect(propertyId?: string | null) {
   const supabase = await createClient();
   let q = supabase
-    .from("maintenance_requests")
+    .from("cases")
     .select("id, title, status, property_id, unit_id, property:properties(name), unit:units(unit_number)")
     .order("reported_date", { ascending: false })
     .limit(50);
@@ -428,32 +388,80 @@ export async function getRemittanceDetail(id: string) {
   return { remittance, items: items ?? [] };
 }
 
-// 滞納エイジングレポート（30/60/90+日の滞納額・件数）
-export async function getOverdueAging(): Promise<{ bucket30: { count: number; amount: number }; bucket60: { count: number; amount: number }; bucket90: { count: number; amount: number } }> {
+// 滞納エイジングレポート（30/60/90+日の滞納額・件数 + 内訳）
+// 「滞納」= due_date を過ぎていて、入金合計が請求額に達していない請求。
+// status カラムには依存しない（自動更新ジョブが無い前提でも常に正しく出るように）。
+export interface AgingItem {
+  id: string;
+  due_date: string;
+  days_overdue: number;
+  unpaid_amount: number;
+  total_amount: number;
+  tenant_name: string | null;
+  property_name: string | null;
+  unit_number: string | null;
+}
+export interface AgingBucket {
+  count: number;
+  amount: number;
+  items: AgingItem[];
+}
+export async function getOverdueAging(): Promise<{
+  bucket30: AgingBucket;
+  bucket60: AgingBucket;
+  bucket90: AgingBucket;
+}> {
   const supabase = await createClient();
   const today = new Date();
-  const d30 = new Date(today); d30.setDate(d30.getDate() - 30);
-  const d60 = new Date(today); d60.setDate(d60.getDate() - 60);
-  const d90 = new Date(today); d90.setDate(d90.getDate() - 90);
-  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+  const todayStr = today.toISOString().slice(0, 10);
 
+  // due_date を過ぎた請求を、入金額算出のため rent_payments も join して取得
   const { data } = await supabase
     .from("rent_billings")
-    .select("due_date, total_amount")
-    .eq("status", "overdue")
-    .lt("due_date", fmt(today));
+    .select(
+      "id, due_date, total_amount, contract:contracts(tenant:tenants(name), unit:units(unit_number, property:properties(name))), rent_payments(amount)"
+    )
+    .lt("due_date", todayStr);
 
-  const result = {
-    bucket30: { count: 0, amount: 0 },
-    bucket60: { count: 0, amount: 0 },
-    bucket90: { count: 0, amount: 0 },
+  const result: { bucket30: AgingBucket; bucket60: AgingBucket; bucket90: AgingBucket } = {
+    bucket30: { count: 0, amount: 0, items: [] },
+    bucket60: { count: 0, amount: 0, items: [] },
+    bucket90: { count: 0, amount: 0, items: [] },
   };
-  for (const row of data ?? []) {
+  for (const row of (data ?? []) as any[]) {
+    const total = Number(row.total_amount) || 0;
+    const paid = (row.rent_payments ?? []).reduce(
+      (s: number, p: any) => s + (Number(p.amount) || 0),
+      0
+    );
+    const unpaid = total - paid;
+    if (unpaid <= 0) continue;
+
     const due = new Date(row.due_date);
-    const amt = Number(row.total_amount) || 0;
-    if (due < d90) { result.bucket90.count++; result.bucket90.amount += amt; }
-    else if (due < d60) { result.bucket60.count++; result.bucket60.amount += amt; }
-    else { result.bucket30.count++; result.bucket30.amount += amt; }
+    const daysOverdue = Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
+    const item: AgingItem = {
+      id: row.id,
+      due_date: row.due_date,
+      days_overdue: daysOverdue,
+      unpaid_amount: unpaid,
+      total_amount: total,
+      tenant_name: row.contract?.tenant?.name ?? null,
+      property_name: row.contract?.unit?.property?.name ?? null,
+      unit_number: row.contract?.unit?.unit_number ?? null,
+    };
+
+    // daysOverdue で振り分け（〜30日 / 31〜60日 / 61日〜）
+    let bucket: AgingBucket;
+    if (daysOverdue > 60) bucket = result.bucket90;
+    else if (daysOverdue > 30) bucket = result.bucket60;
+    else bucket = result.bucket30;
+    bucket.count++;
+    bucket.amount += unpaid;
+    bucket.items.push(item);
+  }
+  // 各バケット内は古い順（滞納日数大きい順）に
+  for (const b of [result.bucket30, result.bucket60, result.bucket90]) {
+    b.items.sort((a, b) => b.days_overdue - a.days_overdue);
   }
   return result;
 }
@@ -505,40 +513,19 @@ export async function getRentBillingDetail(id: string) {
   };
 }
 
-// 修繕依頼一覧（物件・部屋付き）— ページネーション対応
-export async function getMaintenanceRequests(page = 1, pageSize = 50, sort = "reported_date:desc"): Promise<{ data: Row[]; total: number }> {
+// 対応案件一覧（物件・部屋付き）— ページネーション対応
+export async function getCases(page = 1, pageSize = 50, sort = "reported_date:desc"): Promise<{ data: Row[]; total: number }> {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
   const [sortCol, sortDir] = sort.split(":") as [string, string];
   const { data, error, count } = await supabase
-    .from("maintenance_requests")
+    .from("cases")
     .select("*, property:properties(name), unit:units(unit_number)", { count: "exact" })
     .order(sortCol, { ascending: sortDir === "asc" })
     .range(from, to);
   if (error) throw error;
   return { data: (data ?? []) as Row[], total: count ?? 0 };
-}
-
-// 問い合わせ一覧（物件・部屋・入居者付き）— ページネーション対応
-export async function getInquiries(page = 1, pageSize = 50): Promise<{ data: Row[]; total: number }> {
-  const supabase = await createClient();
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  const { data, error, count } = await supabase
-    .from("inquiries")
-    .select("*, property:properties(id, name), unit:units(unit_number, contracts(tenant_id, status, tenant:tenants(id, name, phone, email))), tenant:tenants(id, name, phone, email), inquiry_logs(id, content, action_type, created_at)", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(from, to);
-  if (error) throw error;
-  const rows = (data ?? []).map((row: Row) => {
-    if (!row.tenant && row.unit?.contracts) {
-      const active = row.unit.contracts.find((c: Row) => c.status === "active");
-      if (active?.tenant) row.tenant = active.tenant;
-    }
-    return row;
-  }) as Row[];
-  return { data: rows, total: count ?? 0 };
 }
 
 // オーナー一覧（物件・部屋付き）
@@ -606,10 +593,8 @@ export async function getDashboardData() {
     unitOccupied,
     unitVacant,
     overdueBillingsRes,
-    activeMaintRes,
-    alertMaintRes,
-    openInqRes,
-    alertInqRes,
+    activeCasesRes,
+    alertCasesRes,
     expiringRes,
     pendingMoveOutRes,
     pipelineUnitsRes,
@@ -627,22 +612,12 @@ export async function getDashboardData() {
       .eq("status", "overdue")
       .order("billing_month", { ascending: false }),
     supabase
-      .from("maintenance_requests")
-      .select("id, title, priority, status, reported_date, property:properties(name)")
+      .from("cases")
+      .select("id, title, priority, status, reported_date, category, property:properties(name)")
       .in("status", ["open", "in_progress"])
       .order("reported_date", { ascending: false }),
     supabase
-      .from("maintenance_requests")
-      .select("id", { count: "exact", head: true })
-      .in("status", ["open", "in_progress"])
-      .in("priority", ["high", "urgent"]),
-    supabase
-      .from("inquiries")
-      .select("id, title, priority, status, created_at")
-      .in("status", ["open", "in_progress"])
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("inquiries")
+      .from("cases")
       .select("id", { count: "exact", head: true })
       .in("status", ["open", "in_progress"])
       .or("priority.in.(high,urgent),created_at.lt." + staleDate),
@@ -678,8 +653,7 @@ export async function getDashboardData() {
   ]);
 
   const overdueBillings = (overdueBillingsRes.data ?? []) as Row[];
-  const activeMaintenance = (activeMaintRes.data ?? []) as Row[];
-  const openInquiries = (openInqRes.data ?? []) as Row[];
+  const activeCases = (activeCasesRes.data ?? []) as Row[];
   const expiringContracts = (expiringRes.data ?? []) as Row[];
   const pendingMoveOuts = (pendingMoveOutRes.data ?? []) as Row[];
   const allPipelineUnits = (pipelineUnitsRes.data ?? []) as Row[];
@@ -707,20 +681,17 @@ export async function getDashboardData() {
       collection_rate: totalExpected > 0 ? Math.round((totalReceived / totalExpected) * 1000) / 10 : 0,
       overdue_count: overdueBillings.length,
       overdue_amount: overdueAmount,
-      open_maintenance: activeMaintenance.length,
-      alert_maintenance: alertMaintRes.count ?? 0,
-      open_inquiries: openInquiries.length,
-      alert_inquiries: alertInqRes.count ?? 0,
+      open_cases: activeCases.length,
+      alert_cases: alertCasesRes.count ?? 0,
       expiring_contracts: expiringContracts.length,
       pending_move_outs: pendingMoveOuts.length,
       monthly_expenses: monthlyExpenseTotal,
       pending_remittances: pendingRemittances.length,
     },
     overdueBillings,
-    activeMaintenance,
+    activeCases,
     expiringContracts,
     pendingMoveOuts,
-    openInquiries,
     maintenanceUnits: allPipelineUnits.filter((u: Row) => u.status === "maintenance"),
     vacantUnits: allPipelineUnits.filter((u: Row) => u.status === "vacant"),
   };
@@ -899,30 +870,19 @@ export async function getBadgeCounts() {
   staleThreshold.setDate(staleThreshold.getDate() - 3);
   const staleDate = staleThreshold.toISOString();
 
-  const [overdueRes, maintenanceUrgentRes, maintenanceStaleRes, inquiriesUrgentRes, inquiriesStaleRes, companyRes, authRes] =
+  const [overdueRes, casesUrgentRes, casesStaleRes, companyRes, authRes] =
     await Promise.all([
       supabase
         .from("rent_billings")
         .select("id", { count: "exact", head: true })
         .eq("status", "overdue"),
       supabase
-        .from("maintenance_requests")
+        .from("cases")
         .select("id", { count: "exact", head: true })
         .in("status", ["open", "in_progress"])
         .in("priority", ["high", "urgent"]),
       supabase
-        .from("maintenance_requests")
-        .select("id", { count: "exact", head: true })
-        .in("status", ["open", "in_progress"])
-        .in("priority", ["low", "normal"])
-        .lt("created_at", staleDate),
-      supabase
-        .from("inquiries")
-        .select("id", { count: "exact", head: true })
-        .in("status", ["open", "in_progress"])
-        .in("priority", ["high", "urgent"]),
-      supabase
-        .from("inquiries")
+        .from("cases")
         .select("id", { count: "exact", head: true })
         .in("status", ["open", "in_progress"])
         .in("priority", ["low", "normal"])
@@ -956,19 +916,17 @@ export async function getBadgeCounts() {
   const userName = profileRes.data?.name ?? "";
 
   const rent = overdueRes.count ?? 0;
-  const maintenance = (maintenanceUrgentRes.count ?? 0) + (maintenanceStaleRes.count ?? 0);
-  const inquiries = (inquiriesUrgentRes.count ?? 0) + (inquiriesStaleRes.count ?? 0);
+  const cases = (casesUrgentRes.count ?? 0) + (casesStaleRes.count ?? 0);
   const contracts = ((contractsRes.data ?? []) as Row[]).filter((c: Row) => {
     const reqs = (c.move_out_requests ?? []) as Row[];
     return !reqs.some((r: Row) => r.status === "pending" || r.status === "approved");
   }).length;
-  const dashboard = rent + maintenance + inquiries + contracts;
+  const dashboard = rent + cases + contracts;
 
   return {
     "/": dashboard,
     "/rent": rent,
-    "/maintenance": maintenance,
-    "/inquiries": inquiries,
+    "/cases": cases,
     "/contracts": contracts,
     company_name: (companyRes.data?.name as string) ?? "",
     contract_alert_days: alertDays,

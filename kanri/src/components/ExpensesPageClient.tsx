@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import ExpenseFormModal, { type MaintenanceOption, type ContractOption } from "./ExpenseFormModal";
+import ExpenseFormModal, { type CaseOption, type ContractOption } from "./ExpenseFormModal";
 
 interface SelectOption {
   id: string;
@@ -15,7 +15,7 @@ interface ExpensesPageClientProps {
   properties: SelectOption[];
   owners: SelectOption[];
   payees: SelectOption[];
-  maintenance?: MaintenanceOption[];
+  cases?: CaseOption[];
   contracts?: ContractOption[];
 }
 
@@ -23,7 +23,7 @@ export default function ExpensesPageClient({
   properties,
   owners,
   payees,
-  maintenance = [],
+  cases = [],
   contracts = [],
 }: ExpensesPageClientProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -40,7 +40,7 @@ export default function ExpensesPageClient({
         properties={properties}
         owners={owners}
         payees={payees}
-        maintenance={maintenance}
+        cases={cases}
         contracts={contracts}
       />
     </>

@@ -88,18 +88,6 @@ export default function LoginPage() {
             物件・入居者・契約・家賃・修繕・オーナー送金を一元管理。
             賃貸管理業務の効率化を実現します。
           </p>
-          <div className="mt-12 flex gap-10">
-            {[
-              { label: "管理物件", value: "500+" },
-              { label: "導入企業", value: "50+" },
-              { label: "入居率改善", value: "15%" },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <p className="text-xl font-semibold text-accent">{stat.value}</p>
-                <p className="text-[11px] text-white/30 mt-1 tracking-wider">{stat.label}</p>
-              </div>
-            ))}
-          </div>
           <a
             href="https://hp.roomly.jp"
             target="_blank"

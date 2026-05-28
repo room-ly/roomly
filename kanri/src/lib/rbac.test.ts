@@ -41,12 +41,12 @@ describe("RBAC", () => {
     });
 
     it("修繕の作成・編集権限を持つ", () => {
-      expect(hasPermission("staff", "maintenance:create")).toBe(true);
-      expect(hasPermission("staff", "maintenance:edit")).toBe(true);
+      expect(hasPermission("staff", "cases:create")).toBe(true);
+      expect(hasPermission("staff", "cases:edit")).toBe(true);
     });
 
     it("削除権限を持たない", () => {
-      expect(hasPermission("staff", "maintenance:delete")).toBe(false);
+      expect(hasPermission("staff", "cases:delete")).toBe(false);
     });
   });
 

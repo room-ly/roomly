@@ -109,7 +109,7 @@ export default function RentPaymentModal({
           </div>
           <div className="flex justify-between mb-1">
             <span className="text-ink-3">対象月</span>
-            <span>{billing.billing_month}</span>
+            <span>{billing.billing_month?.slice(0, 7) ?? billing.billing_month}</span>
           </div>
           <div className="flex justify-between mb-1">
             <span className="text-ink-3">請求額</span>

@@ -2,7 +2,6 @@ import {
   Banknote,
   Wrench,
   FileText,
-  MessageSquare,
   Receipt,
   Send,
 } from "lucide-react";
@@ -18,9 +17,8 @@ export default async function DashboardPage() {
   const {
     stats: s,
     overdueBillings,
-    activeMaintenance,
+    activeCases,
     expiringContracts,
-    openInquiries,
     maintenanceUnits,
     vacantUnits,
   } = dashData;
@@ -44,21 +42,13 @@ export default async function DashboardPage() {
       href: "/rent?status=overdue",
       action: "滞納一覧",
     },
-    s.alert_maintenance > 0 && {
+    s.alert_cases > 0 && {
       icon: Wrench,
       tone: "warn" as const,
-      title: `修繕 要対応 ${s.alert_maintenance}件`,
-      detail: "対応期限が迫っている案件があります",
-      href: "/maintenance?filter=pending",
-      action: "修繕一覧",
-    },
-    s.alert_inquiries > 0 && {
-      icon: MessageSquare,
-      tone: "danger" as const,
-      title: `問い合わせ 未対応 ${s.alert_inquiries}件`,
-      detail: "48時間以上未対応の問い合わせ",
-      href: "/inquiries?filter=open",
-      action: "対応する",
+      title: `対応案件 要対応 ${s.alert_cases}件`,
+      detail: "緊急、または3日以上放置されている案件",
+      href: "/cases?filter=open",
+      action: "対応案件一覧",
     },
     (s.expiring_contracts > 0 || s.pending_move_outs > 0) && {
       icon: FileText,
@@ -323,7 +313,7 @@ export default async function DashboardPage() {
                   return (
                     <tr key={b.id} className="row-hover row-link">
                       <td><Link href={href} className="strong">{b.contract?.tenant?.name || "—"}</Link></td>
-                      <td><Link href={href} className="mono" style={{ fontSize: 12, color: "var(--ink-2)" }}>{b.billing_month}</Link></td>
+                      <td><Link href={href} className="mono" style={{ fontSize: 12, color: "var(--ink-2)" }}>{(b.billing_month as string)?.slice(0, 7) ?? b.billing_month}</Link></td>
                       <td><Link href={href} className="num">¥{Number(b.total_amount).toLocaleString()}</Link></td>
                       <td><Link href={href}><StatusBadge status={b.status} /></Link></td>
                     </tr>
@@ -336,30 +326,30 @@ export default async function DashboardPage() {
 
         <div className="dash2-table">
           <div className="dash2-table-head">
-            <h3 className="dash2-table-title">修繕対応中</h3>
+            <h3 className="dash2-table-title">対応案件（未対応・対応中）</h3>
             <div className="dash2-table-meta">
-              {s.open_maintenance > 0 && (
-                <span className="badge badge-warn mono">{s.open_maintenance}件</span>
+              {s.open_cases > 0 && (
+                <span className="badge badge-warn mono">{s.open_cases}件</span>
               )}
-              <Link href="/maintenance" className="rlink is-muted" style={{ fontSize: 11 }}>すべて見る</Link>
+              <Link href="/cases" className="rlink is-muted" style={{ fontSize: 11 }}>すべて見る</Link>
             </div>
           </div>
-          {activeMaintenance.length === 0 ? (
-            <p style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "center", padding: "24px 0" }}>対応中の修繕なし</p>
+          {activeCases.length === 0 ? (
+            <p style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "center", padding: "24px 0" }}>対応中の案件なし</p>
           ) : (
             <table className="tbl">
               <thead>
                 <tr><th>件名</th><th>物件</th><th>優先度</th><th>状態</th></tr>
               </thead>
               <tbody>
-                {activeMaintenance.map((m: Record<string, any>) => {
-                  const href = `/maintenance/${m.id}`;
+                {activeCases.map((c: Record<string, any>) => {
+                  const href = `/cases/${c.id}`;
                   return (
-                    <tr key={m.id} className="row-hover row-link">
-                      <td><Link href={href} className="strong">{m.title}</Link></td>
-                      <td><Link href={href} style={{ fontSize: 12, color: "var(--ink-3)" }}>{m.property?.name}</Link></td>
-                      <td><Link href={href}><StatusBadge status={m.priority} /></Link></td>
-                      <td><Link href={href}><StatusBadge status={m.status} /></Link></td>
+                    <tr key={c.id} className="row-hover row-link">
+                      <td><Link href={href} className="strong">{c.title}</Link></td>
+                      <td><Link href={href} style={{ fontSize: 12, color: "var(--ink-3)" }}>{c.property?.name || "—"}</Link></td>
+                      <td><Link href={href}><StatusBadge status={c.priority} /></Link></td>
+                      <td><Link href={href}><StatusBadge status={c.status} /></Link></td>
                     </tr>
                   );
                 })}
@@ -404,39 +394,6 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        <div className="dash2-table">
-          <div className="dash2-table-head">
-            <h3 className="dash2-table-title">未対応の問い合わせ</h3>
-            <div className="dash2-table-meta">
-              <Link href="/inquiries" className="rlink is-muted" style={{ fontSize: 11 }}>すべて見る</Link>
-            </div>
-          </div>
-          {openInquiries.length === 0 ? (
-            <p style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "center", padding: "24px 0" }}>未対応の問い合わせなし</p>
-          ) : (
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>件名</th>
-                  <th>種別</th>
-                  <th>状態</th>
-                </tr>
-              </thead>
-              <tbody>
-                {openInquiries.map((inq: Record<string, any>) => {
-                  const href = `/inquiries/${inq.id}`;
-                  return (
-                    <tr key={inq.id} className="row-hover row-link">
-                      <td><Link href={href} className="strong">{inq.title}</Link></td>
-                      <td><Link href={href}><StatusBadge status={inq.inquiry_type} /></Link></td>
-                      <td><Link href={href}><StatusBadge status={inq.status} /></Link></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
       </div>
     </>
   );

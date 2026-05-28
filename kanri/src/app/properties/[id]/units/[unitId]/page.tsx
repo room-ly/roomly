@@ -15,7 +15,7 @@ export default async function UnitDetailPage({
   const result = await getUnitDetail(unitId);
   if (!result || result.unit.property_id !== id) notFound();
 
-  const { unit, contracts, maintenanceRequests } = result;
+  const { unit, contracts, cases } = result;
   const activeContract = contracts.find((c: any) => c.status === "active");
 
   return (
@@ -44,7 +44,7 @@ export default async function UnitDetailPage({
         </div>
       </div>
 
-      <PropertyImages propertyId={id} unitId={unitId} />
+      <PropertyImages propertyId={id} unitId={unitId} readOnly />
 
       <div className="detail-grid">
         <div className="detail-col-main">
@@ -184,16 +184,16 @@ export default async function UnitDetailPage({
             </div>
           </div>
 
-          {maintenanceRequests.length > 0 && (
+          {cases.length > 0 && (
             <div className="section">
               <div className="section-head-bar">
-                <h2>修繕履歴</h2>
-                <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--ink-4)" }}>{maintenanceRequests.length}件</span>
+                <h2>対応案件履歴</h2>
+                <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--ink-4)" }}>{cases.length}件</span>
               </div>
               <div className="section-body" style={{ padding: "4px 16px 12px" }}>
                 <div className="related-list">
-                  {maintenanceRequests.map((m: any) => (
-                    <Link key={m.id} href={`/maintenance/${m.id}`} className="related-row" style={{ padding: "8px 8px", margin: "0 -8px" }}>
+                  {cases.map((m: any) => (
+                    <Link key={m.id} href={`/cases/${m.id}`} className="related-row" style={{ padding: "8px 8px", margin: "0 -8px" }}>
                       <div>
                         <div className="related-label" style={{ fontSize: 12.5 }}>{m.title || "—"}</div>
                         <div className="related-sub" style={{ display: "flex", alignItems: "center", gap: 6 }}>

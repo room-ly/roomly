@@ -247,12 +247,12 @@ export default async function ExpenseDetailPage({
                     <div className="field-value field-plain">{expense.payee.name}</div>
                   </div>
                 )}
-                {expense.maintenance && (
+                {expense.case && (
                   <div className="field">
-                    <div className="field-label mono">紐付け修繕</div>
+                    <div className="field-label mono">紐付け対応案件</div>
                     <div className="field-value field-plain">
-                      <Link href={`/maintenance/${expense.maintenance.id}`} className="rlink">
-                        {expense.maintenance.title}
+                      <Link href={`/cases/${expense.case.id}`} className="rlink">
+                        {expense.case.title}
                       </Link>
                     </div>
                   </div>

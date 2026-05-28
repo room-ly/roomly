@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 
@@ -33,7 +33,16 @@ export default function RemittanceFormModal({
 
   const isEdit = !!editData;
 
+  const formRef = useRef<HTMLFormElement>(null);
+  // 編集対象が切り替わった時のみフォーム状態をリセットする。
+  // 同じ対象の閉じ直しでは入力を保持して、誤クローズで内容を失わないようにする。
+  const lastTargetRef = useRef<string | null>(null);
   useEffect(() => {
+    if (!isOpen) return;
+    const target = editData?.id ?? "__new__";
+    if (lastTargetRef.current === target) return;
+    lastTargetRef.current = target;
+
     if (editData) {
       setManualOverride(editData.manual_override || false);
       setCalcResult(null);
@@ -43,9 +52,9 @@ export default function RemittanceFormModal({
       setSelectedOwnerId("");
       setSelectedMonth("");
     }
-  }, [editData, isOpen]);
-
-  if (!isOpen) return null;
+    setApiError("");
+    formRef.current?.reset();
+  }, [isOpen, editData]);
 
   async function handleCalc(ownerId?: string, month?: string) {
     const oId = ownerId || selectedOwnerId;
@@ -135,6 +144,9 @@ export default function RemittanceFormModal({
           return;
         }
       }
+      // 登録/更新が完了したらドラフトをリセット
+      lastTargetRef.current = null;
+      formRef.current?.reset();
       onClose();
       router.refresh();
     } finally {
@@ -149,6 +161,7 @@ export default function RemittanceFormModal({
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      style={{ display: isOpen ? "flex" : "none" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -167,7 +180,7 @@ export default function RemittanceFormModal({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           {!isEdit ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

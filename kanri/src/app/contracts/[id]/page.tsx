@@ -189,7 +189,7 @@ export default async function ContractDetailPage({
                     {billings.map((b: any) => (
                       <tr key={b.id} className={`row-hover ${b.status === "overdue" ? "bg-danger-tint" : ""}`}>
                         <td>
-                          <Link href={`/rent/${b.id}`} className="rlink">{b.billing_month}</Link>
+                          <Link href={`/rent/${b.id}`} className="rlink">{(b.billing_month as string)?.slice(0, 7) ?? b.billing_month}</Link>
                         </td>
                         <td className="num">¥{Number(b.total_amount).toLocaleString()}</td>
                         <td><StatusBadge status={b.status} /></td>

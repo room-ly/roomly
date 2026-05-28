@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { unitSchema, type UnitFormData } from "@/lib/schemas";
+import PropertyImages from "./PropertyImages";
 import type { ZodError } from "zod";
 
 interface UnitFormModalProps {
@@ -26,7 +27,19 @@ export default function UnitFormModal({
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
 
-  if (!isOpen) return null;
+  const formRef = useRef<HTMLFormElement>(null);
+  // 編集対象が切り替わった時のみフォーム状態をリセットする。
+  // 同じ対象の閉じ直しでは入力を保持して、誤クローズで内容を失わないようにする。
+  const lastTargetRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const target = editData?.id ?? "__new__";
+    if (lastTargetRef.current === target) return;
+    lastTargetRef.current = target;
+    setErrors({});
+    setApiError("");
+    formRef.current?.reset();
+  }, [isOpen, editData]);
 
   const isEdit = !!editData;
   // 戸建ては1建物=1区画。部屋番号・階の概念が薄いので表示を切り替える
@@ -73,6 +86,9 @@ export default function UnitFormModal({
         return;
       }
 
+      // 登録/更新が完了したらドラフトをリセット
+      lastTargetRef.current = null;
+      formRef.current?.reset();
       onClose();
       router.refresh();
     } catch (err) {
@@ -88,9 +104,10 @@ export default function UnitFormModal({
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      style={{ display: isOpen ? "flex" : "none" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface rounded-2xl shadow-xl p-6 pb-0 max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">
             {isEdit ? `${unitWord}を編集` : `${unitWord}を追加`}
@@ -109,7 +126,15 @@ export default function UnitFormModal({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* 編集時のみ：画像セクション（モーダル内で直接アップロード可能） */}
+        {isEdit && editData && (
+          <div className="mb-4">
+            <p className="text-[13px] font-medium text-ink-2 mb-2">部屋画像</p>
+            <PropertyImages propertyId={propertyId} unitId={editData.id} />
+          </div>
+        )}
+
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
@@ -240,7 +265,7 @@ export default function UnitFormModal({
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-3">
+          <div className="sticky bottom-0 -mx-6 px-6 py-3 bg-surface border-t border-line flex justify-end gap-2 z-10">
             <button
               type="button"
               onClick={onClose}

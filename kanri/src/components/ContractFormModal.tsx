@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { contractSchema, type ContractFormData } from "@/lib/schemas";
@@ -42,7 +42,22 @@ export default function ContractFormModal({
     }
   }
 
-  if (!isOpen) return null;
+  const formRef = useRef<HTMLFormElement>(null);
+  // 編集対象が切り替わった時のみフォーム状態をリセットする。
+  // 同じ対象の閉じ直しでは入力を保持して、誤クローズで内容を失わないようにする。
+  const lastTargetRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const target = editData?.id ?? "__new__";
+    if (lastTargetRef.current === target) return;
+    lastTargetRef.current = target;
+
+    setSelectedUnitId(editData?.unit_id || editData?.unit?.id || "");
+    setSelectedTenantId(editData?.tenant_id || editData?.tenant?.id || "");
+    setErrors({});
+    setApiError("");
+    formRef.current?.reset();
+  }, [isOpen, editData]);
 
   const isEdit = !!editData;
 
@@ -83,6 +98,9 @@ export default function ContractFormModal({
         return;
       }
 
+      // 登録/更新が完了したらドラフトをリセット
+      lastTargetRef.current = null;
+      formRef.current?.reset();
       if (!isEdit) {
         const created = await res.json();
         router.push(`/contracts/${created.id}`);
@@ -103,6 +121,7 @@ export default function ContractFormModal({
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      style={{ display: isOpen ? "flex" : "none" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-surface rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -122,7 +141,7 @@ export default function ContractFormModal({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
             {/* 基本情報 */}
             <fieldset className="space-y-3">
               <legend className="text-[11px] font-mono tracking-wider uppercase text-ink-4 mb-2">基本情報</legend>

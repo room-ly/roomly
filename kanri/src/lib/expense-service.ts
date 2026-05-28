@@ -54,7 +54,7 @@ export async function saveExpense(supabase: Client, params: SaveParams): Promise
     owner_id: input.owner_id || null,
     payee_id: input.payee_id || null,
     contract_id: input.contract_id || null,
-    maintenance_request_id: input.maintenance_request_id || null,
+    case_id: input.case_id || null,
     category: input.category,
     description: input.description,
     amount: input.amount,

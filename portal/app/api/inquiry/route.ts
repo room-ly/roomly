@@ -29,19 +29,22 @@ export async function POST(request: Request) {
     company_id: string;
   };
 
-  const { error: insertErr } = await supabaseAdmin.from("inquiries").insert({
+  // ポータル経由の問い合わせは「対応案件」として登録（cases テーブル）。
+  // category=inquiry で「質問・相談」に分類、source=portal でポータル由来と識別。
+  const { error: insertErr } = await supabaseAdmin.from("cases").insert({
     company_id: unit.company_id,
     property_id: unit.property_id,
     unit_id: vacancy.unit_id,
-    inquiry_type: "general",
+    category: "inquiry",
     title: `【ポータル】${name}様からのお問い合わせ`,
     description: `名前: ${name}\nメール: ${email}\n電話: ${phone || "未記入"}\n\n${message}`,
     status: "open",
     priority: "normal",
+    source: "portal",
   });
 
   if (insertErr) {
-    console.error("Inquiry insert error:", insertErr);
+    console.error("Case insert error:", insertErr);
     return NextResponse.json({ error: "送信に失敗しました" }, { status: 500 });
   }
 

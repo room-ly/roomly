@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import {
@@ -28,7 +28,7 @@ interface PayeeOption {
   category?: string;
 }
 
-export type MaintenanceOption = {
+export type CaseOption = {
   id: string;
   label: string;
   property_id?: string | null;
@@ -53,7 +53,7 @@ interface ExpenseFormModalProps {
   properties: SelectOption[];
   owners: SelectOption[];
   payees?: PayeeOption[];
-  maintenance?: MaintenanceOption[];
+  cases?: CaseOption[];
   contracts?: ContractOption[];
   editData?: Record<string, any> | null;
 }
@@ -66,7 +66,7 @@ export default function ExpenseFormModal({
   properties,
   owners,
   payees = [],
-  maintenance = [],
+  cases = [],
   contracts = [],
   editData,
 }: ExpenseFormModalProps) {
@@ -95,7 +95,7 @@ export default function ExpenseFormModal({
   const [selectedPropertyId, setSelectedPropertyId] = useState(editData?.property_id || "");
   const [unitId, setUnitId] = useState(editData?.unit_id || "");
   const [contractId, setContractId] = useState(editData?.contract_id || "");
-  const [maintenanceId, setMaintenanceId] = useState(editData?.maintenance_request_id || "");
+  const [caseId, setCaseId] = useState(editData?.case_id || "");
   const [taxCategory, setTaxCategory] = useState<TaxCategory>(
     (editData?.tax_category as TaxCategory) || "taxable",
   );
@@ -143,16 +143,45 @@ export default function ExpenseFormModal({
   const sumBreakdown = ownerAmount + tenantAmount + companyAmount;
   const breakdownOk = sumBreakdown === amount;
 
-  if (!isOpen) return null;
+  const formRef = useRef<HTMLFormElement>(null);
+  // 編集対象が切り替わった時のみフォーム状態をリセットする。
+  // 同じ対象の閉じ直しでは入力を保持して、誤クローズで内容を失わないようにする。
+  const lastTargetRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const target = editData?.id ?? "__new__";
+    if (lastTargetRef.current === target) return;
+    lastTargetRef.current = target;
+
+    setSplitMode(initialSplit);
+    setAmount(num(editData?.amount));
+    setOwnerAmount(num(editData?.owner_amount));
+    setTenantAmount(num(editData?.tenant_amount));
+    setCompanyAmount(num(editData?.company_amount));
+    setSelectedPropertyId(editData?.property_id || "");
+    setUnitId(editData?.unit_id || "");
+    setContractId(editData?.contract_id || "");
+    setCaseId(editData?.case_id || "");
+    setTaxCategory((editData?.tax_category as TaxCategory) || "taxable");
+    setPaymentDueDate(editData?.payment_due_date || "");
+    setPaidAt(editData?.paid_at || "");
+    setAllocate((editData?.allocations?.length ?? 0) > 0);
+    setAllocations((editData?.allocations as AllocationDraft[]) ?? []);
+    setErrors({});
+    setApiError("");
+    formRef.current?.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, editData]);
+
   const isEdit = !!editData;
 
   const filteredContracts = unitId
     ? contracts.filter((c) => c.unit_id === unitId)
     : contracts;
 
-  const filteredMaintenance = selectedPropertyId
-    ? maintenance.filter((m) => !m.property_id || m.property_id === selectedPropertyId)
-    : maintenance;
+  const filteredCases = selectedPropertyId
+    ? cases.filter((c) => !c.property_id || c.property_id === selectedPropertyId)
+    : cases;
 
   const selectedOwner = (() => {
     if (!propertyRow?.owner_id) return null;
@@ -228,7 +257,7 @@ export default function ExpenseFormModal({
     data.property_id = selectedPropertyId;
     data.unit_id = unitId;
     data.contract_id = contractId;
-    data.maintenance_request_id = maintenanceId;
+    data.case_id = caseId;
     data.tax_category = taxCategory;
     data.payment_due_date = paymentDueDate;
     data.paid_at = paidAt;
@@ -271,6 +300,9 @@ export default function ExpenseFormModal({
         return;
       }
 
+      // 登録/更新が完了したらドラフトをリセット
+      lastTargetRef.current = null;
+      formRef.current?.reset();
       onClose();
       router.refresh();
     } catch (err) {
@@ -286,6 +318,7 @@ export default function ExpenseFormModal({
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      style={{ display: isOpen ? "flex" : "none" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -302,7 +335,7 @@ export default function ExpenseFormModal({
           <div className="bg-danger-tint text-danger text-sm rounded-lg px-3 py-2 mb-4">{apiError}</div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           {/* カテゴリ・日付 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -570,19 +603,19 @@ export default function ExpenseFormModal({
             </div>
           )}
 
-          {/* 修繕紐付け */}
-          {filteredMaintenance.length > 0 && (
+          {/* 対応案件紐付け */}
+          {filteredCases.length > 0 && (
             <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">紐付ける修繕依頼</label>
+              <label className="text-sm font-medium text-ink-2 block mb-1">紐付ける対応案件</label>
               <select
-                value={maintenanceId}
-                onChange={(e) => setMaintenanceId(e.target.value)}
+                value={caseId}
+                onChange={(e) => setCaseId(e.target.value)}
                 className="input"
               >
                 <option value="">未指定</option>
-                {filteredMaintenance.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
+                {filteredCases.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
                   </option>
                 ))}
               </select>

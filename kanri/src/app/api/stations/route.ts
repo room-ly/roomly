@@ -25,14 +25,13 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // 駅名の前方一致 → 部分一致の順で拾うため ilike。
-    // 路線名は train_lines を join して取得。
+    // 前方一致候補を広めに拾い、station_g_cd（駅グループ=乗換駅）の路線数で主要駅を上位に並べ直す。
+    // 並び順: 完全一致 → station_g_cd 路線数 降順 → 駅名 昇順。
     const { data, error } = await supabase
       .from("stations")
-      .select("station_cd, station_name, train_lines(line_name, company_name)")
+      .select("station_cd, station_name, station_g_cd, train_lines(line_name, company_name)")
       .ilike("station_name", `${q}%`)
-      .order("station_name")
-      .limit(30);
+      .limit(300);
 
     if (error) {
       return NextResponse.json(
@@ -41,12 +40,39 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const stations: StationOption[] = (data ?? []).map((row: any) => ({
-      station_cd: row.station_cd,
-      station_name: row.station_name,
-      line_name: row.train_lines?.line_name ?? null,
-      company_name: row.train_lines?.company_name ?? null,
-    }));
+    // station_g_cd ごとに「同名扱いの路線数」を数えてターミナル度合いを近似
+    const groupCount = new Map<string, number>();
+    for (const row of data ?? []) {
+      const g = (row as any).station_g_cd;
+      if (!g) continue;
+      groupCount.set(g, (groupCount.get(g) ?? 0) + 1);
+    }
+
+    const ranked = (data ?? [])
+      .map((row: any) => ({
+        station_cd: row.station_cd,
+        station_name: row.station_name,
+        station_g_cd: row.station_g_cd,
+        line_name: row.train_lines?.line_name ?? null,
+        company_name: row.train_lines?.company_name ?? null,
+        _exact: row.station_name === q ? 1 : 0,
+        _terminal: row.station_g_cd ? (groupCount.get(row.station_g_cd) ?? 1) : 1,
+      }))
+      .sort((a, b) => {
+        if (a._exact !== b._exact) return b._exact - a._exact;
+        if (a._terminal !== b._terminal) return b._terminal - a._terminal;
+        return a.station_name.localeCompare(b.station_name, "ja");
+      })
+      .slice(0, 30);
+
+    const stations: StationOption[] = ranked.map(
+      ({ station_cd, station_name, line_name, company_name }) => ({
+        station_cd,
+        station_name,
+        line_name,
+        company_name,
+      })
+    );
 
     return NextResponse.json({ stations });
   } catch {

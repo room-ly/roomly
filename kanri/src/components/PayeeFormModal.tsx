@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { payeeSchema, type PayeeFormData } from "@/lib/schemas-payee";
@@ -30,14 +30,24 @@ export default function PayeeFormModal({ isOpen, onClose, editData }: PayeeFormM
   const [branchName, setBranchName] = useState("");
   const [branchCode, setBranchCode] = useState("");
 
+  const formRef = useRef<HTMLFormElement>(null);
+  // 編集対象が切り替わった時のみフォーム状態をリセットする。
+  // 同じ対象の閉じ直しでは入力を保持して、誤クローズで内容を失わないようにする。
+  const lastTargetRef = useRef<string | null>(null);
   useEffect(() => {
+    if (!isOpen) return;
+    const target = editData?.id ?? "__new__";
+    if (lastTargetRef.current === target) return;
+    lastTargetRef.current = target;
+
     setBankName(editData?.bank_name || "");
     setBankCode(editData?.bank_code || "");
     setBranchName(editData?.branch_name || "");
     setBranchCode(editData?.branch_code || "");
-  }, [editData, isOpen]);
-
-  if (!isOpen) return null;
+    setErrors({});
+    setApiError("");
+    formRef.current?.reset();
+  }, [isOpen, editData]);
 
   const isEdit = !!editData;
 
@@ -74,6 +84,9 @@ export default function PayeeFormModal({ isOpen, onClose, editData }: PayeeFormM
         }
         return;
       }
+      // 登録/更新が完了したらドラフトをリセット
+      lastTargetRef.current = null;
+      formRef.current?.reset();
       onClose();
       router.refresh();
     } catch (err) {
@@ -87,6 +100,7 @@ export default function PayeeFormModal({ isOpen, onClose, editData }: PayeeFormM
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      style={{ display: isOpen ? "flex" : "none" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -105,7 +119,7 @@ export default function PayeeFormModal({ isOpen, onClose, editData }: PayeeFormM
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm font-medium text-ink-2 block mb-1">
               取引先名 <span className="text-danger">*</span>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
-import { maintenanceSchema } from "@/lib/schemas";
+import { caseSchema } from "@/lib/schemas";
 
 export async function PUT(
   request: NextRequest,
@@ -9,8 +9,25 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const parsed = maintenanceSchema.safeParse(body);
 
+    // ステータスのみの部分更新（カンバンのドラッグ&ドロップなど）に対応
+    if (Object.keys(body).length === 1 && typeof body.status === "string") {
+      const supabase = await createClient();
+      const companyId = await getCompanyId();
+      const { data, error } = await supabase
+        .from("cases")
+        .update({ status: body.status })
+        .eq("id", id)
+        .eq("company_id", companyId)
+        .select()
+        .single();
+      if (error) {
+        return NextResponse.json({ error: "対応案件の更新に失敗しました" }, { status: 500 });
+      }
+      return NextResponse.json(data);
+    }
+
+    const parsed = caseSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: "バリデーションエラー", details: parsed.error.flatten().fieldErrors },
@@ -20,9 +37,13 @@ export async function PUT(
 
     const supabase = await createClient();
     const companyId = await getCompanyId();
-    const { data: maintenance, error } = await supabase
-      .from("maintenance_requests")
-      .update(parsed.data)
+    const { data: caseRow, error } = await supabase
+      .from("cases")
+      .update({
+        ...parsed.data,
+        property_id: parsed.data.property_id || null,
+        unit_id: parsed.data.unit_id || null,
+      })
       .eq("id", id)
       .eq("company_id", companyId)
       .select()
@@ -30,12 +51,12 @@ export async function PUT(
 
     if (error) {
       return NextResponse.json(
-        { error: "修繕依頼の更新に失敗しました" },
+        { error: "対応案件の更新に失敗しました" },
         { status: 500 }
       );
     }
 
-    return NextResponse.json(maintenance);
+    return NextResponse.json(caseRow);
   } catch {
     return NextResponse.json(
       { error: "リクエストの処理に失敗しました" },
@@ -54,14 +75,14 @@ export async function DELETE(
     const companyId = await getCompanyId();
 
     const { error } = await supabase
-      .from("maintenance_requests")
+      .from("cases")
       .delete()
       .eq("id", id)
       .eq("company_id", companyId);
 
     if (error) {
       return NextResponse.json(
-        { error: "修繕依頼の削除に失敗しました" },
+        { error: "対応案件の削除に失敗しました" },
         { status: 500 }
       );
     }

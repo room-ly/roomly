@@ -82,8 +82,6 @@ export default function TenantFormModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, editData?.id]);
 
-  if (!isOpen) return null;
-
   function set(key: string, value: string) {
     setForm((prev) => {
       const next = { ...prev, [key]: value };
@@ -157,6 +155,7 @@ export default function TenantFormModal({
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      style={{ display: isOpen ? "flex" : "none" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">

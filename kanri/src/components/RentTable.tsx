@@ -48,9 +48,23 @@ export default function RentTable({ data }: RentTableProps) {
     return data.filter((b) => b.billing_month === selectedMonth);
   }, [data, selectedMonth]);
 
-  const paidItems = monthFiltered.filter((b) => b.status === "paid");
-  const unpaidItems = monthFiltered.filter((b) => b.status !== "paid");
-  const overdueItems = monthFiltered.filter((b) => b.status === "overdue");
+  // 滞納判定: due_date を過ぎていて、入金合計が請求額に達していない
+  // status カラムが古いまま放置されていても矛盾しないよう、その場で計算する
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isUnpaid = (b: Record<string, any>) => {
+    const total = Number(b.total_amount) || 0;
+    const paid = (b.rent_payments ?? []).reduce(
+      (s: number, p: any) => s + (Number(p.amount) || 0),
+      0
+    );
+    return paid < total;
+  };
+  const isOverdue = (b: Record<string, any>) =>
+    isUnpaid(b) && b.due_date && b.due_date < todayStr;
+
+  const paidItems = monthFiltered.filter((b) => !isUnpaid(b));
+  const unpaidItems = monthFiltered.filter((b) => isUnpaid(b));
+  const overdueItems = monthFiltered.filter((b) => isOverdue(b));
 
   const tabFiltered = useMemo(() => {
     if (activeTab === "paid") return paidItems;
@@ -161,7 +175,7 @@ export default function RentTable({ data }: RentTableProps) {
                   {paid > 0 && diff > 0 && (
                     <div style={{ fontSize: 11, color: "#2b6cb0" }}>+¥{diff.toLocaleString()} 超過</div>
                   )}
-                  {item.status !== "paid" && paid > 0 && diff < 0 && (
+                  {isUnpaid(item) && paid > 0 && diff < 0 && (
                     <div style={{ fontSize: 11, color: "var(--danger)" }}>-¥{Math.abs(diff).toLocaleString()} 不足</div>
                   )}
                 </div>
@@ -171,13 +185,23 @@ export default function RentTable({ data }: RentTableProps) {
           {
             key: "status",
             label: "状態",
-            render: (item) => <StatusBadge status={item.status} />,
+            render: (item) => {
+              // due_date と入金額から実際の状態を導出（DBのstatusが古いままでも正しく表示）
+              const paid = (item.rent_payments as any[] || []).reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+              const total = Number(item.total_amount) || 0;
+              let derived: string;
+              if (paid >= total) derived = "paid";
+              else if (paid > 0) derived = "partial";
+              else if (isOverdue(item)) derived = "overdue";
+              else derived = "unpaid";
+              return <StatusBadge status={derived} />;
+            },
           },
           {
             key: "_action",
             label: "",
             render: (item) =>
-              item.status !== "paid" ? (
+              isUnpaid(item) ? (
                 <RentPaymentButton
                   billing={{
                     id: item.id,
@@ -192,7 +216,7 @@ export default function RentTable({ data }: RentTableProps) {
           },
         ]}
         onRowClick={(item) => router.push(`/rent/${item.id}`)}
-        rowClassName={(item) => (item.status === "overdue" || item.status === "partial" ? "bg-danger-tint" : "")}
+        rowClassName={(item) => (isOverdue(item) ? "row-overdue" : "")}
       />
     </>
   );

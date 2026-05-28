@@ -306,18 +306,33 @@ export const rentPaymentSchema = z.object({
 
 export type RentPaymentFormData = z.infer<typeof rentPaymentSchema>;
 
-// 修繕依頼スキーマ
-export const maintenanceSchema = z.object({
-  property_id: z.guid("物件を選択してください"),
+// 対応案件スキーマ（旧 maintenance_requests + inquiries 統合）
+// 受付した全事象を1つの台帳で管理。物件特定不可なクレーム等のため property_id はオプション。
+export const caseSchema = z.object({
+  property_id: z.guid().optional().or(z.literal("").transform(() => undefined)),
   unit_id: z.string().optional().or(z.literal("")),
   title: z.string().min(1, "件名は必須です"),
   description: z.string().optional(),
-  category: z.string().min(1, "カテゴリは必須です"),
+  category: z.enum(
+    [
+      "repair",
+      "key",
+      "common_area",
+      "tenant_trouble",
+      "neighbor",
+      "inspection",
+      "inquiry",
+      "request",
+      "complaint",
+      "other",
+    ],
+    { message: "種別を選択してください" }
+  ),
   priority: z.enum(["low", "normal", "high", "urgent"], {
     message: "優先度を選択してください",
   }),
   status: z
-    .enum(["open", "in_progress", "waiting_parts", "completed", "cancelled"])
+    .enum(["open", "in_progress", "on_hold", "completed", "cancelled"])
     .default("open"),
   vendor_name: z.string().optional(),
   estimated_cost: z.coerce
@@ -327,29 +342,7 @@ export const maintenanceSchema = z.object({
     .or(z.literal("").transform(() => undefined)),
 });
 
-export type MaintenanceFormData = z.infer<typeof maintenanceSchema>;
-
-// 問い合わせスキーマ
-export const inquirySchema = z.object({
-  property_id: z.string().optional().or(z.literal("")),
-  unit_id: z.string().optional().or(z.literal("")),
-  tenant_id: z.string().optional().or(z.literal("")),
-  inquiry_type: z.enum(
-    ["move_out", "maintenance", "complaint", "other"],
-    {
-      message: "種別を選択してください",
-    }
-  ),
-  move_out_date: z.string().optional().or(z.literal("")),
-  title: z.string().min(1, "件名は必須です"),
-  description: z.string().optional(),
-  status: z
-    .enum(["open", "in_progress", "resolved", "closed"])
-    .default("open"),
-  priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
-});
-
-export type InquiryFormData = z.infer<typeof inquirySchema>;
+export type CaseFormData = z.infer<typeof caseSchema>;
 
 // オーナースキーマ
 export const ownerSchema = z.object({

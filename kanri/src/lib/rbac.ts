@@ -24,14 +24,10 @@ export type Permission =
   | "rent:create"
   | "rent:edit"
   | "rent:delete"
-  | "maintenance:read"
-  | "maintenance:create"
-  | "maintenance:edit"
-  | "maintenance:delete"
-  | "inquiries:read"
-  | "inquiries:create"
-  | "inquiries:edit"
-  | "inquiries:delete"
+  | "cases:read"
+  | "cases:create"
+  | "cases:edit"
+  | "cases:delete"
   | "expenses:read"
   | "expenses:create"
   | "expenses:edit"
@@ -62,8 +58,7 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     "tenants:read", "tenants:create", "tenants:edit", "tenants:delete",
     "contracts:read", "contracts:create", "contracts:edit", "contracts:delete",
     "rent:read", "rent:create", "rent:edit", "rent:delete",
-    "maintenance:read", "maintenance:create", "maintenance:edit", "maintenance:delete",
-    "inquiries:read", "inquiries:create", "inquiries:edit", "inquiries:delete",
+    "cases:read", "cases:create", "cases:edit", "cases:delete",
     "expenses:read", "expenses:create", "expenses:edit", "expenses:delete", "expenses:approve",
     "owners:read", "owners:create", "owners:edit", "owners:delete",
     "remittances:read", "remittances:create", "remittances:edit",
@@ -78,8 +73,7 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     "tenants:read", "tenants:create", "tenants:edit",
     "contracts:read", "contracts:create", "contracts:edit",
     "rent:read", "rent:create", "rent:edit",
-    "maintenance:read", "maintenance:create", "maintenance:edit",
-    "inquiries:read", "inquiries:create", "inquiries:edit",
+    "cases:read", "cases:create", "cases:edit",
     "expenses:read", "expenses:create", "expenses:edit", "expenses:approve",
     "owners:read", "owners:create", "owners:edit",
     "remittances:read", "remittances:create", "remittances:edit",
@@ -94,8 +88,7 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     "tenants:read", "tenants:create", "tenants:edit",
     "contracts:read",
     "rent:read", "rent:create", "rent:edit",
-    "maintenance:read", "maintenance:create", "maintenance:edit",
-    "inquiries:read", "inquiries:create", "inquiries:edit",
+    "cases:read", "cases:create", "cases:edit",
     "expenses:read", "expenses:create",
     "owners:read",
     "remittances:read",
@@ -109,8 +102,7 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     "tenants:read",
     "contracts:read",
     "rent:read",
-    "maintenance:read",
-    "inquiries:read",
+    "cases:read",
     "expenses:read",
     "owners:read",
     "remittances:read",

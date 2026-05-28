@@ -4,7 +4,7 @@ import {
   getPropertiesForSelect,
   getOwnersForSelect,
   getPayeesForSelect,
-  getMaintenanceForSelect,
+  getCasesForSelect,
   getContractsForSelect,
 } from "@/lib/queries";
 import PageHeader from "@/components/PageHeader";
@@ -29,20 +29,20 @@ export default async function ExpensesPage({
   const { page: pageStr, sort } = await searchParams;
   const page = Math.max(1, Number(pageStr) || 1);
   const sortValue = sort || "expense_date:desc";
-  const [{ data: expenses, total }, properties, owners, payees, maintenance, contracts] =
+  const [{ data: expenses, total }, properties, owners, payees, cases, contracts] =
     await Promise.all([
       getExpenses(page, PAGE_SIZE, sortValue),
       getPropertiesForSelect(),
       getOwnersForSelect(),
       getPayeesForSelect(),
-      getMaintenanceForSelect(),
+      getCasesForSelect(),
       getContractsForSelect(),
     ]);
 
-  const maintenanceOptions = (maintenance as any[]).map((m) => ({
-    id: m.id,
-    label: `${m.property?.name ?? ""} ${m.unit?.unit_number ?? ""} ${m.title}`.trim(),
-    property_id: m.property_id,
+  const caseOptions = (cases as any[]).map((c) => ({
+    id: c.id,
+    label: `${c.property?.name ?? ""} ${c.unit?.unit_number ?? ""} ${c.title}`.trim(),
+    property_id: c.property_id,
   }));
 
   const contractOptions = (contracts as any[]).map((c) => ({
@@ -64,7 +64,7 @@ export default async function ExpensesPage({
             properties={properties}
             owners={owners}
             payees={payees}
-            maintenance={maintenanceOptions}
+            cases={caseOptions}
             contracts={contractOptions}
           />
         }

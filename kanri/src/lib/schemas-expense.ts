@@ -82,7 +82,7 @@ export const expenseSchema = z
     owner_id: optionalUuid,
     payee_id: optionalUuid,
     contract_id: optionalUuid,
-    maintenance_request_id: optionalUuid,
+    case_id: optionalUuid,
     category: z.enum(["repair", "cleaning", "insurance", "tax", "utility", "other"], {
       message: "カテゴリを選択してください",
     }),
