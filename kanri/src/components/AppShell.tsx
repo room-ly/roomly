@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import CommandPalette from "./CommandPalette";
+import BetaNotice from "./BetaNotice";
 
 export interface SidebarInitialData {
   badgeCounts: Record<string, number>;
@@ -23,6 +24,7 @@ export default function AppShell({ children, sidebarData }: { children: React.Re
 
   return (
     <Sidebar initialData={sidebarData}>
+      <BetaNotice />
       <Header />
       <main className="page">
         {children}
