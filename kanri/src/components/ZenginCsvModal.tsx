@@ -327,7 +327,7 @@ export default function ZenginCsvModal({ isOpen, onClose, remittances, ownerSumm
         </div>
 
         <p className="text-[11px] text-ink-3 mt-4">
-          ※ 全銀協標準フォーマット（固定長120バイト）で出力されます。銀行独自のCSV形式が必要な場合は<a href="mailto:support@roomly.jp" className="text-accent hover:underline">お問い合わせ</a>ください。
+          ※ 全銀協標準フォーマット（固定長120バイト）で出力されます。銀行独自のCSV形式が必要な場合は<a href="mailto:contact@roomly.jp" className="text-accent hover:underline">お問い合わせ</a>ください。
         </p>
 
         <div className="flex justify-end gap-2 pt-5 mt-5 border-t border-line">
