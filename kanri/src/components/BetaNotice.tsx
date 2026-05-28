@@ -34,7 +34,7 @@ export default function BetaNotice() {
           BETA
         </span>
         <p className="flex-1">
-          Roomlyは現在ベータ版として提供しています。動かない機能や不具合に遭遇した場合は、お手数ですが{" "}
+          Roomlyは現在ベータ版として提供しています。動かない機能や不具合はもちろん、「こんな機能がほしい」「ここがこうなっていると使いやすい」といったご要望も{" "}
           <a href="mailto:contact@roomly.jp" className="text-accent hover:underline">
             contact@roomly.jp
           </a>
