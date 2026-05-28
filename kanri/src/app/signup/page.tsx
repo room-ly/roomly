@@ -132,6 +132,12 @@ export default function SignupPage() {
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8 text-center">
             <h1 className="text-xl font-semibold text-ink tracking-wide">Roomly</h1>
+            <a
+              href="https://hp.roomly.jp"
+              className="inline-flex items-center gap-1 mt-3 text-[12px] text-ink-3 hover:text-accent transition-colors"
+            >
+              ← hp.roomly.jp に戻る
+            </a>
           </div>
 
           <div className="text-center mb-8">

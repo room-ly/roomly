@@ -107,6 +107,12 @@ export default function LoginPage() {
               <span className="w-7 h-7 rounded-lg bg-ink text-bg grid place-items-center text-[15px] font-semibold">R</span>
               <h1 className="text-xl font-semibold text-ink tracking-wide">Roomly</h1>
             </div>
+            <a
+              href="https://hp.roomly.jp"
+              className="inline-flex items-center gap-1 mt-3 text-[12px] text-ink-3 hover:text-accent transition-colors"
+            >
+              ← hp.roomly.jp に戻る
+            </a>
           </div>
 
           {mfaStep ? (
