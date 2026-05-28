@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import MonthSelector from "./MonthSelector";
 import FilterableTable from "./FilterableTable";
 import StatusBadge from "./StatusBadge";
@@ -9,44 +9,46 @@ import { RentPaymentButton } from "./RentPageClient";
 
 interface RentTableProps {
   data: Record<string, any>[];
+  availableMonths: string[];
+  selectedMonth: string; // "all" もしくは YYYY-MM-DD
 }
 
-function getAvailableMonths(data: Record<string, any>[]): string[] {
-  const set = new Set<string>();
-  for (const item of data) {
-    if (item.billing_month) set.add(item.billing_month);
-  }
-  return Array.from(set).sort().reverse();
-}
+type StatusTab = "all" | "paid" | "overdue";
 
-function getCurrentMonth() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
-
-type StatusTab = "all" | "paid" | "unpaid" | "overdue";
-
-export default function RentTable({ data }: RentTableProps) {
+export default function RentTable({ data, availableMonths, selectedMonth }: RentTableProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const statusParam = searchParams.get("status");
-  const availableMonths = useMemo(() => getAvailableMonths(data), [data]);
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    if (statusParam) return "all";
-    const current = getCurrentMonth();
-    return availableMonths.includes(current) ? current : availableMonths[0] || current;
-  });
   const [activeTab, setActiveTab] = useState<StatusTab>(() => {
-    if (statusParam === "overdue") return "overdue";
-    if (statusParam === "unpaid") return "unpaid";
+    if (statusParam === "overdue" || statusParam === "unpaid") return "overdue";
     if (statusParam === "paid") return "paid";
     return "all";
   });
 
-  const monthFiltered = useMemo(() => {
-    if (selectedMonth === "all") return data;
-    return data.filter((b) => b.billing_month === selectedMonth);
-  }, [data, selectedMonth]);
+  // 月セレクトはURLパラメータでサーバーリフェッチ
+  const handleMonthChange = (month: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("month", month);
+    params.delete("page");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  // サーバーで月絞り込み済みなので data はそのまま使う
+  const monthFiltered = data;
+
+  const propertyOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of data) {
+      const property = item.contract?.unit?.property;
+      const id = property?.id;
+      if (!id) continue;
+      if (!map.has(id)) map.set(id, property.name || "(名称未設定)");
+    }
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, "ja"));
+  }, [data]);
 
   // 滞納判定: due_date を過ぎていて、入金合計が請求額に達していない
   // status カラムが古いまま放置されていても矛盾しないよう、その場で計算する
@@ -63,31 +65,34 @@ export default function RentTable({ data }: RentTableProps) {
     isUnpaid(b) && b.due_date && b.due_date < todayStr;
 
   const paidItems = monthFiltered.filter((b) => !isUnpaid(b));
-  const unpaidItems = monthFiltered.filter((b) => isUnpaid(b));
   const overdueItems = monthFiltered.filter((b) => isOverdue(b));
 
   const tabFiltered = useMemo(() => {
     if (activeTab === "paid") return paidItems;
-    if (activeTab === "unpaid") return unpaidItems;
     if (activeTab === "overdue") return overdueItems;
     return monthFiltered;
-  }, [monthFiltered, activeTab, paidItems, unpaidItems, overdueItems]);
+  }, [monthFiltered, activeTab, paidItems, overdueItems]);
 
   const totalExpected = monthFiltered.reduce((s, b) => s + Number(b.total_amount), 0);
   const totalPaid = paidItems.reduce((s, b) => s + Number(b.total_amount), 0);
   const collectionRate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0;
-  const unpaidAmount = totalExpected - totalPaid;
+  const overdueAmount = overdueItems.reduce((s, b) => {
+    const paid = (b.rent_payments ?? []).reduce(
+      (sum: number, p: any) => sum + (Number(p.amount) || 0),
+      0
+    );
+    return s + (Number(b.total_amount) - paid);
+  }, 0);
 
   const tabs: { key: StatusTab; label: string; count: number; danger?: boolean }[] = [
     { key: "all", label: "すべて", count: monthFiltered.length },
     { key: "paid", label: "入金済", count: paidItems.length },
-    { key: "unpaid", label: "未入金", count: unpaidItems.length },
     { key: "overdue", label: "滞納", count: overdueItems.length, danger: true },
   ];
 
   return (
     <>
-      <MonthSelector selectedMonth={selectedMonth} availableMonths={availableMonths} onChange={setSelectedMonth} />
+      <MonthSelector selectedMonth={selectedMonth} availableMonths={availableMonths} onChange={handleMonthChange} />
 
       <div className="cols-summary">
         <div className="sum-card">
@@ -101,9 +106,9 @@ export default function RentTable({ data }: RentTableProps) {
           <span className="sum-foot mono">{collectionRate}% · {paidItems.length}件</span>
         </div>
         <div className="sum-card">
-          <span className="sum-label">未収・滞納</span>
-          <span className="sum-value serif-i" style={{ color: unpaidItems.length > 0 ? "var(--danger)" : undefined }}>¥{unpaidAmount.toLocaleString()}</span>
-          <span className="sum-foot mono" style={{ color: overdueItems.length > 0 ? "var(--danger)" : undefined }}>{unpaidItems.length}件{overdueItems.length > 0 && ` (滞納${overdueItems.length}件)`}</span>
+          <span className="sum-label">滞納</span>
+          <span className="sum-value serif-i" style={{ color: overdueItems.length > 0 ? "var(--danger)" : undefined }}>¥{overdueAmount.toLocaleString()}</span>
+          <span className="sum-foot mono" style={{ color: overdueItems.length > 0 ? "var(--danger)" : undefined }}>{overdueItems.length}件</span>
         </div>
         <div className="sum-card">
           <span className="sum-label">回収率</span>
@@ -132,6 +137,13 @@ export default function RentTable({ data }: RentTableProps) {
         data={tabFiltered}
         searchFields={["contract.tenant.name", "contract.unit.property.name", "contract.unit.unit_number"]}
         searchPlaceholder="入居者・物件名で検索..."
+        filters={[
+          {
+            key: "contract.unit.property.id",
+            label: "物件",
+            options: propertyOptions,
+          },
+        ]}
         columns={[
           {
             key: "contract.tenant.name",

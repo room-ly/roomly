@@ -467,21 +467,45 @@ export async function getOverdueAging(): Promise<{
 }
 
 // 家賃請求一覧（契約・入居者・物件付き）— ページネーション対応
-export async function getRentBillings(page = 1, pageSize = 50, sort = "billing_month:desc"): Promise<{ data: Row[]; total: number }> {
+export async function getRentBillings(
+  page = 1,
+  pageSize = 50,
+  sort = "billing_month:desc",
+  billingMonth?: string,
+): Promise<{ data: Row[]; total: number }> {
   const supabase = await createClient();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
   const [sortCol, sortDir] = sort.split(":") as [string, string];
-  const { data, error, count } = await supabase
+  let query = supabase
     .from("rent_billings")
     .select(
-      "*, contract:contracts(id, tenant:tenants(name, phone), unit:units(unit_number, property:properties(name))), rent_payments(payment_date, amount)",
+      "*, contract:contracts(id, tenant:tenants(name, phone), unit:units(unit_number, property:properties(id, name))), rent_payments(payment_date, amount)",
       { count: "exact" }
-    )
+    );
+  if (billingMonth) {
+    query = query.eq("billing_month", billingMonth);
+  }
+  const { data, error, count } = await query
     .order(sortCol, { ascending: sortDir === "asc" })
     .range(from, to);
   if (error) throw error;
   return { data: (data ?? []) as Row[], total: count ?? 0 };
+}
+
+// 家賃画面の月セレクト用に、rent_billings に存在する全 billing_month を新しい順で返す
+export async function getAvailableBillingMonths(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("rent_billings")
+    .select("billing_month")
+    .order("billing_month", { ascending: false });
+  if (error) throw error;
+  const set = new Set<string>();
+  for (const row of data ?? []) {
+    if (row.billing_month) set.add(row.billing_month as string);
+  }
+  return Array.from(set);
 }
 
 // 家賃請求詳細 — 指定IDの請求を起点に、同一契約の全請求を時系列で返す
