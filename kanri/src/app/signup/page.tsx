@@ -6,6 +6,24 @@ import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 
+const AW_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || "";
+const AW_LABEL_SIGNUP_COMPLETE = process.env.NEXT_PUBLIC_GOOGLE_ADS_LABEL_SIGNUP_COMPLETE || "";
+
+type Gtag = (...args: unknown[]) => void;
+declare global {
+  interface Window {
+    gtag?: Gtag;
+  }
+}
+
+// signup完了時にGoogle広告へコンバージョン送信
+function fireSignupConversion() {
+  if (!AW_ID || !AW_LABEL_SIGNUP_COMPLETE) return;
+  window.gtag?.("event", "conversion", {
+    send_to: `${AW_ID}/${AW_LABEL_SIGNUP_COMPLETE}`,
+  });
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const [companyName, setCompanyName] = useState("");
@@ -35,6 +53,9 @@ export default function SignupPage() {
         setError(data.error || "アカウント作成に失敗しました");
         return;
       }
+
+      // signup完了をGoogle広告コンバージョンとして送信
+      fireSignupConversion();
 
       if (data.requiresEmailConfirmation) {
         setSuccess(true);
