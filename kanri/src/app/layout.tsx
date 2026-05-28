@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/lib/theme-context";
 import { AuthProvider } from "@/lib/auth-context";
 import { PostHogProvider } from "@/lib/posthog";
 import AppShell from "@/components/AppShell";
-import GoogleAdsTag from "@/components/GoogleAdsTag";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { getBadgeCounts } from "@/lib/queries";
 
 const inter = Inter({
@@ -49,7 +49,7 @@ export default async function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <body className={`${inter.variable} antialiased`} style={{ fontFamily: "var(--font-sans)" }}>
-        <GoogleAdsTag />
+        <GoogleAnalytics />
         <ThemeProvider>
           <AuthProvider>
             <PostHogProvider>

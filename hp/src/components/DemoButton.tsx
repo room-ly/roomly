@@ -10,10 +10,6 @@ declare global {
   }
 }
 
-const AW_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || "";
-const AW_LABEL_DEMO = process.env.NEXT_PUBLIC_GOOGLE_ADS_LABEL_DEMO || "";
-const AW_LABEL_SIGNUP = process.env.NEXT_PUBLIC_GOOGLE_ADS_LABEL_SIGNUP || "";
-
 function classify(href: string): "demo" | "signup" | null {
   if (href.includes("demo=1")) return "demo";
   if (/kanri\.roomly\.jp\/signup(\/|\?|$)/.test(href)) return "signup";
@@ -98,20 +94,12 @@ export function DemoClickTracker() {
         );
       }
 
-      // GA4イベント（GA設定済み）
+      // GA4カスタムイベント（Google広告のCVはGA4経由で連携）
       const eventName = kind === "demo" ? "demo_click" : "signup_click";
       window.gtag?.("event", eventName, {
         location: loc,
         link_url: href,
       });
-
-      // Google広告コンバージョン（AW-IDとラベルが揃っているときだけ）
-      const label = kind === "demo" ? AW_LABEL_DEMO : AW_LABEL_SIGNUP;
-      if (AW_ID && label) {
-        window.gtag?.("event", "conversion", {
-          send_to: `${AW_ID}/${label}`,
-        });
-      }
     }
 
     document.addEventListener("click", handleClick);
