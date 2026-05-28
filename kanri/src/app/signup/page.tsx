@@ -116,6 +116,14 @@ export default function SignupPage() {
             10区画まで無料。クレジットカード不要。
             今すぐアカウントを作成して始めましょう。
           </p>
+          <a
+            href="https://hp.roomly.jp"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-10 inline-flex items-center gap-1.5 text-[13px] text-white/40 hover:text-white/70 transition-colors"
+          >
+            hp.roomly.jp →
+          </a>
         </div>
       </div>
 
