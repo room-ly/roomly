@@ -632,8 +632,8 @@ export async function getDashboardData() {
     supabase.from("units").select("id", { count: "exact", head: true }).eq("status", "vacant"),
     supabase
       .from("rent_billings")
-      .select("id, billing_month, total_amount, contract:contracts(id, tenant:tenants(name))")
-      .eq("status", "overdue")
+      .select("id, billing_month, total_amount, due_date, status, contract:contracts(id, tenant:tenants(name)), rent_payments(amount)")
+      .lt("due_date", today)
       .order("billing_month", { ascending: false }),
     supabase
       .from("cases")
@@ -662,7 +662,7 @@ export async function getDashboardData() {
       .in("status", ["maintenance", "vacant"]),
     supabase
       .from("rent_billings")
-      .select("total_amount, status, billing_month")
+      .select("total_amount, status, billing_month, rent_payments(amount)")
       .gte("billing_month", `${now.toISOString().slice(0, 7)}-01`)
       .lt("billing_month", `${new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().slice(0, 10)}`),
     supabase
@@ -676,7 +676,14 @@ export async function getDashboardData() {
       .in("status", ["draft", "confirmed"]),
   ]);
 
-  const overdueBillings = (overdueBillingsRes.data ?? []) as Row[];
+  // due_date 超過のうち、rent_payments 合計が total_amount に満たないものを滞納とみなす
+  const overdueBillings = ((overdueBillingsRes.data ?? []) as Row[]).filter((b: Row) => {
+    const paid = (b.rent_payments ?? []).reduce(
+      (s: number, p: { amount: number }) => s + Number(p.amount || 0),
+      0
+    );
+    return paid < Number(b.total_amount);
+  });
   const activeCases = (activeCasesRes.data ?? []) as Row[];
   const expiringContracts = (expiringRes.data ?? []) as Row[];
   const pendingMoveOuts = (pendingMoveOutRes.data ?? []) as Row[];
@@ -688,9 +695,22 @@ export async function getDashboardData() {
   const totalUnits = unitTotal.count ?? 0;
   const occupiedUnits = unitOccupied.count ?? 0;
   const vacantUnitsCount = unitVacant.count ?? 0;
-  const overdueAmount = overdueBillings.reduce((s: number, b: Row) => s + Number(b.total_amount), 0);
+  const overdueAmount = overdueBillings.reduce((s: number, b: Row) => {
+    const paid = (b.rent_payments ?? []).reduce(
+      (sum: number, p: { amount: number }) => sum + Number(p.amount || 0),
+      0
+    );
+    return s + (Number(b.total_amount) - paid);
+  }, 0);
+  // 家賃ページと同じ定義: rent_payments 実額ベース
   const totalExpected = allBillings.reduce((s: number, b: Row) => s + Number(b.total_amount), 0);
-  const totalReceived = allBillings.filter((b: Row) => b.status === "paid").reduce((s: number, b: Row) => s + Number(b.total_amount), 0);
+  const totalReceived = allBillings.reduce((s: number, b: Row) => {
+    const paid = (b.rent_payments ?? []).reduce(
+      (sum: number, p: { amount: number }) => sum + Number(p.amount || 0),
+      0
+    );
+    return s + Math.min(paid, Number(b.total_amount));
+  }, 0);
   const monthlyExpenseTotal = monthlyExpenses.reduce((s: number, e: Row) => s + Number(e.amount), 0);
 
   return {
@@ -731,11 +751,11 @@ export async function getMonthlyTrend() {
     months.push(d.toISOString().slice(0, 7));
   }
 
-  // 月ごとの家賃請求データ
+  // 月ごとの家賃請求データ（家賃ページと同じく rent_payments 実額ベース）
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
   const { data: billings } = await supabase
     .from("rent_billings")
-    .select("billing_month, status, total_amount")
+    .select("billing_month, status, total_amount, rent_payments(amount)")
     .gte("billing_month", sixMonthsAgo.toISOString().slice(0, 10));
 
   const trend = months.map((month) => {
@@ -746,9 +766,13 @@ export async function getMonthlyTrend() {
       (s: number, b: Row) => s + Number(b.total_amount),
       0
     );
-    const paid = monthBillings
-      .filter((b: Row) => b.status === "paid")
-      .reduce((s: number, b: Row) => s + Number(b.total_amount), 0);
+    const paid = monthBillings.reduce((s: number, b: Row) => {
+      const sum = (b.rent_payments ?? []).reduce(
+        (acc: number, p: { amount: number }) => acc + Number(p.amount || 0),
+        0
+      );
+      return s + Math.min(sum, Number(b.total_amount));
+    }, 0);
     return {
       month,
       label: `${month.slice(5)}月`,
