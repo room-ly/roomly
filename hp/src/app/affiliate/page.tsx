@@ -15,6 +15,12 @@ export const metadata: Metadata = {
     siteName: "Roomly",
     locale: "ja_JP",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "アフィリエイトプログラム | Roomly",
+    description:
+      "紹介された方が有料プランを続ける限り、月額の10%を期限なくずっと還元します。",
+  },
 };
 
 export default function AffiliatePage() {
