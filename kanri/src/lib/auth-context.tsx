@@ -149,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const gaClientId = await getGaClientId();
     if (gaClientId) attribution.ga_client_id = gaClientId;
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -170,11 +170,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: error.message };
     }
 
-    // MFA要否チェック
-    const { data: mfaData } = await supabase.auth.mfa.listFactors();
-    const totpFactors = mfaData?.totp ?? (mfaData as any)?.all?.filter((f: any) => f.factor_type === "totp") ?? [];
-    if (totpFactors.length > 0) {
-      return { mfaRequired: true };
+    // MFA要否チェック（失敗してもログインは継続できるよう例外を握りつぶす）
+    try {
+      const { data: mfaData } = await supabase.auth.mfa.listFactors();
+      const totpFactors = mfaData?.totp ?? (mfaData as any)?.all?.filter((f: any) => f.factor_type === "totp") ?? [];
+      if (totpFactors.length > 0) {
+        return { mfaRequired: true };
+      }
+    } catch (e) {
+      console.error("MFA factors check failed:", e);
     }
 
     return {};
