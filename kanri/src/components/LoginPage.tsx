@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
@@ -30,8 +30,10 @@ export default function LoginPage() {
         } else {
           setError("メールアドレスまたはパスワードが正しくありません");
         }
+        setLoading(false);
       } else if (result.mfaRequired) {
         setMfaStep(true);
+        setLoading(false);
       } else {
         if (isDemo) {
           navigator.sendBeacon("/api/demo-click");
@@ -40,7 +42,6 @@ export default function LoginPage() {
       }
     } catch {
       setError("ログインに失敗しました");
-    } finally {
       setLoading(false);
     }
   };
@@ -53,12 +54,12 @@ export default function LoginPage() {
       const result = await verifyMfa(mfaCode);
       if (result.error) {
         setError(result.error);
+        setLoading(false);
       } else {
         router.push("/");
       }
     } catch {
       setError("認証に失敗しました");
-    } finally {
       setLoading(false);
     }
   };
@@ -150,8 +151,9 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading || mfaCode.length !== 6}
-                  className="w-full py-2.5 bg-accent text-white rounded-full font-medium text-[13px] transition-colors hover:bg-accent-deep disabled:opacity-50"
+                  className="w-full py-2.5 bg-accent text-white rounded-full font-medium text-[13px] transition-colors hover:bg-accent-deep disabled:opacity-70 inline-flex items-center justify-center gap-2"
                 >
+                  {loading && <Loader2 size={15} className="animate-spin" />}
                   {loading ? "認証中..." : "認証する"}
                 </button>
               </form>
@@ -219,8 +221,9 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 bg-accent text-white rounded-full font-medium text-[13px] transition-colors hover:bg-accent-deep disabled:opacity-50"
+                  className="w-full py-2.5 bg-accent text-white rounded-full font-medium text-[13px] transition-colors hover:bg-accent-deep disabled:opacity-70 inline-flex items-center justify-center gap-2"
                 >
+                  {loading && <Loader2 size={15} className="animate-spin" />}
                   {loading ? "ログイン中..." : "ログイン"}
                 </button>
               </form>
