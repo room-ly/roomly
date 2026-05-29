@@ -4,12 +4,12 @@ import AffiliateApplyForm from "@/components/AffiliateApplyForm";
 export const metadata: Metadata = {
   title: "アフィリエイトプログラム",
   description:
-    "Roomlyのアフィリエイトプログラム。ご紹介いただいた管理会社・大家さんが有料プランに移行した月から、24ヶ月間にわたり月額の20%を還元します。",
+    "Roomlyのアフィリエイトプログラム。ご紹介いただいた管理会社・大家さんが有料プランを継続している限り、月額の10%を期限なくずっと還元します。",
   alternates: { canonical: "/affiliate" },
   openGraph: {
     title: "アフィリエイトプログラム | Roomly",
     description:
-      "ご紹介いただいた管理会社・大家さんが有料プランに移行した月から、24ヶ月間にわたり月額の20%を還元します。",
+      "ご紹介いただいた管理会社・大家さんが有料プランを継続している限り、月額の10%を期限なくずっと還元します。",
     type: "website",
     url: "https://hp.roomly.jp/affiliate",
     siteName: "Roomly",
@@ -24,13 +24,13 @@ export default function AffiliatePage() {
         <div className="mx-auto max-w-3xl">
           <span className="eyebrow">Affiliate Program</span>
           <h1 className="mt-6 text-[clamp(32px,5vw,48px)] font-medium leading-tight tracking-tight text-rm-primary">
-            紹介された方の継続に応じて、<br />
-            <em className="font-serif-display italic text-rm-accent-deep font-normal">長く還元</em>します
+            紹介した方が続く限り、<br />
+            <em className="font-serif-display italic text-rm-accent-deep font-normal">ずっと還元</em>します
           </h1>
           <p className="mt-5 text-[16px] leading-relaxed text-rm-text-secondary">
-            ご紹介いただいた管理会社・大家さんが有料プランに移行した月から、
+            ご紹介いただいた管理会社・大家さんが有料プランを継続している限り、
             <br className="hidden sm:block" />
-            24ヶ月間、月額の20%を継続的に還元します。
+            月額の10%を期限なく毎月還元します。
           </p>
         </div>
       </section>
@@ -46,16 +46,16 @@ export default function AffiliatePage() {
           </div>
           <div className="rounded-2xl border-2 border-rm-accent-deep bg-rm-surface p-7">
             <div className="text-[13px] text-rm-accent-deep font-medium">継続報酬</div>
-            <div className="mt-2 text-[28px] font-medium text-rm-primary">月額の20%</div>
+            <div className="mt-2 text-[28px] font-medium text-rm-primary">月額の10%</div>
             <p className="mt-2 text-[13px] text-rm-text-secondary leading-relaxed">
-              紹介された会社が支払う月額利用料の20%を毎月還元します。
+              紹介された会社が支払う月額利用料の10%を毎月還元します。
             </p>
           </div>
           <div className="rounded-2xl border border-rm-border bg-rm-surface p-7">
             <div className="text-[13px] text-rm-text-secondary">還元期間</div>
-            <div className="mt-2 text-[28px] font-medium text-rm-primary">24ヶ月</div>
+            <div className="mt-2 text-[28px] font-medium text-rm-primary">期限なし</div>
             <p className="mt-2 text-[13px] text-rm-text-secondary leading-relaxed">
-              有料移行から24ヶ月間、継続する限り報酬が発生します。
+              紹介された会社が利用を続ける限り、何ヶ月でも報酬が発生し続けます。
             </p>
           </div>
         </div>
@@ -63,10 +63,12 @@ export default function AffiliatePage() {
         <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-rm-border bg-rm-bg p-6 text-[14px] leading-relaxed text-rm-text-secondary">
           <p className="font-medium text-rm-primary">報酬の試算例</p>
           <p className="mt-2">
-            ご紹介者が <span className="text-rm-primary font-medium">月額¥10,000（税込）のプラン</span> で
-            24ヶ月継続した場合、累計報酬は
-            <span className="text-rm-accent-deep font-medium"> ¥48,000（税込） </span>
-            となります。複数社をご紹介いただくと、毎月安定した収益が積み上がります。
+            ご紹介者が <span className="text-rm-primary font-medium">月額¥10,000（税込）のプラン</span> を
+            利用している限り、毎月
+            <span className="text-rm-accent-deep font-medium"> ¥1,000（税込） </span>
+            が継続的に発生します。仮に5年（60ヶ月）継続すれば1社あたり累計
+            <span className="text-rm-accent-deep font-medium"> ¥60,000（税込） </span>。
+            複数社をご紹介いただくほど、毎月の収益がストックとして積み上がっていきます。
           </p>
         </div>
       </section>

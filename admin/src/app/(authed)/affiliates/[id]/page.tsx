@@ -350,7 +350,10 @@ function OverviewTab({ affiliate }: { affiliate: Affiliate }) {
         ¥{affiliate.commission_initial_jpy.toLocaleString()}
       </Row>
       <Row label="継続報酬">
-        {affiliate.commission_recurring_rate}% × {affiliate.commission_recurring_months}ヶ月
+        {affiliate.commission_recurring_rate}% ×{" "}
+        {affiliate.commission_recurring_months === 0
+          ? "無期限"
+          : `${affiliate.commission_recurring_months}ヶ月`}
       </Row>
       {affiliate.notes && (
         <Row label="メモ">

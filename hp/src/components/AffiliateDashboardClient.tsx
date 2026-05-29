@@ -159,7 +159,9 @@ export default function AffiliateDashboardClient() {
           <span className="font-mono text-rm-primary">{data.affiliate.code}</span>
           {" / "}
           報酬率: 月額の{Number(data.affiliate.commission_recurring_rate)}% を
-          {data.affiliate.commission_recurring_months}ヶ月
+          {data.affiliate.commission_recurring_months === 0
+            ? "期限なく継続"
+            : `${data.affiliate.commission_recurring_months}ヶ月`}
         </p>
       </section>
 

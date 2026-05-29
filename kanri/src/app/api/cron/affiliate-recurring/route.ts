@@ -6,7 +6,8 @@ import { createClient } from "@supabase/supabase-js";
 //
 // 計上ロジック:
 //   - subscription_status = 'active' かつ affiliate_id が紐付いている companies が対象
-//   - 各 affiliate の commission_recurring_months を超えていない月のみ計上
+//   - commission_recurring_months > 0 ならその月数を超えていない月のみ計上
+//     commission_recurring_months = 0 は「無期限」として継続報酬を計上し続ける
 //   - recurring_month_index: subscription_started_at から数えた継続月数 (1〜)
 //     - 初回有料化月は first_payment で計上済みなので、2ヶ月目から計上
 //   - 報酬額: その月のプラン金額 × commission_recurring_rate / 100
@@ -125,7 +126,8 @@ async function processRecurring(): Promise<{
       skipped++;
       continue;
     }
-    if (idx > aff.commission_recurring_months) {
+    // commission_recurring_months = 0 は無期限。それ以外は月数上限でカット。
+    if (aff.commission_recurring_months > 0 && idx > aff.commission_recurring_months) {
       skipped++;
       continue;
     }

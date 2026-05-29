@@ -206,7 +206,10 @@ export default function AdminAffiliatesPage() {
                     : "-"}
                 </td>
                 <td className="px-3 py-2 text-ink-2">
-                  {r.commission_recurring_rate}% × {r.commission_recurring_months}ヶ月
+                  {r.commission_recurring_rate}% ×{" "}
+                  {r.commission_recurring_months === 0
+                    ? "無期限"
+                    : `${r.commission_recurring_months}ヶ月`}
                 </td>
                 <td className="px-3 py-2 text-ink-3 text-xs">
                   {r.source === "self_signup" ? "本人申込" : "直接登録"}
@@ -303,8 +306,8 @@ function CreateAffiliateModal({
     prospect_type: "",
     website_url: "",
     notes: "",
-    commission_recurring_rate: 20,
-    commission_recurring_months: 24,
+    commission_recurring_rate: 10,
+    commission_recurring_months: 0,
     status: "active",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -406,9 +409,10 @@ function CreateAffiliateModal({
                 className="w-full px-3 py-2 rounded-md border border-line bg-bg text-sm"
               />
             </Field>
-            <Field label="継続月数">
+            <Field label="継続月数 (0=無期限)">
               <input
                 type="number"
+                min={0}
                 value={form.commission_recurring_months}
                 onChange={(e) =>
                   setForm({
