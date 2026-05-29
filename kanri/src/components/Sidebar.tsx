@@ -20,6 +20,7 @@ import {
   Settings,
   BookUser,
   CreditCard,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import type { SidebarInitialData } from "./AppShell";
@@ -260,6 +261,31 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
             <span>設定</span>
           </Link>
         </div>
+
+        {/* Roomly Ops（運営者専用・ROOMLY_ADMIN_EMAILSに登録された人だけに表示） */}
+        {initialData?.isRoomlyAdmin && (
+          <div className="mb-4">
+            <div className="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-4 px-6 py-1.5 mb-1">
+              Roomly Ops
+            </div>
+            <Link
+              href="/admin/analytics"
+              className={`relative flex items-center gap-2.5 py-[7px] px-6 text-[13.5px] rounded-[7px] mx-4 mb-px transition-all duration-100 ${
+                pathname.startsWith("/admin/analytics")
+                  ? "bg-surface text-ink font-medium shadow-[0_1px_2px_rgba(40,32,12,0.04)]"
+                  : "text-ink-2 hover:bg-surface hover:text-ink"
+              }`}
+            >
+              {pathname.startsWith("/admin/analytics") && (
+                <span className="absolute left-0 top-[7px] bottom-[7px] w-[2px] bg-accent-deep rounded-full" />
+              )}
+              <span className={`w-4 shrink-0 ${pathname.startsWith("/admin/analytics") ? "text-accent-deep" : "text-ink-3"}`}>
+                <BarChart3 size={16} />
+              </span>
+              <span>計測ダッシュボード</span>
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* ユーザーメニュー */}

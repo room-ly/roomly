@@ -12,6 +12,7 @@ export interface SidebarInitialData {
   companyName: string;
   userName: string;
   userEmail: string;
+  isRoomlyAdmin: boolean;
 }
 
 export default function AppShell({ children, sidebarData }: { children: React.ReactNode; sidebarData: SidebarInitialData | null }) {
