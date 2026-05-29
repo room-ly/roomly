@@ -28,12 +28,10 @@ export default async function Image() {
       >
         <div
           style={{
+            display: "flex",
             position: "absolute",
             top: 56,
             left: 64,
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
             fontSize: 22,
             color: "rgba(255, 255, 255, 0.55)",
             letterSpacing: "0.12em",
@@ -44,6 +42,7 @@ export default async function Image() {
 
         <div
           style={{
+            display: "flex",
             fontSize: 30,
             color: "rgba(255, 255, 255, 0.7)",
             marginBottom: 28,
@@ -60,28 +59,54 @@ export default async function Image() {
             color: "#ffffff",
           }}
         >
-          <div style={{ fontSize: 104, fontWeight: 600, lineHeight: 1 }}>
-            月額の<span style={{ color: "#7fb4ff" }}>10%</span>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 104,
+              fontWeight: 600,
+              lineHeight: 1,
+            }}
+          >
+            <span>月額の</span>
+            <span style={{ color: "#7fb4ff" }}>10%</span>
           </div>
-          <div style={{ fontSize: 56, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 56,
+              fontWeight: 600,
+              color: "rgba(255,255,255,0.85)",
+            }}
+          >
             ×
           </div>
-          <div style={{ fontSize: 104, fontWeight: 600, lineHeight: 1 }}>
-            <span style={{ color: "#7fb4ff" }}>期限なし</span>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 104,
+              fontWeight: 600,
+              lineHeight: 1,
+              color: "#7fb4ff",
+            }}
+          >
+            期限なし
           </div>
         </div>
 
         <div
           style={{
+            display: "flex",
             marginTop: 40,
             fontSize: 26,
             color: "rgba(255, 255, 255, 0.6)",
-          }}>
+          }}
+        >
           紹介された会社が利用を続ける限り、毎月ずっと
         </div>
 
         <div
           style={{
+            display: "flex",
             position: "absolute",
             bottom: 48,
             right: 64,
