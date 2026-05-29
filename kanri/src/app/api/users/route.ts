@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     const userRole = validRoles.includes(role) ? role : "staff";
 
     const appOrigin = getAppOrigin(request);
-    const redirectTo = `${appOrigin}/auth/confirm?next=/update-password`;
+    const redirectTo = `${appOrigin}/update-password`;
 
     // 同一会社内の既存usersをチェック（is_active問わず）
     const { data: existingUser } = await admin

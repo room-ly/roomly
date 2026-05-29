@@ -89,7 +89,7 @@ export async function POST(
     }
 
     const appOrigin = getAppOrigin(request);
-    const redirectTo = `${appOrigin}/auth/confirm?next=/update-password`;
+    const redirectTo = `${appOrigin}/update-password`;
 
     const { data: linkData, error: linkError } =
       await admin.auth.admin.generateLink({

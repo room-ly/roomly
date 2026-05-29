@@ -19,8 +19,29 @@ export default function UpdatePasswordPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
         setReady(true);
+        if (typeof window !== "undefined" && window.location.hash) {
+          window.history.replaceState(null, "", window.location.pathname);
+        }
       }
     });
+
+    // 招待・リセットリンクのhashトークンを明示的に取り込む
+    if (typeof window !== "undefined" && window.location.hash.includes("access_token")) {
+      const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const access_token = params.get("access_token");
+      const refresh_token = params.get("refresh_token");
+      if (access_token && refresh_token) {
+        supabase.auth.setSession({ access_token, refresh_token }).then(({ error }) => {
+          if (!error) {
+            setReady(true);
+            window.history.replaceState(null, "", window.location.pathname);
+          } else {
+            setError("リンクが無効か期限切れです。再度招待を依頼してください。");
+          }
+        });
+        return () => subscription.unsubscribe();
+      }
+    }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setReady(true);
