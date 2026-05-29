@@ -1,54 +1,51 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
-        setReady(true);
-        if (typeof window !== "undefined" && window.location.hash) {
-          window.history.replaceState(null, "", window.location.pathname);
-        }
-      }
-    });
+    if (typeof window === "undefined") return;
 
-    // 招待・リセットリンクのhashトークンを明示的に取り込む
-    if (typeof window !== "undefined" && window.location.hash.includes("access_token")) {
+    // hash の access_token を読み取って保持（URLからは消す）
+    if (window.location.hash.includes("access_token")) {
       const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-      const access_token = params.get("access_token");
-      const refresh_token = params.get("refresh_token");
-      if (access_token && refresh_token) {
-        supabase.auth.setSession({ access_token, refresh_token }).then(({ error }) => {
-          if (!error) {
-            setReady(true);
-            window.history.replaceState(null, "", window.location.pathname);
-          } else {
-            setError("リンクが無効か期限切れです。再度招待を依頼してください。");
-          }
+      const token = params.get("access_token");
+      if (token) {
+        window.history.replaceState(null, "", window.location.pathname);
+        startTransition(() => {
+          setAccessToken(token);
+          setReady(true);
         });
-        return () => subscription.unsubscribe();
+        return;
       }
     }
 
+    // hash が無ければ既存セッション（パスワードリセット中のログインユーザー等）を確認
+    const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setReady(true);
+      startTransition(() => {
+        if (session) {
+          setAccessToken(session.access_token);
+          setReady(true);
+        } else {
+          setError("リンクが無効か期限切れです。再度招待を依頼してください。");
+          setReady(true);
+        }
+      });
     });
-
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,34 +55,37 @@ export default function UpdatePasswordPage() {
       setError("パスワードが一致しません");
       return;
     }
-
     if (password.length < 8) {
       setError("パスワードは8文字以上で入力してください");
+      return;
+    }
+    if (!accessToken) {
+      setError("認証情報が見つかりません。招待リンクを再度クリックしてください。");
       return;
     }
 
     setLoading(true);
 
     try {
-      // updateUser がハングするケースがあるので 15 秒でタイムアウト
-      const timeout = new Promise<{ error: Error }>((resolve) =>
-        setTimeout(() => resolve({ error: new Error("タイムアウトしました。再度お試しください。") }), 15000)
-      );
-      const result = await Promise.race([
-        supabase.auth.updateUser({ password }),
-        timeout,
-      ]);
-      const { error } = result as { error: { message: string } | null };
+      const res = await fetch("/api/auth/set-initial-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: accessToken, password }),
+      });
 
-      if (error) {
-        setError("パスワードの更新に失敗しました: " + error.message);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "パスワードの更新に失敗しました");
         setLoading(false);
         return;
       }
 
-      router.push("/");
+      // 新しいパスワードでログインしてからトップへ
+      // この時点でユーザーのメールは Supabase 側で取得済みではないため、
+      // ログイン画面で再度入力してもらう
+      router.push("/login?invited=1");
     } catch {
-      setError("エラーが発生しました");
+      setError("通信エラーが発生しました");
       setLoading(false);
     }
   };
@@ -97,7 +97,10 @@ export default function UpdatePasswordPage() {
           <div className="mb-6">
             <h1 className="text-xl font-semibold text-ink tracking-wide">Roomly</h1>
           </div>
-          <p className="text-[13px] text-ink-3">セッションを確認中...</p>
+          <div className="card p-8">
+            <Loader2 className="w-6 h-6 text-accent mx-auto mb-3 animate-spin" />
+            <p className="text-[13px] text-ink-3">招待リンクを確認中...</p>
+          </div>
         </div>
       </div>
     );
@@ -165,7 +168,7 @@ export default function UpdatePasswordPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !accessToken}
             className="w-full py-2.5 bg-accent text-white rounded font-medium text-[13px] transition-colors hover:bg-accent-deep disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading && <Loader2 size={14} className="animate-spin" />}
