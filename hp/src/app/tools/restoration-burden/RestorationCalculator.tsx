@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useToolLog } from "@/lib/use-tool-log";
 
 type ItemKey =
   | "wallpaper"
@@ -93,6 +94,16 @@ export default function RestorationCalculator() {
           : `耐用年数${item.usefulYears}年に対し入居期間${residencyYears.toFixed(1)}年。残存価値${(remainingRatio * 100).toFixed(0)}%に責任割合${(baseTenantRatio * 100).toFixed(0)}%を乗じて負担割合を算出しました。`,
     };
   }, [itemKey, residencyMonths, repairCost, faultType, item]);
+
+  useToolLog(
+    "restoration-burden",
+    { itemKey, residencyMonths, repairCost, faultType },
+    {
+      tenantBurden: result.tenantBurden,
+      landlordBurden: result.landlordBurden,
+      tenantRatio: result.tenantRatio,
+    }
+  );
 
   return (
     <div className="rounded-2xl border border-rm-border bg-rm-surface p-6 sm:p-8">

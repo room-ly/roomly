@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useToolLog } from "@/lib/use-tool-log";
 
 const yen = (n: number) => `¥${Math.round(n).toLocaleString("ja-JP")}`;
 
@@ -13,10 +14,17 @@ export default function VacancyLossCalculator() {
 
   const result = useMemo(() => {
     const monthlyIncome = monthlyRent + commonFee;
-    const rentLoss = monthlyIncome * vacancyMonths * unitCount;
-    const adCost = monthlyRent * adMonths * unitCount;
-    const annualOpportunityLoss = monthlyIncome * 12 * unitCount;
-    const totalLoss = rentLoss + adCost;
+    const perUnitRentLoss = monthlyIncome * vacancyMonths;
+    const perUnitAdCost = monthlyRent * adMonths;
+    const perUnitTotalLoss = perUnitRentLoss + perUnitAdCost;
+
+    const totalRentLoss = perUnitRentLoss * unitCount;
+    const totalAdCost = perUnitAdCost * unitCount;
+    const totalLoss = perUnitTotalLoss * unitCount;
+
+    const annualPotentialIncome = monthlyIncome * 12 * unitCount;
+    const lossRatioOfAnnual = (totalLoss / annualPotentialIncome) * 100;
+
     const breakdownData = Array.from({ length: Math.max(1, Math.ceil(vacancyMonths)) }, (_, i) => {
       const m = i + 1;
       return {
@@ -24,18 +32,35 @@ export default function VacancyLossCalculator() {
         cumulativeLoss: monthlyIncome * Math.min(m, vacancyMonths) * unitCount,
       };
     });
+
     return {
       monthlyIncome,
-      rentLoss,
-      adCost,
+      perUnitRentLoss,
+      perUnitAdCost,
+      perUnitTotalLoss,
+      totalRentLoss,
+      totalAdCost,
       totalLoss,
-      annualOpportunityLoss,
-      lossRatioOfAnnual: (totalLoss / annualOpportunityLoss) * 100,
+      annualPotentialIncome,
+      lossRatioOfAnnual,
       breakdownData,
     };
   }, [monthlyRent, commonFee, vacancyMonths, adMonths, unitCount]);
 
-  const maxBar = Math.max(...result.breakdownData.map((d) => d.cumulativeLoss), 1);
+  // グラフの最大値は「年間家賃収入(満室時)」を100%とする
+  // → 戸数増減でバー長が短く見えるようになり、空室損失のインパクトが視覚化される
+  const maxBar = result.annualPotentialIncome;
+
+  useToolLog(
+    "vacancy-loss",
+    { monthlyRent, commonFee, vacancyMonths, adMonths, unitCount },
+    {
+      totalLoss: result.totalLoss,
+      totalRentLoss: result.totalRentLoss,
+      totalAdCost: result.totalAdCost,
+      lossRatioOfAnnual: result.lossRatioOfAnnual,
+    }
+  );
 
   return (
     <div className="rounded-2xl border border-rm-border bg-rm-surface p-6 sm:p-8">
@@ -124,32 +149,61 @@ export default function VacancyLossCalculator() {
             />
             <span className="text-[13px] text-rm-text-muted">戸</span>
           </div>
+          <input
+            type="range"
+            min={1}
+            max={50}
+            value={Math.min(unitCount, 50)}
+            onChange={(e) => setUnitCount(Number(e.target.value))}
+            className="mt-3 w-full accent-rm-accent-deep"
+          />
         </div>
       </div>
 
       <div className="mt-8 rounded-xl bg-rm-primary p-6 text-rm-bg">
-        <p className="text-[12px] uppercase tracking-wider text-rm-bg/60">空室による合計損失</p>
+        <p className="text-[12px] uppercase tracking-wider text-rm-bg/60">
+          {unitCount}戸合計の空室損失
+        </p>
         <p className="mt-2 text-[30px] font-medium tracking-tight">
           {yen(result.totalLoss)}
         </p>
         <p className="mt-2 text-[12px] text-rm-bg/60">
-          年間家賃収入の {result.lossRatioOfAnnual.toFixed(1)}% に相当
+          年間家賃収入(満室想定 {yen(result.annualPotentialIncome)}) の {result.lossRatioOfAnnual.toFixed(1)}% に相当
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <div className="rounded-lg bg-rm-bg/10 p-3">
             <p className="text-[11px] text-rm-bg/60">家賃の機会損失</p>
-            <p className="mt-1 text-[15px] font-medium">{yen(result.rentLoss)}</p>
+            <p className="mt-1 text-[15px] font-medium">{yen(result.totalRentLoss)}</p>
           </div>
           <div className="rounded-lg bg-rm-bg/10 p-3">
             <p className="text-[11px] text-rm-bg/60">募集時の広告料</p>
-            <p className="mt-1 text-[15px] font-medium">{yen(result.adCost)}</p>
+            <p className="mt-1 text-[15px] font-medium">{yen(result.totalAdCost)}</p>
           </div>
         </div>
       </div>
 
+      {unitCount > 1 && (
+        <div className="mt-4 rounded-xl border border-rm-border bg-rm-bg p-5">
+          <p className="text-[12px] uppercase tracking-wider text-rm-text-muted">
+            1戸あたりの空室損失
+          </p>
+          <p className="mt-2 text-[20px] font-medium text-rm-primary">
+            {yen(result.perUnitTotalLoss)}
+            <span className="ml-2 text-[12px] text-rm-text-muted">
+              × {unitCount}戸 = {yen(result.totalLoss)}
+            </span>
+          </p>
+        </div>
+      )}
+
       {result.breakdownData.length > 1 && (
         <div className="mt-6 rounded-xl border border-rm-border bg-rm-bg p-5">
-          <p className="text-[12px] font-medium text-rm-text-secondary">月別の累計損失</p>
+          <p className="text-[12px] font-medium text-rm-text-secondary">
+            月別の累計損失({unitCount}戸合計)
+          </p>
+          <p className="mt-1 text-[11px] text-rm-text-muted">
+            バーの長さ = 年間家賃収入(満室時)に対する割合
+          </p>
           <div className="mt-4 space-y-2">
             {result.breakdownData.map((d) => {
               const width = (d.cumulativeLoss / maxBar) * 100;
@@ -161,7 +215,7 @@ export default function VacancyLossCalculator() {
                   <div className="relative h-6 flex-1 overflow-hidden rounded bg-rm-border/40">
                     <div
                       className="h-full bg-rm-accent-deep transition-all duration-500"
-                      style={{ width: `${width}%` }}
+                      style={{ width: `${Math.min(width, 100)}%` }}
                     />
                   </div>
                   <span className="w-24 shrink-0 text-right text-[11px] text-rm-text-secondary">

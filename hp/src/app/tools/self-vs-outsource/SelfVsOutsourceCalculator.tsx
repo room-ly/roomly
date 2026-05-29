@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useToolLog } from "@/lib/use-tool-log";
 
 const yen = (n: number) => `¥${Math.round(n).toLocaleString("ja-JP")}`;
 
@@ -58,6 +59,18 @@ export default function SelfVsOutsourceCalculator() {
   const maxBar = Math.max(
     ...result.curve.map((d) => Math.max(d.fee, d.timeCost)),
     1
+  );
+
+  useToolLog(
+    "self-vs-outsource",
+    { unitCount, avgRent, feeRate, hoursPerUnitPerMonth, hourlyValue },
+    {
+      outsourceMonthlyFee: result.outsourceMonthlyFee,
+      selfMonthlyTimeCost: result.selfMonthlyTimeCost,
+      monthlyDelta: result.monthlyDelta,
+      shouldOutsource: result.shouldOutsource,
+      breakevenHours: result.breakevenHours,
+    }
   );
 
   return (
