@@ -41,6 +41,8 @@ export function Footer() {
             </h5>
             <div className="space-y-2.5">
               <Link href="/column" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">コラム</Link>
+              <Link href="/glossary" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">用語集</Link>
+              <Link href="/tools" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">計算ツール</Link>
               <Link href="/faq" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">よくある質問</Link>
             </div>
           </div>
@@ -51,6 +53,7 @@ export function Footer() {
             </h5>
             <div className="space-y-2.5">
               <Link href="/contact" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">お問い合わせ</Link>
+              <Link href="/affiliate" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">アフィリエイト</Link>
               <Link href="/privacy" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">プライバシー</Link>
               <Link href="/terms" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">利用規約</Link>
               <Link href="/legal" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">特定商取引法</Link>
