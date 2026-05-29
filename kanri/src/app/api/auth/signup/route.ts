@@ -15,7 +15,13 @@ function getAdminClient() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { companyName, name, email, password } = await request.json();
+    const {
+      companyName,
+      name,
+      email,
+      password,
+      attribution,
+    } = await request.json();
 
     if (!companyName || !name || !email || !password) {
       return NextResponse.json(
@@ -33,10 +39,24 @@ export async function POST(request: NextRequest) {
 
     const admin = getAdminClient();
 
-    // 1. 会社を作成
+    // 1. 会社を作成（広告流入情報を保存）
+    const truncate = (v: unknown, max = 255) =>
+      typeof v === "string" && v.length > 0 ? v.slice(0, max) : null;
+    const companyInsert: Record<string, unknown> = { name: companyName };
+    if (attribution && typeof attribution === "object") {
+      companyInsert.utm_source = truncate(attribution.utm_source);
+      companyInsert.utm_medium = truncate(attribution.utm_medium);
+      companyInsert.utm_campaign = truncate(attribution.utm_campaign);
+      companyInsert.utm_term = truncate(attribution.utm_term);
+      companyInsert.utm_content = truncate(attribution.utm_content);
+      companyInsert.referrer = truncate(attribution.referrer, 2000);
+      companyInsert.landing_path = truncate(attribution.landing_path, 2000);
+      companyInsert.signup_gclid = truncate(attribution.gclid);
+    }
+
     const { data: company, error: companyError } = await admin
       .from("companies")
-      .insert({ name: companyName })
+      .insert(companyInsert)
       .select()
       .single();
 

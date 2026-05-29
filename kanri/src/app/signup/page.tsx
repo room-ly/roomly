@@ -1,10 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+
+type Attribution = {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  gclid?: string;
+  referrer?: string;
+  landing_path?: string;
+  captured_at?: string;
+};
+
+const ATTRIBUTION_KEY = "roomly_attribution";
+const ATTRIBUTION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+// 初回着地時のUTM・referrerをlocalStorageに保持し、サインアップ時にAPIへ送る
+function captureAttribution(): Attribution | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const stored = window.localStorage.getItem(ATTRIBUTION_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as Attribution;
+      const ts = parsed.captured_at ? Date.parse(parsed.captured_at) : 0;
+      if (ts && Date.now() - ts < ATTRIBUTION_TTL_MS) {
+        return parsed;
+      }
+    }
+  } catch {
+    // パース失敗は無視
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const pick = (k: string) => params.get(k) || undefined;
+  const data: Attribution = {
+    utm_source: pick("utm_source"),
+    utm_medium: pick("utm_medium"),
+    utm_campaign: pick("utm_campaign"),
+    utm_term: pick("utm_term"),
+    utm_content: pick("utm_content"),
+    gclid: pick("gclid"),
+    referrer: document.referrer || undefined,
+    landing_path: window.location.pathname + window.location.search,
+    captured_at: new Date().toISOString(),
+  };
+
+  const hasAny = Object.entries(data).some(
+    ([k, v]) => k !== "captured_at" && k !== "landing_path" && v
+  );
+  if (!hasAny) return null;
+
+  try {
+    window.localStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(data));
+  } catch {
+    // 容量超過等は無視
+  }
+  return data;
+}
 
 type Gtag = (...args: unknown[]) => void;
 declare global {
@@ -28,6 +87,11 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [attribution, setAttribution] = useState<Attribution | null>(null);
+
+  useEffect(() => {
+    setAttribution(captureAttribution());
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +102,13 @@ export default function SignupPage() {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyName, name, email, password }),
+        body: JSON.stringify({
+          companyName,
+          name,
+          email,
+          password,
+          attribution,
+        }),
       });
 
       const data = await res.json();

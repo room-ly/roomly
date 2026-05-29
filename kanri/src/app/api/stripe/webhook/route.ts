@@ -12,7 +12,8 @@ function getAdmin() {
 }
 
 async function updateCompanySubscription(
-  subscription: Stripe.Subscription
+  subscription: Stripe.Subscription,
+  stripeEvent?: { id: string; type: string }
 ) {
   const admin = getAdmin();
   const companyId = subscription.metadata.company_id;
@@ -28,16 +29,44 @@ async function updateCompanySubscription(
     ? new Date(periodEnd * 1000).toISOString()
     : null;
 
-  await admin
+  const newPlan = subscription.status === "active" ? "pro" : "free";
+
+  // 遷移前の状態を取得（subscription_events 用 + subscription_started_at 設定判定用）
+  const { data: prev } = await admin
     .from("companies")
-    .update({
+    .select("subscription_status, subscription_started_at")
+    .eq("id", companyId)
+    .single();
+
+  const fromStatus = prev?.subscription_status ?? null;
+
+  const updatePayload: Record<string, unknown> = {
+    stripe_subscription_id: subscription.id,
+    subscription_status: subscription.status,
+    subscription_current_period_end: periodEndIso,
+    plan: newPlan,
+    max_units: subscription.status === "active" ? maxUnits : 10,
+  };
+
+  // 初めて有料化したタイミングを記録（既にあれば上書きしない）
+  if (subscription.status === "active" && !prev?.subscription_started_at) {
+    updatePayload.subscription_started_at = new Date().toISOString();
+  }
+
+  await admin.from("companies").update(updatePayload).eq("id", companyId);
+
+  // ステータス変化があれば subscription_events に記録
+  if (fromStatus !== subscription.status) {
+    await admin.from("subscription_events").insert({
+      company_id: companyId,
+      event_type: stripeEvent?.type ?? "subscription.updated",
+      from_status: fromStatus,
+      to_status: subscription.status,
       stripe_subscription_id: subscription.id,
-      subscription_status: subscription.status,
-      subscription_current_period_end: periodEndIso,
-      plan: subscription.status === "active" ? "pro" : "free",
-      max_units: subscription.status === "active" ? maxUnits : 10,
-    })
-    .eq("id", companyId);
+      stripe_event_id: stripeEvent?.id ?? null,
+      plan: newPlan,
+    });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -63,7 +92,7 @@ export async function POST(request: NextRequest) {
         const subscription = await getStripe().subscriptions.retrieve(
           session.subscription as string
         );
-        await updateCompanySubscription(subscription);
+        await updateCompanySubscription(subscription, { id: event.id, type: event.type });
       }
       break;
     }
@@ -71,7 +100,7 @@ export async function POST(request: NextRequest) {
     case "customer.subscription.updated":
     case "customer.subscription.deleted": {
       const subscription = event.data.object as Stripe.Subscription;
-      await updateCompanySubscription(subscription);
+      await updateCompanySubscription(subscription, { id: event.id, type: event.type });
       break;
     }
 
@@ -82,7 +111,7 @@ export async function POST(request: NextRequest) {
         const subscription = await getStripe().subscriptions.retrieve(
           typeof subId === "string" ? subId : subId.id
         );
-        await updateCompanySubscription(subscription);
+        await updateCompanySubscription(subscription, { id: event.id, type: event.type });
       }
       break;
     }
