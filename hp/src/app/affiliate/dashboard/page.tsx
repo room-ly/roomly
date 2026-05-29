@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import AffiliateDashboardClient from "@/components/AffiliateDashboardClient";
+import { createAffiliateServerClient } from "@/lib/supabase-server";
 
 export const metadata: Metadata = {
   title: "アフィリエイターダッシュボード",
@@ -9,18 +10,18 @@ export const metadata: Metadata = {
   alternates: { canonical: "/affiliate/dashboard" },
 };
 
-export default function AffiliateDashboardPage() {
+export default async function AffiliateDashboardPage() {
+  const supabase = await createAffiliateServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/affiliate?tab=login");
+  }
+
   return (
     <section className="px-7 pt-20 pb-24 sm:pt-28">
-      <Suspense
-        fallback={
-          <div className="mx-auto max-w-xl text-center text-[14px] text-rm-text-secondary">
-            読み込み中...
-          </div>
-        }
-      >
-        <AffiliateDashboardClient />
-      </Suspense>
+      <AffiliateDashboardClient />
     </section>
   );
 }

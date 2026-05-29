@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import AffiliateApplyForm from "@/components/AffiliateApplyForm";
+import { redirect } from "next/navigation";
+import AffiliateAuthTabs from "@/components/AffiliateAuthTabs";
+import { createAffiliateServerClient } from "@/lib/supabase-server";
 
 export const metadata: Metadata = {
   title: "アフィリエイトプログラム",
@@ -23,7 +25,23 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AffiliatePage() {
+export default async function AffiliatePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  // ログイン済ならダッシュボードへ
+  const supabase = await createAffiliateServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    redirect("/affiliate/dashboard");
+  }
+
+  const params = await searchParams;
+  const initialTab = params.tab === "login" ? "login" : "signup";
+
   return (
     <>
       <section className="px-7 pt-20 pb-12 text-center sm:pt-28">
@@ -38,6 +56,12 @@ export default function AffiliatePage() {
             <br className="hidden sm:block" />
             月額の10%を期限なく毎月還元します。
           </p>
+        </div>
+      </section>
+
+      <section id="apply" className="px-7 pb-16">
+        <div className="mx-auto max-w-md">
+          <AffiliateAuthTabs initialTab={initialTab} />
         </div>
       </section>
 
@@ -99,15 +123,15 @@ export default function AffiliatePage() {
         </div>
       </section>
 
-      <section className="px-7 pb-16">
+      <section className="px-7 pb-24">
         <div className="mx-auto max-w-3xl">
           <h2 className="text-[22px] font-medium text-rm-primary">参加の流れ</h2>
           <ol className="mt-5 space-y-4 text-[14px] text-rm-text">
             <li className="flex gap-4">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rm-accent-deep text-white text-[13px] font-medium">1</span>
               <div>
-                <div className="font-medium text-rm-primary">フォームから登録（審査なし・即時発行）</div>
-                <p className="mt-1 text-rm-text-secondary">必要事項を送信すると、その場で紹介リンクとダッシュボードURLが発行されます。</p>
+                <div className="font-medium text-rm-primary">メールアドレスとパスワードで登録</div>
+                <p className="mt-1 text-rm-text-secondary">審査なし。送信した瞬間にダッシュボードが開き、紹介リンクが発行されます。</p>
               </div>
             </li>
             <li className="flex gap-4">
@@ -125,18 +149,6 @@ export default function AffiliatePage() {
               </div>
             </li>
           </ol>
-        </div>
-      </section>
-
-      <section id="apply" className="px-7 pb-24">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-[22px] font-medium text-rm-primary text-center">アフィリエイト登録フォーム</h2>
-          <p className="mt-3 text-center text-[14px] text-rm-text-secondary">
-            送信後すぐに紹介リンクとダッシュボードが発行されます。
-          </p>
-          <div className="mt-8">
-            <AffiliateApplyForm />
-          </div>
         </div>
       </section>
     </>

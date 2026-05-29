@@ -1,50 +1,55 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from "next/server";
+import {
+  createAffiliateServerClient,
+  createServiceRoleClient,
+} from "@/lib/supabase-server";
 
-// service_role を使ってトークン(=アフィリエイトコード)で本人の情報・成果を返す。
-// アフィリエイト用の軽量認証として、コード自体を見せられる本人にだけ閲覧を許す方針。
-const supabase = createClient(
-  process.env.ROOMLY_SUPABASE_URL!,
-  process.env.ROOMLY_SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-);
+export async function GET() {
+  const supabase = await createAffiliateServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export async function GET(request: NextRequest) {
-  const url = new URL(request.url);
-  const token = url.searchParams.get("token")?.trim().toUpperCase();
-  if (!token || !/^[A-Z0-9]{4,16}$/.test(token)) {
-    return NextResponse.json({ error: "無効なトークンです" }, { status: 400 });
+  if (!user) {
+    return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
   }
 
-  const { data: affiliate, error: affErr } = await supabase
+  const admin = createServiceRoleClient();
+
+  const { data: affiliate, error: affErr } = await admin
     .from("affiliates")
     .select(
       "id, code, name, email, status, commission_recurring_rate, commission_recurring_months, approved_at, created_at"
     )
-    .eq("code", token)
+    .eq("user_id", user.id)
     .maybeSingle();
 
   if (affErr) {
     console.error("affiliate me error:", affErr);
-    return NextResponse.json({ error: "情報の取得に失敗しました" }, { status: 500 });
+    return NextResponse.json(
+      { error: "情報の取得に失敗しました" },
+      { status: 500 }
+    );
   }
   if (!affiliate) {
-    return NextResponse.json({ error: "該当するアフィリエイトが見つかりません" }, { status: 404 });
+    return NextResponse.json(
+      { error: "アフィリエイトアカウントが見つかりません" },
+      { status: 404 }
+    );
   }
   if (affiliate.status !== "approved") {
-    return NextResponse.json({ error: "このアカウントは現在ご利用いただけません" }, { status: 403 });
+    return NextResponse.json(
+      { error: "このアカウントは現在ご利用いただけません" },
+      { status: 403 }
+    );
   }
 
-  // クリック数
-  const { count: clickCount } = await supabase
+  const { count: clickCount } = await admin
     .from("affiliate_clicks")
     .select("id", { count: "exact", head: true })
     .eq("affiliate_id", affiliate.id);
 
-  // ユニーククリック (visitor_id重複排除はDB側でやるのが面倒なのでざっくり distinct on は省略し、全件カウントのみ)
-
-  // 成果サマリ
-  const { data: conversions } = await supabase
+  const { data: conversions } = await admin
     .from("affiliate_conversions")
     .select("status, amount_jpy, occurred_at, conversion_type")
     .eq("affiliate_id", affiliate.id)

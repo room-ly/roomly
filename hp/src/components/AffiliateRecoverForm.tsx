@@ -56,11 +56,11 @@ export default function AffiliateRecoverForm() {
         </h1>
         <p className="mt-3 text-[14px] text-rm-text-secondary leading-relaxed">
           入力いただいたメールアドレスがアフィリエイトに登録されていれば、
-          ダッシュボードURLをお送りしました。数分以内にメールが届かない場合は、
+          パスワード再設定用のリンクをお送りしました。数分以内にメールが届かない場合は、
           迷惑メールフォルダもご確認ください。
         </p>
         <p className="mt-6 text-[12px] text-rm-text-secondary">
-          <Link href="/affiliate/login" className="text-rm-accent-deep underline">
+          <Link href="/affiliate?tab=login" className="text-rm-accent-deep underline">
             ログインに戻る
           </Link>
         </p>
@@ -71,12 +71,12 @@ export default function AffiliateRecoverForm() {
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-rm-border bg-rm-surface p-8 sm:p-10">
       <h1 className="text-[24px] font-medium text-rm-primary text-center">
-        ダッシュボードURLを再送
+        パスワードを再設定
       </h1>
       <p className="mt-3 text-center text-[13px] text-rm-text-secondary leading-relaxed">
-        ご登録時のメールアドレスを入力してください。
+        ご登録のメールアドレスを入力してください。
         <br />
-        該当する場合、ダッシュボードURLをメールでお送りします。
+        該当する場合、パスワード再設定用のリンクをメールでお送りします。
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
@@ -105,12 +105,12 @@ export default function AffiliateRecoverForm() {
           disabled={status === "sending"}
           className="w-full rounded-full bg-rm-accent-deep px-6 py-3 text-[14px] font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
         >
-          {status === "sending" ? "送信中..." : "ダッシュボードURLを送信"}
+          {status === "sending" ? "送信中..." : "再設定リンクを送信"}
         </button>
       </form>
 
       <p className="mt-6 text-center text-[12px] text-rm-text-secondary">
-        <Link href="/affiliate/login" className="text-rm-accent-deep underline">
+        <Link href="/affiliate?tab=login" className="text-rm-accent-deep underline">
           ログインに戻る
         </Link>
       </p>

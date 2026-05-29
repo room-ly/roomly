@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 type DashboardData = {
@@ -58,20 +58,15 @@ function formatDate(iso: string) {
 }
 
 export default function AffiliateDashboardClient() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token")?.trim().toUpperCase() || "";
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
-    if (!token) {
-      setError("URLにトークンが含まれていません");
-      setLoading(false);
-      return;
-    }
-    fetch(`/api/affiliate/me?token=${encodeURIComponent(token)}`)
+    fetch("/api/affiliate/me")
       .then(async (res) => {
         if (!res.ok) {
           const j = await res.json().catch(() => ({}));
@@ -82,7 +77,18 @@ export default function AffiliateDashboardClient() {
       .then((d) => setData(d as DashboardData))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, []);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await fetch("/api/affiliate/logout", { method: "POST" });
+      router.push("/affiliate");
+      router.refresh();
+    } catch {
+      setLoggingOut(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -102,11 +108,10 @@ export default function AffiliateDashboardClient() {
           {error || "情報の取得に失敗しました"}
         </p>
         <p className="mt-6 text-[13px] text-rm-text-secondary">
-          まだ登録されていない方は{" "}
           <Link href="/affiliate" className="text-rm-accent-deep underline">
             アフィリエイトプログラム
           </Link>{" "}
-          ページから登録できます。
+          に戻る
         </p>
       </div>
     );
@@ -126,16 +131,26 @@ export default function AffiliateDashboardClient() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <header>
-        <div className="text-[12px] text-rm-text-secondary">
-          アフィリエイターダッシュボード
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-[12px] text-rm-text-secondary">
+            アフィリエイターダッシュボード
+          </div>
+          <h1 className="mt-1 text-[24px] font-medium text-rm-primary">
+            {data.affiliate.name} 様
+          </h1>
+          <p className="mt-1 text-[13px] text-rm-text-secondary">
+            {data.affiliate.email}
+          </p>
         </div>
-        <h1 className="mt-1 text-[24px] font-medium text-rm-primary">
-          {data.affiliate.name} 様
-        </h1>
-        <p className="mt-1 text-[13px] text-rm-text-secondary">
-          {data.affiliate.email}
-        </p>
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="shrink-0 rounded-full border border-rm-border bg-rm-surface px-4 py-2 text-[12px] text-rm-text-secondary transition-all hover:bg-rm-bg disabled:opacity-50"
+        >
+          {loggingOut ? "ログアウト中..." : "ログアウト"}
+        </button>
       </header>
 
       <section className="rounded-2xl border border-rm-border bg-rm-surface p-6">
@@ -228,9 +243,9 @@ export default function AffiliateDashboardClient() {
       <section className="rounded-2xl border border-rm-border bg-rm-bg p-6 text-[13px] text-rm-text-secondary leading-relaxed">
         <p className="font-medium text-rm-primary">このページについて</p>
         <p className="mt-2">
-          このダッシュボードURLにはあなたの紹介コードが含まれます。
-          第三者と共有しないよう、ブックマークしてご利用ください。
-          URLを紛失した場合は、登録メールアドレスでお問い合わせください。
+          このダッシュボードはログイン中のセッションで表示されています。
+          別端末からアクセスするには <Link href="/affiliate?tab=login" className="text-rm-accent-deep underline">ログイン</Link> を行ってください。
+          パスワードを忘れた場合は <Link href="/affiliate/recover" className="text-rm-accent-deep underline">パスワード再設定</Link> から再設定できます。
         </p>
       </section>
     </div>
