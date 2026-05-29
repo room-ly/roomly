@@ -93,7 +93,7 @@ export default function AdminAffiliateDetailPage({
 
   const load = () => {
     setError(null);
-    fetch(`/api/admin/affiliates/${id}`)
+    fetch(`/api/affiliates/${id}`)
       .then(async (r) => {
         if (!r.ok) {
           const body = await r.json().catch(() => ({}));
@@ -112,7 +112,7 @@ export default function AdminAffiliateDetailPage({
 
   const updateStatus = async (status: string, rejectedReason?: string) => {
     if (!confirm(`ステータスを「${status}」に変更しますか?`)) return;
-    const res = await fetch(`/api/admin/affiliates/${id}`, {
+    const res = await fetch(`/api/affiliates/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -134,7 +134,7 @@ export default function AdminAffiliateDetailPage({
         <div className="p-3 rounded bg-red-50 border border-red-200 text-sm text-red-700">
           {error}
         </div>
-        <Link href="/admin/affiliates" className="text-accent text-sm mt-3 inline-block">
+        <Link href="/affiliates" className="text-accent text-sm mt-3 inline-block">
           ← 一覧に戻る
         </Link>
       </div>
@@ -157,7 +157,7 @@ export default function AdminAffiliateDetailPage({
     <div className="p-6 max-w-7xl">
       <div className="mb-4">
         <Link
-          href="/admin/affiliates"
+          href="/affiliates"
           className="text-accent text-sm hover:underline"
         >
           ← アフィリエイト一覧
@@ -379,7 +379,7 @@ function ConversionsTab({
 }) {
   const updateConv = async (cid: string, status: string) => {
     if (!confirm(`「${status}」に変更しますか?`)) return;
-    const res = await fetch(`/api/admin/affiliate-conversions/${cid}`, {
+    const res = await fetch(`/api/affiliate-conversions/${cid}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
@@ -606,7 +606,7 @@ function BankTab({
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    const res = await fetch(`/api/admin/affiliates/${id}`, {
+    const res = await fetch(`/api/affiliates/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),

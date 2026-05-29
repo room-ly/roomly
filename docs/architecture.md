@@ -127,22 +127,24 @@ roomly/
 
 ## サブドメイン構成
 
-| サブドメイン | 用途 | Vercelプロジェクト |
-|------------|------|------------------|
-| hp.roomly.jp | 公式HP・コラム | roomly-hp |
-| kanri.roomly.jp | 管理会社向けkanri SaaS本体 | roomly-kanri |
-| admin.roomly.jp | **Roomly運営者専用admin（kanri内で同居・ホスト判定で分離）** | roomly-kanri |
-| portal.roomly.jp | 入居者向け物件ポータル | roomly-portal |
-| sumai.roomly.jp | （roomly-sumai） | roomly-sumai |
+| サブドメイン | 用途 | Vercelプロジェクト | ディレクトリ |
+|------------|------|------------------|------------|
+| hp.roomly.jp | 公式HP・コラム | roomly-hp | hp/ |
+| kanri.roomly.jp | 管理会社向けkanri SaaS本体 | roomly-kanri | kanri/ |
+| admin.roomly.jp | **Roomly運営者専用admin（独立プロジェクト）** | roomly-admin | admin/ |
+| portal.roomly.jp | 入居者向け物件ポータル | roomly-portal | portal/ |
+| sumai.roomly.jp | （roomly-sumai） | roomly-sumai | sumai/ |
 
 ### admin.roomly.jp 運用ルール
 
-- kanriプロジェクトと同居だが、`src/proxy.ts` でホスト判定して切り分けている
-- `admin.roomly.jp` → `/admin/*` と `/api/admin/*` のみ通す（他は404）
-- `kanri.roomly.jp` → `/admin/*` と `/api/admin/*` は404（URLバレ防止）
-- `/api/cron/*` はVercel Cron経由でホスト固定されないため両ホスト素通り
-- アクセス可能アドレスは `ROOMLY_ADMIN_EMAILS` 環境変数で制御（kanriに設定済み）
-- **adminアクセスは admin.roomly.jp を使う**。kanri.roomly.jp/admin/... は今後アクセス不可
+- **完全に独立したNext.jsプロジェクト**。kanriとはコード分離されている
+- Supabase Auth は kanri と同じプロジェクトを参照（同じ users テーブル）
+- アクセス可能アドレスは `ROOMLY_ADMIN_EMAILS` 環境変数で制御（roomly-admin Vercelに設定済み）
+- ログインはメール/パスワード（Supabase Auth）。`/login` → 認証後 `/` → `/affiliates` にリダイレクト
+- 非adminアドレスでログインしても `/forbidden` へリダイレクト（API側も403）
+- パス構造: `/affiliates`, `/affiliates/[id]`, `/analytics`, `/api/affiliates`, `/api/analytics` 等（`/admin/` プレフィックスなし）
+- 今後この admin プロジェクトに運営機能を集約していく（プロスペクト管理、支払い管理、複数SaaSの統合等）
+- アフィリエイト関連の cron は引き続き kanri 側（`/api/cron/affiliate-recurring`）で動かす（DBは共通なので問題なし）
 
 ## 開発ステータス
 

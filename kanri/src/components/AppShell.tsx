@@ -13,7 +13,6 @@ export interface SidebarInitialData {
   companyName: string;
   userName: string;
   userEmail: string;
-  isRoomlyAdmin: boolean;
   isDemo: boolean;
 }
 

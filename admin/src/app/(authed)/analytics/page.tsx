@@ -25,7 +25,7 @@ export default function AnalyticsPage() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetch(`/api/admin/analytics?view=${view}&limit=100`)
+    fetch(`/api/analytics?view=${view}&limit=100`)
       .then(async (res) => {
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));

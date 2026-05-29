@@ -26,3 +26,15 @@ export async function requireRoomlyAdmin(): Promise<
   }
   return { ok: true, email: user!.email!, userId: user!.id };
 }
+
+// ページ用: 非adminは/loginにリダイレクト or 404を返す判定
+export async function getCurrentAdminUser(): Promise<
+  { email: string; userId: string } | null
+> {
+  const supabase = await createAuthClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!isRoomlyAdmin(user?.email)) return null;
+  return { email: user!.email!, userId: user!.id };
+}

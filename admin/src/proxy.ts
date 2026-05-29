@@ -1,8 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// 注意: Roomly運営者向け管理機能は roomly-admin プロジェクト(admin.roomly.jp)に分離済み。
-// kanri.roomly.jp には /admin/* も /api/admin/* も存在しない。
+// admin.roomly.jp 全体の認証ガード。
+// - 未認証で /login 以外にアクセス → /login へリダイレクト
+// - 認証済みで /login にアクセス → / へリダイレクト
+// 非adminアドレスでログインした場合のページレベル弾きは、
+// 各 server component で getCurrentAdminUser() を呼ぶことで対応。
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -31,26 +34,21 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 未認証なら /login にリダイレクト
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/signup") &&
-    !request.nextUrl.pathname.startsWith("/reset-password") &&
-    !request.nextUrl.pathname.startsWith("/update-password") &&
-    !request.nextUrl.pathname.startsWith("/auth/") &&
-    !request.nextUrl.pathname.startsWith("/_next") &&
-    !request.nextUrl.pathname.startsWith("/api") &&
-    !request.nextUrl.pathname.includes(".")
-  ) {
+  const path = request.nextUrl.pathname;
+  const isPublic =
+    path.startsWith("/login") ||
+    path.startsWith("/auth/") ||
+    path.startsWith("/_next") ||
+    path.startsWith("/api") ||
+    path.includes(".");
+
+  if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // 認証済みで /login にアクセスしたらトップへ
-  const authPaths = ["/login", "/signup", "/reset-password"];
-  if (user && authPaths.some((p) => request.nextUrl.pathname.startsWith(p))) {
+  if (user && path.startsWith("/login")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

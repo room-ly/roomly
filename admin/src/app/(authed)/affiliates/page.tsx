@@ -59,11 +59,11 @@ export default function AdminAffiliatesPage() {
     if (search) params.set("q", search);
 
     Promise.all([
-      fetch(`/api/admin/affiliates?${params}`).then(async (r) => {
+      fetch(`/api/affiliates?${params}`).then(async (r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       }),
-      fetch(`/api/admin/affiliates/summary`).then((r) => r.json()),
+      fetch(`/api/affiliates/summary`).then((r) => r.json()),
     ])
       .then(([listRes, sumRes]) => {
         setRows(listRes.rows ?? []);
@@ -219,7 +219,7 @@ export default function AdminAffiliatesPage() {
                 </td>
                 <td className="px-3 py-2 text-right">
                   <Link
-                    href={`/admin/affiliates/${r.id}`}
+                    href={`/affiliates/${r.id}`}
                     className="text-accent text-xs hover:underline"
                   >
                     詳細 →
@@ -315,7 +315,7 @@ function CreateAffiliateModal({
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/affiliates", {
+      const res = await fetch("/api/affiliates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
