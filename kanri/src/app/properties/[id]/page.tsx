@@ -115,6 +115,8 @@ export default async function PropertyDetailPage({
             </div>
           </div>
 
+          <UnitTable propertyId={id} propertyType={property.property_type} units={units} contracts={contracts} />
+
           {/* 所在地 */}
           <div className="section">
             <div className="section-head-bar"><h2>所在地</h2></div>
@@ -409,8 +411,6 @@ export default async function PropertyDetailPage({
               </div>
             </div>
           </div>
-
-          <UnitTable propertyId={id} propertyType={property.property_type} units={units} contracts={contracts} />
 
           <DocumentSection propertyId={id} />
         </div>
