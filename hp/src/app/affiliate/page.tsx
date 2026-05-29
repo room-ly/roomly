@@ -98,29 +98,22 @@ export default function AffiliatePage() {
             <li className="flex gap-4">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rm-accent-deep text-white text-[13px] font-medium">1</span>
               <div>
-                <div className="font-medium text-rm-primary">申込フォームから登録</div>
-                <p className="mt-1 text-rm-text-secondary">下記フォームから必要事項を送信してください。</p>
+                <div className="font-medium text-rm-primary">フォームから登録（審査なし・即時発行）</div>
+                <p className="mt-1 text-rm-text-secondary">必要事項を送信すると、その場で紹介リンクとダッシュボードURLが発行されます。</p>
               </div>
             </li>
             <li className="flex gap-4">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rm-accent-deep text-white text-[13px] font-medium">2</span>
               <div>
-                <div className="font-medium text-rm-primary">運営側で審査（通常3営業日以内）</div>
-                <p className="mt-1 text-rm-text-secondary">承認後、専用の紹介リンクと管理画面のログインURLをメールでお送りします。</p>
+                <div className="font-medium text-rm-primary">紹介リンクで集客</div>
+                <p className="mt-1 text-rm-text-secondary">ブログ・SNS・コミュニティで紹介リンクを共有してください。クリック数と成果はダッシュボードからいつでも確認できます。</p>
               </div>
             </li>
             <li className="flex gap-4">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rm-accent-deep text-white text-[13px] font-medium">3</span>
               <div>
-                <div className="font-medium text-rm-primary">紹介リンクで集客</div>
-                <p className="mt-1 text-rm-text-secondary">ブログ・SNS・コミュニティで紹介リンクを共有してください。</p>
-              </div>
-            </li>
-            <li className="flex gap-4">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rm-accent-deep text-white text-[13px] font-medium">4</span>
-              <div>
                 <div className="font-medium text-rm-primary">毎月25日に振込</div>
-                <p className="mt-1 text-rm-text-secondary">前月までに確定した報酬を、ご登録の口座へお振込みします（最低支払額¥3,000）。</p>
+                <p className="mt-1 text-rm-text-secondary">前月までに確定した報酬を、ご登録の口座へお振込みします（最低支払額¥3,000）。振込先は別途ご登録いただきます。</p>
               </div>
             </li>
           </ol>
@@ -129,9 +122,9 @@ export default function AffiliatePage() {
 
       <section id="apply" className="px-7 pb-24">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-[22px] font-medium text-rm-primary text-center">アフィリエイト申込フォーム</h2>
+          <h2 className="text-[22px] font-medium text-rm-primary text-center">アフィリエイト登録フォーム</h2>
           <p className="mt-3 text-center text-[14px] text-rm-text-secondary">
-            営業日3日以内に審査結果をご連絡します。
+            送信後すぐに紹介リンクとダッシュボードが発行されます。
           </p>
           <div className="mt-8">
             <AffiliateApplyForm />

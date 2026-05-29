@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+// service_role を使うことで status='approved' を含む任意のINSERTが可能になる。
+// 即時発行フローのためanon RLSの「pending+self_signup限定」制約を回避する。
 const supabase = createClient(
   process.env.ROOMLY_SUPABASE_URL!,
-  process.env.ROOMLY_SUPABASE_ANON_KEY!
+  process.env.ROOMLY_SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { persistSession: false } }
 );
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -54,15 +57,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 既存メアドチェックは anon select 禁止なので、insertしてエラー判定する
-    // ただしユニーク制約はemailにかかっていないので、同一メアドの重複申込はまずチェック不可
-    // → 申込時点は重複OK、運営承認時に統合判断する設計とする
+    // 同一メアドの既存承認済みアカウントがあれば、そのコードを返して使い回す。
+    // service_role なので select 可能。
+    const { data: existing } = await supabase
+      .from("affiliates")
+      .select("code, status")
+      .eq("email", email)
+      .eq("status", "approved")
+      .limit(1)
+      .maybeSingle();
+
+    if (existing?.code) {
+      return NextResponse.json({ ok: true, code: existing.code, reused: true });
+    }
 
     // ユニークコードを生成（最大5回リトライ）
-    let inserted = false;
     let attempt = 0;
     let lastError: unknown = null;
-    while (attempt < 5 && !inserted) {
+    while (attempt < 5) {
       const code = generateCode();
       const { error } = await supabase.from("affiliates").insert({
         code,
@@ -73,14 +85,13 @@ export async function POST(request: NextRequest) {
         website_url: websiteUrl,
         social_url: socialUrl,
         notes,
-        status: "pending",
+        status: "approved",
+        approved_at: new Date().toISOString(),
         source: "self_signup",
       });
       if (!error) {
-        inserted = true;
-        break;
+        return NextResponse.json({ ok: true, code });
       }
-      // ユニーク制約違反ならリトライ、それ以外はエラー
       if (
         error.code === "23505" &&
         (error.message?.includes("affiliates_code_key") ||
@@ -97,15 +108,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!inserted) {
-      console.error("affiliate apply failed after retries:", lastError);
-      return NextResponse.json(
-        { error: "コード生成に失敗しました。時間をおいて再度お試しください" },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ ok: true });
+    console.error("affiliate apply failed after retries:", lastError);
+    return NextResponse.json(
+      { error: "コード生成に失敗しました。時間をおいて再度お試しください" },
+      { status: 500 }
+    );
   } catch (e) {
     console.error("affiliate apply unexpected error:", e);
     return NextResponse.json(
