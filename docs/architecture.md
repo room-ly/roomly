@@ -125,6 +125,25 @@ roomly/
 - kanri側にポータル掲載トグルUI追加
 - kanriの物件データをAPI公開（外部サービス連携用）
 
+## サブドメイン構成
+
+| サブドメイン | 用途 | Vercelプロジェクト |
+|------------|------|------------------|
+| hp.roomly.jp | 公式HP・コラム | roomly-hp |
+| kanri.roomly.jp | 管理会社向けkanri SaaS本体 | roomly-kanri |
+| admin.roomly.jp | **Roomly運営者専用admin（kanri内で同居・ホスト判定で分離）** | roomly-kanri |
+| portal.roomly.jp | 入居者向け物件ポータル | roomly-portal |
+| sumai.roomly.jp | （roomly-sumai） | roomly-sumai |
+
+### admin.roomly.jp 運用ルール
+
+- kanriプロジェクトと同居だが、`src/proxy.ts` でホスト判定して切り分けている
+- `admin.roomly.jp` → `/admin/*` と `/api/admin/*` のみ通す（他は404）
+- `kanri.roomly.jp` → `/admin/*` と `/api/admin/*` は404（URLバレ防止）
+- `/api/cron/*` はVercel Cron経由でホスト固定されないため両ホスト素通り
+- アクセス可能アドレスは `ROOMLY_ADMIN_EMAILS` 環境変数で制御（kanriに設定済み）
+- **adminアクセスは admin.roomly.jp を使う**。kanri.roomly.jp/admin/... は今後アクセス不可
+
 ## 開発ステータス
 
 | プロジェクト | 状態 | 優先度 |
