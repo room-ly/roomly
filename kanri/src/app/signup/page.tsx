@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { getGaClientId } from "@/lib/ga-client-id";
 
 type Attribution = {
   utm_source?: string;
@@ -15,6 +16,7 @@ type Attribution = {
   gclid?: string;
   referrer?: string;
   landing_path?: string;
+  ga_client_id?: string;
   captured_at?: string;
 };
 
@@ -99,6 +101,13 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
+      // 送信直前にGA4 client_idを取得（広告チャネル別CVRの名寄せ用）
+      const gaClientId = await getGaClientId();
+      const attributionPayload: Attribution = {
+        ...(attribution ?? {}),
+        ...(gaClientId ? { ga_client_id: gaClientId } : {}),
+      };
+
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -107,7 +116,7 @@ export default function SignupPage() {
           name,
           email,
           password,
-          attribution,
+          attribution: attributionPayload,
         }),
       });
 

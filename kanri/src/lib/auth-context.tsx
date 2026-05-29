@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
+import { getGaClientId } from "@/lib/ga-client-id";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface User {
@@ -144,7 +145,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // 広告計測用にlocalStorage保持中のattributionを同送
-    const attribution = readAttribution();
+    const attribution = readAttribution() ?? {};
+    const gaClientId = await getGaClientId();
+    if (gaClientId) attribution.ga_client_id = gaClientId;
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,

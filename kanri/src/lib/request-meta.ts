@@ -17,6 +17,7 @@ export type Attribution = {
   gclid?: string | null;
   referrer?: string | null;
   landing_path?: string | null;
+  ga_client_id?: string | null;
 };
 
 // Vercelの地理情報ヘッダはURLエンコードされている場合がある
@@ -62,5 +63,6 @@ export function normalizeAttribution(input: unknown): Attribution {
     gclid: truncate(a.gclid),
     referrer: truncate(a.referrer, 2000),
     landing_path: truncate(a.landing_path, 2000),
+    ga_client_id: truncate(a.ga_client_id),
   };
 }

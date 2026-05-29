@@ -45,9 +45,27 @@ export async function POST(request: NextRequest) {
     // 成功・失敗どちらも記録する。広告流入の検証に使うため成功も残す
     const meta = getRequestMeta(request);
     const attr = normalizeAttribution(attribution);
+
+    // 成功ログイン時のみ company_id / user_id を解決（失敗時はemail存在を漏らさないため引かない）
+    let companyId: string | null = null;
+    let userId: string | null = null;
+    if (success === true) {
+      const { data: u } = await admin
+        .from("users")
+        .select("id, company_id")
+        .eq("email", emailLower)
+        .maybeSingle();
+      if (u) {
+        companyId = u.company_id ?? null;
+        userId = u.id ?? null;
+      }
+    }
+
     await admin.from("login_attempts").insert({
       email: emailLower,
       success: success === true,
+      company_id: companyId,
+      user_id: userId,
       ip_address: meta.ip_address,
       country: meta.country,
       region: meta.region,
@@ -61,7 +79,17 @@ export async function POST(request: NextRequest) {
       utm_term: attr.utm_term,
       utm_content: attr.utm_content,
       gclid: attr.gclid,
+      ga_client_id: attr.ga_client_id,
     });
+
+    // 成功時、未設定の companies.ga_client_id を埋める（既存会社の名寄せ用）
+    if (success === true && companyId && attr.ga_client_id) {
+      await admin
+        .from("companies")
+        .update({ ga_client_id: attr.ga_client_id })
+        .eq("id", companyId)
+        .is("ga_client_id", null);
+    }
 
     return NextResponse.json({ ok: true });
   }
