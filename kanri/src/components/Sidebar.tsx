@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   LogOut,
+  Loader2,
   MoreHorizontal,
   Settings,
   BookUser,
@@ -72,6 +73,7 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
     email: initialData?.userEmail ?? "",
   });
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
 
@@ -315,11 +317,25 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
             </div>
             <div className="p-2">
               <button
-                onClick={() => { logout(); }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-ink-2 hover:bg-danger-tint hover:text-danger rounded-[var(--r-md)] transition-colors cursor-pointer"
+                onClick={() => {
+                  if (isLoggingOut) return;
+                  setIsLoggingOut(true);
+                  logout();
+                }}
+                disabled={isLoggingOut}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-ink-2 hover:bg-danger-tint hover:text-danger active:bg-danger-tint active:text-danger rounded-[var(--r-md)] transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-wait"
               >
-                <LogOut size={14} />
-                ログアウト
+                {isLoggingOut ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    ログアウト中…
+                  </>
+                ) : (
+                  <>
+                    <LogOut size={14} />
+                    ログアウト
+                  </>
+                )}
               </button>
             </div>
           </div>
