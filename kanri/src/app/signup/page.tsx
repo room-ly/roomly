@@ -17,6 +17,8 @@ type Attribution = {
   referrer?: string;
   landing_path?: string;
   ga_client_id?: string;
+  affiliate_code?: string;
+  visitor_id?: string;
   captured_at?: string;
 };
 
@@ -45,6 +47,9 @@ function captureAttribution(): Attribution | null {
   // HP側で付与した rm_ref / rm_landing を優先（外部からの本来の流入元）
   const externalRef = pick("rm_ref");
   const externalLanding = pick("rm_landing");
+  // HP側で付与した rm_aff / rm_vid （アフィリエイトコードとvisitor_id）
+  const affiliateCode = pick("rm_aff");
+  const visitorId = pick("rm_vid");
   const data: Attribution = {
     utm_source: pick("utm_source"),
     utm_medium: pick("utm_medium"),
@@ -55,6 +60,11 @@ function captureAttribution(): Attribution | null {
     referrer: externalRef || document.referrer || undefined,
     landing_path:
       externalLanding || window.location.pathname + window.location.search,
+    affiliate_code:
+      affiliateCode && /^[A-Z0-9]{4,16}$/.test(affiliateCode)
+        ? affiliateCode
+        : undefined,
+    visitor_id: visitorId && visitorId.length >= 8 ? visitorId : undefined,
     captured_at: new Date().toISOString(),
   };
 

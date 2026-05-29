@@ -35,7 +35,9 @@ async function updateCompanySubscription(
   // 遷移前の状態を取得（subscription_events 用 + subscription_started_at 設定判定用）
   const { data: prev } = await admin
     .from("companies")
-    .select("subscription_status, subscription_started_at, ga_client_id, signup_gclid")
+    .select(
+      "subscription_status, subscription_started_at, ga_client_id, signup_gclid, affiliate_id"
+    )
     .eq("id", companyId)
     .single();
 
@@ -83,6 +85,40 @@ async function updateCompanySubscription(
       maxUnits,
       gclid: prev.signup_gclid ?? null,
     });
+  }
+
+  // 初回有料化のタイミングでアフィリエイト報酬(first_payment)を計上
+  // 報酬計算: affiliate毎の commission_initial_jpy（デフォルト¥0）
+  // 継続報酬は別途月次cronで計上する
+  if (isFirstActive && prev?.affiliate_id) {
+    try {
+      const { data: affiliate } = await admin
+        .from("affiliates")
+        .select("id, status, commission_initial_jpy")
+        .eq("id", prev.affiliate_id)
+        .maybeSingle();
+
+      if (affiliate && affiliate.status === "active") {
+        const mrr = plan?.price ?? calcCustomPrice(maxUnits) ?? 5000;
+        const initialAmount = affiliate.commission_initial_jpy ?? 0;
+
+        // first_payment は記録自体は必ずする（金額0でも継続報酬の起点になる）
+        await admin.from("affiliate_conversions").insert({
+          affiliate_id: affiliate.id,
+          company_id: companyId,
+          conversion_type: "first_payment",
+          amount_jpy: initialAmount,
+          mrr_at_conversion_jpy: mrr,
+          status: initialAmount > 0 ? "pending" : "approved",
+          notes:
+            initialAmount > 0
+              ? "初回有料化（要承認）"
+              : "初回有料化（初回報酬なし設定のため自動承認）",
+        });
+      }
+    } catch (e) {
+      console.error("affiliate_conversion insert error:", e);
+    }
   }
 }
 

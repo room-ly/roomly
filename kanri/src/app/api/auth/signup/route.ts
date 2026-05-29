@@ -85,6 +85,20 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // 0. アフィリエイトコードからaffiliate_idを解決（あれば）
+    let affiliateId: string | null = null;
+    if (attribution.affiliate_code) {
+      const { data: affiliate } = await admin
+        .from("affiliates")
+        .select("id, status")
+        .eq("code", attribution.affiliate_code)
+        .maybeSingle();
+      if (affiliate && affiliate.status === "active") {
+        affiliateId = affiliate.id as string;
+      }
+      // 承認待ち/拒否のコードでも affiliate_code は記録しておく（後で運営判断できるように）
+    }
+
     // 1. 会社を作成（広告流入情報を保存）
     const companyInsert: Record<string, unknown> = {
       name: companyName,
@@ -97,6 +111,9 @@ export async function POST(request: NextRequest) {
       landing_path: attribution.landing_path ?? null,
       signup_gclid: attribution.gclid ?? null,
       ga_client_id: attribution.ga_client_id ?? null,
+      attribution_visitor_id: attribution.visitor_id ?? null,
+      affiliate_code: attribution.affiliate_code ?? null,
+      affiliate_id: affiliateId,
     };
 
     const { data: company, error: companyError } = await admin
