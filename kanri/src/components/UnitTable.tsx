@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Plus, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight } from "lucide-react";
 import UnitFormModal from "./UnitFormModal";
 
 interface PlanOption {
@@ -30,7 +30,6 @@ interface UnitTableProps {
 
 export default function UnitTable({ propertyId, propertyType, units, contracts, showAddButton }: UnitTableProps) {
   const router = useRouter();
-  const [editUnit, setEditUnit] = useState<Record<string, any> | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [checking, setChecking] = useState(false);
   const [limitInfo, setLimitInfo] = useState<LimitInfo | null>(null);
@@ -116,7 +115,6 @@ export default function UnitTable({ propertyId, propertyType, units, contracts, 
               <th className="px-5 py-2.5 font-medium text-right">管理費</th>
               <th className="px-5 py-2.5 font-medium">状態</th>
               <th className="px-5 py-2.5 font-medium">入居者</th>
-              <th className="w-10"></th>
             </tr>
           </thead>
           <tbody>
@@ -144,26 +142,12 @@ export default function UnitTable({ propertyId, propertyType, units, contracts, 
                     </span>
                   </td>
                   <td className={`px-5 py-2.5 text-ink-2 ${isHidden ? "blur-[3px]" : ""}`}>{contract?.tenant?.name || "—"}</td>
-                  <td className="px-2 py-2.5">
-                    {!isHidden && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditUnit(unit);
-                        }}
-                        className="p-1.5 rounded-md text-ink-3 hover:text-accent hover:bg-accent-tint transition-colors"
-                        title="編集"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                    )}
-                  </td>
                 </tr>
               );
             })}
             {units.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-5 py-8 text-center text-ink-3 text-[13px]">
+                <td colSpan={8} className="px-5 py-8 text-center text-ink-3 text-[13px]">
                   部屋が登録されていません
                 </td>
               </tr>
@@ -178,14 +162,6 @@ export default function UnitTable({ propertyId, propertyType, units, contracts, 
           </span>
         </div>
       )}
-
-      <UnitFormModal
-        isOpen={!!editUnit}
-        onClose={() => setEditUnit(null)}
-        propertyId={propertyId}
-        propertyType={propertyType}
-        editData={editUnit}
-      />
 
       {showAddButton && (
         <UnitFormModal
