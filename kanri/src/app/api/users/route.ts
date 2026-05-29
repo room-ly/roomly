@@ -106,48 +106,99 @@ export async function POST(request: NextRequest) {
     const appOrigin = getAppOrigin(request);
     const redirectTo = `${appOrigin}/auth/confirm?next=/update-password`;
 
-    // generateLink({type: "invite"}) はAuthユーザーを作成しつつメール送信せずリンクだけ返す。
-    // メール本文はResendから自前のテンプレートで送るので、これでメール2通問題を避ける。
-    const { data: linkData, error: linkError } =
-      await admin.auth.admin.generateLink({
-        type: "invite",
-        email,
-        options: { redirectTo, data: { name, company_id: companyId } },
-      });
+    // 同一会社内の既存usersをチェック（is_active問わず）
+    const { data: existingUser } = await admin
+      .from("users")
+      .select("id, is_active, company_id")
+      .eq("email", email)
+      .eq("company_id", companyId)
+      .maybeSingle();
 
-    if (linkError || !linkData?.properties?.action_link || !linkData.user?.id) {
-      if (
-        linkError?.message.includes("already been registered") ||
-        linkError?.message.includes("already exists") ||
-        linkError?.message.includes("already registered")
-      ) {
-        return NextResponse.json(
-          { error: "このメールアドレスは既に登録されています" },
-          { status: 409 }
-        );
-      }
+    if (existingUser?.is_active) {
       return NextResponse.json(
-        { error: "招待リンクの生成に失敗しました" },
-        { status: 500 }
+        { error: "このメールアドレスは既に登録されています" },
+        { status: 409 }
       );
     }
 
-    const authUserId = linkData.user.id;
+    let authUserId: string;
+    let inviteUrl: string;
 
-    const { error: profileError } = await admin.from("users").insert({
-      id: authUserId,
-      company_id: companyId,
-      name,
-      email,
-      role: userRole,
-    });
+    if (existingUser && !existingUser.is_active) {
+      // 論理削除済みユーザーを復活：is_active戻し→Auth BAN解除→recoveryリンク発行
+      authUserId = existingUser.id;
 
-    if (profileError) {
-      await admin.auth.admin.deleteUser(authUserId);
-      return NextResponse.json(
-        { error: "ユーザー作成に失敗しました" },
-        { status: 500 }
-      );
+      await admin
+        .from("users")
+        .update({
+          name,
+          role: userRole,
+          is_active: true,
+          deleted_at: null,
+        })
+        .eq("id", authUserId);
+
+      await admin.auth.admin.updateUserById(authUserId, { ban_duration: "none" });
+
+      const { data: linkData, error: linkError } =
+        await admin.auth.admin.generateLink({
+          type: "recovery",
+          email,
+          options: { redirectTo },
+        });
+
+      if (linkError || !linkData?.properties?.action_link) {
+        return NextResponse.json(
+          { error: "招待リンクの生成に失敗しました" },
+          { status: 500 }
+        );
+      }
+      inviteUrl = linkData.properties.action_link;
+    } else {
+      // 新規作成: generateLink({type:"invite"}) はAuthユーザーを作成しつつ
+      // メール送信せずリンクだけ返す。メール本文はResendから自前テンプレートで送る。
+      const { data: linkData, error: linkError } =
+        await admin.auth.admin.generateLink({
+          type: "invite",
+          email,
+          options: { redirectTo, data: { name, company_id: companyId } },
+        });
+
+      if (linkError || !linkData?.properties?.action_link || !linkData.user?.id) {
+        if (
+          linkError?.message.includes("already been registered") ||
+          linkError?.message.includes("already exists") ||
+          linkError?.message.includes("already registered")
+        ) {
+          return NextResponse.json(
+            { error: "このメールアドレスは別の会社で既に登録されています" },
+            { status: 409 }
+          );
+        }
+        return NextResponse.json(
+          { error: "招待リンクの生成に失敗しました" },
+          { status: 500 }
+        );
+      }
+
+      authUserId = linkData.user.id;
+      inviteUrl = linkData.properties.action_link;
+
+      const { error: profileError } = await admin.from("users").insert({
+        id: authUserId,
+        company_id: companyId,
+        name,
+        email,
+        role: userRole,
+      });
+
+      if (profileError) {
+        await admin.auth.admin.deleteUser(authUserId);
+        return NextResponse.json(
+          { error: "ユーザー作成に失敗しました" },
+          { status: 500 }
+        );
+      }
     }
 
     const { data: companyRow } = await admin
@@ -168,7 +219,7 @@ export async function POST(request: NextRequest) {
         html: buildInviteEmailHtml({
           inviterName: inviterRow?.name,
           companyName: companyRow?.name,
-          inviteUrl: linkData.properties.action_link,
+          inviteUrl,
         }),
       });
     } catch (e) {
