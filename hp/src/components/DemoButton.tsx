@@ -24,8 +24,17 @@ function locationOf(a: HTMLAnchorElement): string {
 }
 
 // 広告流入時のクエリをセッション内で保持する（着地ページ以外でクリックされても引き継げるように）
-const SS_KEYS = ["gclid", "utm_source", "utm_medium", "utm_campaign"] as const;
+const SS_KEYS = [
+  "gclid",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+] as const;
 type AdParam = (typeof SS_KEYS)[number];
+const SS_REFERRER_KEY = "rm_referrer";
+const SS_LANDING_KEY = "rm_landing_path";
 
 function captureAdParams() {
   try {
@@ -33,6 +42,20 @@ function captureAdParams() {
     for (const k of SS_KEYS) {
       const v = here.searchParams.get(k);
       if (v) sessionStorage.setItem(`rm_${k}`, v);
+    }
+    // 外部からの初回着地時の referrer と landing_path を保持
+    if (!sessionStorage.getItem(SS_REFERRER_KEY)) {
+      const ref = document.referrer || "";
+      // 自サイト遷移は無視
+      if (ref && !/(^|\.)roomly\.jp$/.test(new URL(ref).hostname)) {
+        sessionStorage.setItem(SS_REFERRER_KEY, ref);
+      }
+    }
+    if (!sessionStorage.getItem(SS_LANDING_KEY)) {
+      sessionStorage.setItem(
+        SS_LANDING_KEY,
+        window.location.pathname + window.location.search
+      );
     }
   } catch {
     // sessionStorageが使えない環境では何もしない
@@ -47,7 +70,15 @@ function readAdParam(k: AdParam): string | null {
   }
 }
 
-// kanri.roomly.jp へのリンクに広告由来のUTM/gclidを引き継ぐ。
+function readSession(k: string): string | null {
+  try {
+    return sessionStorage.getItem(k);
+  } catch {
+    return null;
+  }
+}
+
+// kanri.roomly.jp へのリンクに広告由来のUTM/gclid/referrerを引き継ぐ。
 function decorateKanriLink(a: HTMLAnchorElement) {
   try {
     const url = new URL(a.href);
@@ -57,12 +88,21 @@ function decorateKanriLink(a: HTMLAnchorElement) {
     const src = readAdParam("utm_source");
     const med = readAdParam("utm_medium");
     const cmp = readAdParam("utm_campaign");
+    const term = readAdParam("utm_term");
+    const content = readAdParam("utm_content");
+    const referrer = readSession(SS_REFERRER_KEY);
+    const landing = readSession(SS_LANDING_KEY);
 
     if (gclid) url.searchParams.set("gclid", gclid);
     // 広告流入と判定: gclid があれば source=google/medium=cpc を既定値で補完
     if (gclid || src) url.searchParams.set("utm_source", src || "google");
     if (gclid || med) url.searchParams.set("utm_medium", med || "cpc");
     if (cmp) url.searchParams.set("utm_campaign", cmp);
+    if (term) url.searchParams.set("utm_term", term);
+    if (content) url.searchParams.set("utm_content", content);
+    // kanri側で読み取ってlocalStorageに保存（先頭"rm_"はクライアント側で除去）
+    if (referrer) url.searchParams.set("rm_ref", referrer);
+    if (landing) url.searchParams.set("rm_landing", landing);
 
     a.href = url.toString();
   } catch {

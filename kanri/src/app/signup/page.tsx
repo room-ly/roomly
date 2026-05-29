@@ -42,6 +42,9 @@ function captureAttribution(): Attribution | null {
 
   const params = new URLSearchParams(window.location.search);
   const pick = (k: string) => params.get(k) || undefined;
+  // HP側で付与した rm_ref / rm_landing を優先（外部からの本来の流入元）
+  const externalRef = pick("rm_ref");
+  const externalLanding = pick("rm_landing");
   const data: Attribution = {
     utm_source: pick("utm_source"),
     utm_medium: pick("utm_medium"),
@@ -49,8 +52,9 @@ function captureAttribution(): Attribution | null {
     utm_term: pick("utm_term"),
     utm_content: pick("utm_content"),
     gclid: pick("gclid"),
-    referrer: document.referrer || undefined,
-    landing_path: window.location.pathname + window.location.search,
+    referrer: externalRef || document.referrer || undefined,
+    landing_path:
+      externalLanding || window.location.pathname + window.location.search,
     captured_at: new Date().toISOString(),
   };
 
