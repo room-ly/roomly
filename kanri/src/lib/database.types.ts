@@ -1,3 +1,4 @@
+Initialising login role...
 export type Json =
   | string
   | number
@@ -11,6 +12,31 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -186,17 +212,26 @@ export type Database = {
           expense_approval_threshold: number
           id: string
           is_demo: boolean
+          landing_path: string | null
           max_units: number
           name: string
           phone: string | null
           plan: string
           postal_code: string | null
+          referrer: string | null
+          signup_gclid: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_current_period_end: string | null
+          subscription_started_at: string | null
           subscription_status: string
           updated_at: string
           usage_type: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
         }
         Insert: {
           address?: string | null
@@ -209,17 +244,26 @@ export type Database = {
           expense_approval_threshold?: number
           id?: string
           is_demo?: boolean
+          landing_path?: string | null
           max_units?: number
           name: string
           phone?: string | null
           plan?: string
           postal_code?: string | null
+          referrer?: string | null
+          signup_gclid?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_current_period_end?: string | null
+          subscription_started_at?: string | null
           subscription_status?: string
           updated_at?: string
           usage_type?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Update: {
           address?: string | null
@@ -232,17 +276,26 @@ export type Database = {
           expense_approval_threshold?: number
           id?: string
           is_demo?: boolean
+          landing_path?: string | null
           max_units?: number
           name?: string
           phone?: string | null
           plan?: string
           postal_code?: string | null
+          referrer?: string | null
+          signup_gclid?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_current_period_end?: string | null
+          subscription_started_at?: string | null
           subscription_status?: string
           updated_at?: string
           usage_type?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: [
           {
@@ -882,24 +935,60 @@ export type Database = {
       login_attempts: {
         Row: {
           attempted_at: string
+          city: string | null
+          country: string | null
           email: string
+          gclid: string | null
           id: string
           ip_address: string | null
+          landing_path: string | null
+          referrer: string | null
+          region: string | null
           success: boolean
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
         }
         Insert: {
           attempted_at?: string
+          city?: string | null
+          country?: string | null
           email: string
+          gclid?: string | null
           id?: string
           ip_address?: string | null
+          landing_path?: string | null
+          referrer?: string | null
+          region?: string | null
           success?: boolean
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Update: {
           attempted_at?: string
+          city?: string | null
+          country?: string | null
           email?: string
+          gclid?: string | null
           id?: string
           ip_address?: string | null
+          landing_path?: string | null
+          referrer?: string | null
+          region?: string | null
           success?: boolean
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: []
       }
@@ -1815,6 +1904,81 @@ export type Database = {
           },
         ]
       }
+      signup_attempts: {
+        Row: {
+          attempted_at: string
+          city: string | null
+          company_name: string | null
+          country: string | null
+          created_company_id: string | null
+          email: string | null
+          error_code: string | null
+          error_message: string | null
+          gclid: string | null
+          id: string
+          ip_address: string | null
+          landing_path: string | null
+          name: string | null
+          referrer: string | null
+          region: string | null
+          success: boolean
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          attempted_at?: string
+          city?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_company_id?: string | null
+          email?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          gclid?: string | null
+          id?: string
+          ip_address?: string | null
+          landing_path?: string | null
+          name?: string | null
+          referrer?: string | null
+          region?: string | null
+          success?: boolean
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          attempted_at?: string
+          city?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_company_id?: string | null
+          email?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          gclid?: string | null
+          id?: string
+          ip_address?: string | null
+          landing_path?: string | null
+          name?: string | null
+          referrer?: string | null
+          region?: string | null
+          success?: boolean
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: []
+      }
       stations: {
         Row: {
           created_at: string | null
@@ -1853,6 +2017,56 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "train_lines"
             referencedColumns: ["line_cd"]
+          },
+        ]
+      }
+      subscription_events: {
+        Row: {
+          company_id: string
+          created_at: string
+          event_type: string
+          from_status: string | null
+          id: string
+          metadata: Json | null
+          occurred_at: string
+          plan: string | null
+          stripe_event_id: string | null
+          stripe_subscription_id: string | null
+          to_status: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          event_type: string
+          from_status?: string | null
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          plan?: string | null
+          stripe_event_id?: string | null
+          stripe_subscription_id?: string | null
+          to_status?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          event_type?: string
+          from_status?: string | null
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          plan?: string | null
+          stripe_event_id?: string | null
+          stripe_subscription_id?: string | null
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2049,6 +2263,7 @@ export type Database = {
           area_sqm: number | null
           company_id: string
           created_at: string
+          damage_notes: string | null
           deposit: number
           equipment: string[] | null
           floor: number | null
@@ -2067,6 +2282,7 @@ export type Database = {
           area_sqm?: number | null
           company_id: string
           created_at?: string
+          damage_notes?: string | null
           deposit?: number
           equipment?: string[] | null
           floor?: number | null
@@ -2085,6 +2301,7 @@ export type Database = {
           area_sqm?: number | null
           company_id?: string
           created_at?: string
+          damage_notes?: string | null
           deposit?: number
           equipment?: string[] | null
           floor?: number | null
@@ -2216,6 +2433,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _recalc_unit_status: { Args: { p_unit_id: string }; Returns: undefined }
       company_id: { Args: never; Returns: string }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       is_subscription_active: { Args: { company_id: string }; Returns: boolean }
@@ -2351,7 +2569,12 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
 } as const
+A new version of Supabase CLI is available: v2.101.0 (currently installed v2.84.2)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli

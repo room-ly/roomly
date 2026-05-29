@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
+import {
+  getRequestMeta,
+  normalizeAttribution,
+  truncate,
+} from "@/lib/request-meta";
 
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -14,45 +19,84 @@ function getAdminClient() {
 }
 
 export async function POST(request: NextRequest) {
+  const admin = getAdminClient();
+  const meta = getRequestMeta(request);
+
+  let companyName: string | undefined;
+  let name: string | undefined;
+  let email: string | undefined;
+  let password: string | undefined;
+  let attribution: ReturnType<typeof normalizeAttribution> = {};
+
   try {
-    const {
-      companyName,
-      name,
-      email,
-      password,
-      attribution,
-    } = await request.json();
+    const body = await request.json();
+    companyName = body.companyName;
+    name = body.name;
+    email = body.email;
+    password = body.password;
+    attribution = normalizeAttribution(body.attribution);
+  } catch {
+    await recordAttempt(admin, {
+      success: false,
+      error_code: "invalid_json",
+      meta,
+      attribution: {},
+    });
+    return NextResponse.json(
+      { error: "リクエストの処理に失敗しました" },
+      { status: 400 }
+    );
+  }
 
-    if (!companyName || !name || !email || !password) {
-      return NextResponse.json(
-        { error: "全ての項目を入力してください" },
-        { status: 400 }
-      );
-    }
+  const emailLower = email ? email.toLowerCase() : undefined;
 
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "パスワードは8文字以上で入力してください" },
-        { status: 400 }
-      );
-    }
+  const baseAttempt = {
+    email: emailLower ?? null,
+    company_name: truncate(companyName),
+    name: truncate(name),
+    meta,
+    attribution,
+  };
 
-    const admin = getAdminClient();
+  if (!companyName || !name || !email || !password) {
+    await recordAttempt(admin, {
+      ...baseAttempt,
+      success: false,
+      error_code: "validation",
+      error_message: "必須項目が不足",
+    });
+    return NextResponse.json(
+      { error: "全ての項目を入力してください" },
+      { status: 400 }
+    );
+  }
 
+  if (password.length < 8) {
+    await recordAttempt(admin, {
+      ...baseAttempt,
+      success: false,
+      error_code: "validation",
+      error_message: "パスワードが短い",
+    });
+    return NextResponse.json(
+      { error: "パスワードは8文字以上で入力してください" },
+      { status: 400 }
+    );
+  }
+
+  try {
     // 1. 会社を作成（広告流入情報を保存）
-    const truncate = (v: unknown, max = 255) =>
-      typeof v === "string" && v.length > 0 ? v.slice(0, max) : null;
-    const companyInsert: Record<string, unknown> = { name: companyName };
-    if (attribution && typeof attribution === "object") {
-      companyInsert.utm_source = truncate(attribution.utm_source);
-      companyInsert.utm_medium = truncate(attribution.utm_medium);
-      companyInsert.utm_campaign = truncate(attribution.utm_campaign);
-      companyInsert.utm_term = truncate(attribution.utm_term);
-      companyInsert.utm_content = truncate(attribution.utm_content);
-      companyInsert.referrer = truncate(attribution.referrer, 2000);
-      companyInsert.landing_path = truncate(attribution.landing_path, 2000);
-      companyInsert.signup_gclid = truncate(attribution.gclid);
-    }
+    const companyInsert: Record<string, unknown> = {
+      name: companyName,
+      utm_source: attribution.utm_source ?? null,
+      utm_medium: attribution.utm_medium ?? null,
+      utm_campaign: attribution.utm_campaign ?? null,
+      utm_term: attribution.utm_term ?? null,
+      utm_content: attribution.utm_content ?? null,
+      referrer: attribution.referrer ?? null,
+      landing_path: attribution.landing_path ?? null,
+      signup_gclid: attribution.gclid ?? null,
+    };
 
     const { data: company, error: companyError } = await admin
       .from("companies")
@@ -62,6 +106,12 @@ export async function POST(request: NextRequest) {
 
     if (companyError) {
       console.error("会社作成エラー:", companyError);
+      await recordAttempt(admin, {
+        ...baseAttempt,
+        success: false,
+        error_code: "company_insert_error",
+        error_message: companyError.message,
+      });
       return NextResponse.json(
         { error: "アカウント作成に失敗しました" },
         { status: 500 }
@@ -80,7 +130,15 @@ export async function POST(request: NextRequest) {
     if (authError) {
       await admin.from("companies").delete().eq("id", company.id);
 
-      if (authError.message.includes("already been registered")) {
+      const duplicate = authError.message.includes("already been registered");
+      await recordAttempt(admin, {
+        ...baseAttempt,
+        success: false,
+        error_code: duplicate ? "duplicate_email" : "auth_error",
+        error_message: authError.message,
+      });
+
+      if (duplicate) {
         return NextResponse.json(
           { error: "このメールアドレスは既に登録されています" },
           { status: 409 }
@@ -108,14 +166,26 @@ export async function POST(request: NextRequest) {
       await admin.from("companies").delete().eq("id", company.id);
 
       console.error("プロフィール作成エラー:", profileError);
+      await recordAttempt(admin, {
+        ...baseAttempt,
+        success: false,
+        error_code: "profile_error",
+        error_message: profileError.message,
+      });
       return NextResponse.json(
         { error: "アカウント作成に失敗しました" },
         { status: 500 }
       );
     }
 
+    await recordAttempt(admin, {
+      ...baseAttempt,
+      success: true,
+      created_company_id: company.id,
+    });
+
     // 4. サーバー側でログインしてセッションCookieをレスポンスに含める
-    let response = NextResponse.json(
+    const response = NextResponse.json(
       { message: "アカウントを作成しました", requiresEmailConfirmation: false },
       { status: 201 }
     );
@@ -140,10 +210,62 @@ export async function POST(request: NextRequest) {
     await supabase.auth.signInWithPassword({ email, password });
 
     return response;
-  } catch {
+  } catch (e) {
+    console.error("signupエラー:", e);
+    await recordAttempt(admin, {
+      ...baseAttempt,
+      success: false,
+      error_code: "unknown_error",
+      error_message: e instanceof Error ? e.message : String(e),
+    });
     return NextResponse.json(
       { error: "リクエストの処理に失敗しました" },
       { status: 500 }
     );
+  }
+}
+
+type RecordAttemptArgs = {
+  email?: string | null;
+  company_name?: string | null;
+  name?: string | null;
+  success: boolean;
+  error_code?: string;
+  error_message?: string;
+  created_company_id?: string;
+  meta: ReturnType<typeof getRequestMeta>;
+  attribution: ReturnType<typeof normalizeAttribution>;
+};
+
+async function recordAttempt(
+  admin: ReturnType<typeof getAdminClient>,
+  args: RecordAttemptArgs
+) {
+  try {
+    await admin.from("signup_attempts").insert({
+      email: args.email ?? null,
+      company_name: args.company_name ?? null,
+      name: args.name ?? null,
+      success: args.success,
+      error_code: args.error_code ?? null,
+      error_message: args.error_message ?? null,
+      created_company_id: args.created_company_id ?? null,
+      ip_address: args.meta.ip_address,
+      country: args.meta.country,
+      region: args.meta.region,
+      city: args.meta.city,
+      user_agent: args.meta.user_agent,
+      referrer: args.attribution.referrer ?? null,
+      landing_path: args.attribution.landing_path ?? null,
+      utm_source: args.attribution.utm_source ?? null,
+      utm_medium: args.attribution.utm_medium ?? null,
+      utm_campaign: args.attribution.utm_campaign ?? null,
+      utm_term: args.attribution.utm_term ?? null,
+      utm_content: args.attribution.utm_content ?? null,
+      gclid: args.attribution.gclid ?? null,
+    });
+  } catch (e) {
+    // 計測失敗は本処理を止めない
+    console.error("signup_attempts記録失敗:", e);
   }
 }

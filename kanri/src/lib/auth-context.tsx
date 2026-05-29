@@ -30,6 +30,51 @@ const AuthContext = createContext<AuthContextType>({
 
 const supabase = createClient();
 
+// signupページと共通のlocalStorageキー。広告流入の経路をログイン時にも紐付ける
+const ATTRIBUTION_KEY = "roomly_attribution";
+
+function readAttribution(): Record<string, string> | null {
+  if (typeof window === "undefined") return null;
+  const result: Record<string, string> = {};
+
+  try {
+    const stored = window.localStorage.getItem(ATTRIBUTION_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as Record<string, unknown>;
+      for (const k of [
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_term",
+        "utm_content",
+        "gclid",
+        "referrer",
+        "landing_path",
+      ]) {
+        const v = parsed[k];
+        if (typeof v === "string" && v.length > 0) result[k] = v;
+      }
+    }
+  } catch {
+    // パース失敗は無視
+  }
+
+  try {
+    // ログイン画面に直接UTM付きで来たケースも拾う
+    const params = new URLSearchParams(window.location.search);
+    for (const k of ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid"]) {
+      const v = params.get(k);
+      if (v && !result[k]) result[k] = v;
+    }
+    if (!result.referrer && document.referrer) result.referrer = document.referrer;
+    if (!result.landing_path) result.landing_path = window.location.pathname + window.location.search;
+  } catch {
+    // 無視
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
+}
+
 // Supabase Auth ユーザーから public.users の情報を取得
 async function fetchProfile(authUser: SupabaseUser): Promise<User | null> {
   const { data, error } = await supabase
@@ -98,27 +143,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: "ログイン試行回数の上限に達しました。30分後に再度お試しください。" };
     }
 
+    // 広告計測用にlocalStorage保持中のattributionを同送
+    const attribution = readAttribution();
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
-      // 失敗を記録
-      await fetch("/api/auth/login-check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, action: "record", success: false }),
-      });
-      return { error: error.message };
-    }
-
-    // 成功時は失敗履歴をクリア（認証済みセッションで呼び出し）
+    // 成功・失敗どちらも記録する（広告流入の検証に使う）
     await fetch("/api/auth/login-check", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, action: "clear", success: true }),
+      body: JSON.stringify({
+        email,
+        action: "record",
+        success: !error,
+        attribution,
+      }),
     });
+
+    if (error) {
+      return { error: error.message };
+    }
 
     // MFA要否チェック
     const { data: mfaData } = await supabase.auth.mfa.listFactors();

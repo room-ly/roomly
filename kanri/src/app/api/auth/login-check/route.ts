@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getRequestMeta, normalizeAttribution } from "@/lib/request-meta";
 
 const MAX_ATTEMPTS = 10;
 const LOCKOUT_MINUTES = 30;
@@ -14,17 +15,17 @@ function getAdmin() {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { email, action, success } = body;
+  const { email, action, success, attribution } = body;
 
   if (!email) {
     return NextResponse.json({ error: "メールアドレスが必要です" }, { status: 400 });
   }
 
   const admin = getAdmin();
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
-  const emailLower = email.toLowerCase();
+  const emailLower = String(email).toLowerCase();
 
   if (action === "check") {
+    // 直近LOCKOUT_MINUTES分の連続失敗回数でロック判定（成功は無視）
     const since = new Date(Date.now() - LOCKOUT_MINUTES * 60 * 1000).toISOString();
     const { count } = await admin
       .from("login_attempts")
@@ -34,34 +35,33 @@ export async function POST(request: NextRequest) {
       .gte("attempted_at", since);
 
     const isLocked = (count ?? 0) >= MAX_ATTEMPTS;
-    return NextResponse.json({ locked: isLocked, remainingAttempts: Math.max(MAX_ATTEMPTS - (count ?? 0), 0) });
+    return NextResponse.json({
+      locked: isLocked,
+      remainingAttempts: Math.max(MAX_ATTEMPTS - (count ?? 0), 0),
+    });
   }
 
   if (action === "record") {
-    // クライアントからはfailure記録のみ許可（success:trueはサーバー側で処理すべき）
+    // 成功・失敗どちらも記録する。広告流入の検証に使うため成功も残す
+    const meta = getRequestMeta(request);
+    const attr = normalizeAttribution(attribution);
     await admin.from("login_attempts").insert({
       email: emailLower,
-      success: false,
-      ip_address: ip,
+      success: success === true,
+      ip_address: meta.ip_address,
+      country: meta.country,
+      region: meta.region,
+      city: meta.city,
+      user_agent: meta.user_agent,
+      referrer: attr.referrer,
+      landing_path: attr.landing_path,
+      utm_source: attr.utm_source,
+      utm_medium: attr.utm_medium,
+      utm_campaign: attr.utm_campaign,
+      utm_term: attr.utm_term,
+      utm_content: attr.utm_content,
+      gclid: attr.gclid,
     });
-
-    return NextResponse.json({ ok: true });
-  }
-
-  if (action === "clear" && success) {
-    // ログイン成功後のクリアは認証済みセッションからのみ許可
-    const { createClient: createAuthClient } = await import("@/lib/supabase-server");
-    const supabase = await createAuthClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.email?.toLowerCase() !== emailLower) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
-    }
-
-    await admin
-      .from("login_attempts")
-      .delete()
-      .eq("email", emailLower)
-      .eq("success", false);
 
     return NextResponse.json({ ok: true });
   }
