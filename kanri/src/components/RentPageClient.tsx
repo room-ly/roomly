@@ -176,7 +176,8 @@ export function BulkGenerateButton() {
                     </button>
                     <button
                       onClick={handleGenerate}
-                      className="btn btn-primary"
+                      disabled={(step as "confirm" | "loading" | "done") === "loading"}
+                      className="btn btn-primary disabled:opacity-50 disabled:cursor-wait"
                     >
                       生成する
                     </button>

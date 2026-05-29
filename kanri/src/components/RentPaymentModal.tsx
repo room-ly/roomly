@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { rentPaymentSchema, type RentPaymentFormData } from "@/lib/schemas";
 import type { ZodError } from "zod";
 
@@ -217,8 +217,9 @@ export default function RentPaymentModal({
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary disabled:opacity-50"
+              className="btn btn-primary disabled:opacity-50 disabled:cursor-wait flex items-center gap-1.5"
             >
+              {loading && <Loader2 size={14} className="animate-spin" />}
               {loading ? "登録中..." : isRefund ? "返金を登録" : "入金を登録"}
             </button>
           </div>

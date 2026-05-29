@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { payeeSchema, type PayeeFormData } from "@/lib/schemas-payee";
 import type { ZodError } from "zod";
 import BankSuggest from "./BankSuggest";
@@ -190,7 +190,8 @@ export default function PayeeFormModal({ isOpen, onClose, editData }: PayeeFormM
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="btn btn-ghost flex-1">キャンセル</button>
-            <button type="submit" disabled={loading} className="btn btn-primary flex-1">
+            <button type="submit" disabled={loading} className="btn btn-primary flex-1 flex items-center justify-center gap-1.5 disabled:cursor-wait">
+              {loading && <Loader2 size={14} className="animate-spin" />}
               {loading ? "保存中…" : isEdit ? "更新" : "追加"}
             </button>
           </div>

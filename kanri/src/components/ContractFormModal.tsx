@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { contractSchema, type ContractFormData } from "@/lib/schemas";
 import type { ZodError } from "zod";
 
@@ -323,7 +323,8 @@ export default function ContractFormModal({
               <button type="button" onClick={onClose} className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-bg-2 transition-colors">
                 キャンセル
               </button>
-              <button type="submit" disabled={loading} className="btn btn-primary disabled:opacity-50">
+              <button type="submit" disabled={loading} className="btn btn-primary disabled:opacity-50 disabled:cursor-wait flex items-center gap-1.5">
+                {loading && <Loader2 size={14} className="animate-spin" />}
                 {loading ? "保存中..." : isEdit ? "更新する" : "作成する"}
               </button>
             </div>

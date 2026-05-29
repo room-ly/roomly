@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 interface Props {
   expenseId: string;
@@ -94,7 +95,8 @@ export default function ExpenseApprovalPanel({ expenseId, status, isApprover, ap
             <p className="text-sm text-ink-2 mb-2">
               下書き状態です。提出すると、しきい値超過時は承認待ちに、それ以外は自動承認されます。
             </p>
-            <button className="btn btn-primary btn-sm" onClick={submit} disabled={loading}>
+            <button className="btn btn-primary btn-sm disabled:cursor-wait flex items-center gap-1.5" onClick={submit} disabled={loading}>
+              {loading && <Loader2 size={14} className="animate-spin" />}
               {loading ? "送信中..." : "提出する"}
             </button>
           </div>
@@ -116,8 +118,9 @@ export default function ExpenseApprovalPanel({ expenseId, status, isApprover, ap
             </p>
             {isApprover && !showReject && (
               <div className="flex gap-2">
-                <button className="btn btn-primary btn-sm" onClick={approve} disabled={loading}>
-                  承認する
+                <button className="btn btn-primary btn-sm disabled:cursor-wait flex items-center gap-1.5" onClick={approve} disabled={loading}>
+                  {loading && <Loader2 size={14} className="animate-spin" />}
+                  {loading ? "承認中..." : "承認する"}
                 </button>
                 <button
                   className="btn btn-ghost btn-sm"
@@ -138,8 +141,9 @@ export default function ExpenseApprovalPanel({ expenseId, status, isApprover, ap
                   onChange={(e) => setReason(e.target.value)}
                 />
                 <div className="flex gap-2 mt-2">
-                  <button className="btn btn-primary btn-sm" onClick={reject} disabled={loading}>
-                    却下を確定
+                  <button className="btn btn-primary btn-sm disabled:cursor-wait flex items-center gap-1.5" onClick={reject} disabled={loading}>
+                    {loading && <Loader2 size={14} className="animate-spin" />}
+                    {loading ? "却下中..." : "却下を確定"}
                   </button>
                   <button
                     className="btn btn-ghost btn-sm"

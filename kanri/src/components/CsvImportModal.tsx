@@ -535,7 +535,7 @@ export default function CsvImportModal({
               >
                 戻る
               </button>
-              <button onClick={handleImport} className="btn btn-primary">
+              <button onClick={handleImport} disabled={(state as ImportState) === "importing"} className="btn btn-primary disabled:opacity-50 disabled:cursor-wait">
                 <Upload size={14} />
                 {label}をインポート
               </button>

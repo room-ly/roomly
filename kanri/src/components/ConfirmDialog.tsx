@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -31,7 +31,8 @@ export default function ConfirmDialog({ isOpen, title, message, confirmLabel = "
           <button onClick={onCancel} className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-surface-2 transition-colors">
             キャンセル
           </button>
-          <button onClick={onConfirm} disabled={loading} className="bg-danger text-white rounded-lg px-4 py-2 text-sm hover:bg-danger/90 transition-colors disabled:opacity-50">
+          <button onClick={onConfirm} disabled={loading} className="bg-danger text-white rounded-lg px-4 py-2 text-sm hover:bg-danger/90 transition-colors disabled:opacity-50 disabled:cursor-wait flex items-center gap-1.5">
+            {loading && <Loader2 size={14} className="animate-spin" />}
             {loading ? "処理中..." : confirmLabel}
           </button>
         </div>

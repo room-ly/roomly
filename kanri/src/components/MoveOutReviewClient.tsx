@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 
 const statusConfig: Record<string, { text: string; cls: string }> = {
   pending: { text: "申請中", cls: "bg-warn-tint text-warn" },
@@ -52,10 +52,10 @@ export default function MoveOutReviewClient({ request }: { request: Record<strin
       <button
         onClick={() => handleAction("approved")}
         disabled={processing}
-        className="w-full flex items-center justify-center gap-1.5 py-2 bg-accent text-white rounded-lg text-[13px] font-medium hover:bg-accent-deep transition-colors disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-1.5 py-2 bg-accent text-white rounded-lg text-[13px] font-medium hover:bg-accent-deep transition-colors disabled:opacity-50 disabled:cursor-wait"
       >
-        <Check size={14} />
-        確認済みにする
+        {processing ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+        {processing ? "処理中..." : "確認済みにする"}
       </button>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import {
   expenseSchema,
   ALLOCATION_METHODS,
@@ -693,7 +693,8 @@ export default function ExpenseFormModal({
             >
               キャンセル
             </button>
-            <button type="submit" disabled={loading || !breakdownOk} className="btn btn-primary disabled:opacity-50">
+            <button type="submit" disabled={loading || !breakdownOk} className="btn btn-primary disabled:opacity-50 disabled:cursor-wait flex items-center gap-1.5">
+              {loading && <Loader2 size={14} className="animate-spin" />}
               {loading ? "保存中..." : isEdit ? "更新する" : "登録する"}
             </button>
           </div>

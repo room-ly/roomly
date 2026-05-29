@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Building2, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Building2, MoreVertical, Pencil, Trash2, Loader2 } from "lucide-react";
 import { formatBuiltYear } from "@/lib/wareki";
 import PropertyFormModal from "./PropertyFormModal";
 
@@ -28,6 +28,7 @@ export default function PropertyCard({ property: prop, owners, users = [] }: Pro
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const propUnits = prop.units || [];
   const occupied = propUnits.filter((u: any) => u.status === "occupied").length;
@@ -36,9 +37,15 @@ export default function PropertyCard({ property: prop, owners, users = [] }: Pro
   const occupancyRate = propUnits.length > 0 ? Math.round((occupied / propUnits.length) * 100) : 0;
 
   async function handleDelete() {
+    if (deleting) return;
     if (!confirm("この物件を削除しますか？関連する部屋も全て削除されます。")) return;
-    const res = await fetch(`/api/properties/${prop.id}`, { method: "DELETE" });
-    if (res.ok) router.refresh();
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/properties/${prop.id}`, { method: "DELETE" });
+      if (res.ok) router.refresh();
+    } finally {
+      setDeleting(false);
+    }
   }
 
   const typeLabels: Record<string, string> = {
@@ -99,11 +106,13 @@ export default function PropertyCard({ property: prop, owners, users = [] }: Pro
                     </button>
                     <button
                       onClick={() => { setMenuOpen(false); handleDelete(); }}
-                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 12, color: "var(--danger)" }}
+                      disabled={deleting}
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 12, color: "var(--danger)", cursor: deleting ? "wait" : undefined, opacity: deleting ? 0.6 : 1 }}
                       onMouseEnter={(e) => { (e.target as HTMLElement).style.background = "var(--danger-tint)"; }}
                       onMouseLeave={(e) => { (e.target as HTMLElement).style.background = ""; }}
                     >
-                      <Trash2 size={12} /> 削除
+                      {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                      {deleting ? "削除中..." : "削除"}
                     </button>
                   </div>
                 </>
