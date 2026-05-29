@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { createClient } from "@/lib/supabase";
 
 export default function LoginPage() {
   const { login, verifyMfa } = useAuth();
@@ -17,6 +18,41 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [mfaStep, setMfaStep] = useState(false);
   const [mfaCode, setMfaCode] = useState("");
+  const [restoringSession, setRestoringSession] = useState(false);
+
+  // 招待リンク・パスワードリセットリンクのhashトークンを処理して /update-password に遷移
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (!hash || !hash.includes("access_token")) return;
+
+    setRestoringSession(true);
+    const params = new URLSearchParams(hash.replace(/^#/, ""));
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+    const type = params.get("type");
+
+    if (!access_token || !refresh_token) {
+      setRestoringSession(false);
+      return;
+    }
+
+    const supabase = createClient();
+    supabase.auth
+      .setSession({ access_token, refresh_token })
+      .then(({ error: sessionError }) => {
+        if (sessionError) {
+          setError("リンクが無効か期限切れです。再度招待を依頼してください。");
+          setRestoringSession(false);
+          window.history.replaceState(null, "", window.location.pathname);
+          return;
+        }
+        const target =
+          type === "invite" || type === "recovery" ? "/update-password" : "/";
+        window.history.replaceState(null, "", window.location.pathname);
+        router.replace(target);
+      });
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +99,20 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (restoringSession) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center px-6">
+        <div className="w-full max-w-sm text-center">
+          <h1 className="text-xl font-semibold text-ink tracking-wide mb-6">Roomly</h1>
+          <div className="card p-8">
+            <Loader2 className="w-6 h-6 text-accent mx-auto mb-3 animate-spin" />
+            <p className="text-[13px] text-ink-3">招待リンクを確認中...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg flex">
