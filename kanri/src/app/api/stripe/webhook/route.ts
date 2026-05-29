@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getStripe, getPlanByPriceId } from "@/lib/stripe";
+import { getStripe, getPlanByPriceId, calcCustomPrice } from "@/lib/stripe";
+import { sendGa4Purchase } from "@/lib/ga-measurement-protocol";
 import type Stripe from "stripe";
 
 function getAdmin() {
@@ -34,7 +35,7 @@ async function updateCompanySubscription(
   // 遷移前の状態を取得（subscription_events 用 + subscription_started_at 設定判定用）
   const { data: prev } = await admin
     .from("companies")
-    .select("subscription_status, subscription_started_at")
+    .select("subscription_status, subscription_started_at, ga_client_id, signup_gclid")
     .eq("id", companyId)
     .single();
 
@@ -49,7 +50,9 @@ async function updateCompanySubscription(
   };
 
   // 初めて有料化したタイミングを記録（既にあれば上書きしない）
-  if (subscription.status === "active" && !prev?.subscription_started_at) {
+  const isFirstActive =
+    subscription.status === "active" && !prev?.subscription_started_at;
+  if (isFirstActive) {
     updatePayload.subscription_started_at = new Date().toISOString();
   }
 
@@ -65,6 +68,20 @@ async function updateCompanySubscription(
       stripe_subscription_id: subscription.id,
       stripe_event_id: stripeEvent?.id ?? null,
       plan: newPlan,
+    });
+  }
+
+  // 初回有料化のタイミングでGA4にpurchaseイベントを送信（Smart Bidding学習用）
+  if (isFirstActive && prev?.ga_client_id) {
+    const valueJpy =
+      plan?.price ?? calcCustomPrice(maxUnits) ?? 5000;
+    await sendGa4Purchase({
+      clientId: prev.ga_client_id,
+      transactionId: subscription.id,
+      valueJpy,
+      planLabel: plan?.label,
+      maxUnits,
+      gclid: prev.signup_gclid ?? null,
     });
   }
 }
