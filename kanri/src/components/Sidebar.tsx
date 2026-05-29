@@ -130,7 +130,10 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+      // ref はモバイル/デスクトップ両方の sidebarContent でレンダリングされて1つしか保持できないので、
+      // data 属性で両方を判定する
+      const target = e.target as Element | null;
+      if (target && !target.closest?.("[data-user-menu]")) {
         setUserMenuOpen(false);
       }
     }
@@ -289,7 +292,7 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
       </nav>
 
       {/* ユーザーメニュー */}
-      <div ref={userMenuRef} className="relative px-4 py-3 border-t border-line">
+      <div ref={userMenuRef} data-user-menu className="relative px-4 py-3 border-t border-line">
         <button
           onClick={() => setUserMenuOpen(!userMenuOpen)}
           className="w-full flex items-center gap-2.5 p-1.5 rounded-[var(--r-md)] hover:bg-surface transition-colors"
