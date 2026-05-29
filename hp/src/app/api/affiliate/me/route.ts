@@ -49,6 +49,19 @@ export async function GET() {
     .select("id", { count: "exact", head: true })
     .eq("affiliate_id", affiliate.id);
 
+  // 紹介経由の登録数(無料含む) = companies.affiliate_id = 自分
+  const { count: signupCount } = await admin
+    .from("companies")
+    .select("id", { count: "exact", head: true })
+    .eq("affiliate_id", affiliate.id);
+
+  // 有料転換数 = companies.affiliate_id = 自分 AND subscription_status が課金中
+  const { count: paidCount } = await admin
+    .from("companies")
+    .select("id", { count: "exact", head: true })
+    .eq("affiliate_id", affiliate.id)
+    .in("subscription_status", ["active", "trialing"]);
+
   const { data: conversions } = await admin
     .from("affiliate_conversions")
     .select("status, amount_jpy, occurred_at, conversion_type")
@@ -75,6 +88,8 @@ export async function GET() {
     },
     stats: {
       click_count: clickCount || 0,
+      signup_count: signupCount || 0,
+      paid_company_count: paidCount || 0,
       conversion_count: conversions?.length || 0,
       pending_amount_jpy: sum(pending),
       approved_amount_jpy: sum(approved),

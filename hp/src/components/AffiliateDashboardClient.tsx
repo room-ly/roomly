@@ -16,6 +16,8 @@ type DashboardData = {
   };
   stats: {
     click_count: number;
+    signup_count: number;
+    paid_company_count: number;
     conversion_count: number;
     pending_amount_jpy: number;
     approved_amount_jpy: number;
@@ -181,31 +183,48 @@ export default function AffiliateDashboardClient() {
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="クリック数" value={data.stats.click_count.toLocaleString()} />
         <StatCard
-          label="成果件数"
-          value={data.stats.conversion_count.toLocaleString()}
+          label="リンクのクリック数"
+          value={data.stats.click_count.toLocaleString()}
+          hint="紹介URLが踏まれた回数"
         />
         <StatCard
-          label="保留中の報酬"
-          value={formatJpy(data.stats.pending_amount_jpy)}
-          hint="承認待ちの成果"
+          label="登録(無料含む)"
+          value={data.stats.signup_count.toLocaleString()}
+          hint="紹介経由でkanriに登録した会社数"
         />
         <StatCard
-          label="確定 + 支払済"
+          label="有料転換中"
+          value={data.stats.paid_company_count.toLocaleString()}
+          hint="現在有料プランを利用中の紹介先"
+        />
+        <StatCard
+          label="累計報酬(税込)"
           value={formatJpy(
-            data.stats.approved_amount_jpy + data.stats.paid_amount_jpy
+            data.stats.pending_amount_jpy +
+              data.stats.approved_amount_jpy +
+              data.stats.paid_amount_jpy
           )}
-          hint={`うち支払済 ${formatJpy(data.stats.paid_amount_jpy)}`}
+          hint={`確定+支払済 ${formatJpy(
+            data.stats.approved_amount_jpy + data.stats.paid_amount_jpy
+          )} / 保留中 ${formatJpy(data.stats.pending_amount_jpy)}`}
         />
       </section>
 
+      <section className="rounded-2xl border border-rm-border bg-rm-bg p-5 text-[12px] text-rm-text-secondary leading-relaxed">
+        <p>
+          <span className="text-rm-primary font-medium">報酬の発生条件:</span>{" "}
+          紹介先がkanriに登録(無料含む)し、有料プランへ移行した月から、月額の{Number(data.affiliate.commission_recurring_rate)}%が毎月還元されます。
+          無料プランのままでは報酬は発生しません。
+        </p>
+      </section>
+
       <section>
-        <h2 className="text-[16px] font-medium text-rm-primary">最近の成果</h2>
+        <h2 className="text-[16px] font-medium text-rm-primary">最近の報酬</h2>
         <div className="mt-4 overflow-hidden rounded-2xl border border-rm-border bg-rm-surface">
           {data.recent_conversions.length === 0 ? (
             <div className="px-6 py-10 text-center text-[13px] text-rm-text-secondary">
-              まだ成果は記録されていません。リンクを共有して紹介を始めましょう。
+              まだ報酬は発生していません。紹介先が有料プランに移行すると、ここに毎月の報酬が記録されます。
             </div>
           ) : (
             <table className="w-full text-[13px]">

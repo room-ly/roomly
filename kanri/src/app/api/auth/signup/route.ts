@@ -93,10 +93,10 @@ export async function POST(request: NextRequest) {
         .select("id, status")
         .eq("code", attribution.affiliate_code)
         .maybeSingle();
-      if (affiliate && affiliate.status === "active") {
+      if (affiliate && affiliate.status === "approved") {
         affiliateId = affiliate.id as string;
       }
-      // 承認待ち/拒否のコードでも affiliate_code は記録しておく（後で運営判断できるように）
+      // 未承認のコードでも affiliate_code は記録しておく（後で運営判断できるように）
     }
 
     // 1. 会社を作成（広告流入情報を保存）
