@@ -66,10 +66,10 @@ export default function AffiliateLoginForm() {
       </p>
       <p className="mt-2 text-center text-[12px] text-rm-text-secondary">
         コードを紛失した方は{" "}
-        <Link href="/contact" className="text-rm-accent-deep underline">
-          お問い合わせ
+        <Link href="/affiliate/recover" className="text-rm-accent-deep underline">
+          ダッシュボードURLの再送
         </Link>{" "}
-        からご連絡ください。
+        からどうぞ。
       </p>
     </div>
   );
