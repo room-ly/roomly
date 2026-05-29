@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 
 export default function UpdatePasswordPage() {
@@ -67,17 +67,25 @@ export default function UpdatePasswordPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      // updateUser がハングするケースがあるので 15 秒でタイムアウト
+      const timeout = new Promise<{ error: Error }>((resolve) =>
+        setTimeout(() => resolve({ error: new Error("タイムアウトしました。再度お試しください。") }), 15000)
+      );
+      const result = await Promise.race([
+        supabase.auth.updateUser({ password }),
+        timeout,
+      ]);
+      const { error } = result as { error: { message: string } | null };
 
       if (error) {
         setError("パスワードの更新に失敗しました: " + error.message);
+        setLoading(false);
         return;
       }
 
       router.push("/");
     } catch {
       setError("エラーが発生しました");
-    } finally {
       setLoading(false);
     }
   };
@@ -158,8 +166,9 @@ export default function UpdatePasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-accent text-white rounded font-medium text-[13px] transition-colors hover:bg-accent-deep disabled:opacity-50"
+            className="w-full py-2.5 bg-accent text-white rounded font-medium text-[13px] transition-colors hover:bg-accent-deep disabled:opacity-50 flex items-center justify-center gap-2"
           >
+            {loading && <Loader2 size={14} className="animate-spin" />}
             {loading ? "更新中..." : "パスワードを更新"}
           </button>
         </form>
