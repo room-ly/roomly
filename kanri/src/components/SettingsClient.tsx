@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Crown, ExternalLink, Trash2, Pencil, ShieldCheck, ShieldOff, Building2, Star } from "lucide-react";
+import { Plus, X, Crown, ExternalLink, Trash2, Pencil, ShieldCheck, ShieldOff, Building2, Star, Mail } from "lucide-react";
 import BankSuggest from "./BankSuggest";
 import PostalCodeInput from "./PostalCodeInput";
 
@@ -38,6 +38,8 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
   const [editTarget, setEditTarget] = useState<Record<string, any> | null>(null);
   const [editing, setEditing] = useState(false);
   const [editError, setEditError] = useState("");
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [resendMsg, setResendMsg] = useState("");
   const [mfaEnrolled, setMfaEnrolled] = useState(false);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaSetup, setMfaSetup] = useState<{ factorId: string; qrCode: string; secret: string } | null>(null);
@@ -231,6 +233,20 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
     if (res.ok) loadBankAccounts();
   }
 
+  async function handleResendInvite(userId: string) {
+    setResendingId(userId);
+    setResendMsg("");
+    const res = await fetch(`/api/users/${userId}/resend-invite`, { method: "POST" });
+    const data = await res.json();
+    if (res.ok) {
+      setResendMsg(data.message || "招待を再送しました");
+    } else {
+      setResendMsg(data.error || "再送に失敗しました");
+    }
+    setResendingId(null);
+    setTimeout(() => setResendMsg(""), 4000);
+  }
+
   async function handleInvite(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setInviting(true);
@@ -240,7 +256,6 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
     const body = {
       name: fd.get("name"),
       email: fd.get("email"),
-      password: fd.get("password"),
       role: fd.get("role"),
     };
 
@@ -805,6 +820,10 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
           </button>
         </div>
 
+        {resendMsg && (
+          <div className="bg-accent-tint text-accent-deep text-[12px] rounded-lg px-3 py-2 mb-3">{resendMsg}</div>
+        )}
+
         <div className="space-y-2">
           {users.map((u) => (
             <div key={u.id} className="flex items-center justify-between p-3 rounded bg-bg-2 group">
@@ -825,6 +844,14 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                 }`}>
                   {roleLabels[u.role] || u.role}
                 </span>
+                <button
+                  onClick={() => handleResendInvite(u.id)}
+                  disabled={resendingId === u.id}
+                  className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-accent transition-all p-1 rounded hover:bg-accent/10 disabled:opacity-50"
+                  title="招待メールを再送"
+                >
+                  <Mail size={14} />
+                </button>
                 <button
                   onClick={() => { setEditTarget(u); setEditError(""); }}
                   className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-accent transition-all p-1 rounded hover:bg-accent/10"
@@ -951,10 +978,7 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">メールアドレス <span className="text-danger">*</span></label>
                 <input name="email" type="email" className="input" placeholder="例: tanaka@example.com" required />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-ink-2 block mb-1">初期パスワード <span className="text-danger">*</span></label>
-                <input name="password" type="password" className="input" placeholder="8文字以上" minLength={8} required />
+                <p className="text-[11px] text-ink-3 mt-1.5">入力したアドレスに招待メールが送信されます。受信者がリンクからパスワードを設定します。</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">権限</label>
@@ -970,7 +994,7 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                   キャンセル
                 </button>
                 <button type="submit" disabled={inviting} className="btn btn-primary disabled:opacity-50">
-                  {inviting ? "作成中..." : "追加する"}
+                  {inviting ? "送信中..." : "招待メールを送信"}
                 </button>
               </div>
             </form>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { sendEmail } from "@/lib/email";
 
 function getAdmin() {
   return createAdminClient(
@@ -8,6 +9,39 @@ function getAdmin() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
+}
+
+function getAppOrigin(request: NextRequest) {
+  const fromEnv = process.env.NEXT_PUBLIC_KANRI_URL;
+  if (fromEnv) return fromEnv.replace(/\/$/, "");
+  const origin = request.headers.get("origin") || request.nextUrl.origin;
+  return origin.replace(/\/$/, "");
+}
+
+function buildInviteEmailHtml({
+  inviterName,
+  companyName,
+  inviteUrl,
+}: {
+  inviterName?: string | null;
+  companyName?: string | null;
+  inviteUrl: string;
+}) {
+  const inviter = inviterName ? `${inviterName} さん` : "管理者";
+  const company = companyName ? `（${companyName}）` : "";
+  return `
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#1a202c;line-height:1.7;">
+  <h1 style="font-size:18px;font-weight:600;margin:0 0 24px;color:#1a365d;">Roomly へようこそ</h1>
+  <p style="margin:0 0 16px;font-size:14px;">${inviter}${company}から Roomly への参加が招待されました。</p>
+  <p style="margin:0 0 24px;font-size:14px;">下のボタンからパスワードを設定して、ログインしてください。</p>
+  <p style="margin:0 0 32px;">
+    <a href="${inviteUrl}" style="display:inline-block;background:#1a365d;color:#fff;text-decoration:none;font-size:14px;font-weight:500;padding:12px 24px;border-radius:8px;">パスワードを設定する</a>
+  </p>
+  <p style="margin:0 0 8px;font-size:12px;color:#718096;">ボタンが押せない場合は、以下のURLをブラウザに貼り付けてください。</p>
+  <p style="margin:0 0 32px;font-size:12px;color:#718096;word-break:break-all;">${inviteUrl}</p>
+  <p style="margin:0;font-size:12px;color:#a0aec0;">このリンクの有効期限は24時間です。期限が切れた場合はログイン画面の「パスワードをお忘れですか？」から再発行できます。</p>
+</div>
+  `.trim();
 }
 
 async function getCurrentUserId() {
@@ -48,50 +82,60 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, role } = await request.json();
+    const { name, email, role } = await request.json();
 
-    if (!name || !email || !password) {
+    if (!name || !email) {
       return NextResponse.json(
-        { error: "氏名・メール・パスワードは必須です" },
+        { error: "氏名・メールアドレスは必須です" },
         { status: 400 }
       );
     }
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "パスワードは8文字以上で入力してください" },
-        { status: 400 }
-      );
+
+    const supabase = await createClient();
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
     const companyId = await getCompanyId();
     const admin = getAdmin();
 
-    const { data: authData, error: authError } =
-      await admin.auth.admin.createUser({
+    const validRoles = ["admin", "manager", "staff", "viewer"];
+    const userRole = validRoles.includes(role) ? role : "staff";
+
+    const appOrigin = getAppOrigin(request);
+    const redirectTo = `${appOrigin}/auth/confirm?next=/update-password`;
+
+    // generateLink({type: "invite"}) はAuthユーザーを作成しつつメール送信せずリンクだけ返す。
+    // メール本文はResendから自前のテンプレートで送るので、これでメール2通問題を避ける。
+    const { data: linkData, error: linkError } =
+      await admin.auth.admin.generateLink({
+        type: "invite",
         email,
-        password,
-        email_confirm: true,
-        user_metadata: { name, company_id: companyId },
+        options: { redirectTo, data: { name, company_id: companyId } },
       });
 
-    if (authError) {
-      if (authError.message.includes("already been registered")) {
+    if (linkError || !linkData?.properties?.action_link || !linkData.user?.id) {
+      if (
+        linkError?.message.includes("already been registered") ||
+        linkError?.message.includes("already exists") ||
+        linkError?.message.includes("already registered")
+      ) {
         return NextResponse.json(
           { error: "このメールアドレスは既に登録されています" },
           { status: 409 }
         );
       }
       return NextResponse.json(
-        { error: "ユーザー作成に失敗しました" },
+        { error: "招待リンクの生成に失敗しました" },
         { status: 500 }
       );
     }
 
-    const validRoles = ["admin", "manager", "staff", "viewer"];
-    const userRole = validRoles.includes(role) ? role : "staff";
+    const authUserId = linkData.user.id;
 
     const { error: profileError } = await admin.from("users").insert({
-      id: authData.user.id,
+      id: authUserId,
       company_id: companyId,
       name,
       email,
@@ -99,15 +143,47 @@ export async function POST(request: NextRequest) {
     });
 
     if (profileError) {
-      await admin.auth.admin.deleteUser(authData.user.id);
+      await admin.auth.admin.deleteUser(authUserId);
       return NextResponse.json(
         { error: "ユーザー作成に失敗しました" },
         { status: 500 }
       );
     }
 
+    const { data: companyRow } = await admin
+      .from("companies")
+      .select("name")
+      .eq("id", companyId)
+      .single();
+    const { data: inviterRow } = await admin
+      .from("users")
+      .select("name")
+      .eq("id", currentUser.id)
+      .single();
+
+    try {
+      await sendEmail({
+        to: email,
+        subject: "Roomly へのご招待",
+        html: buildInviteEmailHtml({
+          inviterName: inviterRow?.name,
+          companyName: companyRow?.name,
+          inviteUrl: linkData.properties.action_link,
+        }),
+      });
+    } catch (e) {
+      console.error("招待メール送信失敗:", e);
+      return NextResponse.json(
+        {
+          error:
+            "ユーザーは作成されましたが、招待メールの送信に失敗しました。ユーザー管理画面の封筒アイコンから招待を再送してください。",
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { id: authData.user.id, name, email, role: userRole },
+      { id: authUserId, name, email, role: userRole },
       { status: 201 }
     );
   } catch {

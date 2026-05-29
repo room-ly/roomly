@@ -28,12 +28,13 @@ export async function GET(request: NextRequest) {
     );
 
     const { error } = await supabase.auth.verifyOtp({
-      type: type as "recovery" | "signup" | "email",
+      type: type as "recovery" | "signup" | "email" | "invite",
       token_hash,
     });
 
     if (!error) {
-      const redirectTo = type === "recovery" ? "/update-password" : next;
+      const redirectTo =
+        type === "recovery" || type === "invite" ? "/update-password" : next;
       const redirectUrl = new URL(redirectTo, request.url);
       const response = NextResponse.redirect(redirectUrl);
 
