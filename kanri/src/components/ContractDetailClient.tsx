@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, FileText, FileCheck } from "lucide-react";
+import { Pencil, Trash2, FileText, FileCheck, RefreshCw } from "lucide-react";
 import ContractFormModal from "./ContractFormModal";
 import ConfirmDialog from "./ConfirmDialog";
 
@@ -46,6 +46,11 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
         <a href={`/api/contracts/${contract.id}/important-explanation`} target="_blank" rel="noopener noreferrer" className="btn btn-secondary flex items-center gap-1.5 text-[13px]">
           <FileCheck size={13} /> 重説
         </a>
+        {contract.status === "active" && (
+          <a href={`/api/contracts/${contract.id}/renewal-notice`} target="_blank" rel="noopener noreferrer" className="btn btn-secondary flex items-center gap-1.5 text-[13px]" style={{ color: "var(--accent)" }}>
+            <RefreshCw size={13} /> 更新案内
+          </a>
+        )}
         {contract.status === "active" && (
           <a href={`/api/contracts/${contract.id}/move-out-notice`} target="_blank" rel="noopener noreferrer" className="btn btn-secondary flex items-center gap-1.5 text-[13px]" style={{ color: "var(--warn)" }}>
             <FileText size={13} /> 退去届

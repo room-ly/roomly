@@ -2,7 +2,7 @@
 
 export default function DemoNotice() {
   return (
-    <div className="border-b border-warning/30 bg-warning/10 px-5 py-2 text-[12.5px] text-ink-2 leading-relaxed">
+    <div className="sticky top-0 z-40 border-b border-warning/30 bg-[#fdf6ec] px-5 py-2 text-[12.5px] text-ink-2 leading-relaxed">
       <div className="flex items-start gap-3">
         <span className="font-mono text-[10px] tracking-wider px-1.5 py-0.5 rounded-full bg-bg border border-warning/40 text-warning shrink-0 mt-0.5">
           DEMO

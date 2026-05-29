@@ -28,7 +28,7 @@ export default function BetaNotice() {
   };
 
   return (
-    <div className="border-b border-line bg-accent-tint/40 px-5 py-2 text-[12.5px] text-ink-2 leading-relaxed">
+    <div className="sticky top-0 z-40 border-b border-line bg-[#eef4fb] px-5 py-2 text-[12.5px] text-ink-2 leading-relaxed">
       <div className="flex items-start gap-3">
         <span className="font-mono text-[10px] tracking-wider px-1.5 py-0.5 rounded-full bg-bg border border-line text-ink-3 shrink-0 mt-0.5">
           BETA
