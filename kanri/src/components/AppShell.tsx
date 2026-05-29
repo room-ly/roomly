@@ -5,6 +5,7 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import CommandPalette from "./CommandPalette";
 import BetaNotice from "./BetaNotice";
+import DemoNotice from "./DemoNotice";
 
 export interface SidebarInitialData {
   badgeCounts: Record<string, number>;
@@ -13,6 +14,7 @@ export interface SidebarInitialData {
   userName: string;
   userEmail: string;
   isRoomlyAdmin: boolean;
+  isDemo: boolean;
 }
 
 export default function AppShell({ children, sidebarData }: { children: React.ReactNode; sidebarData: SidebarInitialData | null }) {
@@ -25,7 +27,7 @@ export default function AppShell({ children, sidebarData }: { children: React.Re
 
   return (
     <Sidebar initialData={sidebarData}>
-      <BetaNotice />
+      {sidebarData?.isDemo ? <DemoNotice /> : <BetaNotice />}
       <Header />
       <main className="page">
         {children}

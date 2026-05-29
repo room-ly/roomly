@@ -31,11 +31,12 @@ export default async function RootLayout({
     userName: string;
     userEmail: string;
     isRoomlyAdmin: boolean;
+    isDemo: boolean;
   } | null = null;
 
   try {
     const data = await getBadgeCounts();
-    const { company_name, user_name, user_email, contract_alert_days, ...counts } = data;
+    const { company_name, user_name, user_email, contract_alert_days, is_demo, ...counts } = data;
     const adminList = (process.env.ROOMLY_ADMIN_EMAILS ?? "")
       .split(",")
       .map((s) => s.trim().toLowerCase())
@@ -49,6 +50,7 @@ export default async function RootLayout({
       userName: user_name,
       userEmail: user_email,
       isRoomlyAdmin,
+      isDemo: is_demo,
     };
   } catch {
     // 未認証（ログインページ等）では取得できない

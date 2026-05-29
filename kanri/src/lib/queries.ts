@@ -935,7 +935,7 @@ export async function getBadgeCounts() {
         .in("status", ["open", "in_progress"])
         .in("priority", ["low", "normal"])
         .lt("created_at", staleDate),
-      supabase.from("companies").select("name, contract_alert_days").single(),
+      supabase.from("companies").select("name, contract_alert_days, is_demo").single(),
       supabase.auth.getUser(),
     ]);
 
@@ -980,5 +980,6 @@ export async function getBadgeCounts() {
     contract_alert_days: alertDays,
     user_name: userName,
     user_email: userEmail,
+    is_demo: (companyRes.data?.is_demo as boolean) ?? false,
   };
 }
