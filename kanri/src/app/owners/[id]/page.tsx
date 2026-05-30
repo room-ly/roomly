@@ -68,90 +68,6 @@ export default async function OwnerDetailPage({
 
       <div className="detail-grid">
         <div className="detail-col-main">
-          {/* 所有物件 */}
-          <div className="section">
-            <div className="section-head-bar">
-              <h2>所有物件</h2>
-              <span className="desc">{ownerProps.length}件</span>
-            </div>
-            <div className="section-body flush">
-              {ownerProps.length === 0 ? (
-                <p style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "center", padding: "24px 0" }}>物件がありません</p>
-              ) : (
-                <table className="tbl">
-                  <thead>
-                    <tr>
-                      <th>物件名</th>
-                      <th style={{ textAlign: "center" }}>戸数</th>
-                      <th style={{ textAlign: "center" }}>入居</th>
-                      <th style={{ textAlign: "right" }}>家賃合計</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ownerProps.map((p: any) => {
-                      const pUnits = p.units || [];
-                      const pOccupied = pUnits.filter((u: any) => u.status === "occupied");
-                      const pRent = pOccupied.reduce((s: number, u: any) => s + Number(u.rent), 0);
-                      return (
-                        <tr key={p.id} className="row-hover">
-                          <td>
-                            <Link href={`/properties/${p.id}`} className="rlink">{p.name}</Link>
-                          </td>
-                          <td className="num" style={{ textAlign: "center" }}>{pUnits.length}</td>
-                          <td className="num" style={{ textAlign: "center", color: "var(--accent-deep)" }}>{pOccupied.length}</td>
-                          <td className="num">¥{pRent.toLocaleString()}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-
-          {/* 送金履歴 */}
-          {remittances.length > 0 && (
-            <div className="section">
-              <div className="section-head-bar">
-                <h2>送金履歴</h2>
-                <span className="desc">直近12ヶ月</span>
-              </div>
-              <div className="section-body flush">
-                <table className="tbl">
-                  <thead>
-                    <tr>
-                      <th>対象月</th>
-                      <th style={{ textAlign: "right" }}>家賃収入</th>
-                      <th style={{ textAlign: "right" }}>手数料</th>
-                      <th style={{ textAlign: "right" }}>経費</th>
-                      <th style={{ textAlign: "right" }}>送金額</th>
-                      <th>状態</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {remittances.map((r: any) => (
-                      <tr key={r.id} className="row-hover">
-                        <td>
-                          <Link href={`/remittances/${r.id}`} className="rlink">{r.remittance_month?.slice(0, 7)}</Link>
-                        </td>
-                        <td className="num">¥{Number(r.total_rent).toLocaleString()}</td>
-                        <td className="num" style={{ color: "var(--danger)" }}>-¥{Number(r.management_fee_deducted).toLocaleString()}</td>
-                        <td className="num" style={{ color: "var(--warn)" }}>
-                          {Number(r.expense_deducted) > 0 ? `-¥${Number(r.expense_deducted).toLocaleString()}` : "—"}
-                        </td>
-                        <td className="num" style={{ fontWeight: 500, color: "var(--accent)" }}>¥{Number(r.net_amount).toLocaleString()}</td>
-                        <td><StatusBadge status={r.status} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* サイドカラム */}
-        <div className="detail-col-side">
           {(owner.owner_type === "corporate" || owner.name_kana || owner.birth_date) && (
             <div className="section">
               <div className="section-head-bar"><h2>基本情報</h2></div>
@@ -339,6 +255,83 @@ export default async function OwnerDetailPage({
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* サイドカラム */}
+        <div className="detail-col-side">
+          {/* 所有物件 */}
+          <div className="section">
+            <div className="section-head-bar">
+              <h2>所有物件</h2>
+              <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--ink-4)" }}>{ownerProps.length}件</span>
+            </div>
+            <div className="section-body flush">
+              {ownerProps.length === 0 ? (
+                <p style={{ fontSize: 12, color: "var(--ink-4)", textAlign: "center", padding: "16px 0" }}>物件がありません</p>
+              ) : (
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>物件名</th>
+                      <th style={{ textAlign: "center" }}>戸数</th>
+                      <th style={{ textAlign: "center" }}>入居</th>
+                      <th style={{ textAlign: "right" }}>家賃合計</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ownerProps.map((p: any) => {
+                      const pUnits = p.units || [];
+                      const pOccupied = pUnits.filter((u: any) => u.status === "occupied");
+                      const pRent = pOccupied.reduce((s: number, u: any) => s + Number(u.rent), 0);
+                      return (
+                        <tr key={p.id} className="row-hover">
+                          <td>
+                            <Link href={`/properties/${p.id}`} className="rlink">{p.name}</Link>
+                          </td>
+                          <td className="num" style={{ textAlign: "center" }}>{pUnits.length}</td>
+                          <td className="num" style={{ textAlign: "center", color: "var(--accent-deep)" }}>{pOccupied.length}</td>
+                          <td className="num">¥{pRent.toLocaleString()}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          {/* 送金履歴 */}
+          {remittances.length > 0 && (
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>送金履歴</h2>
+                <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--ink-4)" }}>直近12ヶ月</span>
+              </div>
+              <div className="section-body flush">
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>対象月</th>
+                      <th style={{ textAlign: "right" }}>送金額</th>
+                      <th>状態</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {remittances.map((r: any) => (
+                      <tr key={r.id} className="row-hover">
+                        <td>
+                          <Link href={`/remittances/${r.id}`} className="rlink">{r.remittance_month?.slice(0, 7)}</Link>
+                        </td>
+                        <td className="num" style={{ fontWeight: 500, color: "var(--accent)" }}>¥{Number(r.net_amount).toLocaleString()}</td>
+                        <td><StatusBadge status={r.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
