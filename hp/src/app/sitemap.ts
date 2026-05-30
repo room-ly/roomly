@@ -20,6 +20,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
+  const featureSlugs = [
+    "properties",
+    "tenants",
+    "contracts",
+    "rent-management",
+    "maintenance",
+    "owner-remittance",
+    "dashboard",
+    "inquiries",
+    "rbac",
+    "notifications",
+    "export",
+    "search",
+  ];
+  const featurePages = featureSlugs.map((slug) => ({
+    url: `${baseUrl}/features/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
+
   return [
     {
       url: baseUrl,
@@ -99,6 +120,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.6,
     },
+    ...featurePages,
     ...columnPages,
     ...glossaryPages,
   ];

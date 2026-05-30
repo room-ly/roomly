@@ -33,6 +33,7 @@ const mainFeatures = [
       </svg>
     ),
     title: "物件・部屋管理",
+    slug: "properties",
     image: "/images/features/properties.png",
     description: "建物・部屋の情報を一元管理。間取り・設備・写真もまとめて登録できます。空室状況もリアルタイムに確認可能。",
     details: [
@@ -49,6 +50,7 @@ const mainFeatures = [
       </svg>
     ),
     title: "入居者管理",
+    slug: "tenants",
     image: "/images/features/tenants.png",
     description: "入居者の個人情報・連絡先・緊急連絡先・保証人情報をまとめて管理。契約履歴や支払い状況もひと目で確認できます。",
     details: [
@@ -66,6 +68,7 @@ const mainFeatures = [
       </svg>
     ),
     title: "契約管理",
+    slug: "contracts",
     image: "/images/features/contracts.png",
     description: "契約の作成から更新・解約まで、ライフサイクル全体をカバー。特約や条件も見やすく整理できます。",
     details: [
@@ -82,6 +85,7 @@ const mainFeatures = [
       </svg>
     ),
     title: "家賃管理",
+    slug: "rent-management",
     image: "/images/features/rent.png",
     description: "請求・入金・滞納を一目で把握。督促のタイミングも見逃しません。",
     details: [
@@ -98,6 +102,7 @@ const mainFeatures = [
       </svg>
     ),
     title: "修繕管理",
+    slug: "maintenance",
     image: "/images/features/maintenance.png",
     description: "依頼の受付から業者手配、完了報告まで。対応漏れを防ぎ、物件の価値を維持します。",
     details: [
@@ -114,6 +119,7 @@ const mainFeatures = [
       </svg>
     ),
     title: "オーナー送金",
+    slug: "owner-remittance",
     image: "/images/features/remittance.png",
     description: "月次の精算・送金明細を自動で作成。管理費の差し引きも計算不要です。",
     details: [
@@ -133,6 +139,7 @@ const additionalFeatures = [
       </svg>
     ),
     title: "ダッシュボード",
+    slug: "dashboard",
     description: "入居率・回収率・空室数・滞納件数などのKPIをリアルタイムで確認。月次推移グラフで傾向も把握。",
   },
   {
@@ -142,6 +149,7 @@ const additionalFeatures = [
       </svg>
     ),
     title: "問い合わせ管理",
+    slug: "inquiries",
     description: "入居者からのクレーム・問い合わせを受付・対応履歴付きで管理。ステータス追跡で対応漏れを防止。",
   },
   {
@@ -151,6 +159,7 @@ const additionalFeatures = [
       </svg>
     ),
     title: "権限管理（RBAC）",
+    slug: "rbac",
     description: "管理者・マネージャー・スタッフ・閲覧者の4ロールで、操作権限をきめ細かく制御。",
   },
   {
@@ -160,6 +169,7 @@ const additionalFeatures = [
       </svg>
     ),
     title: "通知機能",
+    slug: "notifications",
     description: "滞納発生・契約満了・修繕依頼をメールとアプリ内通知でお知らせ。見落とし防止に。",
   },
   {
@@ -169,6 +179,7 @@ const additionalFeatures = [
       </svg>
     ),
     title: "CSV/PDFエクスポート",
+    slug: "export",
     description: "物件・入居者・家賃データのCSV出力。オーナー向け月次報告書PDFも自動生成。",
   },
   {
@@ -178,6 +189,7 @@ const additionalFeatures = [
       </svg>
     ),
     title: "検索・フィルタ・ソート",
+    slug: "search",
     description: "全画面で横断検索・ステータスフィルタ・ソート・ページネーションに対応。",
   },
 ];
@@ -220,7 +232,11 @@ export default function FeaturesPage() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rm-accent-tint">
                     {feature.icon}
                   </div>
-                  <h2 className="mt-4 text-[20px] font-medium text-rm-primary sm:text-[22px]">{feature.title}</h2>
+                  <h2 className="mt-4 text-[20px] font-medium text-rm-primary sm:text-[22px]">
+                    <Link href={`/features/${feature.slug}`} className="hover:text-rm-accent-deep">
+                      {feature.title}
+                    </Link>
+                  </h2>
                   <p className="mt-3 text-[15px] leading-relaxed text-rm-text-secondary">{feature.description}</p>
                   <ul className="mt-5 space-y-2.5">
                     {feature.details.map((detail) => (
@@ -229,6 +245,9 @@ export default function FeaturesPage() {
                       </li>
                     ))}
                   </ul>
+                  <Link href={`/features/${feature.slug}`} className="mt-5 inline-flex items-center gap-1 text-[13px] font-medium text-rm-accent-deep hover:underline">
+                    詳細を見る →
+                  </Link>
                 </div>
               </div>
             </Reveal>
@@ -248,13 +267,13 @@ export default function FeaturesPage() {
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {additionalFeatures.map((feature) => (
               <Reveal key={feature.title}>
-                <div className="rounded-2xl border border-rm-border bg-rm-surface p-6">
+                <Link href={`/features/${feature.slug}`} className="block rounded-2xl border border-rm-border bg-rm-surface p-6 transition-colors hover:border-rm-accent-deep">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rm-accent-tint">
                     {feature.icon}
                   </div>
                   <h3 className="mt-4 text-[15px] font-semibold text-rm-primary">{feature.title}</h3>
                   <p className="mt-2 text-[14px] leading-relaxed text-rm-text-secondary">{feature.description}</p>
-                </div>
+                </Link>
               </Reveal>
             ))}
           </div>
