@@ -8,27 +8,57 @@ on:
   schedule:
     - cron: "0 9 * * 1"
 
-defaults:
-  run:
-    working-directory: kanri
-
 jobs:
-  security-audit:
-    name: 脆弱性診断
+  changes:
+    name: 変更検出
     runs-on: ubuntu-latest
+    outputs:
+      kanri: ${{ steps.filter.outputs.kanri }}
+      hp: ${{ steps.filter.outputs.hp }}
+      portal: ${{ steps.filter.outputs.portal }}
+      admin: ${{ steps.filter.outputs.admin }}
+      lp: ${{ steps.filter.outputs.lp }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: kanri/package-lock.json
-      - run: npm ci
-      - run: npm audit --audit-level=high
+          filters: |
+            kanri:
+              - 'kanri/**'
+              - '.github/workflows/ci.yml'
+            hp:
+              - 'hp/**'
+              - '.github/workflows/ci.yml'
+            portal:
+              - 'portal/**'
+              - '.github/workflows/ci.yml'
+            admin:
+              - 'admin/**'
+              - '.github/workflows/ci.yml'
+            lp:
+              - 'lp/**'
+              - '.github/workflows/ci.yml'
 
-  test-and-build:
-    name: テスト & ビルド
+  secret-scan:
+    name: シークレットスキャン
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  kanri:
+    name: kanri (lint / typecheck / test / build / audit)
+    needs: changes
+    if: needs.changes.outputs.kanri == 'true' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: kanri
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,8 +67,123 @@ jobs:
           cache: npm
           cache-dependency-path: kanri/package-lock.json
       - run: npm ci
-      - run: npm test
-      - run: npm run build
+      - name: Lint (記録のみ・既存error解消まで非ブロッキング)
+        run: npm run lint
+        continue-on-error: true
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Test
+        run: npm test
+      - name: Build
+        run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2MTYxNjAwMDAsImV4cCI6MTkzMTczNjAwMH0.dummy
+      - name: npm audit (high)
+        run: npm audit --audit-level=high
+
+  hp:
+    name: hp (lint / typecheck / build)
+    needs: changes
+    if: needs.changes.outputs.hp == 'true' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: hp/package-lock.json
+      - run: npm ci
+      - name: Lint (記録のみ)
+        run: npm run lint
+        continue-on-error: true
+      - run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_ROOMLY_SUPABASE_URL: https://dummy.supabase.co
+          NEXT_PUBLIC_ROOMLY_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2MTYxNjAwMDAsImV4cCI6MTkzMTczNjAwMH0.dummy
+          ROOMLY_SUPABASE_URL: https://dummy.supabase.co
+          ROOMLY_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2MTYxNjAwMDAsImV4cCI6MTkzMTczNjAwMH0.dummy
+          ROOMLY_SUPABASE_SERVICE_ROLE_KEY: dummy
+          INQUIRY_SUPABASE_URL: https://dummy.supabase.co
+          INQUIRY_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2MTYxNjAwMDAsImV4cCI6MTkzMTczNjAwMH0.dummy
+          RESEND_API_KEY: dummy
+
+  portal:
+    name: portal (lint / typecheck / build)
+    needs: changes
+    if: needs.changes.outputs.portal == 'true' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: portal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: portal/package-lock.json
+      - run: npm ci
+      - name: Lint (記録のみ)
+        run: npm run lint
+        continue-on-error: true
+      - run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2MTYxNjAwMDAsImV4cCI6MTkzMTczNjAwMH0.dummy
+          SUPABASE_SERVICE_ROLE_KEY: dummy
+
+  admin:
+    name: admin (lint / typecheck / build)
+    needs: changes
+    if: needs.changes.outputs.admin == 'true' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: admin/package-lock.json
+      - run: npm ci
+      - name: Lint (記録のみ)
+        run: npm run lint
+        continue-on-error: true
+      - run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2MTYxNjAwMDAsImV4cCI6MTkzMTczNjAwMH0.dummy
+          SUPABASE_SERVICE_ROLE_KEY: dummy
+          ROOMLY_ADMIN_EMAILS: dummy@example.com
+
+  lp:
+    name: lp (build)
+    needs: changes
+    if: needs.changes.outputs.lp == 'true' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: lp/package-lock.json
+      - run: npm ci
+      # lp は eslint 未導入のため lint はスキップ
+      - run: npm run build
