@@ -35,9 +35,15 @@ export async function POST(
       .select("expense_approval_threshold")
       .eq("id", company_id)
       .single();
-    const threshold = Number(company?.expense_approval_threshold ?? 50000);
+    // threshold が NULL の会社は稟議機能OFF扱い（自動承認）
+    const threshold =
+      company?.expense_approval_threshold != null
+        ? Number(company.expense_approval_threshold)
+        : null;
     const requiresApproval =
-      Number(existing.owner_amount) > 0 && Number(existing.amount) >= threshold;
+      threshold !== null &&
+      Number(existing.owner_amount) > 0 &&
+      Number(existing.amount) >= threshold;
 
     let approverId: string | null = null;
     if (requiresApproval) {

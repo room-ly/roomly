@@ -26,7 +26,13 @@ export async function PUT(request: NextRequest) {
       update.default_approver_user_id = update.default_approver_user_id || null;
     }
     if (update.expense_approval_threshold !== undefined) {
-      update.expense_approval_threshold = Number(update.expense_approval_threshold) || 0;
+      // null/空文字/0は「稟議機能OFF」を意味するため null として保存
+      const v = update.expense_approval_threshold;
+      if (v === null || v === "" || Number(v) <= 0) {
+        update.expense_approval_threshold = null;
+      } else {
+        update.expense_approval_threshold = Number(v);
+      }
     }
 
     const { error } = await supabase

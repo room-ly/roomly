@@ -27,8 +27,8 @@ type SaveParams = {
 export async function saveExpense(supabase: Client, params: SaveParams): Promise<SaveResult> {
   const { id, input, company_id, user_id } = params;
 
-  // しきい値判定（threshold は companies に保持）
-  let threshold = 50000;
+  // しきい値判定。threshold が NULL の会社は稟議機能OFF扱い
+  let threshold: number | null = null;
   try {
     const { data: company } = await supabase
       .from("companies")
@@ -42,7 +42,8 @@ export async function saveExpense(supabase: Client, params: SaveParams): Promise
     // フォールバック値で続行
   }
 
-  const requiresApproval = input.owner_amount > 0 && input.amount >= threshold;
+  const requiresApproval =
+    threshold !== null && input.owner_amount > 0 && input.amount >= threshold;
   const targetStatus =
     input.status === "draft" && requiresApproval ? "pending_approval" : input.status;
 
