@@ -25,32 +25,19 @@ type Attribution = {
 const ATTRIBUTION_KEY = "roomly_attribution";
 const ATTRIBUTION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-// 初回着地時のUTM・referrerをlocalStorageに保持し、サインアップ時にAPIへ送る
+// 初回着地時のUTM・referrerをlocalStorageに保持し、サインアップ時にAPIへ送る。
+// URLに新しいパラメータがあるときは既存localStorageを上書きする(最新流入を優先)。
 function captureAttribution(): Attribution | null {
   if (typeof window === "undefined") return null;
 
-  try {
-    const stored = window.localStorage.getItem(ATTRIBUTION_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored) as Attribution;
-      const ts = parsed.captured_at ? Date.parse(parsed.captured_at) : 0;
-      if (ts && Date.now() - ts < ATTRIBUTION_TTL_MS) {
-        return parsed;
-      }
-    }
-  } catch {
-    // パース失敗は無視
-  }
-
   const params = new URLSearchParams(window.location.search);
   const pick = (k: string) => params.get(k) || undefined;
-  // HP側で付与した rm_ref / rm_landing を優先（外部からの本来の流入元）
   const externalRef = pick("rm_ref");
   const externalLanding = pick("rm_landing");
-  // HP側で付与した rm_aff / rm_vid （アフィリエイトコードとvisitor_id）
   const affiliateCode = pick("rm_aff");
   const visitorId = pick("rm_vid");
-  const data: Attribution = {
+
+  const fromUrl: Attribution = {
     utm_source: pick("utm_source"),
     utm_medium: pick("utm_medium"),
     utm_campaign: pick("utm_campaign"),
@@ -68,17 +55,43 @@ function captureAttribution(): Attribution | null {
     captured_at: new Date().toISOString(),
   };
 
-  const hasAny = Object.entries(data).some(
+  // URLに有意なシグナルがあれば、それを最新として採用しlocalStorageに保存
+  const urlHasSignal = Boolean(
+    fromUrl.utm_source ||
+      fromUrl.utm_medium ||
+      fromUrl.utm_campaign ||
+      fromUrl.gclid ||
+      fromUrl.affiliate_code ||
+      externalRef
+  );
+  if (urlHasSignal) {
+    try {
+      window.localStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(fromUrl));
+    } catch {
+      // 容量超過等は無視
+    }
+    return fromUrl;
+  }
+
+  // URLに何もなければ既存のlocalStorageを使う(30日以内のみ)
+  try {
+    const stored = window.localStorage.getItem(ATTRIBUTION_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as Attribution;
+      const ts = parsed.captured_at ? Date.parse(parsed.captured_at) : 0;
+      if (ts && Date.now() - ts < ATTRIBUTION_TTL_MS) {
+        return parsed;
+      }
+    }
+  } catch {
+    // パース失敗は無視
+  }
+
+  // URLにもlocalStorageにも何もない場合、最低限の流入情報だけ返す
+  const hasAny = Object.entries(fromUrl).some(
     ([k, v]) => k !== "captured_at" && k !== "landing_path" && v
   );
-  if (!hasAny) return null;
-
-  try {
-    window.localStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(data));
-  } catch {
-    // 容量超過等は無視
-  }
-  return data;
+  return hasAny ? fromUrl : null;
 }
 
 type Gtag = (...args: unknown[]) => void;

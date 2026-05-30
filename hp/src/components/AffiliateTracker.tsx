@@ -109,15 +109,20 @@ export function AffiliateTracker() {
     const code = activeCode;
     const visitorId = readVisitorId();
 
-    // 2. kanriへのリンクにアフィリエイトコードを乗せる
+    // 2. kanriへのリンクにアフィリエイトコードを乗せる。
+    //    mousedownで先に書き換えるとキーボード操作で漏れるので両方listen。
     function handleClick(e: MouseEvent) {
       const a = (e.target as HTMLElement).closest?.("a[href]") as HTMLAnchorElement | null;
       if (!a) return;
       decorateKanriLink(a, code, visitorId);
     }
 
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
+    document.addEventListener("mousedown", handleClick, true);
+    document.addEventListener("click", handleClick, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClick, true);
+      document.removeEventListener("click", handleClick, true);
+    };
   }, []);
 
   return null;
