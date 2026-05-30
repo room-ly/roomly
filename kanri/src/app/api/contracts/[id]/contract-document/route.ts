@@ -12,6 +12,15 @@ function yen(val: any): string {
   return isNaN(n) ? "—" : `¥${n.toLocaleString()}`;
 }
 
+function fee(val: any, unit: any, rent: any): string {
+  const n = Number(val) || 0;
+  if (unit === "months") {
+    const jpy = Math.round(n * (Number(rent) || 0));
+    return `賃料の${n}ヶ月分（¥${jpy.toLocaleString()}）`;
+  }
+  return yen(val);
+}
+
 function dateStr(val: any): string {
   if (!val) return "";
   const d = new Date(val);
@@ -162,9 +171,9 @@ export async function GET(
     <tr><th>賃料（月額）</th><td>${yen(contract.rent)}</td></tr>
     <tr><th>共益費・管理費</th><td>${yen(contract.management_fee)}</td></tr>
     <tr><th>月額合計</th><td>${yen(Number(contract.rent) + Number(contract.management_fee))}</td></tr>
-    <tr><th>敷金</th><td>${yen(contract.deposit)}</td></tr>
-    <tr><th>礼金</th><td>${yen(contract.key_money)}</td></tr>
-    <tr><th>更新料</th><td>${Number(contract.renewal_fee) > 0 ? yen(contract.renewal_fee) : "なし"}</td></tr>
+    <tr><th>敷金</th><td>${fee(contract.deposit, contract.deposit_unit, contract.rent)}</td></tr>
+    <tr><th>礼金</th><td>${fee(contract.key_money, contract.key_money_unit, contract.rent)}</td></tr>
+    <tr><th>更新料</th><td>${Number(contract.renewal_fee) > 0 ? fee(contract.renewal_fee, contract.renewal_fee_unit, contract.rent) : "なし"}</td></tr>
     <tr><th>仲介手数料</th><td>${Number(contract.brokerage_fee) > 0 ? yen(contract.brokerage_fee) : "—"}</td></tr>
     <tr><th>支払方法</th><td>${e(contract.payment_method ? (paymentMethodLabel[contract.payment_method] || "") : "")}</td></tr>
     <tr><th>支払期日</th><td>${contract.payment_due_day ? `毎月${e(contract.payment_due_day)}日` : ""}</td></tr>
@@ -173,7 +182,7 @@ export async function GET(
   <h2>第4条（敷金）</h2>
   <div class="article">
     <div class="article-body">
-      乙は、本契約から生じる一切の債務の担保として、敷金${yen(contract.deposit)}を甲に預託する。
+      乙は、本契約から生じる一切の債務の担保として、敷金${fee(contract.deposit, contract.deposit_unit, contract.rent)}を甲に預託する。
       甲は、本物件の明渡し完了後、未払い賃料・原状回復費用等を控除した残額を、明渡しから1ヶ月以内に乙に返還する。
     </div>
   </div>
@@ -228,7 +237,7 @@ export async function GET(
     <div class="article-body">
       ${contract.contract_type === "ordinary" ? `
       本契約は、期間満了の6ヶ月前までに甲または乙から書面による更新拒絶の通知がなされない限り、同一条件にて2年間更新されるものとする。
-      更新の際、乙は更新料として${Number(contract.renewal_fee) > 0 ? `賃料の${yen(contract.renewal_fee)}相当額` : "別途定める額"}を甲に支払うものとする。
+      更新の際、乙は更新料として${Number(contract.renewal_fee) > 0 ? fee(contract.renewal_fee, contract.renewal_fee_unit, contract.rent) : "別途定める額"}を甲に支払うものとする。
       ` : `
       本契約は定期建物賃貸借であり、期間満了により終了する。更新はない。
       甲は、期間満了の1年前から6ヶ月前までの間に、乙に対し期間満了により契約が終了する旨を通知する。

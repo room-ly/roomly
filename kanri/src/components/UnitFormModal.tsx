@@ -238,6 +238,55 @@ export default function UnitFormModal({
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                敷金
+              </label>
+              <div className="flex gap-2">
+                <input
+                  name="deposit"
+                  type="number"
+                  step="0.01"
+                  defaultValue={editData?.deposit ?? ""}
+                  className="input flex-1"
+                  placeholder="例: 80000 / 2"
+                />
+                <select
+                  name="deposit_unit"
+                  defaultValue={editData?.deposit_unit || "jpy"}
+                  className="input w-24"
+                >
+                  <option value="jpy">円</option>
+                  <option value="months">ヶ月</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                礼金
+              </label>
+              <div className="flex gap-2">
+                <input
+                  name="key_money"
+                  type="number"
+                  step="0.01"
+                  defaultValue={editData?.key_money ?? ""}
+                  className="input flex-1"
+                  placeholder="例: 80000 / 1"
+                />
+                <select
+                  name="key_money_unit"
+                  defaultValue={editData?.key_money_unit || "jpy"}
+                  className="input w-24"
+                >
+                  <option value="jpy">円</option>
+                  <option value="months">ヶ月</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label className="text-sm font-medium text-ink-2 block mb-1">
               状態 <span className="text-danger">*</span>

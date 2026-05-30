@@ -12,6 +12,7 @@ import AuditLogSection from "@/components/AuditLogSection";
 import DocumentSection from "@/components/DocumentSection";
 import ExpenseApprovalPanel from "@/components/ExpenseApprovalPanel";
 import OffFeaturesMenu from "@/components/OffFeaturesMenu";
+import { toJpy } from "@/lib/deposit-unit";
 import DepositBalancePanel from "@/components/DepositBalancePanel";
 import {
   EXPENSE_STATUS_LABELS,
@@ -333,7 +334,7 @@ export default async function ExpenseDetailPage({
           {expense.contract?.id && (
             <DepositBalancePanel
               contractId={expense.contract.id}
-              initialDeposit={Number(expense.contract.deposit || 0)}
+              initialDeposit={toJpy(expense.contract.deposit, expense.contract.deposit_unit, expense.contract.rent)}
               transactions={depositTxs}
               expenseId={expense.id}
               showAdditionalBilling

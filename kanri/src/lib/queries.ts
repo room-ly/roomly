@@ -280,7 +280,7 @@ export async function getExpenseDetail(id: string) {
         "approver:users!expenses_approved_by_fkey(id, name)",
         "submitter:users!expenses_submitted_by_fkey(id, name)",
         "case:cases(id, title, status)",
-        "contract:contracts(id, deposit, tenant:tenants(id, name))",
+        "contract:contracts(id, deposit, deposit_unit, rent, tenant:tenants(id, name))",
         "allocations:expense_allocations(*, unit:units(unit_number), owner:owners(name))",
       ].join(", "),
     )
@@ -356,7 +356,7 @@ export async function getContractsForSelect(unitId?: string | null) {
   const supabase = await createClient();
   let q = supabase
     .from("contracts")
-    .select("id, unit_id, deposit, status, tenant:tenants(name), unit:units(unit_number, property:properties(name))")
+    .select("id, unit_id, deposit, deposit_unit, rent, status, tenant:tenants(name), unit:units(unit_number, property:properties(name))")
     .eq("status", "active")
     .order("start_date", { ascending: false });
   if (unitId) q = q.eq("unit_id", unitId);

@@ -12,6 +12,15 @@ function yen(val: any): string {
   return isNaN(n) ? "—" : `¥${n.toLocaleString()}`;
 }
 
+function fee(val: any, unit: any, rent: any): string {
+  const n = Number(val) || 0;
+  if (unit === "months") {
+    const jpy = Math.round(n * (Number(rent) || 0));
+    return `賃料の${n}ヶ月分（¥${jpy.toLocaleString()}）`;
+  }
+  return yen(val);
+}
+
 function dateStr(val: any): string {
   if (!val) return "";
   const d = new Date(val);
@@ -237,9 +246,9 @@ export async function GET(
 
   <h3>8. 敷金等の精算に関する事項</h3>
   <table>
-    <tr><th>敷金</th><td>${yen(contract.deposit)}</td></tr>
-    <tr><th>礼金</th><td>${yen(contract.key_money)}</td></tr>
-    <tr><th>更新料</th><td>${Number(contract.renewal_fee) > 0 ? yen(contract.renewal_fee) : "なし"}</td></tr>
+    <tr><th>敷金</th><td>${fee(contract.deposit, contract.deposit_unit, contract.rent)}</td></tr>
+    <tr><th>礼金</th><td>${fee(contract.key_money, contract.key_money_unit, contract.rent)}</td></tr>
+    <tr><th>更新料</th><td>${Number(contract.renewal_fee) > 0 ? fee(contract.renewal_fee, contract.renewal_fee_unit, contract.rent) : "なし"}</td></tr>
   </table>
   <p class="note">※ 敷金は、賃料の未払い及び原状回復費用を差し引いた残額が退去後に返還されます。原状回復は、国土交通省「原状回復をめぐるトラブルとガイドライン」に準拠します。</p>
 

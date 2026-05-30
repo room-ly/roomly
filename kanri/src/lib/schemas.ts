@@ -176,6 +176,12 @@ export const unitSchema = z.object({
     message: "状態を選択してください",
   }),
   damage_notes: z.string().optional(),
+  deposit: z.coerce.number().min(0, "敷金は0以上を入力してください").optional()
+    .or(z.literal("").transform(() => undefined)),
+  deposit_unit: z.enum(["jpy", "months"]).optional(),
+  key_money: z.coerce.number().min(0, "礼金は0以上を入力してください").optional()
+    .or(z.literal("").transform(() => undefined)),
+  key_money_unit: z.enum(["jpy", "months"]).optional(),
 });
 
 export type UnitFormData = z.infer<typeof unitSchema>;
@@ -244,10 +250,13 @@ export const contractSchema = z
       .min(0, "管理費は0以上を入力してください"),
     deposit: z.coerce.number().min(0, "敷金は0以上を入力してください").optional()
       .or(z.literal("").transform(() => undefined)),
+    deposit_unit: z.enum(["jpy", "months"]).optional(),
     key_money: z.coerce.number().min(0, "礼金は0以上を入力してください").optional()
       .or(z.literal("").transform(() => undefined)),
+    key_money_unit: z.enum(["jpy", "months"]).optional(),
     renewal_fee: z.coerce.number().min(0, "更新料は0以上を入力してください").optional()
       .or(z.literal("").transform(() => undefined)),
+    renewal_fee_unit: z.enum(["jpy", "months"]).optional(),
     signed_date: optionalString,
     important_explanation_date: optionalString,
     payment_method: optionalString,

@@ -75,7 +75,12 @@ export async function GET(
     const rent = Number(contract.rent || 0).toLocaleString();
     const managementFee = Number(contract.management_fee || 0).toLocaleString();
     const monthlyTotal = (Number(contract.rent || 0) + Number(contract.management_fee || 0)).toLocaleString();
-    const renewalFee = Number(contract.renewal_fee || 0).toLocaleString();
+    const renewalFeeJpy = (contract.renewal_fee_unit === "months"
+      ? Math.round(Number(contract.renewal_fee || 0) * Number(contract.rent || 0))
+      : Math.round(Number(contract.renewal_fee || 0))).toLocaleString();
+    const renewalFee = contract.renewal_fee_unit === "months"
+      ? `賃料の${Number(contract.renewal_fee || 0)}ヶ月分（¥${renewalFeeJpy}）`
+      : `¥${renewalFeeJpy}`;
     const companyName = escapeHtml(company?.name ?? "");
     const companyPostalCode = escapeHtml(company?.postal_code ?? "");
     const companyAddress = escapeHtml(company?.address ?? "");
@@ -228,7 +233,7 @@ export async function GET(
       <tr><th>賃料</th><td class="amount">¥${rent}</td></tr>
       <tr><th>管理費・共益費</th><td class="amount">¥${managementFee}</td></tr>
       <tr><th>月額合計</th><td class="amount"><strong>¥${monthlyTotal}</strong></td></tr>
-      <tr><th>更新料</th><td class="amount">¥${renewalFee}</td></tr>
+      <tr><th>更新料</th><td class="amount">${renewalFee}</td></tr>
     </tbody>
   </table>
 

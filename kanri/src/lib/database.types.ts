@@ -369,6 +369,7 @@ export type Database = {
           contract_type: string
           created_at: string
           deposit: number
+          deposit_unit: string
           end_date: string | null
           expiry_notified_at: string | null
           guarantor_name: string | null
@@ -377,6 +378,7 @@ export type Database = {
           important_explanation_date: string | null
           insurance_company: string | null
           key_money: number
+          key_money_unit: string
           management_fee: number
           move_in_date: string | null
           move_out_date: string | null
@@ -384,6 +386,7 @@ export type Database = {
           payment_due_day: number | null
           payment_method: string | null
           renewal_fee: number
+          renewal_fee_unit: string
           rent: number
           signed_date: string | null
           special_terms: string | null
@@ -399,6 +402,7 @@ export type Database = {
           contract_type?: string
           created_at?: string
           deposit?: number
+          deposit_unit?: string
           end_date?: string | null
           expiry_notified_at?: string | null
           guarantor_name?: string | null
@@ -407,6 +411,7 @@ export type Database = {
           important_explanation_date?: string | null
           insurance_company?: string | null
           key_money?: number
+          key_money_unit?: string
           management_fee?: number
           move_in_date?: string | null
           move_out_date?: string | null
@@ -414,6 +419,7 @@ export type Database = {
           payment_due_day?: number | null
           payment_method?: string | null
           renewal_fee?: number
+          renewal_fee_unit?: string
           rent: number
           signed_date?: string | null
           special_terms?: string | null
@@ -429,6 +435,7 @@ export type Database = {
           contract_type?: string
           created_at?: string
           deposit?: number
+          deposit_unit?: string
           end_date?: string | null
           expiry_notified_at?: string | null
           guarantor_name?: string | null
@@ -437,6 +444,7 @@ export type Database = {
           important_explanation_date?: string | null
           insurance_company?: string | null
           key_money?: number
+          key_money_unit?: string
           management_fee?: number
           move_in_date?: string | null
           move_out_date?: string | null
@@ -444,6 +452,7 @@ export type Database = {
           payment_due_day?: number | null
           payment_method?: string | null
           renewal_fee?: number
+          renewal_fee_unit?: string
           rent?: number
           signed_date?: string | null
           special_terms?: string | null
@@ -2267,10 +2276,12 @@ export type Database = {
           created_at: string
           damage_notes: string | null
           deposit: number
+          deposit_unit: string
           equipment: string[] | null
           floor: number | null
           id: string
           key_money: number
+          key_money_unit: string
           layout: string | null
           management_fee: number
           notes: string | null
@@ -2286,10 +2297,12 @@ export type Database = {
           created_at?: string
           damage_notes?: string | null
           deposit?: number
+          deposit_unit?: string
           equipment?: string[] | null
           floor?: number | null
           id?: string
           key_money?: number
+          key_money_unit?: string
           layout?: string | null
           management_fee?: number
           notes?: string | null
@@ -2305,10 +2318,12 @@ export type Database = {
           created_at?: string
           damage_notes?: string | null
           deposit?: number
+          deposit_unit?: string
           equipment?: string[] | null
           floor?: number | null
           id?: string
           key_money?: number
+          key_money_unit?: string
           layout?: string | null
           management_fee?: number
           notes?: string | null

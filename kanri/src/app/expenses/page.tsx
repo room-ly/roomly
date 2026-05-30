@@ -52,7 +52,9 @@ export default async function ExpensesPage({
     id: c.id,
     label: `${c.unit?.property?.name ?? ""} ${c.unit?.unit_number ?? ""} ${c.tenant?.name ?? ""}`.trim(),
     unit_id: c.unit_id,
-    deposit: c.deposit,
+    deposit: c.deposit_unit === "months"
+      ? Math.round(Number(c.deposit || 0) * Number(c.rent || 0))
+      : Number(c.deposit || 0),
   }));
 
   return (

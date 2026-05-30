@@ -8,6 +8,7 @@ import MoveOutReviewClient from "@/components/MoveOutReviewClient";
 import MoveOutChecklist from "@/components/MoveOutChecklist";
 import DepositBalancePanel from "@/components/DepositBalancePanel";
 import AuditLogSection from "@/components/AuditLogSection";
+import { formatDeposit, toJpy } from "@/lib/deposit-unit";
 
 const contractTypeLabels: Record<string, string> = {
   fixed: "定期借家",
@@ -113,19 +114,19 @@ export default async function ContractDetailPage({
                 {Number(contract.deposit) > 0 && (
                   <div className="field">
                     <div className="field-label mono">敷金</div>
-                    <div className="field-value num">¥{Number(contract.deposit).toLocaleString()}</div>
+                    <div className="field-value num">{formatDeposit(contract.deposit, contract.deposit_unit, contract.rent)}</div>
                   </div>
                 )}
                 {Number(contract.key_money) > 0 && (
                   <div className="field">
                     <div className="field-label mono">礼金</div>
-                    <div className="field-value num">¥{Number(contract.key_money).toLocaleString()}</div>
+                    <div className="field-value num">{formatDeposit(contract.key_money, contract.key_money_unit, contract.rent)}</div>
                   </div>
                 )}
                 {Number(contract.renewal_fee) > 0 && (
                   <div className="field">
                     <div className="field-label mono">更新料</div>
-                    <div className="field-value num">¥{Number(contract.renewal_fee).toLocaleString()}</div>
+                    <div className="field-value num">{formatDeposit(contract.renewal_fee, contract.renewal_fee_unit, contract.rent)}</div>
                   </div>
                 )}
               </div>
@@ -275,7 +276,7 @@ export default async function ContractDetailPage({
           {Number(contract.deposit) > 0 && (
             <DepositBalancePanel
               contractId={contract.id}
-              initialDeposit={Number(contract.deposit)}
+              initialDeposit={toJpy(contract.deposit, contract.deposit_unit, contract.rent)}
               transactions={depositTransactions as any[]}
             />
           )}
