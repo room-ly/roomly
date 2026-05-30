@@ -6,6 +6,7 @@ import {
   getPayeesForSelect,
   getCasesForSelect,
   getContractsForSelect,
+  getCompany,
 } from "@/lib/queries";
 import PageHeader from "@/components/PageHeader";
 import ExpensesPageClient from "@/components/ExpensesPageClient";
@@ -29,7 +30,7 @@ export default async function ExpensesPage({
   const { page: pageStr, sort } = await searchParams;
   const page = Math.max(1, Number(pageStr) || 1);
   const sortValue = sort || "expense_date:desc";
-  const [{ data: expenses, total }, properties, owners, payees, cases, contracts] =
+  const [{ data: expenses, total }, properties, owners, payees, cases, contracts, company] =
     await Promise.all([
       getExpenses(page, PAGE_SIZE, sortValue),
       getPropertiesForSelect(),
@@ -37,7 +38,9 @@ export default async function ExpensesPage({
       getPayeesForSelect(),
       getCasesForSelect(),
       getContractsForSelect(),
+      getCompany(),
     ]);
+  const approvalEnabled = company?.expense_approval_threshold != null;
 
   const caseOptions = (cases as any[]).map((c) => ({
     id: c.id,
@@ -75,7 +78,7 @@ export default async function ExpensesPage({
           <SortSelect options={SORT_OPTIONS} defaultValue={sortValue} />
         </Suspense>
       </div>
-      <ExpensesTable data={expenses} />
+      <ExpensesTable data={expenses} approvalEnabled={approvalEnabled} />
       <ServerPagination page={page} pageSize={PAGE_SIZE} total={total} />
     </>
   );

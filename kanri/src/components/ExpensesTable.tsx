@@ -9,6 +9,7 @@ import { EXPENSE_STATUS_LABELS, type ExpenseStatus } from "@/lib/schemas-expense
 
 interface ExpensesTableProps {
   data: Record<string, any>[];
+  approvalEnabled?: boolean;
 }
 
 function getAvailableMonths(data: Record<string, any>[]): string[] {
@@ -34,7 +35,7 @@ function chargeBadges(e: Record<string, any>) {
   return out;
 }
 
-export default function ExpensesTable({ data }: ExpensesTableProps) {
+export default function ExpensesTable({ data, approvalEnabled = true }: ExpensesTableProps) {
   const router = useRouter();
 
   const availableMonths = useMemo(() => getAvailableMonths(data), [data]);
@@ -137,7 +138,7 @@ export default function ExpensesTable({ data }: ExpensesTableProps) {
     { key: "unit.unit_number", label: "部屋" },
     { key: "amount", label: "金額", sortable: true, align: "right" as const },
     { key: "breakdown", label: "内訳" },
-    { key: "status", label: "状態" },
+    ...(approvalEnabled ? [{ key: "status", label: "状態" }] : []),
   ];
 
   return (
@@ -227,12 +228,14 @@ export default function ExpensesTable({ data }: ExpensesTableProps) {
           >
             自社<span className="c">{monthFiltered.filter((e) => Number(e.company_amount) > 0).length}</span>
           </span>
-          <span
-            className={`tb-tab${chargeFilter === "pending" ? " is-active" : ""}`}
-            onClick={() => setChargeFilter("pending")}
-          >
-            承認待ち<span className="c">{pendingCount}</span>
-          </span>
+          {approvalEnabled && (
+            <span
+              className={`tb-tab${chargeFilter === "pending" ? " is-active" : ""}`}
+              onClick={() => setChargeFilter("pending")}
+            >
+              承認待ち<span className="c">{pendingCount}</span>
+            </span>
+          )}
           <span
             className={`tb-tab${chargeFilter === "overdue" ? " is-active" : ""}`}
             onClick={() => setChargeFilter("overdue")}
@@ -276,7 +279,7 @@ export default function ExpensesTable({ data }: ExpensesTableProps) {
         </div>
       </div>
 
-      {pendingCount > 0 && (
+      {approvalEnabled && pendingCount > 0 && (
         <div
           style={{
             marginBottom: 12,
@@ -360,21 +363,23 @@ export default function ExpensesTable({ data }: ExpensesTableProps) {
                           ))}
                         </div>
                       </td>
-                      <td>
-                        <span
-                          className={`charge-tag ${
-                            status === "pending_approval"
-                              ? "warn"
-                              : status === "approved" || status === "paid"
-                                ? "accent"
-                                : status === "rejected"
-                                  ? "danger"
-                                  : ""
-                          }`}
-                        >
-                          {EXPENSE_STATUS_LABELS[status]}
-                        </span>
-                      </td>
+                      {approvalEnabled && (
+                        <td>
+                          <span
+                            className={`charge-tag ${
+                              status === "pending_approval"
+                                ? "warn"
+                                : status === "approved" || status === "paid"
+                                  ? "accent"
+                                  : status === "rejected"
+                                    ? "danger"
+                                    : ""
+                            }`}
+                          >
+                            {EXPENSE_STATUS_LABELS[status]}
+                          </span>
+                        </td>
+                      )}
                     </tr>
                   );
                 })
