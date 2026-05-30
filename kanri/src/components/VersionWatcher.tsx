@@ -27,9 +27,12 @@ function isUserBusy(): boolean {
     if (active.isContentEditable) return true;
   }
 
-  // モーダル/ダイアログが開いている（Roomlyではrole="dialog"やdata-state="open"を使う）
+  // モーダル系（role=dialog、または fixed inset-0 のオーバーレイ）
   if (document.querySelector('[role="dialog"]')) return true;
-  if (document.querySelector('[data-state="open"][role="dialog"]')) return true;
+  const overlays = document.querySelectorAll<HTMLElement>(".fixed.inset-0");
+  for (const el of overlays) {
+    if (el.offsetParent !== null || el.getClientRects().length > 0) return true;
+  }
 
   return false;
 }
