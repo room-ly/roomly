@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RefreshCw, X } from "lucide-react";
 
-const POLL_INTERVAL_MS = 60_000;
+const POLL_INTERVAL_MS = 5 * 60_000;
 
 async function fetchBuildId(): Promise<string | null> {
   try {
@@ -61,9 +61,16 @@ export default function VersionWatcher() {
     check();
     timer = setInterval(check, POLL_INTERVAL_MS);
 
+    // タブが非アクティブから戻ってきた瞬間にもチェック（放置→復帰勢を即救う）
+    const onVisible = () => {
+      if (document.visibilityState === "visible") check();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
     return () => {
       cancelled = true;
       if (timer) clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 
