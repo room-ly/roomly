@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, User as UserIcon } from "lucide-react";
+import { Clock, User as UserIcon, ChevronRight } from "lucide-react";
+import { fieldLabel, isIgnoredField } from "@/lib/audit-field-labels";
 
 interface AuditLog {
   id: string;
@@ -10,13 +11,14 @@ interface AuditLog {
   action: "create" | "update" | "delete";
   user_id: string | null;
   created_at: string;
+  before_values: Record<string, unknown> | null;
+  after_values: Record<string, unknown> | null;
   user: { name: string; email: string } | null;
 }
 
 interface AuditLogSectionProps {
   table: string;
   recordId: string;
-  // 「物件」「入居者」のような表示用ラベル（省略時はテーブル名）
   recordLabel?: string;
 }
 
@@ -42,9 +44,46 @@ function formatTime(iso: string) {
   return `${y}-${m}-${day} ${h}:${min}`;
 }
 
+function formatValue(v: unknown): string {
+  if (v === null || v === undefined) return "—";
+  if (typeof v === "boolean") return v ? "あり" : "なし";
+  if (typeof v === "object") return JSON.stringify(v);
+  return String(v);
+}
+
+interface FieldDiff {
+  key: string;
+  before: unknown;
+  after: unknown;
+}
+
+function computeDiffs(log: AuditLog): FieldDiff[] {
+  const before = log.before_values ?? {};
+  const after = log.after_values ?? {};
+  const allKeys = new Set([
+    ...Object.keys(before),
+    ...Object.keys(after),
+  ]);
+  const diffs: FieldDiff[] = [];
+  for (const key of allKeys) {
+    if (isIgnoredField(key)) continue;
+    const b = (before as Record<string, unknown>)[key];
+    const a = (after as Record<string, unknown>)[key];
+    if (log.action === "create") {
+      if (a !== null && a !== undefined && a !== "") diffs.push({ key, before: null, after: a });
+    } else if (log.action === "delete") {
+      if (b !== null && b !== undefined && b !== "") diffs.push({ key, before: b, after: null });
+    } else {
+      if (JSON.stringify(b) !== JSON.stringify(a)) diffs.push({ key, before: b, after: a });
+    }
+  }
+  return diffs;
+}
+
 export default function AuditLogSection({ table, recordId, recordLabel }: AuditLogSectionProps) {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -76,26 +115,72 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
         ) : logs.length === 0 ? (
           <p className="text-[13px] text-ink-3">履歴がありません</p>
         ) : (
-          <ul className="space-y-2">
-            {logs.map((log) => (
-              <li
-                key={log.id}
-                className="flex items-center gap-3 text-[13px] py-1.5 border-b border-line last:border-0"
-              >
-                <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${ACTION_COLOR[log.action]}`}>
-                  {ACTION_LABEL[log.action]}
-                </span>
-                <span className="flex items-center gap-1 text-ink-2 flex-1 min-w-0">
-                  <UserIcon size={12} className="text-ink-3 flex-shrink-0" />
-                  <span className="truncate">
-                    {log.user?.name ?? <span className="text-ink-3">システム</span>}
-                  </span>
-                </span>
-                <span className="text-ink-3 text-[12px] flex-shrink-0">
-                  {formatTime(log.created_at)}
-                </span>
-              </li>
-            ))}
+          <ul className="space-y-1">
+            {logs.map((log) => {
+              const isOpen = openId === log.id;
+              const diffs = computeDiffs(log);
+              const canExpand = diffs.length > 0;
+              return (
+                <li key={log.id} className="border-b border-line last:border-0">
+                  <button
+                    onClick={() => canExpand && setOpenId(isOpen ? null : log.id)}
+                    disabled={!canExpand}
+                    className="w-full flex items-center gap-3 text-[13px] py-1.5 text-left hover:bg-bg-2 px-2 -mx-2 rounded transition-colors disabled:hover:bg-transparent disabled:cursor-default"
+                  >
+                    <ChevronRight
+                      size={12}
+                      className={`text-ink-3 transition-transform flex-shrink-0 ${isOpen ? "rotate-90" : ""} ${canExpand ? "" : "opacity-0"}`}
+                    />
+                    <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${ACTION_COLOR[log.action]}`}>
+                      {ACTION_LABEL[log.action]}
+                    </span>
+                    <span className="flex items-center gap-1 text-ink-2 flex-1 min-w-0">
+                      <UserIcon size={12} className="text-ink-3 flex-shrink-0" />
+                      <span className="truncate">
+                        {log.user?.name ?? <span className="text-ink-3">システム</span>}
+                      </span>
+                      {canExpand && (
+                        <span className="text-[11px] text-ink-3 ml-2">
+                          {log.action === "update" ? `${diffs.length}項目変更` : `${diffs.length}項目`}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-ink-3 text-[12px] flex-shrink-0">
+                      {formatTime(log.created_at)}
+                    </span>
+                  </button>
+
+                  {isOpen && canExpand && (
+                    <div className="ml-5 mb-2 mt-1 px-3 py-2 rounded bg-bg-2 border border-line">
+                      <table className="text-[12px] w-full">
+                        <tbody>
+                          {diffs.map((d) => (
+                            <tr key={d.key} className="align-top">
+                              <td className="text-ink-3 pr-3 py-0.5 whitespace-nowrap">
+                                {fieldLabel(table, d.key)}
+                              </td>
+                              <td className="py-0.5">
+                                {log.action === "update" ? (
+                                  <span>
+                                    <span className="text-ink-3 line-through">{formatValue(d.before)}</span>
+                                    <span className="mx-2 text-ink-3">→</span>
+                                    <span className="text-ink">{formatValue(d.after)}</span>
+                                  </span>
+                                ) : log.action === "create" ? (
+                                  <span className="text-ink">{formatValue(d.after)}</span>
+                                ) : (
+                                  <span className="text-ink-3 line-through">{formatValue(d.before)}</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
         {logs.length === 30 && (

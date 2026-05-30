@@ -8,6 +8,8 @@ interface AuditLogRow {
   action: "create" | "update" | "delete";
   user_id: string | null;
   created_at: string;
+  before_values: Record<string, unknown> | null;
+  after_values: Record<string, unknown> | null;
 }
 
 // 監査ログ取得
@@ -24,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     // database.types.ts に audit_logs が未生成なので from を string キャストで叩く
     let query = (supabase.from as any)("audit_logs")
-      .select("id, table_name, record_id, action, user_id, created_at")
+      .select("id, table_name, record_id, action, user_id, created_at, before_values, after_values")
       .order("created_at", { ascending: false })
       .limit(limit);
 
