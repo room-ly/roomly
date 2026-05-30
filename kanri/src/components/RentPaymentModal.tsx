@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { X, Loader2 } from "lucide-react";
 import { rentPaymentSchema, type RentPaymentFormData } from "@/lib/schemas";
 import type { ZodError } from "zod";
+import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 
 interface RentPaymentModalProps {
   isOpen: boolean;
@@ -71,6 +72,7 @@ export default function RentPaymentModal({
 
       onClose();
       router.refresh();
+      dispatchAuditLogRefresh();
     } catch (err) {
       const zodErr = err as ZodError;
       if (zodErr.flatten) {

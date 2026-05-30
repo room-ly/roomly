@@ -6,6 +6,7 @@ import { X, Loader2 } from "lucide-react";
 import { payeeSchema, type PayeeFormData } from "@/lib/schemas-payee";
 import type { ZodError } from "zod";
 import BankSuggest from "./BankSuggest";
+import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 
 const CATEGORY_OPTIONS = [
   { value: "repair", label: "修繕業者" },
@@ -89,6 +90,7 @@ export default function PayeeFormModal({ isOpen, onClose, editData }: PayeeFormM
       formRef.current?.reset();
       onClose();
       router.refresh();
+      dispatchAuditLogRefresh();
     } catch (err) {
       const zodErr = err as ZodError;
       if (zodErr.flatten) setErrors(zodErr.flatten().fieldErrors as Record<string, string[]>);

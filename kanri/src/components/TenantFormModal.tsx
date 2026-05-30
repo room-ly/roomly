@@ -6,6 +6,7 @@ import { X, Loader2 } from "lucide-react";
 import { tenantSchema, type TenantFormData } from "@/lib/schemas";
 import PostalCodeInput from "./PostalCodeInput";
 import type { ZodError } from "zod";
+import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 
 interface TenantFormModalProps {
   isOpen: boolean;
@@ -140,6 +141,7 @@ export default function TenantFormModal({
       clearDraft();
       onClose();
       router.refresh();
+      dispatchAuditLogRefresh();
     } catch (err) {
       const zodErr = err as ZodError;
       if (zodErr.flatten) {

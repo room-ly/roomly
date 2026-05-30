@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Clock, User as UserIcon, ChevronRight } from "lucide-react";
 import { fieldLabel, fieldType, formatFieldValue, isIgnoredField } from "@/lib/audit-field-labels";
+import { subscribeAuditLogRefresh } from "@/lib/audit-events";
 
 interface AuditLog {
   id: string;
@@ -96,18 +97,27 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    fetch(`/api/audit-logs?table=${encodeURIComponent(table)}&record_id=${encodeURIComponent(recordId)}&limit=30`)
-      .then((res) => res.ok ? res.json() : [])
-      .then((data) => {
-        if (active) setLogs(Array.isArray(data) ? data : []);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => { active = false; };
+  const fetchLogs = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/audit-logs?table=${encodeURIComponent(table)}&record_id=${encodeURIComponent(recordId)}&limit=30`,
+        { cache: "no-store" },
+      );
+      const data = res.ok ? await res.json() : [];
+      setLogs(Array.isArray(data) ? data : []);
+    } finally {
+      setLoading(false);
+    }
   }, [table, recordId]);
+
+  useEffect(() => {
+    fetchLogs();
+    // 編集モーダル等で保存・削除されたタイミングで再fetch
+    const unsubscribe = subscribeAuditLogRefresh(() => {
+      fetchLogs();
+    });
+    return () => unsubscribe();
+  }, [fetchLogs]);
 
   const label = recordLabel ?? "レコード";
 

@@ -10,6 +10,7 @@ import StationInput from "./StationInput";
 import PropertyImages from "./PropertyImages";
 import UnitTable from "./UnitTable";
 import type { ZodError } from "zod";
+import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 
 interface Owner {
   id: string;
@@ -225,6 +226,7 @@ export default function PropertyFormModal({
       lastTargetRef.current = null;
       onClose();
       router.refresh();
+      dispatchAuditLogRefresh();
     } catch (err) {
       const zodErr = err as ZodError;
       if (zodErr.flatten) {

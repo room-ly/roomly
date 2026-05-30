@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { unitSchema, type UnitFormData } from "@/lib/schemas";
 import PropertyImages from "./PropertyImages";
 import type { ZodError } from "zod";
+import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 
 interface UnitFormModalProps {
   isOpen: boolean;
@@ -91,6 +92,7 @@ export default function UnitFormModal({
       formRef.current?.reset();
       onClose();
       router.refresh();
+      dispatchAuditLogRefresh();
     } catch (err) {
       const zodErr = err as ZodError;
       if (zodErr.flatten) {

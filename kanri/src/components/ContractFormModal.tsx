@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { X, Loader2 } from "lucide-react";
 import { contractSchema, type ContractFormData } from "@/lib/schemas";
 import type { ZodError } from "zod";
+import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 
 interface SelectOption {
   id: string;
@@ -107,6 +108,7 @@ export default function ContractFormModal({
       } else {
         onClose();
         router.refresh();
+        dispatchAuditLogRefresh();
       }
     } catch (err) {
       const zodErr = err as ZodError;

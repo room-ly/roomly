@@ -7,6 +7,7 @@ import { ownerSchema, type OwnerFormData } from "@/lib/schemas";
 import type { ZodError } from "zod";
 import BankSuggest from "./BankSuggest";
 import PostalCodeInput from "./PostalCodeInput";
+import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 
 interface OwnerFormModalProps {
   isOpen: boolean;
@@ -97,6 +98,7 @@ export default function OwnerFormModal({
       formRef.current?.reset();
       onClose();
       router.refresh();
+      dispatchAuditLogRefresh();
     } catch (err) {
       const zodErr = err as ZodError;
       if (zodErr.flatten) {

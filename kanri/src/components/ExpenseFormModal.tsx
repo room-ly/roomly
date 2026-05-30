@@ -14,6 +14,7 @@ import {
   type ExpenseAllocationInput,
 } from "@/lib/schemas-expense";
 import type { ZodError } from "zod";
+import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 
 interface SelectOption {
   id: string;
@@ -305,6 +306,7 @@ export default function ExpenseFormModal({
       formRef.current?.reset();
       onClose();
       router.refresh();
+      dispatchAuditLogRefresh();
     } catch (err) {
       const zodErr = err as ZodError;
       if (zodErr.flatten) {

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { X, Loader2 } from "lucide-react";
+import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 
 interface OwnerOption {
   id: string;
@@ -149,6 +150,7 @@ export default function RemittanceFormModal({
       formRef.current?.reset();
       onClose();
       router.refresh();
+      dispatchAuditLogRefresh();
     } finally {
       setLoading(false);
     }

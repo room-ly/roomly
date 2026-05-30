@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 
 interface Props {
   expenseId: string;
@@ -51,6 +52,7 @@ export default function ExpenseApprovalPanel({
         setError(err.error || "設定の保存に失敗しました");
       } else {
         router.refresh();
+        dispatchAuditLogRefresh();
       }
     } finally {
       setLoading(false);
@@ -67,6 +69,7 @@ export default function ExpenseApprovalPanel({
         setError(err.error || "提出に失敗しました");
       } else {
         router.refresh();
+        dispatchAuditLogRefresh();
       }
     } finally {
       setLoading(false);
@@ -83,6 +86,7 @@ export default function ExpenseApprovalPanel({
         setError(err.error || "承認に失敗しました");
       } else {
         router.refresh();
+        dispatchAuditLogRefresh();
       }
     } finally {
       setLoading(false);
@@ -109,6 +113,7 @@ export default function ExpenseApprovalPanel({
         setShowReject(false);
         setReason("");
         router.refresh();
+        dispatchAuditLogRefresh();
       }
     } finally {
       setLoading(false);
