@@ -43,6 +43,7 @@ properties_sample.csv
 
 # Local tooling artifacts
 .mcp.json
+.claude/
 # Playwright MCP の出力先（.mcp.json の --output-dir で固定）。
 # フォルダ自体は追跡し（.gitkeep）、中の生成物は無視する。
 .playwright-mcp/*
