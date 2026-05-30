@@ -314,6 +314,25 @@ export default async function ExpenseDetailPage({
         </div>
 
         <div className="detail-col-side">
+          {expense.property?.id && (
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>物件</h2>
+              </div>
+              <div className="section-body">
+                <div className="kv-list">
+                  <div className="field">
+                    <div className="field-label mono">物件名</div>
+                    <div className="field-value">
+                      <Link href={`/properties/${expense.property.id}`} className="rlink">
+                        {expense.property.name}
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           {expense.unit?.unit_number && (
             <div className="section">
               <div className="section-head-bar">
