@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Clock, User as UserIcon, ChevronRight } from "lucide-react";
-import { fieldLabel, isIgnoredField } from "@/lib/audit-field-labels";
+import { fieldLabel, fieldType, formatFieldValue, isIgnoredField } from "@/lib/audit-field-labels";
 
 interface AuditLog {
   id: string;
@@ -42,13 +42,6 @@ function formatTime(iso: string) {
   const h = String(d.getHours()).padStart(2, "0");
   const min = String(d.getMinutes()).padStart(2, "0");
   return `${y}-${m}-${day} ${h}:${min}`;
-}
-
-function formatValue(v: unknown): string {
-  if (v === null || v === undefined) return "—";
-  if (typeof v === "boolean") return v ? "あり" : "なし";
-  if (typeof v === "object") return JSON.stringify(v);
-  return String(v);
 }
 
 interface FieldDiff {
@@ -154,26 +147,29 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
                     <div className="ml-5 mb-2 mt-1 px-3 py-2 rounded bg-bg-2 border border-line">
                       <table className="text-[12px] w-full">
                         <tbody>
-                          {diffs.map((d) => (
-                            <tr key={d.key} className="align-top">
-                              <td className="text-ink-3 pr-3 py-0.5 whitespace-nowrap">
-                                {fieldLabel(table, d.key)}
-                              </td>
-                              <td className="py-0.5">
-                                {log.action === "update" ? (
-                                  <span>
-                                    <span className="text-ink-3 line-through">{formatValue(d.before)}</span>
-                                    <span className="mx-2 text-ink-3">→</span>
-                                    <span className="text-ink">{formatValue(d.after)}</span>
-                                  </span>
-                                ) : log.action === "create" ? (
-                                  <span className="text-ink">{formatValue(d.after)}</span>
-                                ) : (
-                                  <span className="text-ink-3 line-through">{formatValue(d.before)}</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
+                          {diffs.map((d) => {
+                            const t = fieldType(table, d.key);
+                            return (
+                              <tr key={d.key} className="align-top">
+                                <td className="text-ink-3 pr-3 py-0.5 whitespace-nowrap">
+                                  {fieldLabel(table, d.key)}
+                                </td>
+                                <td className="py-0.5">
+                                  {log.action === "update" ? (
+                                    <span>
+                                      <span className="text-ink-3 line-through">{formatFieldValue(d.before, t)}</span>
+                                      <span className="mx-2 text-ink-3">→</span>
+                                      <span className="text-ink">{formatFieldValue(d.after, t)}</span>
+                                    </span>
+                                  ) : log.action === "create" ? (
+                                    <span className="text-ink">{formatFieldValue(d.after, t)}</span>
+                                  ) : (
+                                    <span className="text-ink-3 line-through">{formatFieldValue(d.before, t)}</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
