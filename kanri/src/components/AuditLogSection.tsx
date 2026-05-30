@@ -50,6 +50,24 @@ interface FieldDiff {
   after: unknown;
 }
 
+// 「空とみなせる」値: null / undefined / 空文字
+function isEmpty(v: unknown): boolean {
+  return v === null || v === undefined || v === "";
+}
+
+// 同値判定: 数値文字列と数値、空系の値同士などを同値扱いにする
+function isSameValue(a: unknown, b: unknown): boolean {
+  if (isEmpty(a) && isEmpty(b)) return true;
+  if (isEmpty(a) || isEmpty(b)) return false;
+  // 数値と数値文字列を同一視（"100" と 100、"100.00" と 100 等）
+  const na = typeof a === "number" ? a : Number(a);
+  const nb = typeof b === "number" ? b : Number(b);
+  if (!Number.isNaN(na) && !Number.isNaN(nb) && String(a).trim() !== "" && String(b).trim() !== "") {
+    if (na === nb) return true;
+  }
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 function computeDiffs(log: AuditLog): FieldDiff[] {
   const before = log.before_values ?? {};
   const after = log.after_values ?? {};
@@ -63,11 +81,11 @@ function computeDiffs(log: AuditLog): FieldDiff[] {
     const b = (before as Record<string, unknown>)[key];
     const a = (after as Record<string, unknown>)[key];
     if (log.action === "create") {
-      if (a !== null && a !== undefined && a !== "") diffs.push({ key, before: null, after: a });
+      if (!isEmpty(a)) diffs.push({ key, before: null, after: a });
     } else if (log.action === "delete") {
-      if (b !== null && b !== undefined && b !== "") diffs.push({ key, before: b, after: null });
+      if (!isEmpty(b)) diffs.push({ key, before: b, after: null });
     } else {
-      if (JSON.stringify(b) !== JSON.stringify(a)) diffs.push({ key, before: b, after: a });
+      if (!isSameValue(b, a)) diffs.push({ key, before: b, after: a });
     }
   }
   return diffs;
