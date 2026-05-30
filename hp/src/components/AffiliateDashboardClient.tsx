@@ -41,6 +41,8 @@ const CONV_STATUS_LABEL: Record<string, string> = {
 const CONV_TYPE_LABEL: Record<string, string> = {
   initial: "初回成果",
   recurring: "継続報酬",
+  first_payment: "初回成果",
+  recurring_payment: "継続報酬",
 };
 
 function formatJpy(n: number) {

@@ -98,7 +98,7 @@ async function updateCompanySubscription(
         .eq("id", prev.affiliate_id)
         .maybeSingle();
 
-      if (affiliate && affiliate.status === "active") {
+      if (affiliate && affiliate.status === "approved") {
         const mrr = plan?.price ?? calcCustomPrice(maxUnits) ?? 5000;
         const initialAmount = affiliate.commission_initial_jpy ?? 0;
 

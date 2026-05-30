@@ -114,7 +114,7 @@ async function processRecurring(): Promise<{
       continue;
     }
     // suspended/rejected アフィリエイトは計上しない
-    if (aff.status !== "active") {
+    if (aff.status !== "approved") {
       skipped++;
       continue;
     }
