@@ -5,12 +5,13 @@ import {
   getPropertiesForSelect,
   getOwnersForSelect,
 } from "@/lib/queries";
-import { getCurrentUserRole } from "@/lib/supabase-server";
+import { createClient, getCompanyId, getCurrentUserRole } from "@/lib/supabase-server";
 import StatusBadge from "@/components/StatusBadge";
 import ExpenseDetailClient from "@/components/ExpenseDetailClient";
 import AuditLogSection from "@/components/AuditLogSection";
 import DocumentSection from "@/components/DocumentSection";
 import ExpenseApprovalPanel from "@/components/ExpenseApprovalPanel";
+import OffFeaturesMenu from "@/components/OffFeaturesMenu";
 import DepositBalancePanel from "@/components/DepositBalancePanel";
 import {
   EXPENSE_STATUS_LABELS,
@@ -32,6 +33,27 @@ export default async function ExpenseDetailPage({
     getCurrentUserRole(),
   ]);
   if (!expense) notFound();
+
+  // 稟議機能ON/OFF判定（threshold が NULL なら OFF）+ 承認者候補
+  const supabase = await createClient();
+  const companyId = await getCompanyId();
+  const { data: company } = await supabase
+    .from("companies")
+    .select("expense_approval_threshold")
+    .eq("id", companyId)
+    .single();
+  const approvalEnabled = company?.expense_approval_threshold != null;
+  const { data: candidateUsers } = await supabase
+    .from("users")
+    .select("user_id, name, role")
+    .eq("company_id", companyId)
+    .in("role", ["admin", "manager"])
+    .order("name");
+  const approverCandidates = (candidateUsers ?? []).map((u: any) => ({
+    id: u.user_id as string,
+    name: (u.name as string) ?? "",
+  }));
+  const canEditSettings = me?.role === "admin";
 
   const approver = (expense.effective_approver ?? null) as { id: string; name: string } | null;
   const approverSource = (expense.approver_source ?? null) as "property" | "company" | null;
@@ -66,19 +88,22 @@ export default async function ExpenseDetailPage({
           </div>
           <div style={{ marginLeft: 8, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
             <StatusBadge status={expense.category} />
-            <span
-              className={`charge-tag ${
-                status === "pending_approval"
-                  ? "warn"
-                  : status === "approved" || status === "paid"
-                    ? "accent"
-                    : status === "rejected"
-                      ? "danger"
-                      : ""
-              }`}
-            >
-              {EXPENSE_STATUS_LABELS[status]}
-            </span>
+            {/* 稟議ONの会社、または paid 等の会計ステータスを持つ経費だけステータスバッジを表示 */}
+            {(approvalEnabled || status === "paid") && (
+              <span
+                className={`charge-tag ${
+                  status === "pending_approval"
+                    ? "warn"
+                    : status === "approved" || status === "paid"
+                      ? "accent"
+                      : status === "rejected"
+                        ? "danger"
+                        : ""
+                }`}
+              >
+                {EXPENSE_STATUS_LABELS[status]}
+              </span>
+            )}
             {Number(expense.owner_amount) > 0 && (
               <span className="charge-tag warn">
                 <span className="dot" />
@@ -99,7 +124,12 @@ export default async function ExpenseDetailPage({
             )}
           </div>
         </div>
-        <div className="detail-header-actions">
+        <div className="detail-header-actions" style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <OffFeaturesMenu
+            approvalOff={!approvalEnabled}
+            canEditSettings={canEditSettings}
+            approverCandidates={approverCandidates}
+          />
           <ExpenseDetailClient expense={expense} properties={properties} owners={owners} />
         </div>
       </div>
@@ -126,13 +156,15 @@ export default async function ExpenseDetailPage({
         </div>
       </div>
 
-      {/* 稟議パネル */}
+      {/* 稟議パネル（ON時のみ表示。OFF時のトグルは題名右の OffFeaturesMenu に集約） */}
       <ExpenseApprovalPanel
         expenseId={expense.id}
         status={status}
         isApprover={isApprover}
         approverName={approver?.name ?? null}
         approverSource={approverSource}
+        approvalEnabled={approvalEnabled}
+        canEditSettings={canEditSettings}
       />
 
       {status === "rejected" && expense.rejected_reason && (

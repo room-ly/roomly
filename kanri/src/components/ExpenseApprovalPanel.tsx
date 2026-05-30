@@ -4,22 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-interface ApproverCandidate {
-  id: string;
-  name: string;
-}
-
 interface Props {
   expenseId: string;
   status: string;
   isApprover: boolean;
   approverName: string | null;
   approverSource: "property" | "company" | null;
-  // 稟議機能のON/OFF制御
   approvalEnabled: boolean;
-  currentThreshold: number | null;
-  currentApproverId: string | null;
-  approverCandidates: ApproverCandidate[];
   canEditSettings: boolean;
 }
 
@@ -30,9 +21,6 @@ export default function ExpenseApprovalPanel({
   approverName,
   approverSource,
   approvalEnabled,
-  currentThreshold,
-  currentApproverId,
-  approverCandidates,
   canEditSettings,
 }: Props) {
   const router = useRouter();
@@ -40,13 +28,13 @@ export default function ExpenseApprovalPanel({
   const [reason, setReason] = useState("");
   const [showReject, setShowReject] = useState(false);
   const [error, setError] = useState("");
-  const [showEnableModal, setShowEnableModal] = useState(false);
-  const [threshold, setThreshold] = useState<string>(
-    currentThreshold != null ? String(currentThreshold) : "50000",
-  );
-  const [approverId, setApproverId] = useState<string>(currentApproverId ?? "");
 
-  async function saveSettings(nextThreshold: number | null, nextApproverId: string | null) {
+  // 稟議OFF: パネル非表示（OFF機能は OffFeaturesMenu に集約）
+  if (!approvalEnabled) return null;
+  if (status !== "pending_approval" && status !== "draft") return null;
+
+  async function turnOff() {
+    if (!confirm("稟議機能をオフにしますか？\n承認待ちの経費は手動で承認/却下が必要です。")) return;
     setLoading(true);
     setError("");
     try {
@@ -54,119 +42,20 @@ export default function ExpenseApprovalPanel({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          expense_approval_threshold: nextThreshold,
-          default_approver_user_id: nextApproverId,
+          expense_approval_threshold: null,
+          default_approver_user_id: null,
         }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         setError(err.error || "設定の保存に失敗しました");
       } else {
-        setShowEnableModal(false);
         router.refresh();
       }
     } finally {
       setLoading(false);
     }
   }
-
-  // OFF状態: トグル + ON切替モーダル
-  if (!approvalEnabled) {
-    return (
-      <div className="section">
-        <div className="section-head-bar">
-          <h2>稟議</h2>
-        </div>
-        <div className="section-body">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm text-ink-2 mb-1">
-                稟議機能は<strong>オフ</strong>です。経費はそのまま登録され、承認フローは走りません。
-              </p>
-              <p className="text-xs text-ink-3">
-                オンにすると、指定金額以上のオーナー負担経費は承認待ちになり、承認者の操作が必要になります。
-              </p>
-            </div>
-            {canEditSettings ? (
-              <button
-                className="btn btn-ghost btn-sm whitespace-nowrap"
-                onClick={() => setShowEnableModal(true)}
-              >
-                稟議をオンにする
-              </button>
-            ) : (
-              <span className="text-xs text-ink-3 whitespace-nowrap">
-                管理者のみ変更可能
-              </span>
-            )}
-          </div>
-
-          {showEnableModal && (
-            <div className="mt-4 border-t pt-4">
-              {error && (
-                <div className="bg-danger-tint text-danger text-sm rounded-lg px-3 py-2 mb-3">
-                  {error}
-                </div>
-              )}
-              <div className="kv-grid">
-                <div className="field">
-                  <label className="field-label mono">承認が必要な金額（円以上）</label>
-                  <input
-                    type="number"
-                    className="input"
-                    min={1}
-                    value={threshold}
-                    onChange={(e) => setThreshold(e.target.value)}
-                    placeholder="例: 50000"
-                  />
-                </div>
-                <div className="field">
-                  <label className="field-label mono">既定の承認者</label>
-                  <select
-                    className="input"
-                    value={approverId}
-                    onChange={(e) => setApproverId(e.target.value)}
-                  >
-                    <option value="">選択してください</option>
-                    {approverCandidates.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-2 mt-3">
-                <button
-                  className="btn btn-primary btn-sm disabled:cursor-wait flex items-center gap-1.5"
-                  disabled={loading || !threshold || Number(threshold) <= 0 || !approverId}
-                  onClick={() => saveSettings(Number(threshold), approverId)}
-                >
-                  {loading && <Loader2 size={14} className="animate-spin" />}
-                  {loading ? "保存中..." : "オンにする"}
-                </button>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => {
-                    setShowEnableModal(false);
-                    setError("");
-                  }}
-                  disabled={loading}
-                >
-                  キャンセル
-                </button>
-              </div>
-              <p className="text-xs text-ink-3 mt-2">
-                ここで設定した内容は会社全体に適用されます。物件ごとの承認者は物件設定から個別に指定できます。
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (status !== "pending_approval" && status !== "draft") return null;
 
   async function submit() {
     setLoading(true);
@@ -232,8 +121,10 @@ export default function ExpenseApprovalPanel({
         <h2>稟議</h2>
         {canEditSettings && (
           <button
-            className="btn btn-ghost btn-xs ml-auto"
-            onClick={() => saveSettings(null, null)}
+            type="button"
+            className="btn btn-ghost btn-xs"
+            style={{ marginLeft: "auto" }}
+            onClick={turnOff}
             disabled={loading}
             title="稟議機能をオフにする"
           >

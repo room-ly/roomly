@@ -42,10 +42,15 @@ export async function saveExpense(supabase: Client, params: SaveParams): Promise
     // フォールバック値で続行
   }
 
+  const approvalEnabled = threshold !== null;
   const requiresApproval =
-    threshold !== null && input.owner_amount > 0 && input.amount >= threshold;
-  const targetStatus =
-    input.status === "draft" && requiresApproval ? "pending_approval" : input.status;
+    approvalEnabled && input.owner_amount > 0 && input.amount >= threshold!;
+  // 稟議OFFの会社では「下書き」概念を使わず、登録した瞬間に approved 扱い
+  let targetStatus = input.status;
+  if (input.status === "draft") {
+    if (!approvalEnabled) targetStatus = "approved";
+    else if (requiresApproval) targetStatus = "pending_approval";
+  }
 
   const now = new Date().toISOString();
   const baseRecord: Record<string, unknown> = {
@@ -74,6 +79,11 @@ export async function saveExpense(supabase: Client, params: SaveParams): Promise
   if (targetStatus === "pending_approval") {
     baseRecord.submitted_by = user_id;
     baseRecord.submitted_at = now;
+  }
+  // 稟議OFFで即approvedになる場合、承認者は登録者本人
+  if (targetStatus === "approved" && input.status === "draft") {
+    baseRecord.approved_by = user_id;
+    baseRecord.approved_at = now;
   }
 
   let expenseRow: Record<string, unknown> | null = null;
