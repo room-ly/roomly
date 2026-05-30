@@ -8,6 +8,7 @@ import {
 import { getCurrentUserRole } from "@/lib/supabase-server";
 import StatusBadge from "@/components/StatusBadge";
 import ExpenseDetailClient from "@/components/ExpenseDetailClient";
+import AuditLogSection from "@/components/AuditLogSection";
 import DocumentSection from "@/components/DocumentSection";
 import ExpenseApprovalPanel from "@/components/ExpenseApprovalPanel";
 import DepositBalancePanel from "@/components/DepositBalancePanel";
@@ -365,6 +366,8 @@ export default async function ExpenseDetailPage({
               </div>
             </div>
           )}
+
+          <AuditLogSection table="expenses" recordId={expense.id} recordLabel="経費" />
         </div>
       </div>
     </>

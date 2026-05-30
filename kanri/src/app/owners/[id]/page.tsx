@@ -5,6 +5,7 @@ import { getOwnerDetail } from "@/lib/queries";
 import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import OwnerDetailClient from "@/components/OwnerDetailClient";
+import AuditLogSection from "@/components/AuditLogSection";
 
 export default async function OwnerDetailPage({
   params,
@@ -342,6 +343,7 @@ export default async function OwnerDetailPage({
             </div>
           )}
 
+          <AuditLogSection table="owners" recordId={owner.id} recordLabel="オーナー" />
         </div>
       </div>
     </>

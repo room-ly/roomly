@@ -7,6 +7,7 @@ import ContractDetailClient from "@/components/ContractDetailClient";
 import MoveOutReviewClient from "@/components/MoveOutReviewClient";
 import MoveOutChecklist from "@/components/MoveOutChecklist";
 import DepositBalancePanel from "@/components/DepositBalancePanel";
+import AuditLogSection from "@/components/AuditLogSection";
 
 const contractTypeLabels: Record<string, string> = {
   fixed: "定期借家",
@@ -402,6 +403,7 @@ export default async function ContractDetailPage({
             </div>
           </div>
 
+          <AuditLogSection table="contracts" recordId={contract.id} recordLabel="契約" />
         </div>
       </div>
     </>

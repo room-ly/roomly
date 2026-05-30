@@ -4,6 +4,7 @@ import { getCaseDetail, getPropertiesForSelect } from "@/lib/queries";
 import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import CaseDetailClient from "@/components/CaseDetailClient";
+import AuditLogSection from "@/components/AuditLogSection";
 
 const categoryLabels: Record<string, string> = {
   repair: "設備修繕",
@@ -236,6 +237,7 @@ export default async function CaseDetailPage({
             </div>
           </div>
 
+          <AuditLogSection table="cases" recordId={caseRow.id} recordLabel="対応案件" />
         </div>
       </div>
     </>

@@ -7,6 +7,7 @@ import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import TenantDetailClient from "@/components/TenantDetailClient";
 import DocumentSection from "@/components/DocumentSection";
+import AuditLogSection from "@/components/AuditLogSection";
 
 const AVATAR_TONES = [
   { bg: "#e8f0e8", fg: "#3f5a4c" },
@@ -229,6 +230,7 @@ export default async function TenantDetailPage({
             </div>
           </div>
 
+          <AuditLogSection table="tenants" recordId={tenant.id} recordLabel="入居者" />
         </div>
       </div>
     </>

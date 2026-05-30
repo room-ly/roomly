@@ -5,6 +5,7 @@ import { getRemittanceDetail, getOwnersForSelect } from "@/lib/queries";
 import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import RemittanceDetailClient from "@/components/RemittanceDetailClient";
+import AuditLogSection from "@/components/AuditLogSection";
 
 const paymentMethodLabel: Record<string, string> = {
   transfer: "振込",
@@ -220,6 +221,7 @@ export default async function RemittanceDetailPage({
             </div>
           )}
 
+          <AuditLogSection table="owner_remittances" recordId={remittance.id} recordLabel="送金" />
         </div>
       </div>
     </>

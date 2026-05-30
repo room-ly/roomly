@@ -4,6 +4,7 @@ import { Phone, Mail } from "lucide-react";
 import { getRentBillingDetail } from "@/lib/queries";
 import { formatPhone } from "@/lib/phone";
 import RentHistoryAndDetail from "@/components/RentHistoryAndDetail";
+import AuditLogSection from "@/components/AuditLogSection";
 
 export default async function RentDetailPage({
   params,
@@ -131,6 +132,7 @@ export default async function RentDetailPage({
             </div>
           </div>
 
+          <AuditLogSection table="rent_billings" recordId={current.id} recordLabel="家賃請求" />
         </div>
       </div>
     </>

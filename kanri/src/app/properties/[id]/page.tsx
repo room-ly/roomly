@@ -7,6 +7,7 @@ import PropertyDetailClient from "@/components/PropertyDetailClient";
 import PropertyImages from "@/components/PropertyImages";
 import UnitTable from "@/components/UnitTable";
 import DocumentSection from "@/components/DocumentSection";
+import AuditLogSection from "@/components/AuditLogSection";
 
 export default async function PropertyDetailPage({
   params,
@@ -463,6 +464,8 @@ export default async function PropertyDetailPage({
               </div>
             </div>
           </div>
+
+          <AuditLogSection table="properties" recordId={id} recordLabel="物件" />
         </div>
       </div>
     </>

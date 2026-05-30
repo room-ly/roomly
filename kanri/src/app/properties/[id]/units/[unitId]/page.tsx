@@ -5,6 +5,7 @@ import { getUnitDetail } from "@/lib/queries";
 import StatusBadge from "@/components/StatusBadge";
 import UnitDetailClient from "@/components/UnitDetailClient";
 import PropertyImages from "@/components/PropertyImages";
+import AuditLogSection from "@/components/AuditLogSection";
 
 export default async function UnitDetailPage({
   params,
@@ -209,6 +210,7 @@ export default async function UnitDetailPage({
             </div>
           )}
 
+          <AuditLogSection table="units" recordId={unitId} recordLabel="部屋" />
         </div>
       </div>
     </>
