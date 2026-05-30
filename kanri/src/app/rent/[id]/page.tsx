@@ -71,6 +71,8 @@ export default async function RentDetailPage({
             propertyName={property?.name || ""}
             unitNumber={unit?.unit_number || ""}
           />
+
+          <AuditLogSection table="rent_billings" recordId={current.id} recordLabel="家賃請求" />
         </div>
 
         {/* サイドカラム */}
@@ -141,7 +143,6 @@ export default async function RentDetailPage({
             </div>
           </div>
 
-          <AuditLogSection table="rent_billings" recordId={current.id} recordLabel="家賃請求" />
         </div>
       </div>
     </>

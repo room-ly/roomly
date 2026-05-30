@@ -285,6 +285,7 @@ export default async function OwnerDetailPage({
             </div>
           )}
 
+          <AuditLogSection table="owners" recordId={owner.id} recordLabel="オーナー" />
         </div>
 
         {/* サイドカラム */}
@@ -362,7 +363,6 @@ export default async function OwnerDetailPage({
             </div>
           )}
 
-          <AuditLogSection table="owners" recordId={owner.id} recordLabel="オーナー" />
         </div>
       </div>
     </>

@@ -343,6 +343,8 @@ export default async function ExpenseDetailPage({
           {expense.property?.id && (
             <DocumentSection propertyId={expense.property.id} title="関連書類（レシート等）" />
           )}
+
+          <AuditLogSection table="expenses" recordId={expense.id} recordLabel="経費" />
         </div>
 
         <div className="detail-col-side">
@@ -424,8 +426,6 @@ export default async function ExpenseDetailPage({
               </div>
             </div>
           )}
-
-          <AuditLogSection table="expenses" recordId={expense.id} recordLabel="経費" />
         </div>
       </div>
     </>

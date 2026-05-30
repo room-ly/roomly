@@ -326,6 +326,8 @@ export default async function ContractDetailPage({
               </div>
             </div>
           )}
+
+          <AuditLogSection table="contracts" recordId={contract.id} recordLabel="契約" />
         </div>
 
         {/* サイドカラム */}
@@ -403,7 +405,6 @@ export default async function ContractDetailPage({
             </div>
           </div>
 
-          <AuditLogSection table="contracts" recordId={contract.id} recordLabel="契約" />
         </div>
       </div>
     </>

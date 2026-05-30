@@ -118,7 +118,7 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
                   <button
                     onClick={() => canExpand && setOpenId(isOpen ? null : log.id)}
                     disabled={!canExpand}
-                    className="w-full flex items-center gap-3 text-[13px] py-1.5 text-left hover:bg-bg-2 px-2 -mx-2 rounded transition-colors disabled:hover:bg-transparent disabled:cursor-default"
+                    className="w-full flex items-center gap-2 text-[13px] py-1.5 px-2 -mx-2 text-left hover:bg-bg-2 rounded transition-colors disabled:hover:bg-transparent disabled:cursor-default whitespace-nowrap"
                   >
                     <ChevronRight
                       size={12}
@@ -127,17 +127,15 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
                     <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${ACTION_COLOR[log.action]}`}>
                       {ACTION_LABEL[log.action]}
                     </span>
-                    <span className="flex items-center gap-1 text-ink-2 flex-1 min-w-0">
-                      <UserIcon size={12} className="text-ink-3 flex-shrink-0" />
-                      <span className="truncate">
-                        {log.user?.name ?? <span className="text-ink-3">システム</span>}
-                      </span>
-                      {canExpand && (
-                        <span className="text-[11px] text-ink-3 ml-2">
-                          {log.action === "update" ? `${diffs.length}項目変更` : `${diffs.length}項目`}
-                        </span>
-                      )}
+                    <UserIcon size={12} className="text-ink-3 flex-shrink-0" />
+                    <span className="text-ink-2 truncate min-w-0 flex-1">
+                      {log.user?.name ?? <span className="text-ink-3">システム</span>}
                     </span>
+                    {canExpand && (
+                      <span className="text-[11px] text-ink-3 flex-shrink-0">
+                        {log.action === "update" ? `${diffs.length}項目` : ""}
+                      </span>
+                    )}
                     <span className="text-ink-3 text-[12px] flex-shrink-0">
                       {formatTime(log.created_at)}
                     </span>

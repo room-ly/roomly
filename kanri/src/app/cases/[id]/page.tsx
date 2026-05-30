@@ -202,6 +202,8 @@ export default async function CaseDetailPage({
               </div>
             </div>
           )}
+
+          <AuditLogSection table="cases" recordId={caseRow.id} recordLabel="対応案件" />
         </div>
 
         <div className="detail-col-side">
@@ -237,7 +239,6 @@ export default async function CaseDetailPage({
             </div>
           </div>
 
-          <AuditLogSection table="cases" recordId={caseRow.id} recordLabel="対応案件" />
         </div>
       </div>
     </>

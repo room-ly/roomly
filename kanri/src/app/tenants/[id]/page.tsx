@@ -167,6 +167,8 @@ export default async function TenantDetailPage({
           )}
 
           <DocumentSection tenantId={id} />
+
+          <AuditLogSection table="tenants" recordId={tenant.id} recordLabel="入居者" />
         </div>
 
         {/* サイドカラム */}
@@ -230,7 +232,6 @@ export default async function TenantDetailPage({
             </div>
           </div>
 
-          <AuditLogSection table="tenants" recordId={tenant.id} recordLabel="入居者" />
         </div>
       </div>
     </>

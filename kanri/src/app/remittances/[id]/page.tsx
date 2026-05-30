@@ -157,6 +157,8 @@ export default async function RemittanceDetailPage({
               PDF をダウンロード
             </a>
           </div>
+
+          <AuditLogSection table="owner_remittances" recordId={remittance.id} recordLabel="送金" />
         </div>
 
         {/* サイドカラム */}
@@ -221,7 +223,6 @@ export default async function RemittanceDetailPage({
             </div>
           )}
 
-          <AuditLogSection table="owner_remittances" recordId={remittance.id} recordLabel="送金" />
         </div>
       </div>
     </>

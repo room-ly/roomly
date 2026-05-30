@@ -126,6 +126,7 @@ export default async function UnitDetailPage({
             </div>
           )}
 
+          <AuditLogSection table="units" recordId={unitId} recordLabel="部屋" />
         </div>
 
         {/* サイドカラム */}
@@ -210,7 +211,6 @@ export default async function UnitDetailPage({
             </div>
           )}
 
-          <AuditLogSection table="units" recordId={unitId} recordLabel="部屋" />
         </div>
       </div>
     </>

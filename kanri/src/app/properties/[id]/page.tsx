@@ -414,6 +414,8 @@ export default async function PropertyDetailPage({
           </div>
 
           <DocumentSection propertyId={id} />
+
+          <AuditLogSection table="properties" recordId={id} recordLabel="物件" />
         </div>
 
         {/* サイドカラム */}
@@ -465,7 +467,6 @@ export default async function PropertyDetailPage({
             </div>
           </div>
 
-          <AuditLogSection table="properties" recordId={id} recordLabel="物件" />
         </div>
       </div>
     </>
