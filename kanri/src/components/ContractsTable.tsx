@@ -146,21 +146,9 @@ export default function ContractsTable({ data, alertDays = 90 }: ContractsTableP
                     <td>
                       <Link href={`/contracts/${c.id}`} className="strong" style={{ color: "inherit", textDecoration: "none" }} onClick={(e) => e.stopPropagation()}>{c.tenant?.name}</Link>
                     </td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      {c.unit?.property?.id ? (
-                        <Link href={`/properties/${c.unit.property.id}`} className="rlink" style={{ color: "var(--ink-2)" }}>
-                          {c.unit.property.name}
-                        </Link>
-                      ) : (
-                        <span style={{ color: "var(--ink-2)" }}>{c.unit?.property?.name}</span>
-                      )}
-                      {c.unit?.id && c.unit?.property_id ? (
-                        <Link href={`/properties/${c.unit.property_id}/units/${c.unit.id}`} className="rlink mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>
-                          #{c.unit.unit_number}
-                        </Link>
-                      ) : (
-                        <span className="mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>#{c.unit?.unit_number}</span>
-                      )}
+                    <td>
+                      <span style={{ color: "var(--ink-2)" }}>{c.unit?.property?.name}</span>
+                      <span className="mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>#{c.unit?.unit_number}</span>
                     </td>
                     <td><span className="badge badge-neutral">{CONTRACT_TYPE_LABEL[c.contract_type] || c.contract_type}</span></td>
                     <td>
