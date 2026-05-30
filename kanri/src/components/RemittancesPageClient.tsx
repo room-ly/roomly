@@ -6,6 +6,7 @@ import { Plus, FileDown } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import RemittanceFormModal from "./RemittanceFormModal";
 import ZenginCsvModal from "./ZenginCsvModal";
+import { usePermission } from "@/lib/use-permission";
 
 interface OwnerOption {
   id: string;
@@ -34,23 +35,29 @@ export default function RemittancesPageClient({ owners, remittances, ownerSummar
   const [modalOpen, setModalOpen] = useState(false);
   const [editData, setEditData] = useState<Record<string, any> | null>(null);
   const [zenginOpen, setZenginOpen] = useState(false);
+  const canCreate = usePermission("remittances:create");
+  const canExport = usePermission("export:csv");
 
   return (
     <>
       {/* アクションボタン — ページ上部 */}
       <div className="flex justify-end mb-4 gap-2">
-        <button
-          onClick={() => setZenginOpen(true)}
-          className="btn btn-secondary flex items-center gap-1.5"
-        >
-          <FileDown size={15} /> 全銀データ
-        </button>
-        <button
-          onClick={() => { setEditData(null); setModalOpen(true); }}
-          className="btn btn-primary flex items-center gap-1.5"
-        >
-          <Plus size={15} /> 送金を作成
-        </button>
+        {canExport && (
+          <button
+            onClick={() => setZenginOpen(true)}
+            className="btn btn-secondary flex items-center gap-1.5"
+          >
+            <FileDown size={15} /> 全銀データ
+          </button>
+        )}
+        {canCreate && (
+          <button
+            onClick={() => { setEditData(null); setModalOpen(true); }}
+            className="btn btn-primary flex items-center gap-1.5"
+          >
+            <Plus size={15} /> 送金を作成
+          </button>
+        )}
       </div>
 
       {/* 送金履歴 */}

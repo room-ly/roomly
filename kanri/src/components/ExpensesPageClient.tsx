@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import ExpenseFormModal, { type CaseOption, type ContractOption } from "./ExpenseFormModal";
+import { usePermission } from "@/lib/use-permission";
 
 interface SelectOption {
   id: string;
@@ -27,6 +28,9 @@ export default function ExpensesPageClient({
   contracts = [],
 }: ExpensesPageClientProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const canCreate = usePermission("expenses:create");
+
+  if (!canCreate) return null;
 
   return (
     <>

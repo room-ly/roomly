@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 
 const ALLOWED_FIELDS = [
   "status", "notes", "payment_method",
@@ -12,6 +12,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const denied = await requirePermission("remittances:edit");
+    if (denied) return denied;
+
     const { id } = await params;
     const body = await request.json();
     const supabase = await createClient();
@@ -54,6 +57,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const denied = await requirePermission("remittances:delete");
+    if (denied) return denied;
+
     const { id } = await params;
     const supabase = await createClient();
     const companyId = await getCompanyId();

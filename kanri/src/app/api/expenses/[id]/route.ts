@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { expenseSchema } from "@/lib/schemas-expense";
 import { saveExpense, IMMUTABLE_EXPENSE_STATUSES } from "@/lib/expense-service";
 
@@ -8,6 +8,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const denied = await requirePermission("expenses:edit");
+    if (denied) return denied;
+
     const { id } = await params;
     const body = await request.json();
     const parsed = expenseSchema.safeParse(body);
@@ -60,6 +63,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const denied = await requirePermission("expenses:delete");
+    if (denied) return denied;
+
     const { id } = await params;
     const supabase = await createClient();
     const companyId = await getCompanyId();

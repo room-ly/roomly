@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 
 export async function GET() {
   try {
@@ -21,6 +21,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const denied = await requirePermission("settings:edit");
+    if (denied) return denied;
+
     const body = await request.json();
     const { label, bank_name, bank_code, branch_name, branch_code, account_type, account_number, account_holder, is_default } = body;
 
@@ -66,6 +69,9 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const denied = await requirePermission("settings:edit");
+    if (denied) return denied;
+
     const body = await request.json();
     const { id, label, bank_name, bank_code, branch_name, branch_code, account_type, account_number, account_holder, is_default } = body;
 
@@ -112,6 +118,9 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const denied = await requirePermission("settings:edit");
+    if (denied) return denied;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (!id) {

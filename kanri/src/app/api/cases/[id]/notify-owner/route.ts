@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { sendMaintenanceNotification } from "@/lib/notifications";
 
 // 対応案件のオーナー宛メール通知。
@@ -9,6 +9,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const denied = await requirePermission("cases:edit");
+    if (denied) return denied;
+
     const { id } = await params;
     const supabase = await createClient();
     await getCompanyId();

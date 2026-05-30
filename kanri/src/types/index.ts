@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "manager" | "staff" | "viewer";
+export type UserRole = "admin" | "staff" | "viewer";
 
 export type PropertyType = "apartment" | "apart" | "house" | "commercial" | "parking" | "land";
 

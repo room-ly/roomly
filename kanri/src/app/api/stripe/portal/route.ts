@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { getCompanyId } from "@/lib/supabase-server";
+import { getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { getStripe } from "@/lib/stripe";
 
 function getAdmin() {
@@ -13,6 +13,9 @@ function getAdmin() {
 
 export async function POST(request: NextRequest) {
   try {
+    const denied = await requirePermission("settings:edit");
+    if (denied) return denied;
+
     const companyId = await getCompanyId();
     const admin = getAdmin();
     const { data: company } = await admin

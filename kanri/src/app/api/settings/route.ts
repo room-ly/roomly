@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { stripPhone } from "@/lib/phone";
 
 export async function PUT(request: NextRequest) {
   try {
+    const denied = await requirePermission("settings:edit");
+    if (denied) return denied;
+
     const body = await request.json();
     const supabase = await createClient();
     const companyId = await getCompanyId();

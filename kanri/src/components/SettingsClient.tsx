@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, X, Crown, ExternalLink, Trash2, Pencil, ShieldCheck, ShieldOff, Building2, Star, Mail } from "lucide-react";
 import BankSuggest from "./BankSuggest";
 import PostalCodeInput from "./PostalCodeInput";
+import { usePermission } from "@/lib/use-permission";
 
 interface SettingsClientProps {
   company: Record<string, any>;
@@ -27,6 +28,10 @@ interface PlanOption {
 
 export default function SettingsClient({ company, users }: SettingsClientProps) {
   const router = useRouter();
+  const canEditSettings = usePermission("settings:edit");
+  const canCreateUsers = usePermission("users:create");
+  const canEditUsers = usePermission("users:edit");
+  const canDeleteUsers = usePermission("users:delete");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -596,13 +601,15 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
               <h2 className="text-[14px] font-semibold">振込元口座</h2>
               <p className="text-[12px] text-ink-3 mt-0.5">全銀フォーマットCSV出力時の依頼人情報</p>
             </div>
-            <button
-              type="button"
-              onClick={() => { setBankEditTarget(null); setBankFormOpen(true); setBankError(""); setBfBankName(""); setBfBankCode(""); setBfBranchName(""); setBfBranchCode(""); }}
-              className="btn btn-primary text-[13px]"
-            >
-              <Plus size={14} /> 口座を追加
-            </button>
+            {canEditSettings && (
+              <button
+                type="button"
+                onClick={() => { setBankEditTarget(null); setBankFormOpen(true); setBankError(""); setBfBankName(""); setBfBankCode(""); setBfBranchName(""); setBfBranchCode(""); }}
+                className="btn btn-primary text-[13px]"
+              >
+                <Plus size={14} /> 口座を追加
+              </button>
+            )}
           </div>
 
           {bankAccounts.length === 0 ? (
@@ -631,22 +638,24 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => { setBankEditTarget(a); setBankFormOpen(true); setBankError(""); setBfBankName(a.bank_name); setBfBankCode(a.bank_code); setBfBranchName(a.branch_name); setBfBranchCode(a.branch_code); }}
-                      className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-accent transition-all p-1 rounded hover:bg-accent/10"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleBankDelete(a.id)}
-                      className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-danger transition-all p-1 rounded hover:bg-danger/10"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                  {canEditSettings && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => { setBankEditTarget(a); setBankFormOpen(true); setBankError(""); setBfBankName(a.bank_name); setBfBankCode(a.bank_code); setBfBranchName(a.branch_name); setBfBranchCode(a.branch_code); }}
+                        className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-accent transition-all p-1 rounded hover:bg-accent/10"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleBankDelete(a.id)}
+                        className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-danger transition-all p-1 rounded hover:bg-danger/10"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -801,9 +810,11 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
               {saveMsg}
             </span>
           )}
-          <button type="submit" disabled={saving} className="btn btn-primary px-8 disabled:opacity-50">
-            {saving ? "保存中..." : "保存"}
-          </button>
+          {canEditSettings && (
+            <button type="submit" disabled={saving} className="btn btn-primary px-8 disabled:opacity-50">
+              {saving ? "保存中..." : "保存"}
+            </button>
+          )}
         </div>
       </form>
 
@@ -814,10 +825,12 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
             <h2 className="text-[14px] font-semibold">ユーザー管理</h2>
             <p className="text-[12px] text-ink-3 mt-0.5">{users.length}名のユーザー</p>
           </div>
-          <button onClick={() => setInviteOpen(true)} className="btn btn-primary text-[13px]">
-            <Plus size={14} />
-            ユーザーを追加
-          </button>
+          {canCreateUsers && (
+            <button onClick={() => setInviteOpen(true)} className="btn btn-primary text-[13px]">
+              <Plus size={14} />
+              ユーザーを追加
+            </button>
+          )}
         </div>
 
         {resendMsg && (
@@ -839,33 +852,39 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
               <div className="flex items-center gap-2">
                 <span className={`text-[11px] px-2 py-0.5 rounded font-medium ${
                   u.role === "admin" ? "bg-accent-tint text-accent" :
-                  u.role === "manager" ? "bg-accent-tint text-accent-deep" :
+                  u.role === "staff" ? "bg-accent-tint text-accent-deep" :
                   "bg-bg-2 text-ink-3 border border-line"
                 }`}>
                   {roleLabels[u.role] || u.role}
                 </span>
-                <button
-                  onClick={() => handleResendInvite(u.id)}
-                  disabled={resendingId === u.id}
-                  className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-accent transition-all p-1 rounded hover:bg-accent/10 disabled:opacity-50"
-                  title="招待メールを再送"
-                >
-                  <Mail size={14} />
-                </button>
-                <button
-                  onClick={() => { setEditTarget(u); setEditError(""); }}
-                  className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-accent transition-all p-1 rounded hover:bg-accent/10"
-                  title="編集"
-                >
-                  <Pencil size={14} />
-                </button>
-                <button
-                  onClick={() => { setDeleteTarget(u); setDeleteError(""); }}
-                  className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-danger transition-all p-1 rounded hover:bg-danger/10"
-                  title="削除"
-                >
-                  <Trash2 size={14} />
-                </button>
+                {canEditUsers && (
+                  <button
+                    onClick={() => handleResendInvite(u.id)}
+                    disabled={resendingId === u.id}
+                    className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-accent transition-all p-1 rounded hover:bg-accent/10 disabled:opacity-50"
+                    title="招待メールを再送"
+                  >
+                    <Mail size={14} />
+                  </button>
+                )}
+                {canEditUsers && (
+                  <button
+                    onClick={() => { setEditTarget(u); setEditError(""); }}
+                    className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-accent transition-all p-1 rounded hover:bg-accent/10"
+                    title="編集"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                )}
+                {canDeleteUsers && (
+                  <button
+                    onClick={() => { setDeleteTarget(u); setDeleteError(""); }}
+                    className="opacity-0 group-hover:opacity-100 text-ink-3 hover:text-danger transition-all p-1 rounded hover:bg-danger/10"
+                    title="削除"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -936,10 +955,9 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">権限</label>
                 <select name="role" className="input" defaultValue={editTarget.role || "staff"}>
-                  <option value="admin">管理者 — 全機能</option>
-                  <option value="manager">マネージャー — 物件・契約・家賃管理</option>
-                  <option value="staff">スタッフ — 日常業務</option>
-                  <option value="viewer">閲覧のみ</option>
+                  <option value="admin">管理者 — 全ての操作</option>
+                  <option value="staff">スタッフ — 削除以外の作成・編集</option>
+                  <option value="viewer">閲覧者 — 閲覧のみ</option>
                 </select>
               </div>
               <div className="flex justify-end gap-2 pt-3">
@@ -983,10 +1001,9 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">権限</label>
                 <select name="role" className="input" defaultValue="staff">
-                  <option value="admin">管理者 — 全機能</option>
-                  <option value="manager">マネージャー — 物件・契約・家賃管理</option>
-                  <option value="staff">スタッフ — 日常業務</option>
-                  <option value="viewer">閲覧のみ</option>
+                  <option value="admin">管理者 — 全ての操作</option>
+                  <option value="staff">スタッフ — 削除以外の作成・編集</option>
+                  <option value="viewer">閲覧者 — 閲覧のみ</option>
                 </select>
               </div>
               <div className="flex justify-end gap-2 pt-3">

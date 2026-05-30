@@ -3,9 +3,13 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import OwnerFormModal from "./OwnerFormModal";
+import { usePermission } from "@/lib/use-permission";
 
 export default function OwnersPageClient() {
   const [isOpen, setIsOpen] = useState(false);
+  const canCreate = usePermission("owners:create");
+
+  if (!canCreate) return null;
 
   return (
     <>

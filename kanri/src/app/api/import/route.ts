@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
+import type { Permission } from "@/lib/rbac";
 import {
   parseCsv,
   mapRowToDb,
@@ -16,6 +17,17 @@ export async function POST(request: NextRequest) {
       csvText: string;
       property_id?: string;
     };
+
+    const permissionMap: Record<string, Permission> = {
+      properties: "properties:create",
+      tenants: "tenants:create",
+      units: "units:create",
+    };
+    const required = permissionMap[type];
+    if (required) {
+      const denied = await requirePermission(required);
+      if (denied) return denied;
+    }
 
     if (!type || !csvText) {
       return NextResponse.json(

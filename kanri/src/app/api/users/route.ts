@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     const companyId = await getCompanyId();
     const admin = getAdmin();
 
-    const validRoles = ["admin", "manager", "staff", "viewer"];
+    const validRoles = ["admin", "staff", "viewer"];
     const userRole = validRoles.includes(role) ? role : "staff";
 
     const appOrigin = getAppOrigin(request);
@@ -280,7 +280,7 @@ export async function PUT(request: NextRequest) {
     if (name) updates.name = name;
     if (email) updates.email = email;
     if (role) {
-      const validRoles = ["admin", "manager", "staff", "viewer"];
+      const validRoles = ["admin", "staff", "viewer"];
       if (!validRoles.includes(role)) {
         return NextResponse.json({ error: "無効な権限です" }, { status: 400 });
       }

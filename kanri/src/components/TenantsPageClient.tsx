@@ -4,10 +4,14 @@ import { useState } from "react";
 import { Plus, Upload } from "lucide-react";
 import TenantFormModal from "./TenantFormModal";
 import CsvImportModal from "./CsvImportModal";
+import { usePermission } from "@/lib/use-permission";
 
 export default function TenantsPageClient() {
   const [isOpen, setIsOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const canCreate = usePermission("tenants:create");
+
+  if (!canCreate) return null;
 
   return (
     <>

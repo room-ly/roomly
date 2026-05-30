@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { unitSchema } from "@/lib/schemas";
 
 export async function PUT(
@@ -7,6 +7,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const denied = await requirePermission("units:edit");
+    if (denied) return denied;
+
     const { id } = await params;
     const body = await request.json();
     const parsed = unitSchema.safeParse(body);
@@ -49,6 +52,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const denied = await requirePermission("units:delete");
+    if (denied) return denied;
+
     const { id } = await params;
     const supabase = await createClient();
     const companyId = await getCompanyId();

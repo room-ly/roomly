@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import CaseFormModal from "./CaseFormModal";
+import { usePermission } from "@/lib/use-permission";
 
 interface SelectOption {
   id: string;
@@ -17,6 +18,9 @@ export default function CasesPageClient({
   properties,
 }: CasesPageClientProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const canCreate = usePermission("cases:create");
+
+  if (!canCreate) return null;
 
   return (
     <>

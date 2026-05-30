@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { randomUUID } from "crypto";
 
 export async function GET(request: NextRequest) {
@@ -31,6 +31,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const denied = await requirePermission("properties:edit");
+    if (denied) return denied;
+
     const supabase = await createClient();
     const companyId = await getCompanyId();
     const formData = await request.formData();
@@ -98,6 +101,11 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // documentsは添付なので properties:edit を満たせば管理可能
+    // viewerは弾かれ、staff/adminは通る
+    const denied = await requirePermission("properties:edit");
+    if (denied) return denied;
+
     const supabase = await createClient();
     const id = request.nextUrl.searchParams.get("id");
     if (!id) {

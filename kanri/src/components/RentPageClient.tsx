@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { X, Check } from "lucide-react";
 import RentPaymentModal from "./RentPaymentModal";
 import RentCsvImportModal from "./RentCsvImportModal";
+import { usePermission } from "@/lib/use-permission";
 
 interface BillingInfo {
   id: string;
@@ -21,6 +22,9 @@ interface RentPaymentButtonProps {
 
 export function RentPaymentButton({ billing }: RentPaymentButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const canEdit = usePermission("rent:edit");
+
+  if (!canEdit) return null;
 
   return (
     <>
@@ -41,6 +45,9 @@ export function RentPaymentButton({ billing }: RentPaymentButtonProps) {
 
 export function CsvImportButton() {
   const [isOpen, setIsOpen] = useState(false);
+  const canEdit = usePermission("rent:edit");
+
+  if (!canEdit) return null;
 
   return (
     <>
@@ -76,6 +83,7 @@ export function BulkGenerateButton() {
     message?: string;
   } | null>(null);
   const [error, setError] = useState("");
+  const canCreate = usePermission("rent:create");
 
   function handleClose() {
     setIsOpen(false);
@@ -111,6 +119,8 @@ export function BulkGenerateButton() {
       setStep("confirm");
     }
   }
+
+  if (!canCreate) return null;
 
   return (
     <>

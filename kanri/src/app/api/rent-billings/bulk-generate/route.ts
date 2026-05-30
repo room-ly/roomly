@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { createNotification } from "@/lib/notify";
 
 // 翌月末日を計算する
@@ -12,6 +12,9 @@ function getNextMonthEnd(billingMonth: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const denied = await requirePermission("rent:create");
+    if (denied) return denied;
+
     const body = await request.json();
     const { billing_month } = body;
 

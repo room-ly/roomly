@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { caseSchema } from "@/lib/schemas";
 import { createNotification } from "@/lib/notify";
 
 export async function POST(request: NextRequest) {
   try {
+    const denied = await requirePermission("cases:create");
+    if (denied) return denied;
+
     const body = await request.json();
     const parsed = caseSchema.safeParse(body);
 

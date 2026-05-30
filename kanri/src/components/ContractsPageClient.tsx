@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import ContractFormModal from "./ContractFormModal";
+import { usePermission } from "@/lib/use-permission";
 
 interface SelectOption {
   id: string;
@@ -19,6 +20,9 @@ export default function ContractsPageClient({
   tenants,
 }: ContractsPageClientProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const canCreate = usePermission("contracts:create");
+
+  if (!canCreate) return null;
 
   return (
     <>

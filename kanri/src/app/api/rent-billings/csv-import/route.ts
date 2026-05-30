@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { createNotification } from "@/lib/notify";
 
 interface CsvRow {
@@ -205,6 +205,10 @@ function normalizeForMatch(s: string): string {
 export async function POST(request: NextRequest) {
   try {
     const action = request.nextUrl.searchParams.get("action") || "match";
+
+    // match は読み取りだけだが入金登録の準備なので edit 権限を要求
+    const denied = await requirePermission("rent:edit");
+    if (denied) return denied;
 
     if (action === "match") {
       return handleMatch(request);

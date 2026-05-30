@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import PayeeFormModal from "./PayeeFormModal";
+import { usePermission } from "@/lib/use-permission";
 
 const CATEGORY_LABEL: Record<string, string> = {
   repair: "修繕業者",
@@ -20,6 +21,9 @@ export default function PayeesPageClient({ payees }: PayeesPageClientProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [editData, setEditData] = useState<Record<string, any> | null>(null);
+  const canCreate = usePermission("expenses:create");
+  const canEdit = usePermission("expenses:edit");
+  const canDelete = usePermission("expenses:delete");
 
   async function handleDelete(id: string, name: string) {
     if (!confirm(`「${name}」を削除しますか？`)) return;
@@ -40,10 +44,12 @@ export default function PayeesPageClient({ payees }: PayeesPageClientProps) {
 
   return (
     <>
-      <button className="btn btn-primary" onClick={openNew}>
-        <Plus size={14} />
-        支払先を追加
-      </button>
+      {canCreate && (
+        <button className="btn btn-primary" onClick={openNew}>
+          <Plus size={14} />
+          支払先を追加
+        </button>
+      )}
 
       {payees.length === 0 ? (
         <div className="card p-10 text-center text-ink-3 mt-4">
@@ -84,12 +90,16 @@ export default function PayeesPageClient({ payees }: PayeesPageClientProps) {
                   <td className="px-4 py-3 text-ink-2">{p.phone || <span className="text-ink-3">—</span>}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
-                      <button onClick={() => openEdit(p)} className="text-ink-3 hover:text-accent transition-colors">
-                        <Pencil size={14} />
-                      </button>
-                      <button onClick={() => handleDelete(p.id, p.name)} className="text-ink-3 hover:text-danger transition-colors">
-                        <Trash2 size={14} />
-                      </button>
+                      {canEdit && (
+                        <button onClick={() => openEdit(p)} className="text-ink-3 hover:text-accent transition-colors">
+                          <Pencil size={14} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button onClick={() => handleDelete(p.id, p.name)} className="text-ink-3 hover:text-danger transition-colors">
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

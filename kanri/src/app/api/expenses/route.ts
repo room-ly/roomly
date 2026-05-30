@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { expenseSchema } from "@/lib/schemas-expense";
 import { saveExpense } from "@/lib/expense-service";
 
 export async function POST(request: NextRequest) {
   try {
+    const denied = await requirePermission("expenses:create");
+    if (denied) return denied;
+
     const body = await request.json();
     const parsed = expenseSchema.safeParse(body);
 

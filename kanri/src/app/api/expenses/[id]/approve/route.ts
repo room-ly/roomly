@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId, getCurrentUserRole } from "@/lib/supabase-server";
+import { createClient, getCompanyId, getCurrentUserRole, requirePermission } from "@/lib/supabase-server";
 import { resolveExpenseApprover } from "@/lib/expense-approver";
 import { createNotification } from "@/lib/notify";
 
@@ -8,6 +8,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const denied = await requirePermission("expenses:approve");
+    if (denied) return denied;
+
     const { id } = await params;
     const me = await getCurrentUserRole();
     if (!me) return NextResponse.json({ error: "未認証" }, { status: 401 });

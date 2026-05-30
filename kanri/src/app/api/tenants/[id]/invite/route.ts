@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 const TENANT_APP_URL = process.env.TENANT_APP_URL || "http://localhost:3001";
@@ -9,6 +9,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const denied = await requirePermission("tenants:edit");
+    if (denied) return denied;
+
     const { id } = await params;
     const supabase = await createClient();
     const companyId = await getCompanyId();

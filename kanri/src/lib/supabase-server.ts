@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import type { Database } from "./database.types";
+import { hasPermission, type UserRole, type Permission } from "./rbac";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -37,6 +39,29 @@ export async function getCurrentUserRole(): Promise<{ user_id: string; role: str
     .eq("id", user.id)
     .single();
   return { user_id: user.id, role: data?.role ?? "viewer" };
+}
+
+/**
+ * 指定パーミッションを持つかチェック。持たなければ 403 のレスポンスを返す。
+ *
+ * 使い方:
+ *   const denied = await requirePermission("properties:create");
+ *   if (denied) return denied;
+ */
+export async function requirePermission(
+  permission: Permission
+): Promise<NextResponse | null> {
+  const current = await getCurrentUserRole();
+  if (!current) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+  if (!hasPermission(current.role as UserRole, permission)) {
+    return NextResponse.json(
+      { error: "この操作を行う権限がありません" },
+      { status: 403 }
+    );
+  }
+  return null;
 }
 
 export async function getCompanyId(): Promise<string> {

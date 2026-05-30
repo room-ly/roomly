@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Upload } from "lucide-react";
 import PropertyFormModal from "./PropertyFormModal";
 import CsvImportModal from "./CsvImportModal";
+import { usePermission } from "@/lib/use-permission";
 
 interface Owner {
   id: string;
@@ -27,6 +28,9 @@ export default function PropertiesPageClient({
 }: PropertiesPageClientProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const canCreate = usePermission("properties:create");
+
+  if (!canCreate) return null;
 
   return (
     <>

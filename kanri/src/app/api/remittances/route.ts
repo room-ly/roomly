@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { calcPropertyManagementFee } from "@/lib/remittance-calc";
 
 // GET: 送金一覧
@@ -30,6 +30,9 @@ export async function GET() {
 // POST: 送金明細を生成
 export async function POST(request: NextRequest) {
   try {
+    const denied = await requirePermission("remittances:create");
+    if (denied) return denied;
+
     const body = await request.json();
     const { owner_id, remittance_month, payment_method: reqPaymentMethod, manual_net_amount } = body;
 

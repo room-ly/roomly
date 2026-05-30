@@ -1,6 +1,6 @@
 // RBAC（Role-Based Access Control）権限管理
 
-export type UserRole = "admin" | "manager" | "staff" | "viewer";
+export type UserRole = "admin" | "staff" | "viewer";
 
 // アクション定義
 export type Permission =
@@ -40,6 +40,7 @@ export type Permission =
   | "remittances:read"
   | "remittances:create"
   | "remittances:edit"
+  | "remittances:delete"
   | "settings:read"
   | "settings:edit"
   | "users:read"
@@ -50,9 +51,11 @@ export type Permission =
   | "export:pdf";
 
 // ロール別権限マトリクス
+// admin : 全ての操作（読取/作成/編集/削除/設定/ユーザー管理）
+// staff : 削除以外の全操作（読取/作成/編集）
+// viewer: 閲覧のみ
 const rolePermissions: Record<UserRole, Permission[]> = {
   admin: [
-    // admin: 全権限
     "properties:read", "properties:create", "properties:edit", "properties:delete",
     "units:read", "units:create", "units:edit", "units:delete",
     "tenants:read", "tenants:create", "tenants:edit", "tenants:delete",
@@ -61,13 +64,12 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     "cases:read", "cases:create", "cases:edit", "cases:delete",
     "expenses:read", "expenses:create", "expenses:edit", "expenses:delete", "expenses:approve",
     "owners:read", "owners:create", "owners:edit", "owners:delete",
-    "remittances:read", "remittances:create", "remittances:edit",
+    "remittances:read", "remittances:create", "remittances:edit", "remittances:delete",
     "settings:read", "settings:edit",
     "users:read", "users:create", "users:edit", "users:delete",
     "export:csv", "export:pdf",
   ],
-  manager: [
-    // manager: 削除以外の全操作 + ユーザー管理なし
+  staff: [
     "properties:read", "properties:create", "properties:edit",
     "units:read", "units:create", "units:edit",
     "tenants:read", "tenants:create", "tenants:edit",
@@ -81,22 +83,7 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     "users:read",
     "export:csv", "export:pdf",
   ],
-  staff: [
-    // staff: 日常業務のみ（作成・編集）
-    "properties:read",
-    "units:read",
-    "tenants:read", "tenants:create", "tenants:edit",
-    "contracts:read",
-    "rent:read", "rent:create", "rent:edit",
-    "cases:read", "cases:create", "cases:edit",
-    "expenses:read", "expenses:create",
-    "owners:read",
-    "remittances:read",
-    "settings:read",
-    "export:csv",
-  ],
   viewer: [
-    // viewer: 閲覧のみ
     "properties:read",
     "units:read",
     "tenants:read",
@@ -128,7 +115,9 @@ export function hasAnyPermission(role: UserRole, permissions: Permission[]): boo
 // ロールラベル
 export const roleLabels: Record<UserRole, string> = {
   admin: "管理者",
-  manager: "マネージャー",
   staff: "スタッフ",
   viewer: "閲覧者",
 };
+
+// API/UI で使う有効ロール一覧
+export const VALID_ROLES: UserRole[] = ["admin", "staff", "viewer"];

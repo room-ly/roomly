@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId } from "@/lib/supabase-server";
+import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -44,6 +44,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const denied = await requirePermission("units:edit");
+    if (denied) return denied;
+
     const { id: unitId } = await params;
     const supabase = await createClient();
     const companyId = await getCompanyId();
@@ -168,6 +171,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const denied = await requirePermission("units:edit");
+    if (denied) return denied;
+
     const { id: unitId } = await params;
     const supabase = await createClient();
     const { imageId } = await request.json();
@@ -205,6 +211,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const denied = await requirePermission("units:edit");
+    if (denied) return denied;
+
     await params;
     const supabase = await createClient();
     const { imageId } = await request.json();
