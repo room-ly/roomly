@@ -5,7 +5,7 @@ import {
   getPropertiesForSelect,
   getOwnersForSelect,
 } from "@/lib/queries";
-import { createClient, getCompanyId, getCurrentUserRole } from "@/lib/supabase-server";
+import { getCurrentUserRole } from "@/lib/supabase-server";
 import StatusBadge from "@/components/StatusBadge";
 import ExpenseDetailClient from "@/components/ExpenseDetailClient";
 import AuditLogSection from "@/components/AuditLogSection";
@@ -32,32 +32,6 @@ export default async function ExpenseDetailPage({
     getCurrentUserRole(),
   ]);
   if (!expense) notFound();
-
-  // 稟議機能のON/OFFは companies.expense_approval_threshold が NULL かどうかで判定
-  const supabase = await createClient();
-  const companyId = await getCompanyId();
-  const { data: company } = await supabase
-    .from("companies")
-    .select("expense_approval_threshold, default_approver_user_id")
-    .eq("id", companyId)
-    .single();
-  const approvalThreshold =
-    company?.expense_approval_threshold != null
-      ? Number(company.expense_approval_threshold)
-      : null;
-  const approvalEnabled = approvalThreshold !== null;
-  // ON切替モーダル用に承認者候補（admin/manager）を取得
-  const { data: candidateUsers } = await supabase
-    .from("users")
-    .select("user_id, name, role")
-    .eq("company_id", companyId)
-    .in("role", ["admin", "manager"])
-    .order("name");
-  const approverCandidates = (candidateUsers ?? []).map((u: any) => ({
-    id: u.user_id as string,
-    name: (u.name as string) ?? "",
-  }));
-  const canEditSettings = me?.role === "admin";
 
   const approver = (expense.effective_approver ?? null) as { id: string; name: string } | null;
   const approverSource = (expense.approver_source ?? null) as "property" | "company" | null;
@@ -152,18 +126,13 @@ export default async function ExpenseDetailPage({
         </div>
       </div>
 
-      {/* 稟議パネル（OFFのときはトグルのみ表示） */}
+      {/* 稟議パネル */}
       <ExpenseApprovalPanel
         expenseId={expense.id}
         status={status}
         isApprover={isApprover}
         approverName={approver?.name ?? null}
         approverSource={approverSource}
-        approvalEnabled={approvalEnabled}
-        currentThreshold={approvalThreshold}
-        currentApproverId={(company?.default_approver_user_id as string | null) ?? null}
-        approverCandidates={approverCandidates}
-        canEditSettings={canEditSettings}
       />
 
       {status === "rejected" && expense.rejected_reason && (
@@ -345,25 +314,6 @@ export default async function ExpenseDetailPage({
         </div>
 
         <div className="detail-col-side">
-          {expense.property?.id && (
-            <div className="section">
-              <div className="section-head-bar">
-                <h2>物件</h2>
-              </div>
-              <div className="section-body">
-                <div className="kv-list">
-                  <div className="field">
-                    <div className="field-label mono">物件名</div>
-                    <div className="field-value">
-                      <Link href={`/properties/${expense.property.id}`} className="rlink">
-                        {expense.property.name}
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
           {expense.unit?.unit_number && (
             <div className="section">
               <div className="section-head-bar">
