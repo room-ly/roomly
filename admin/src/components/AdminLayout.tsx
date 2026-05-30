@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Users, BarChart3, LogOut } from "lucide-react";
+import { Users, BarChart3, LogOut, Megaphone, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase-browser";
 
 const NAV = [
   { href: "/affiliates", label: "アフィリエイト", icon: Users },
   { href: "/analytics", label: "計測ダッシュボード", icon: BarChart3 },
+  { href: "/marketing", label: "マーケティング", icon: Megaphone },
+  { href: "/whereami", label: "現在地", icon: MapPin },
 ];
 
 export default function AdminLayout({
