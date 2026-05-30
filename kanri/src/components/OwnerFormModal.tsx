@@ -438,6 +438,7 @@ export default function OwnerFormModal({
                   <option value="">選択</option>
                   <option value="普通">普通</option>
                   <option value="当座">当座</option>
+                  <option value="貯蓄">貯蓄</option>
                 </select>
               </div>
               <div>
@@ -453,11 +454,22 @@ export default function OwnerFormModal({
               </div>
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">
-                  口座名義（カナ）
+                  口座名義
                 </label>
                 <input
                   name="bank_account_holder"
                   defaultValue={editData?.bank_account_holder || ""}
+                  className="input"
+                  placeholder="例: 山田 太郎"
+                />
+              </div>
+              <div className="sm:col-span-3">
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  口座名義（カナ）
+                </label>
+                <input
+                  name="bank_account_holder_kana"
+                  defaultValue={editData?.bank_account_holder_kana || ""}
                   className="input"
                   placeholder="例: ヤマダ タロウ"
                 />

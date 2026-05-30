@@ -233,13 +233,33 @@ export default async function OwnerDetailPage({
               <div className="section-body">
                 <div className="kv-list">
                   <div className="field">
-                    <div className="field-label mono">銀行</div>
-                    <div className="field-value field-plain">{owner.bank_name} {owner.bank_branch}</div>
+                    <div className="field-label mono">銀行名</div>
+                    <div className="field-value field-plain">
+                      {owner.bank_name}
+                      {owner.bank_code && (
+                        <span className="mono" style={{ marginLeft: 8, color: "var(--ink-3)", fontSize: 12 }}>
+                          ({owner.bank_code})
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  {owner.bank_branch && (
+                    <div className="field">
+                      <div className="field-label mono">支店名</div>
+                      <div className="field-value field-plain">
+                        {owner.bank_branch}
+                        {owner.bank_branch_code && (
+                          <span className="mono" style={{ marginLeft: 8, color: "var(--ink-3)", fontSize: 12 }}>
+                            ({owner.bank_branch_code})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {owner.bank_account_type && (
                     <div className="field">
                       <div className="field-label mono">種別</div>
-                      <div className="field-value field-plain">{owner.bank_account_type === "ordinary" ? "普通" : owner.bank_account_type === "current" ? "当座" : owner.bank_account_type}</div>
+                      <div className="field-value field-plain">{owner.bank_account_type === "ordinary" || owner.bank_account_type === "普通" ? "普通" : owner.bank_account_type === "current" || owner.bank_account_type === "当座" ? "当座" : owner.bank_account_type === "savings" || owner.bank_account_type === "貯蓄" ? "貯蓄" : owner.bank_account_type}</div>
                     </div>
                   )}
                   {owner.bank_account_number && (
@@ -252,6 +272,12 @@ export default async function OwnerDetailPage({
                     <div className="field">
                       <div className="field-label mono">名義</div>
                       <div className="field-value field-plain">{owner.bank_account_holder}</div>
+                    </div>
+                  )}
+                  {owner.bank_account_holder_kana && (
+                    <div className="field">
+                      <div className="field-label mono">名義カナ</div>
+                      <div className="field-value field-plain mono">{owner.bank_account_holder_kana}</div>
                     </div>
                   )}
                 </div>

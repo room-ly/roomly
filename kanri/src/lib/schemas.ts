@@ -377,6 +377,7 @@ export const ownerSchema = z.object({
   bank_account_type: z.string().optional().or(z.literal("")),
   bank_account_number: z.string().max(7).optional().or(z.literal("")),
   bank_account_holder: z.string().optional().or(z.literal("")),
+  bank_account_holder_kana: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
 });
 

@@ -145,11 +145,12 @@ const TABLE_LABELS: Record<string, Record<string, string>> = {
   owners: {
     bank_name: "銀行名",
     bank_code: "銀行コード",
-    branch_name: "支店名",
-    branch_code: "支店コード",
-    account_type: "口座種別",
-    account_number: "口座番号",
+    bank_branch: "支店名",
+    bank_branch_code: "支店コード",
+    bank_account_type: "口座種別",
+    bank_account_number: "口座番号",
     bank_account_holder: "口座名義",
+    bank_account_holder_kana: "口座名義カナ",
   },
   owner_remittances: {
     owner_id: "オーナーID",
