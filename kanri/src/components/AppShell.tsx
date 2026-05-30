@@ -6,6 +6,7 @@ import Header from "./Header";
 import CommandPalette from "./CommandPalette";
 import BetaNotice from "./BetaNotice";
 import DemoNotice from "./DemoNotice";
+import VersionWatcher from "./VersionWatcher";
 
 export interface SidebarInitialData {
   badgeCounts: Record<string, number>;
@@ -32,6 +33,7 @@ export default function AppShell({ children, sidebarData }: { children: React.Re
         {children}
       </main>
       <CommandPalette />
+      <VersionWatcher />
     </Sidebar>
   );
 }
