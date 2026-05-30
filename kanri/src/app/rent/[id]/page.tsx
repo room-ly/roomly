@@ -19,8 +19,9 @@ export default async function RentDetailPage({
     ? result
     : { current: result, history: [result] };
 
-  const tenant = current.contract?.tenant;
-  const unit = current.contract?.unit;
+  const contract = current.contract;
+  const tenant = contract?.tenant;
+  const unit = contract?.unit;
   const property = unit?.property;
 
   const totalBilled = history.reduce((s: number, b: any) => s + Number(b.total_amount), 0);
@@ -128,6 +129,14 @@ export default async function RentDetailPage({
                   <div className="field-label mono">部屋</div>
                   <div className="field-value field-plain mono">{unit?.unit_number || "—"}</div>
                 </div>
+                {contract?.id && (
+                  <div className="field">
+                    <div className="field-label mono">契約</div>
+                    <div className="field-value">
+                      <Link href={`/contracts/${contract.id}`} className="rlink">契約詳細を開く</Link>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

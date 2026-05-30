@@ -54,7 +54,14 @@ export default async function ExpenseDetailPage({
           <div>
             <h1 className="detail-title">{expense.description}</h1>
             <div className="detail-kana">
-              {expense.expense_date} — {expense.property?.name || "物件未指定"}
+              {expense.expense_date} —{" "}
+              {expense.property?.id ? (
+                <Link href={`/properties/${expense.property.id}`} className="rlink">
+                  {expense.property.name}
+                </Link>
+              ) : (
+                "物件未指定"
+              )}
             </div>
           </div>
           <div style={{ marginLeft: 8, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
