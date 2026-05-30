@@ -1341,6 +1341,7 @@ export type Database = {
         Row: {
           address: string | null
           bank_account_holder: string | null
+          bank_account_holder_kana: string | null
           bank_account_number: string | null
           bank_account_type: string | null
           bank_branch: string | null
@@ -1375,6 +1376,7 @@ export type Database = {
         Insert: {
           address?: string | null
           bank_account_holder?: string | null
+          bank_account_holder_kana?: string | null
           bank_account_number?: string | null
           bank_account_type?: string | null
           bank_branch?: string | null
@@ -1409,6 +1411,7 @@ export type Database = {
         Update: {
           address?: string | null
           bank_account_holder?: string | null
+          bank_account_holder_kana?: string | null
           bank_account_number?: string | null
           bank_account_type?: string | null
           bank_branch?: string | null
