@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, Trash2, Mail } from "lucide-react";
 import CaseFormModal from "./CaseFormModal";
 import ConfirmDialog from "./ConfirmDialog";
+import { usePermission } from "@/lib/use-permission";
 
 interface SelectOption {
   id: string;
@@ -23,6 +24,8 @@ export default function CaseDetailClient({ caseRow, properties }: CaseDetailClie
   const [deleting, setDeleting] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [notifying, setNotifying] = useState(false);
+  const canEdit = usePermission("cases:edit");
+  const canDelete = usePermission("cases:delete");
 
   const owner = caseRow.property?.owner;
   const ownerEmail = owner?.email as string | undefined;
@@ -53,17 +56,21 @@ export default function CaseDetailClient({ caseRow, properties }: CaseDetailClie
   return (
     <>
       <div className="flex items-center gap-2">
-        {ownerEmail && (
+        {ownerEmail && canEdit && (
           <button onClick={() => setNotifyOpen(true)} className="btn btn-secondary flex items-center gap-1.5 text-[13px]">
             <Mail size={13} /> オーナーに通知
           </button>
         )}
-        <button onClick={() => setModalOpen(true)} className="btn btn-secondary flex items-center gap-1.5 text-[13px]">
-          <Pencil size={13} /> 編集
-        </button>
-        <button onClick={() => setDeleteOpen(true)} className="p-2 rounded text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors">
-          <Trash2 size={15} />
-        </button>
+        {canEdit && (
+          <button onClick={() => setModalOpen(true)} className="btn btn-secondary flex items-center gap-1.5 text-[13px]">
+            <Pencil size={13} /> 編集
+          </button>
+        )}
+        {canDelete && (
+          <button onClick={() => setDeleteOpen(true)} className="p-2 rounded text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors">
+            <Trash2 size={15} />
+          </button>
+        )}
       </div>
 
       <CaseFormModal isOpen={modalOpen} onClose={() => setModalOpen(false)} properties={properties} editData={caseRow} />

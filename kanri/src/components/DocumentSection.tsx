@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Upload, Download, Trash2, X, Paperclip, FileText, File as FileIcon } from "lucide-react";
+import { usePermission } from "@/lib/use-permission";
 
 interface DocumentSectionProps {
   propertyId?: string;
@@ -38,6 +39,8 @@ function isPdfMime(mime?: string | null) {
 export default function DocumentSection({ propertyId, tenantId, title = "書類" }: DocumentSectionProps) {
   const [docs, setDocs] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(true);
+  // 書類アップロード・削除は properties:edit を満たせば許可（viewerはNG）
+  const canManage = usePermission("properties:edit");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -95,13 +98,15 @@ export default function DocumentSection({ propertyId, tenantId, title = "書類"
           <Paperclip size={15} />
           {title}
         </h2>
-        <button
-          onClick={() => setUploadOpen(true)}
-          className="btn btn-ghost btn-sm flex items-center gap-1"
-          style={{ fontSize: 12 }}
-        >
-          <Upload size={12} /> 追加
-        </button>
+        {canManage && (
+          <button
+            onClick={() => setUploadOpen(true)}
+            className="btn btn-ghost btn-sm flex items-center gap-1"
+            style={{ fontSize: 12 }}
+          >
+            <Upload size={12} /> 追加
+          </button>
+        )}
       </div>
       <div className="section-body" style={docs.length === 0 && !uploadOpen ? { textAlign: "center", padding: "20px 0" } : undefined}>
         {docs.length === 0 && !uploadOpen && (
@@ -168,12 +173,14 @@ export default function DocumentSection({ propertyId, tenantId, title = "書類"
                         <Download size={14} />
                       </a>
                     )}
-                    <button
-                      onClick={() => handleDelete(d.id, d.file_name)}
-                      className="p-1 rounded text-ink-3 hover:text-danger hover:bg-danger/10 transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {canManage && (
+                      <button
+                        onClick={() => handleDelete(d.id, d.file_name)}
+                        className="p-1 rounded text-ink-3 hover:text-danger hover:bg-danger/10 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               );

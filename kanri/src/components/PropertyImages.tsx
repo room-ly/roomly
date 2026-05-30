@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { usePermission } from "@/lib/use-permission";
 import {
   ChevronLeft,
   ChevronRight,
@@ -36,7 +37,7 @@ interface PropertyImagesProps {
   readOnly?: boolean;
 }
 
-export default function PropertyImages({ propertyId, unitId, readOnly }: PropertyImagesProps) {
+export default function PropertyImages({ propertyId, unitId, readOnly: readOnlyProp }: PropertyImagesProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<PropertyImage[]>([]);
@@ -44,6 +45,11 @@ export default function PropertyImages({ propertyId, unitId, readOnly }: Propert
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  // 画像CRUDは properties:edit / units:edit を満たせば許可（呼出側で readOnly を渡すこともできる）
+  const canEditProperty = usePermission("properties:edit");
+  const canEditUnit = usePermission("units:edit");
+  const canManage = unitId ? canEditUnit : canEditProperty;
+  const readOnly = readOnlyProp || !canManage;
   // ドラッグ/スワイプ用の状態。pointerdownでstartXに記録、pointermoveでdragXを更新
   const dragStartRef = useRef<number | null>(null);
   const [dragX, setDragX] = useState(0);

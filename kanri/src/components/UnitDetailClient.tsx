@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, FileText } from "lucide-react";
 import UnitFormModal from "./UnitFormModal";
+import { usePermission } from "@/lib/use-permission";
 
 interface UnitDetailClientProps {
   propertyId: string;
@@ -19,6 +20,10 @@ export default function UnitDetailClient({
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const canEdit = usePermission("units:edit");
+  const canDelete = usePermission("units:delete");
+  // 退去届はテンプレ生成（編集系操作）なので edit 権限で判定
+  const canMoveOut = usePermission("contracts:edit");
 
   async function handleDelete() {
     if (!confirm("この部屋を削除しますか？")) return;
@@ -34,7 +39,7 @@ export default function UnitDetailClient({
   return (
     <>
       <div className="flex items-center gap-1.5">
-        {activeContract && (
+        {activeContract && canMoveOut && (
           <button
             onClick={() => window.open(`/api/contracts/${activeContract.id}/move-out-notice`, "_blank")}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-ink-2 bg-bg-2 rounded-lg hover:bg-bg-3 transition-colors"
@@ -43,21 +48,25 @@ export default function UnitDetailClient({
             退去届
           </button>
         )}
-        <button
-          onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-ink-2 bg-bg-2 rounded-lg hover:bg-bg-3 transition-colors"
-        >
-          <Pencil size={14} />
-          編集
-        </button>
-        <button
-          onClick={handleDelete}
-          disabled={deleting}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-danger bg-danger-tint rounded-lg hover:bg-danger/10 transition-colors disabled:opacity-50"
-        >
-          <Trash2 size={14} />
-          {deleting ? "削除中..." : "削除"}
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-ink-2 bg-bg-2 rounded-lg hover:bg-bg-3 transition-colors"
+          >
+            <Pencil size={14} />
+            編集
+          </button>
+        )}
+        {canDelete && (
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-danger bg-danger-tint rounded-lg hover:bg-danger/10 transition-colors disabled:opacity-50"
+          >
+            <Trash2 size={14} />
+            {deleting ? "削除中..." : "削除"}
+          </button>
+        )}
       </div>
 
       <UnitFormModal

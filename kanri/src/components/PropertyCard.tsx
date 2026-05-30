@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Building2, MoreVertical, Pencil, Trash2, Loader2 } from "lucide-react";
 import { formatBuiltYear } from "@/lib/wareki";
 import PropertyFormModal from "./PropertyFormModal";
+import { usePermission } from "@/lib/use-permission";
 
 interface Owner {
   id: string;
@@ -29,6 +30,8 @@ export default function PropertyCard({ property: prop, owners, users = [] }: Pro
   const [menuOpen, setMenuOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const canEdit = usePermission("properties:edit");
+  const canDelete = usePermission("properties:delete");
 
   const propUnits = prop.units || [];
   const occupied = propUnits.filter((u: any) => u.status === "occupied").length;
@@ -79,6 +82,7 @@ export default function PropertyCard({ property: prop, owners, users = [] }: Pro
               <div className="prop-h-addr">{prop.address}</div>
             </div>
             <span className={`prop-h-type${isApt ? " is-apt" : ""}`}>{typeLabel}</span>
+            {(canEdit || canDelete) && (
             <div style={{ position: "relative", zIndex: 10 }} onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -96,28 +100,33 @@ export default function PropertyCard({ property: prop, owners, users = [] }: Pro
                     borderRadius: "var(--r-md)", boxShadow: "0 4px 12px rgba(40,32,12,.1)",
                     zIndex: 50, overflow: "hidden"
                   }}>
-                    <button
-                      onClick={() => { setMenuOpen(false); setEditOpen(true); }}
-                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 12, color: "var(--ink-2)" }}
-                      onMouseEnter={(e) => { (e.target as HTMLElement).style.background = "var(--bg-2)"; }}
-                      onMouseLeave={(e) => { (e.target as HTMLElement).style.background = ""; }}
-                    >
-                      <Pencil size={12} /> 編集
-                    </button>
-                    <button
-                      onClick={() => { setMenuOpen(false); handleDelete(); }}
-                      disabled={deleting}
-                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 12, color: "var(--danger)", cursor: deleting ? "wait" : undefined, opacity: deleting ? 0.6 : 1 }}
-                      onMouseEnter={(e) => { (e.target as HTMLElement).style.background = "var(--danger-tint)"; }}
-                      onMouseLeave={(e) => { (e.target as HTMLElement).style.background = ""; }}
-                    >
-                      {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                      {deleting ? "削除中..." : "削除"}
-                    </button>
+                    {canEdit && (
+                      <button
+                        onClick={() => { setMenuOpen(false); setEditOpen(true); }}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 12, color: "var(--ink-2)" }}
+                        onMouseEnter={(e) => { (e.target as HTMLElement).style.background = "var(--bg-2)"; }}
+                        onMouseLeave={(e) => { (e.target as HTMLElement).style.background = ""; }}
+                      >
+                        <Pencil size={12} /> 編集
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => { setMenuOpen(false); handleDelete(); }}
+                        disabled={deleting}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 12, color: "var(--danger)", cursor: deleting ? "wait" : undefined, opacity: deleting ? 0.6 : 1 }}
+                        onMouseEnter={(e) => { (e.target as HTMLElement).style.background = "var(--danger-tint)"; }}
+                        onMouseLeave={(e) => { (e.target as HTMLElement).style.background = ""; }}
+                      >
+                        {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                        {deleting ? "削除中..." : "削除"}
+                      </button>
+                    )}
                   </div>
                 </>
               )}
             </div>
+            )}
           </div>
 
           <div>

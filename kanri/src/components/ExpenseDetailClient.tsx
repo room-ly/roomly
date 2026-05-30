@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import ExpenseFormModal from "./ExpenseFormModal";
 import ConfirmDialog from "./ConfirmDialog";
+import { usePermission } from "@/lib/use-permission";
 
 interface SelectOption {
   id: string;
@@ -23,6 +24,8 @@ export default function ExpenseDetailClient({ expense, properties, owners }: Exp
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const canEdit = usePermission("expenses:edit");
+  const canDelete = usePermission("expenses:delete");
 
   async function handleDelete() {
     setDeleting(true);
@@ -34,12 +37,16 @@ export default function ExpenseDetailClient({ expense, properties, owners }: Exp
   return (
     <>
       <div className="flex items-center gap-2">
-        <button onClick={() => setModalOpen(true)} className="btn btn-secondary flex items-center gap-1.5 text-[13px]">
-          <Pencil size={13} /> 編集
-        </button>
-        <button onClick={() => setDeleteOpen(true)} className="p-2 rounded text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors">
-          <Trash2 size={15} />
-        </button>
+        {canEdit && (
+          <button onClick={() => setModalOpen(true)} className="btn btn-secondary flex items-center gap-1.5 text-[13px]">
+            <Pencil size={13} /> 編集
+          </button>
+        )}
+        {canDelete && (
+          <button onClick={() => setDeleteOpen(true)} className="p-2 rounded text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors">
+            <Trash2 size={15} />
+          </button>
+        )}
       </div>
 
       <ExpenseFormModal isOpen={modalOpen} onClose={() => setModalOpen(false)} properties={properties} owners={owners} editData={expense} />

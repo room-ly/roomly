@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2, FileText } from "lucide-react";
 import OwnerFormModal from "./OwnerFormModal";
+import { usePermission } from "@/lib/use-permission";
 
 interface OwnerDetailClientProps {
   owner: Record<string, any>;
@@ -17,6 +18,8 @@ export default function OwnerDetailClient({ owner }: OwnerDetailClientProps) {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
   const [reportOpen, setReportOpen] = useState(false);
+  const canEdit = usePermission("owners:edit");
+  const canDelete = usePermission("owners:delete");
 
   async function handleDelete() {
     if (!confirm(`「${owner.name}」を削除しますか？`)) return;
@@ -56,19 +59,23 @@ export default function OwnerDetailClient({ owner }: OwnerDetailClientProps) {
             </div>
           )}
         </div>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="btn btn-secondary flex items-center gap-1.5 text-[13px]"
-        >
-          <Pencil size={13} />
-          編集
-        </button>
-        <button
-          onClick={handleDelete}
-          className="p-2 rounded text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors"
-        >
-          <Trash2 size={15} />
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => setModalOpen(true)}
+            className="btn btn-secondary flex items-center gap-1.5 text-[13px]"
+          >
+            <Pencil size={13} />
+            編集
+          </button>
+        )}
+        {canDelete && (
+          <button
+            onClick={handleDelete}
+            className="p-2 rounded text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors"
+          >
+            <Trash2 size={15} />
+          </button>
+        )}
       </div>
 
       <OwnerFormModal

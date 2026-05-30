@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Pencil, Upload } from "lucide-react";
 import PropertyFormModal from "./PropertyFormModal";
 import CsvImportModal from "./CsvImportModal";
+import { usePermission } from "@/lib/use-permission";
 
 interface Owner {
   id: string;
@@ -35,6 +36,8 @@ export default function PropertyDetailClient({
 }: PropertyDetailClientProps) {
   const [propertyModalOpen, setPropertyModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const canEdit = usePermission("properties:edit");
+  const canCreateUnits = usePermission("units:create");
 
   // 戸建ては1建物=1区画。複数部屋の一括取込は不要なのでCSVインポートは出さない
   const isHouse = property.property_type === "house";
@@ -42,7 +45,7 @@ export default function PropertyDetailClient({
   return (
     <>
       <div className="flex items-center gap-2">
-        {!isHouse && (
+        {!isHouse && canCreateUnits && (
           <button
             className="btn btn-secondary"
             onClick={() => setImportModalOpen(true)}
@@ -51,13 +54,15 @@ export default function PropertyDetailClient({
             部屋をCSVインポート
           </button>
         )}
-        <button
-          className="btn btn-primary"
-          onClick={() => setPropertyModalOpen(true)}
-        >
-          <Pencil size={14} />
-          物件を編集
-        </button>
+        {canEdit && (
+          <button
+            className="btn btn-primary"
+            onClick={() => setPropertyModalOpen(true)}
+          >
+            <Pencil size={14} />
+            物件を編集
+          </button>
+        )}
       </div>
 
       <PropertyFormModal

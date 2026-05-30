@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ClipboardList, Plus, Check } from "lucide-react";
+import { usePermission } from "@/lib/use-permission";
 
 interface ChecklistItem {
   id: string;
@@ -24,6 +25,7 @@ export default function MoveOutChecklist({ contractId }: { contractId: string })
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const canEdit = usePermission("contracts:edit");
 
   const fetchItems = useCallback(async () => {
     const res = await fetch(`/api/contracts/${contractId}/checklist`);
@@ -62,10 +64,12 @@ export default function MoveOutChecklist({ contractId }: { contractId: string })
         </div>
         <div className="section-body" style={{ textAlign: "center", padding: "24px 0" }}>
           <p style={{ fontSize: 13, color: "var(--ink-3)", marginBottom: 12 }}>チェックリストがまだ作成されていません</p>
-          <button onClick={handleCreate} disabled={creating} className="btn btn-primary flex items-center gap-1.5 mx-auto text-[13px]">
-            <Plus size={13} />
-            {creating ? "作成中..." : "チェックリストを作成"}
-          </button>
+          {canEdit && (
+            <button onClick={handleCreate} disabled={creating} className="btn btn-primary flex items-center gap-1.5 mx-auto text-[13px]">
+              <Plus size={13} />
+              {creating ? "作成中..." : "チェックリストを作成"}
+            </button>
+          )}
         </div>
       </div>
     );
@@ -109,7 +113,7 @@ export default function MoveOutChecklist({ contractId }: { contractId: string })
                 }}
               >
                 <span
-                  onClick={(e) => { e.preventDefault(); toggleItem(item.id, !item.is_checked); }}
+                  onClick={(e) => { e.preventDefault(); if (!canEdit) return; toggleItem(item.id, !item.is_checked); }}
                   style={{
                     width: 20, height: 20, borderRadius: 4, flexShrink: 0, display: "flex",
                     alignItems: "center", justifyContent: "center",

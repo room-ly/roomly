@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, Trash2, FileText, FileCheck, RefreshCw } from "lucide-react";
 import ContractFormModal from "./ContractFormModal";
 import ConfirmDialog from "./ConfirmDialog";
+import { usePermission } from "@/lib/use-permission";
 
 interface SelectOption {
   id: string;
@@ -23,6 +24,8 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const canEdit = usePermission("contracts:edit");
+  const canDelete = usePermission("contracts:delete");
 
   const latestMoveOut = moveOutRequests?.[0];
   const editData = {
@@ -56,12 +59,16 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
             <FileText size={13} /> 退去届
           </a>
         )}
-        <button onClick={() => setModalOpen(true)} className="btn btn-secondary flex items-center gap-1.5 text-[13px]">
-          <Pencil size={13} /> 編集
-        </button>
-        <button onClick={() => setDeleteOpen(true)} className="p-2 rounded text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors">
-          <Trash2 size={15} />
-        </button>
+        {canEdit && (
+          <button onClick={() => setModalOpen(true)} className="btn btn-secondary flex items-center gap-1.5 text-[13px]">
+            <Pencil size={13} /> 編集
+          </button>
+        )}
+        {canDelete && (
+          <button onClick={() => setDeleteOpen(true)} className="p-2 rounded text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors">
+            <Trash2 size={15} />
+          </button>
+        )}
       </div>
 
       <ContractFormModal key={modalOpen ? "open" : "closed"} isOpen={modalOpen} onClose={() => setModalOpen(false)} units={units} tenants={tenants} editData={editData} />
