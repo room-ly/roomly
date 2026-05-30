@@ -1,0 +1,15 @@
+# gitleaks 設定
+# https://github.com/gitleaks/gitleaks#configuration
+[extend]
+useDefault = true
+
+[allowlist]
+description = "ダミーJWT・ビルド用環境変数の誤検知を除外"
+paths = [
+  # CIワークフロー内のビルド用ダミーJWT(ref=dummy)
+  '''\.github/workflows/.*\.ya?ml''',
+]
+# テスト用・ダミー値として広く使われる文字列を除外
+regexes = [
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2MTYxNjAwMDAsImV4cCI6MTkzMTczNjAwMH0\.dummy''',
+]

@@ -52,7 +52,7 @@ jobs:
           curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | tar -xz -C /tmp gitleaks
           sudo mv /tmp/gitleaks /usr/local/bin/
       - name: gitleaks 実行
-        run: gitleaks detect --source . --no-banner --redact --verbose
+        run: gitleaks detect --source . --config .gitleaks.toml --no-banner --redact --verbose
 
   kanri:
     name: kanri (lint / typecheck / test / build / audit)
