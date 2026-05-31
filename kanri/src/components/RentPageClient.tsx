@@ -27,9 +27,12 @@ export function RentPaymentButton({ billing }: RentPaymentButtonProps) {
   if (!canEdit) return null;
 
   return (
-    <>
+    <span onClick={(e) => e.stopPropagation()}>
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(true);
+        }}
         className="btn btn-primary text-[11px] px-2 py-1"
       >
         入金登録
@@ -39,7 +42,7 @@ export function RentPaymentButton({ billing }: RentPaymentButtonProps) {
         onClose={() => setIsOpen(false)}
         billing={billing}
       />
-    </>
+    </span>
   );
 }
 

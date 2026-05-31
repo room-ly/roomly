@@ -86,7 +86,10 @@ export default function RentPaymentModal({
   return (
     <div
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-md w-full">
         <div className="flex items-center justify-between mb-5">
