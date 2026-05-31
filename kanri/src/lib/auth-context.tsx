@@ -150,9 +150,23 @@ async function fetchProfile(authUser: SupabaseUser): Promise<User | null> {
   };
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export function AuthProvider({
+  children,
+  initialUser = null,
+}: {
+  children: React.ReactNode;
+  initialUser?: User | null;
+}) {
+  // SSR で取得済みの profile を初期値にする。これがあれば初回レンダリングから
+  // 編集ボタンの表示判定が確定するので「一瞬消える」事象が発生しない。
+  const [user, setUser] = useState<User | null>(initialUser);
+  const [isLoading, setIsLoading] = useState(initialUser === null);
+
+  // SSRで取得した初期値はキャッシュにも書いておく（クライアント遷移後のフォールバック源）
+  useEffect(() => {
+    if (initialUser) saveCachedProfile(initialUser);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
