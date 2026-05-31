@@ -119,6 +119,11 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
     return () => unsubscribe();
   }, [fetchLogs]);
 
+  // 差分0件の update は表示しない（updated_at だけ動いた等の意味の無い行を除外）
+  const visibleLogs = logs.filter((log) =>
+    log.action !== "update" || computeDiffs(log).length > 0,
+  );
+
   const label = recordLabel ?? "レコード";
 
   return (
@@ -128,16 +133,16 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
           <Clock size={15} />
           更新履歴
         </h2>
-        <span className="desc">{logs.length}件</span>
+        <span className="desc">{visibleLogs.length}件</span>
       </div>
       <div className="section-body">
         {loading ? (
           <p className="text-[13px] text-ink-3">読み込み中...</p>
-        ) : logs.length === 0 ? (
+        ) : visibleLogs.length === 0 ? (
           <p className="text-[13px] text-ink-3">履歴がありません</p>
         ) : (
           <ul className="space-y-1">
-            {logs.map((log) => {
+            {visibleLogs.map((log) => {
               const isOpen = openId === log.id;
               const diffs = computeDiffs(log);
               const canExpand = diffs.length > 0;
@@ -205,7 +210,7 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
             })}
           </ul>
         )}
-        {logs.length === 30 && (
+        {visibleLogs.length === 30 && (
           <p className="text-[11px] text-ink-3 mt-2">最新30件を表示しています</p>
         )}
         <p className="text-[11px] text-ink-3 mt-2">{label}の変更履歴</p>
