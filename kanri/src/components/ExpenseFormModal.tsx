@@ -5,16 +5,14 @@ import { useRouter } from "next/navigation";
 import { X, Loader2 } from "lucide-react";
 import {
   expenseSchema,
-  ALLOCATION_METHODS,
-  ALLOCATION_METHOD_LABELS,
-  TAX_CATEGORIES,
-  TAX_CATEGORY_LABELS,
   type AllocationMethod,
   type TaxCategory,
-  type ExpenseAllocationInput,
 } from "@/lib/schemas-expense";
 import type { ZodError } from "zod";
 import { dispatchAuditLogRefresh } from "@/lib/audit-events";
+import SplitModeSection, { type SplitMode } from "./expense-form/SplitModeSection";
+import AllocationSection, { type AllocationDraft } from "./expense-form/AllocationSection";
+import MetaFields from "./expense-form/MetaFields";
 
 interface SelectOption {
   id: string;
@@ -42,12 +40,6 @@ export type ContractOption = {
   deposit?: number | null;
 };
 
-type SplitMode = "owner" | "company" | "tenant" | "custom";
-
-type AllocationDraft = ExpenseAllocationInput & {
-  unit_number?: string | null;
-};
-
 interface ExpenseFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -56,7 +48,7 @@ interface ExpenseFormModalProps {
   payees?: PayeeOption[];
   cases?: CaseOption[];
   contracts?: ContractOption[];
-  editData?: Record<string, any> | null;
+  editData?: Record<string, any> | null; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 const num = (v: unknown) => Number(v ?? 0) || 0;
@@ -94,7 +86,7 @@ export default function ExpenseFormModal({
   const [companyAmount, setCompanyAmount] = useState<number>(num(editData?.company_amount));
 
   const [selectedPropertyId, setSelectedPropertyId] = useState(editData?.property_id || "");
-  const [unitId, setUnitId] = useState(editData?.unit_id || "");
+  const [unitId] = useState(editData?.unit_id || "");
   const [contractId, setContractId] = useState(editData?.contract_id || "");
   const [caseId, setCaseId] = useState(editData?.case_id || "");
   const [taxCategory, setTaxCategory] = useState<TaxCategory>(
@@ -160,7 +152,6 @@ export default function ExpenseFormModal({
     setTenantAmount(num(editData?.tenant_amount));
     setCompanyAmount(num(editData?.company_amount));
     setSelectedPropertyId(editData?.property_id || "");
-    setUnitId(editData?.unit_id || "");
     setContractId(editData?.contract_id || "");
     setCaseId(editData?.case_id || "");
     setTaxCategory((editData?.tax_category as TaxCategory) || "taxable");
@@ -207,7 +198,7 @@ export default function ExpenseFormModal({
       });
       if (!res.ok) return;
       const json = await res.json();
-      const drafts: AllocationDraft[] = (json.allocations ?? []).map((a: any) => ({
+      const drafts: AllocationDraft[] = (json.allocations ?? []).map((a: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
         unit_id: a.unit_id,
         owner_id: null,
         owner_amount: a.owner_amount,
@@ -229,7 +220,8 @@ export default function ExpenseFormModal({
       rows.map((r, i) => {
         if (i !== idx) return r;
         const merged = { ...r, ...patch };
-        merged.amount = num(merged.owner_amount) + num(merged.tenant_amount) + num(merged.company_amount);
+        merged.amount =
+          num(merged.owner_amount) + num(merged.tenant_amount) + num(merged.company_amount);
         return merged;
       }),
     );
@@ -246,7 +238,7 @@ export default function ExpenseFormModal({
     }
 
     const formData = new FormData(e.currentTarget);
-    const data: Record<string, any> = {};
+    const data: Record<string, any> = {}; // eslint-disable-line @typescript-eslint/no-explicit-any
     formData.forEach((value, key) => {
       data[key] = value;
     });
@@ -301,7 +293,6 @@ export default function ExpenseFormModal({
         return;
       }
 
-      // 登録/更新が完了したらドラフトをリセット
       lastTargetRef.current = null;
       formRef.current?.reset();
       onClose();
@@ -334,7 +325,9 @@ export default function ExpenseFormModal({
         </div>
 
         {apiError && (
-          <div className="bg-danger-tint text-danger text-sm rounded-lg px-3 py-2 mb-4">{apiError}</div>
+          <div className="bg-danger-tint text-danger text-sm rounded-lg px-3 py-2 mb-4">
+            {apiError}
+          </div>
         )}
 
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
@@ -365,7 +358,9 @@ export default function ExpenseFormModal({
                 defaultValue={editData?.expense_date || new Date().toISOString().slice(0, 10)}
                 className="input"
               />
-              {errors.expense_date && <p className="text-danger text-sm mt-1">{errors.expense_date[0]}</p>}
+              {errors.expense_date && (
+                <p className="text-danger text-sm mt-1">{errors.expense_date[0]}</p>
+              )}
             </div>
           </div>
 
@@ -380,7 +375,9 @@ export default function ExpenseFormModal({
               className="input"
               placeholder="例: エアコン修理"
             />
-            {errors.description && <p className="text-danger text-sm mt-1">{errors.description[0]}</p>}
+            {errors.description && (
+              <p className="text-danger text-sm mt-1">{errors.description[0]}</p>
+            )}
           </div>
 
           {/* 金額 */}
@@ -398,64 +395,21 @@ export default function ExpenseFormModal({
             {errors.amount && <p className="text-danger text-sm mt-1">{errors.amount[0]}</p>}
           </div>
 
-          {/* 負担区分（3分割） */}
-          <div>
-            <label className="text-sm font-medium text-ink-2 block mb-1.5">負担区分</label>
-            <div className="flex rounded-lg border border-line overflow-hidden mb-2">
-              {(["company", "owner", "tenant", "custom"] as SplitMode[]).map((m) => (
-                <button
-                  type="button"
-                  key={m}
-                  onClick={() => setSplitMode(m)}
-                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
-                    splitMode === m ? "bg-accent text-white" : "bg-surface text-ink-3 hover:bg-bg-2"
-                  }`}
-                >
-                  {m === "company" ? "100%自社" : m === "owner" ? "100%オーナー" : m === "tenant" ? "100%入居者" : "カスタム"}
-                </button>
-              ))}
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="text-[11px] text-ink-3 block mb-1">オーナー負担</label>
-                <input
-                  type="number"
-                  value={ownerAmount || 0}
-                  disabled={splitMode !== "custom"}
-                  onChange={(e) => setOwnerAmount(Number(e.target.value) || 0)}
-                  className="input"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] text-ink-3 block mb-1">入居者負担</label>
-                <input
-                  type="number"
-                  value={tenantAmount || 0}
-                  disabled={splitMode !== "custom"}
-                  onChange={(e) => setTenantAmount(Number(e.target.value) || 0)}
-                  className="input"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] text-ink-3 block mb-1">自社負担</label>
-                <input
-                  type="number"
-                  value={companyAmount || 0}
-                  disabled={splitMode !== "custom"}
-                  onChange={(e) => setCompanyAmount(Number(e.target.value) || 0)}
-                  className="input"
-                />
-              </div>
-            </div>
-            <p
-              className={`text-[11px] mt-1 ${breakdownOk ? "text-ink-3" : "text-danger"}`}
-            >
-              内訳合計: ¥{sumBreakdown.toLocaleString()} / 金額: ¥{amount.toLocaleString()}
-              {!breakdownOk && " — 一致しません"}
-            </p>
-          </div>
+          <SplitModeSection
+            splitMode={splitMode}
+            setSplitMode={setSplitMode}
+            amount={amount}
+            ownerAmount={ownerAmount}
+            setOwnerAmount={setOwnerAmount}
+            tenantAmount={tenantAmount}
+            setTenantAmount={setTenantAmount}
+            companyAmount={companyAmount}
+            setCompanyAmount={setCompanyAmount}
+            breakdownOk={breakdownOk}
+            sumBreakdown={sumBreakdown}
+          />
 
-          {/* 物件・部屋 */}
+          {/* 物件・オーナー */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">物件</label>
@@ -508,107 +462,26 @@ export default function ExpenseFormModal({
             </div>
           )}
 
-          {/* 共用部按分 */}
           {selectedPropertyId && (
-            <div className="border border-line rounded-lg p-3">
-              <label className="flex items-center gap-2 text-sm font-medium text-ink-2">
-                <input
-                  type="checkbox"
-                  checked={allocate}
-                  onChange={(e) => setAllocate(e.target.checked)}
-                />
-                共用部経費として部屋に按分
-              </label>
-              {allocate && (
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={allocationMethod}
-                      onChange={(e) => setAllocationMethod(e.target.value as AllocationMethod)}
-                      className="input"
-                      style={{ maxWidth: 200 }}
-                    >
-                      {ALLOCATION_METHODS.map((m) => (
-                        <option key={m} value={m}>
-                          {ALLOCATION_METHOD_LABELS[m]}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm"
-                      disabled={previewing || amount <= 0}
-                      onClick={runAllocationPreview}
-                    >
-                      {previewing ? "計算中..." : "按分プレビュー"}
-                    </button>
-                  </div>
-                  {allocations.length > 0 && (
-                    <table className="tbl" style={{ fontSize: 12 }}>
-                      <thead>
-                        <tr>
-                          <th>部屋</th>
-                          <th style={{ textAlign: "right" }}>オーナー</th>
-                          <th style={{ textAlign: "right" }}>入居者</th>
-                          <th style={{ textAlign: "right" }}>自社</th>
-                          <th style={{ textAlign: "right" }}>合計</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allocations.map((a, i) => (
-                          <tr key={a.unit_id || i}>
-                            <td>{a.unit_number || "—"}</td>
-                            <td>
-                              <input
-                                type="number"
-                                value={a.owner_amount}
-                                onChange={(e) =>
-                                  updateAllocRow(i, { owner_amount: Number(e.target.value) || 0 })
-                                }
-                                className="input"
-                                style={{ width: 90, textAlign: "right" }}
-                                disabled={allocationMethod !== "custom"}
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                value={a.tenant_amount}
-                                onChange={(e) =>
-                                  updateAllocRow(i, { tenant_amount: Number(e.target.value) || 0 })
-                                }
-                                className="input"
-                                style={{ width: 90, textAlign: "right" }}
-                                disabled={allocationMethod !== "custom"}
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                value={a.company_amount}
-                                onChange={(e) =>
-                                  updateAllocRow(i, { company_amount: Number(e.target.value) || 0 })
-                                }
-                                className="input"
-                                style={{ width: 90, textAlign: "right" }}
-                                disabled={allocationMethod !== "custom"}
-                              />
-                            </td>
-                            <td className="num">¥{a.amount.toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              )}
-            </div>
+            <AllocationSection
+              allocate={allocate}
+              setAllocate={setAllocate}
+              allocationMethod={allocationMethod}
+              setAllocationMethod={setAllocationMethod}
+              allocations={allocations}
+              updateAllocRow={updateAllocRow}
+              previewing={previewing}
+              runAllocationPreview={runAllocationPreview}
+              amount={amount}
+            />
           )}
 
           {/* 対応案件紐付け */}
           {filteredCases.length > 0 && (
             <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">紐付ける対応案件</label>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                紐付ける対応案件
+              </label>
               <select
                 value={caseId}
                 onChange={(e) => setCaseId(e.target.value)}
@@ -639,41 +512,14 @@ export default function ExpenseFormModal({
             </div>
           )}
 
-          {/* 税区分・支払期日・支払日 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">税区分</label>
-              <select
-                value={taxCategory}
-                onChange={(e) => setTaxCategory(e.target.value as TaxCategory)}
-                className="input"
-              >
-                {TAX_CATEGORIES.map((t) => (
-                  <option key={t} value={t}>
-                    {TAX_CATEGORY_LABELS[t]}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">支払期日</label>
-              <input
-                type="date"
-                value={paymentDueDate || ""}
-                onChange={(e) => setPaymentDueDate(e.target.value)}
-                className="input"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">支払日</label>
-              <input
-                type="date"
-                value={paidAt || ""}
-                onChange={(e) => setPaidAt(e.target.value)}
-                className="input"
-              />
-            </div>
-          </div>
+          <MetaFields
+            taxCategory={taxCategory}
+            setTaxCategory={setTaxCategory}
+            paymentDueDate={paymentDueDate}
+            setPaymentDueDate={setPaymentDueDate}
+            paidAt={paidAt}
+            setPaidAt={setPaidAt}
+          />
 
           {/* 備考 */}
           <div>
@@ -695,7 +541,11 @@ export default function ExpenseFormModal({
             >
               キャンセル
             </button>
-            <button type="submit" disabled={loading || !breakdownOk} className="btn btn-primary disabled:opacity-50 disabled:cursor-wait flex items-center gap-1.5">
+            <button
+              type="submit"
+              disabled={loading || !breakdownOk}
+              className="btn btn-primary disabled:opacity-50 disabled:cursor-wait flex items-center gap-1.5"
+            >
               {loading && <Loader2 size={14} className="animate-spin" />}
               {loading ? "保存中..." : isEdit ? "更新する" : "登録する"}
             </button>
