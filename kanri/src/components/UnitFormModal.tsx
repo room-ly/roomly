@@ -249,13 +249,15 @@ export default function UnitFormModal({
                   type="number"
                   step="0.01"
                   defaultValue={editData?.deposit ?? ""}
-                  className="input flex-1 min-w-0"
+                  className="input min-w-0"
+                  style={{ flex: "1 1 0", width: "auto" }}
                   placeholder="例: 80000 / 2"
                 />
                 <select
                   name="deposit_unit"
                   defaultValue={editData?.deposit_unit || "jpy"}
-                  className="input w-20 shrink-0"
+                  className="input shrink-0"
+                  style={{ width: "5rem" }}
                 >
                   <option value="jpy">円</option>
                   <option value="months">ヶ月</option>
@@ -272,13 +274,15 @@ export default function UnitFormModal({
                   type="number"
                   step="0.01"
                   defaultValue={editData?.key_money ?? ""}
-                  className="input flex-1 min-w-0"
+                  className="input min-w-0"
+                  style={{ flex: "1 1 0", width: "auto" }}
                   placeholder="例: 80000 / 1"
                 />
                 <select
                   name="key_money_unit"
                   defaultValue={editData?.key_money_unit || "jpy"}
-                  className="input w-20 shrink-0"
+                  className="input shrink-0"
+                  style={{ width: "5rem" }}
                 >
                   <option value="jpy">円</option>
                   <option value="months">ヶ月</option>
