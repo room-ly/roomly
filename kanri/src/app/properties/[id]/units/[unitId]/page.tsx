@@ -19,6 +19,21 @@ export default async function UnitDetailPage({
 
   const { unit, contracts, cases } = result;
   const activeContract = contracts.find((c: any) => c.status === "active");
+  const owner = unit.property?.owner ?? null;
+  const managementFormLabels: Record<string, string> = {
+    self: "自主管理",
+    full_management: "全部委託",
+    partial_management: "一部委託",
+    sublet: "サブリース",
+  };
+  const managementFeeText =
+    unit.property?.management_fee_type === "fixed"
+      ? unit.property?.management_fee_amount
+        ? `¥${Number(unit.property.management_fee_amount).toLocaleString()}／月`
+        : "—"
+      : unit.property?.management_fee_rate != null
+        ? `${unit.property.management_fee_rate}%`
+        : "—";
 
   return (
     <>
@@ -91,11 +106,11 @@ export default async function UnitDetailPage({
               </div>
               <div className="kv-grid" style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
                 <div className="field">
-                  <div className="field-label mono">敷金</div>
+                  <div className="field-label mono">募集敷金</div>
                   <div className="field-value num">{formatDeposit(unit.deposit, unit.deposit_unit, unit.rent)}</div>
                 </div>
                 <div className="field">
-                  <div className="field-label mono">礼金</div>
+                  <div className="field-label mono">募集礼金</div>
                   <div className="field-value num">{formatDeposit(unit.key_money, unit.key_money_unit, unit.rent)}</div>
                 </div>
               </div>
@@ -186,6 +201,42 @@ export default async function UnitDetailPage({
               )}
             </div>
           </div>
+
+          {owner && (
+            <div className="section">
+              <div className="section-head-bar"><h2>オーナー</h2></div>
+              <div className="section-body">
+                <div className="kv-list">
+                  <div className="field">
+                    <div className="field-label mono">オーナー名</div>
+                    <div className="field-value">
+                      <Link href={`/owners/${owner.id}`} className="rlink">{owner.name || "—"}</Link>
+                    </div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">電話番号</div>
+                    <div className="field-value field-plain mono">{owner.phone || "—"}</div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">メール</div>
+                    <div className="field-value field-plain mono">{owner.email || "—"}</div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">管理形態</div>
+                    <div className="field-value field-plain">
+                      {unit.property?.management_form
+                        ? managementFormLabels[unit.property.management_form] || unit.property.management_form
+                        : "—"}
+                    </div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">管理手数料</div>
+                    <div className="field-value field-plain">{managementFeeText}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {cases.length > 0 && (
             <div className="section">
