@@ -514,7 +514,7 @@ export async function getRentBillingDetail(id: string) {
   const { data: target, error: targetErr } = await supabase
     .from("rent_billings")
     .select(
-      "*, contract:contracts(id, tenant:tenants(id, name, phone, email), unit:units(unit_number, property:properties(id, name, address))), rent_payments(id, amount, payment_date, payment_method, notes, created_at)"
+      "*, contract:contracts(id, tenant:tenants(id, name, phone, email), unit:units(id, unit_number, property:properties(id, name, address))), rent_payments(id, amount, payment_date, payment_method, notes, created_at)"
     )
     .eq("id", id)
     .single();
