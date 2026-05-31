@@ -76,12 +76,39 @@ function readAttribution(): Record<string, string> | null {
   return Object.keys(result).length > 0 ? result : null;
 }
 
+// localStorage に最後に取得した profile をキャッシュしておく。
+// TOKEN_REFRESHED や一時的なRLS失敗で fetchProfile がコケた時に、admin → viewer に
+// 降格して編集ボタンが消える事故を防ぐ。同じ auth user id のものだけ復元する。
+const PROFILE_CACHE_KEY = "roomly_profile_cache_v1";
+
+function loadCachedProfile(authUserId: string): User | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(PROFILE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as User & { _id?: string };
+    if (parsed.id !== authUserId) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveCachedProfile(profile: User) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
+  } catch {
+    // 保存失敗は無視
+  }
+}
+
 // Supabase Auth ユーザーから public.users の情報を取得
 // 一時的なRLS/ネットワーク失敗で role がフォールバック値に落ちると、admin ユーザーでも
-// 編集ボタンが消える事故が起きるので、失敗時は短いリトライを挟む
+// 編集ボタンが消える事故が起きるので、失敗時はリトライ→キャッシュ→viewerの順でフォールバック
 async function fetchProfile(authUser: SupabaseUser): Promise<User | null> {
   let lastError: unknown = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 5; attempt++) {
     const { data, error } = await supabase
       .from("users")
       .select("id, name, email, role, company_id, is_active")
@@ -89,21 +116,30 @@ async function fetchProfile(authUser: SupabaseUser): Promise<User | null> {
       .single();
 
     if (!error && data && data.is_active !== false) {
-      return {
+      const profile: User = {
         id: data.id,
         name: data.name,
         email: data.email,
         role: data.role,
         company_id: data.company_id,
       };
+      saveCachedProfile(profile);
+      return profile;
     }
     lastError = error;
     if (data?.is_active === false) break; // 明示的にinactiveなら即フォールバック
-    await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+    await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
   }
 
-  // 全リトライ失敗時のみフォールバック。role は最小権限の viewer にして誤って書き込み権を与えない
-  console.warn("fetchProfile failed, using fallback (viewer):", lastError);
+  // リトライ全失敗時はキャッシュを優先（直前のセッションのroleを引き継ぐ）
+  const cached = loadCachedProfile(authUser.id);
+  if (cached) {
+    console.warn("fetchProfile failed, using cached profile:", lastError);
+    return cached;
+  }
+
+  // キャッシュも無い場合のみ viewer フォールバック
+  console.warn("fetchProfile failed and no cache, using fallback (viewer):", lastError);
   const email = authUser.email || "";
   return {
     id: authUser.id,
@@ -128,9 +164,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (cancelled) return;
       if (session?.user) {
+        // まずキャッシュで即埋めてレンダリング初回で編集ボタンが消えないようにする
+        const cached = loadCachedProfile(session.user.id);
+        if (cached && !cancelled) {
+          setUser(cached);
+          setIsLoading(false);
+        }
         const profile = await fetchProfile(session.user);
-        if (!cancelled) {
-          setUser(profile);
+        if (!cancelled && profile) {
+          // 取得済み role が admin/manager/staff なのに viewer にだけ降格するパターンを防ぐ
+          setUser((prev) => {
+            if (
+              prev &&
+              prev.id === profile.id &&
+              prev.role !== "viewer" &&
+              profile.role === "viewer"
+            ) {
+              return prev;
+            }
+            return profile;
+          });
           setIsLoading(false);
         }
       } else {
@@ -146,13 +199,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session?.user
       ) {
         const profile = await fetchProfile(session.user);
-        if (cancelled) return;
-        setUser(profile);
+        if (cancelled || !profile) return;
+        setUser((prev) => {
+          // 既に高い権限で取れている場合、viewer 降格は無視する（一時的な fetch 失敗対策）
+          if (
+            prev &&
+            prev.id === profile.id &&
+            prev.role !== "viewer" &&
+            profile.role === "viewer"
+          ) {
+            return prev;
+          }
+          return profile;
+        });
         setIsLoading(false);
       } else if (event === "INITIAL_SESSION" && !session) {
         if (!cancelled) setIsLoading(false);
       } else if (event === "SIGNED_OUT") {
-        if (!cancelled) setUser(null);
+        if (!cancelled) {
+          setUser(null);
+          if (typeof window !== "undefined") {
+            try {
+              window.localStorage.removeItem(PROFILE_CACHE_KEY);
+            } catch {
+              // 無視
+            }
+          }
+        }
       }
     });
 
