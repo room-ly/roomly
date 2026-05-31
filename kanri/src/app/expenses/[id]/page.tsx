@@ -11,7 +11,6 @@ import ExpenseDetailClient from "@/components/ExpenseDetailClient";
 import AuditLogSection from "@/components/AuditLogSection";
 import DocumentSection from "@/components/DocumentSection";
 import ExpenseApprovalPanel from "@/components/ExpenseApprovalPanel";
-import OffFeaturesMenu from "@/components/OffFeaturesMenu";
 import { toJpy } from "@/lib/deposit-unit";
 import DepositBalancePanel from "@/components/DepositBalancePanel";
 import {
@@ -44,16 +43,6 @@ export default async function ExpenseDetailPage({
     .eq("id", companyId)
     .single();
   const approvalEnabled = company?.expense_approval_threshold != null;
-  const { data: candidateUsers } = await supabase
-    .from("users")
-    .select("user_id, name, role")
-    .eq("company_id", companyId)
-    .in("role", ["admin", "manager"])
-    .order("name");
-  const approverCandidates = (candidateUsers ?? []).map((u: any) => ({
-    id: u.user_id as string,
-    name: (u.name as string) ?? "",
-  }));
   const canEditSettings = me?.role === "admin";
 
   const approver = (expense.effective_approver ?? null) as { id: string; name: string } | null;
@@ -126,11 +115,6 @@ export default async function ExpenseDetailPage({
           </div>
         </div>
         <div className="detail-header-actions" style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <OffFeaturesMenu
-            approvalOff={!approvalEnabled}
-            canEditSettings={canEditSettings}
-            approverCandidates={approverCandidates}
-          />
           <ExpenseDetailClient expense={expense} properties={properties} owners={owners} />
         </div>
       </div>
@@ -157,7 +141,7 @@ export default async function ExpenseDetailPage({
         </div>
       </div>
 
-      {/* 稟議パネル（ON時のみ表示。OFF時のトグルは題名右の OffFeaturesMenu に集約） */}
+      {/* 稟議パネル（ON時のみ表示。OFF時のカードは経費一覧ページ上部に表示） */}
       <ExpenseApprovalPanel
         expenseId={expense.id}
         status={status}

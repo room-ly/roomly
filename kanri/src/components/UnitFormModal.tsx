@@ -241,7 +241,7 @@ export default function UnitFormModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
-                敷金
+                募集敷金
               </label>
               <div className="flex gap-2">
                 <input
@@ -266,7 +266,7 @@ export default function UnitFormModal({
             </div>
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
-                礼金
+                募集礼金
               </label>
               <div className="flex gap-2">
                 <input

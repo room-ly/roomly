@@ -11,6 +11,12 @@ interface SelectOption {
   id: string;
   label: string;
   tenant_id?: string | null;
+  rent?: number | null;
+  management_fee?: number | null;
+  deposit?: number | null;
+  deposit_unit?: string | null;
+  key_money?: number | null;
+  key_money_unit?: string | null;
 }
 
 interface ContractFormModalProps {
@@ -40,6 +46,29 @@ export default function ContractFormModal({
     const unit = units.find((u) => u.id === unitId);
     if (unit?.tenant_id) {
       setSelectedTenantId(unit.tenant_id);
+    }
+    // 新規作成時のみ、部屋の募集条件をフォーム初期値としてコピー
+    if (!editData && unit && formRef.current) {
+      const setIfEmpty = (name: string, value: string) => {
+        const el = formRef.current!.elements.namedItem(name) as
+          | HTMLInputElement
+          | HTMLSelectElement
+          | null;
+        if (el && !el.value) el.value = value;
+      };
+      const setAlways = (name: string, value: string) => {
+        const el = formRef.current!.elements.namedItem(name) as
+          | HTMLInputElement
+          | HTMLSelectElement
+          | null;
+        if (el) el.value = value;
+      };
+      if (unit.rent != null) setIfEmpty("rent", String(unit.rent));
+      if (unit.management_fee != null) setIfEmpty("management_fee", String(unit.management_fee));
+      if (unit.deposit != null) setIfEmpty("deposit", String(unit.deposit));
+      if (unit.deposit_unit) setAlways("deposit_unit", unit.deposit_unit);
+      if (unit.key_money != null) setIfEmpty("key_money", String(unit.key_money));
+      if (unit.key_money_unit) setAlways("key_money_unit", unit.key_money_unit);
     }
   }
 
@@ -240,8 +269,8 @@ export default function ContractFormModal({
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">敷金</label>
                   <div className="flex gap-2">
-                    <input name="deposit" type="number" step="0.01" defaultValue={editData?.deposit ?? ""} className="input flex-1" placeholder="例: 80000 / 2" />
-                    <select name="deposit_unit" defaultValue={editData?.deposit_unit || "jpy"} className="input w-24">
+                    <input name="deposit" type="number" step="0.01" defaultValue={editData?.deposit ?? ""} className="input min-w-0" style={{ flex: "1 1 0", width: "auto" }} placeholder="例: 80000 / 2" />
+                    <select name="deposit_unit" defaultValue={editData?.deposit_unit || "jpy"} className="input shrink-0" style={{ width: "5rem" }}>
                       <option value="jpy">円</option>
                       <option value="months">ヶ月</option>
                     </select>
@@ -250,8 +279,8 @@ export default function ContractFormModal({
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">礼金</label>
                   <div className="flex gap-2">
-                    <input name="key_money" type="number" step="0.01" defaultValue={editData?.key_money ?? ""} className="input flex-1" placeholder="例: 80000 / 1" />
-                    <select name="key_money_unit" defaultValue={editData?.key_money_unit || "jpy"} className="input w-24">
+                    <input name="key_money" type="number" step="0.01" defaultValue={editData?.key_money ?? ""} className="input min-w-0" style={{ flex: "1 1 0", width: "auto" }} placeholder="例: 80000 / 1" />
+                    <select name="key_money_unit" defaultValue={editData?.key_money_unit || "jpy"} className="input shrink-0" style={{ width: "5rem" }}>
                       <option value="jpy">円</option>
                       <option value="months">ヶ月</option>
                     </select>
@@ -260,8 +289,8 @@ export default function ContractFormModal({
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">更新料</label>
                   <div className="flex gap-2">
-                    <input name="renewal_fee" type="number" step="0.01" defaultValue={editData?.renewal_fee ?? ""} className="input flex-1" placeholder="例: 80000 / 1" />
-                    <select name="renewal_fee_unit" defaultValue={editData?.renewal_fee_unit || "jpy"} className="input w-24">
+                    <input name="renewal_fee" type="number" step="0.01" defaultValue={editData?.renewal_fee ?? ""} className="input min-w-0" style={{ flex: "1 1 0", width: "auto" }} placeholder="例: 80000 / 1" />
+                    <select name="renewal_fee_unit" defaultValue={editData?.renewal_fee_unit || "jpy"} className="input shrink-0" style={{ width: "5rem" }}>
                       <option value="jpy">円</option>
                       <option value="months">ヶ月</option>
                     </select>

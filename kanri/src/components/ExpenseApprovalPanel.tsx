@@ -30,7 +30,7 @@ export default function ExpenseApprovalPanel({
   const [showReject, setShowReject] = useState(false);
   const [error, setError] = useState("");
 
-  // 稟議OFF: パネル非表示（OFF機能は OffFeaturesMenu に集約）
+  // 稟議OFF: パネル非表示（OFF時のカードは経費一覧ページ上部に表示）
   if (!approvalEnabled) return null;
   if (status !== "pending_approval" && status !== "draft") return null;
 

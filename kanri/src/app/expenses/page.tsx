@@ -8,11 +8,14 @@ import {
   getContractsForSelect,
   getCompany,
 } from "@/lib/queries";
+import { createClient, getCompanyId, getCurrentUserRole } from "@/lib/supabase-server";
 import PageHeader from "@/components/PageHeader";
 import ExpensesPageClient from "@/components/ExpensesPageClient";
 import ExpensesTable from "@/components/ExpensesTable";
 import ServerPagination from "@/components/ServerPagination";
 import SortSelect from "@/components/SortSelect";
+import FeatureOffCard from "@/components/FeatureOffCard";
+import ExpenseApprovalEnableForm from "@/components/ExpenseApprovalEnableForm";
 
 const PAGE_SIZE = 50;
 const SORT_OPTIONS = [
@@ -30,7 +33,7 @@ export default async function ExpensesPage({
   const { page: pageStr, sort } = await searchParams;
   const page = Math.max(1, Number(pageStr) || 1);
   const sortValue = sort || "expense_date:desc";
-  const [{ data: expenses, total }, properties, owners, payees, cases, contracts, company] =
+  const [{ data: expenses, total }, properties, owners, payees, cases, contracts, company, me] =
     await Promise.all([
       getExpenses(page, PAGE_SIZE, sortValue),
       getPropertiesForSelect(),
@@ -39,8 +42,27 @@ export default async function ExpensesPage({
       getCasesForSelect(),
       getContractsForSelect(),
       getCompany(),
+      getCurrentUserRole(),
     ]);
   const approvalEnabled = company?.expense_approval_threshold != null;
+  const canEditSettings = me?.role === "admin";
+
+  // 稟議OFF時のみ承認者候補を取得（カード展開用）
+  let approverCandidates: { id: string; name: string }[] = [];
+  if (!approvalEnabled) {
+    const supabase = await createClient();
+    const companyId = await getCompanyId();
+    const { data: candidateUsers } = await supabase
+      .from("users")
+      .select("user_id, name, role")
+      .eq("company_id", companyId)
+      .in("role", ["admin", "manager"])
+      .order("name");
+    approverCandidates = (candidateUsers ?? []).map((u: any) => ({
+      id: u.user_id as string,
+      name: (u.name as string) ?? "",
+    }));
+  }
 
   const caseOptions = (cases as any[]).map((c) => ({
     id: c.id,
@@ -74,6 +96,17 @@ export default async function ExpensesPage({
           />
         }
       />
+
+      {!approvalEnabled && (
+        <FeatureOffCard
+          title="稟議（経費承認フロー）"
+          description="一定金額以上の経費を承認待ちにして、承認後に確定する運用ができます。"
+          canEnable={canEditSettings}
+          disabledReason="※ 管理者のみオンにできます"
+        >
+          <ExpenseApprovalEnableForm approverCandidates={approverCandidates} />
+        </FeatureOffCard>
+      )}
 
       <div className="flex justify-end mb-3">
         <Suspense>
