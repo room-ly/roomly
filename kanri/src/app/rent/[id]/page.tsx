@@ -72,7 +72,11 @@ export default async function RentDetailPage({
             unitNumber={unit?.unit_number || ""}
           />
 
-          <AuditLogSection table="rent_billings" recordId={current.id} recordLabel="家賃請求" />
+          <AuditLogSection
+            table="rent_billings"
+            recordId={current.id}
+            recordLabel={`${String(current.billing_month).slice(0, 7)} の家賃請求`}
+          />
         </div>
 
         {/* サイドカラム */}

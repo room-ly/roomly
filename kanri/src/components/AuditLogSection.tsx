@@ -131,7 +131,7 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
       <div className="section-head-bar">
         <h2 className="flex items-center gap-1.5">
           <Clock size={15} />
-          更新履歴
+          {label}の更新履歴
         </h2>
         <span className="desc">{visibleLogs.length}件</span>
       </div>
@@ -213,7 +213,6 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
         {visibleLogs.length === 30 && (
           <p className="text-[11px] text-ink-3 mt-2">最新30件を表示しています</p>
         )}
-        <p className="text-[11px] text-ink-3 mt-2">{label}の変更履歴</p>
       </div>
     </section>
   );
