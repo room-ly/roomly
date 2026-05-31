@@ -11,18 +11,20 @@ type SendEmailParams = {
   subject: string;
   html: string;
   from?: string;
+  headers?: Record<string, string>;
 };
 
 /**
  * メール送信
  * from のデフォルトは noreply@roomly.jp（システム自動送信用）
  */
-export async function sendEmail({ to, subject, html, from }: SendEmailParams) {
+export async function sendEmail({ to, subject, html, from, headers }: SendEmailParams) {
   const { data, error } = await getResend().emails.send({
     from: from ?? "Roomly <noreply@roomly.jp>",
     to: Array.isArray(to) ? to : [to],
     subject,
     html,
+    ...(headers ? { headers } : {}),
   });
 
   if (error) {
