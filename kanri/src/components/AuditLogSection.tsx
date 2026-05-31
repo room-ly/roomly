@@ -183,14 +183,14 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
                                 <td className="py-0.5">
                                   {log.action === "update" ? (
                                     <span>
-                                      <span className="text-ink-3 line-through">{formatFieldValue(d.before, t)}</span>
+                                      <span className="text-ink-3 line-through">{formatFieldValue(d.before, t, table, d.key)}</span>
                                       <span className="mx-2 text-ink-3">→</span>
-                                      <span className="text-ink">{formatFieldValue(d.after, t)}</span>
+                                      <span className="text-ink">{formatFieldValue(d.after, t, table, d.key)}</span>
                                     </span>
                                   ) : log.action === "create" ? (
-                                    <span className="text-ink">{formatFieldValue(d.after, t)}</span>
+                                    <span className="text-ink">{formatFieldValue(d.after, t, table, d.key)}</span>
                                   ) : (
-                                    <span className="text-ink-3 line-through">{formatFieldValue(d.before, t)}</span>
+                                    <span className="text-ink-3 line-through">{formatFieldValue(d.before, t, table, d.key)}</span>
                                   )}
                                 </td>
                               </tr>

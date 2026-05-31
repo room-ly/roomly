@@ -300,12 +300,220 @@ export function fieldType(table: string, column: string): FieldType {
   return getDef(table, column)?.type ?? "text";
 }
 
+// enum値の日本語ラベル。テーブル×カラム単位で定義する（同じenum値でも文脈で訳が違うため）。
+// 監査ログ表示・他の整形処理共通で使えるよう公開する。
+type EnumMap = Record<string, Record<string, Record<string, string>>>;
+
+const ENUM_LABELS: EnumMap = {
+  rent_billings: {
+    status: {
+      unpaid: "未入金",
+      partial: "一部入金",
+      paid: "入金済",
+      overdue: "滞納",
+    },
+  },
+  rent_payments: {
+    payment_method: {
+      transfer: "銀行振込",
+      card: "カード",
+      cash: "現金",
+      debit: "口座引落",
+      refund: "返金",
+      bank: "銀行振込",
+    },
+  },
+  units: {
+    status: {
+      vacant: "空室",
+      occupied: "入居中",
+      reserved: "予約済",
+      maintenance: "メンテナンス中",
+    },
+    deposit_unit: { jpy: "円", months: "ヶ月" },
+    key_money_unit: { jpy: "円", months: "ヶ月" },
+  },
+  contracts: {
+    status: {
+      active: "契約中",
+      expired: "満了",
+      terminated: "解約",
+      pending: "申込中",
+    },
+    contract_type: {
+      fixed: "定期借家",
+      ordinary: "普通借家",
+    },
+    deposit_unit: { jpy: "円", months: "ヶ月" },
+    key_money_unit: { jpy: "円", months: "ヶ月" },
+    renewal_fee_unit: { jpy: "円", months: "ヶ月" },
+    payment_method: {
+      transfer: "銀行振込",
+      card: "カード",
+      cash: "現金",
+      debit: "口座引落",
+    },
+  },
+  tenants: {
+    guarantee_type: {
+      company: "保証会社",
+      individual: "個人連帯保証",
+      none: "なし",
+    },
+  },
+  properties: {
+    property_type: {
+      apartment: "マンション",
+      apart: "アパート",
+      house: "戸建",
+      commercial: "事業用",
+      parking: "駐車場",
+      land: "土地",
+    },
+    management_form: {
+      self: "自主管理",
+      full_management: "全部委託",
+      partial_management: "一部委託",
+      sublet: "サブリース",
+    },
+    land_rights: {
+      ownership: "所有権",
+      leasehold: "借地権",
+      sublease: "転借地権",
+    },
+    management_fee_type: {
+      rate: "賃料の％",
+      fixed: "定額",
+    },
+    transaction_type: {
+      owner: "貸主",
+      agent: "代理",
+      intermediary: "媒介",
+      sublet: "サブリース",
+    },
+    default_allocation_method: {
+      equal_units: "戸数均等",
+      by_floor_area: "床面積按分",
+      by_owner_share: "オーナー持分按分",
+      custom: "個別指定",
+    },
+  },
+  cases: {
+    priority: {
+      low: "低",
+      normal: "通常",
+      high: "高",
+      urgent: "緊急",
+    },
+    status: {
+      open: "未対応",
+      in_progress: "対応中",
+      pending: "保留",
+      resolved: "対応済",
+      closed: "完了",
+    },
+  },
+  expenses: {
+    status: {
+      draft: "下書き",
+      pending_approval: "承認待ち",
+      approved: "承認済",
+      rejected: "却下",
+      ordered: "発注済",
+      completed: "完了",
+      paid: "支払済",
+    },
+    tax_category: {
+      taxable: "課税",
+      tax_free: "免税",
+      non_taxable: "非課税",
+    },
+    category: {
+      repair: "修繕",
+      cleaning: "清掃",
+      insurance: "保険",
+      tax: "税金",
+      utility: "光熱費",
+      other: "その他",
+    },
+    allocation_method: {
+      equal_units: "戸数均等",
+      by_floor_area: "床面積按分",
+      by_owner_share: "オーナー持分按分",
+      custom: "個別指定",
+    },
+  },
+  owners: {
+    owner_type: {
+      individual: "個人",
+      corporate: "法人",
+    },
+    bank_account_type: {
+      ordinary: "普通",
+      checking: "当座",
+      savings: "貯蓄",
+    },
+  },
+  owner_remittances: {
+    status: {
+      pending: "未送金",
+      sent: "送金済",
+      hold: "保留",
+    },
+    payment_method: {
+      transfer: "銀行振込",
+      cash: "現金",
+    },
+  },
+  payees: {
+    category: {
+      repair: "修繕",
+      cleaning: "清掃",
+      insurance: "保険",
+      other: "その他",
+    },
+    account_type: {
+      ordinary: "普通",
+      checking: "当座",
+      savings: "貯蓄",
+    },
+  },
+  users: {
+    role: {
+      admin: "管理者",
+      manager: "マネージャー",
+      staff: "スタッフ",
+      viewer: "閲覧のみ",
+    },
+  },
+  audit_logs: {
+    action: {
+      create: "作成",
+      update: "更新",
+      delete: "削除",
+    },
+  },
+};
+
+export function enumLabel(table: string, column: string, value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  return ENUM_LABELS[table]?.[column]?.[value] ?? null;
+}
+
 // 値を型に応じて整形する。未対応の型はそのまま文字列化。
+// table / column を渡すと enum の日本語ラベルに変換する。
 export function formatFieldValue(
   value: unknown,
-  type: FieldType
+  type: FieldType,
+  table?: string,
+  column?: string,
 ): string {
   if (value === null || value === undefined || value === "") return "—";
+
+  if (table && column) {
+    const label = enumLabel(table, column, value);
+    if (label) return label;
+  }
 
   switch (type) {
     case "money": {
