@@ -127,7 +127,13 @@ export default async function RentDetailPage({
                 )}
                 <div className="field">
                   <div className="field-label mono">部屋</div>
-                  <div className="field-value field-plain mono">{unit?.unit_number || "—"}</div>
+                  <div className="field-value">
+                    {unit?.id && property?.id ? (
+                      <Link href={`/properties/${property.id}/units/${unit.id}`} className="rlink mono">{unit.unit_number}</Link>
+                    ) : (
+                      <span className="field-plain mono">{unit?.unit_number || "—"}</span>
+                    )}
+                  </div>
                 </div>
                 {contract?.id && (
                   <div className="field">
