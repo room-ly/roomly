@@ -331,6 +331,28 @@ export default function SignupPage() {
             >
               {loading ? "作成中..." : "無料で始める"}
             </button>
+
+            <p className="text-center text-[11px] text-ink-3 leading-relaxed">
+              「無料で始める」をクリックすることで、
+              <a
+                href="https://hp.roomly.jp/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent hover:underline"
+              >
+                利用規約
+              </a>
+              および
+              <a
+                href="https://hp.roomly.jp/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent hover:underline"
+              >
+                プライバシーポリシー
+              </a>
+              に同意し、サービスに関するメール配信（使い方案内、新機能のお知らせ、キャンペーン情報等）を受け取ることに同意したものとみなします。
+            </p>
           </form>
 
           <p className="text-center text-[13px] text-ink-3 mt-6">
