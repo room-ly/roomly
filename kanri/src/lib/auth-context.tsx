@@ -77,30 +77,40 @@ function readAttribution(): Record<string, string> | null {
 }
 
 // Supabase Auth ユーザーから public.users の情報を取得
+// 一時的なRLS/ネットワーク失敗で role がフォールバック値に落ちると、admin ユーザーでも
+// 編集ボタンが消える事故が起きるので、失敗時は短いリトライを挟む
 async function fetchProfile(authUser: SupabaseUser): Promise<User | null> {
-  const { data, error } = await supabase
-    .from("users")
-    .select("id, name, email, role, company_id, is_active")
-    .eq("id", authUser.id)
-    .single();
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, name, email, role, company_id, is_active")
+      .eq("id", authUser.id)
+      .single();
 
-  if (error || !data || data.is_active === false) {
-    // RLSブロック等でprofileが取れない場合、auth userからフォールバック
-    const email = authUser.email || "";
-    return {
-      id: authUser.id,
-      name: authUser.user_metadata?.name || email.split("@")[0] || "",
-      email,
-      role: "staff",
-      company_id: "",
-    };
+    if (!error && data && data.is_active !== false) {
+      return {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        company_id: data.company_id,
+      };
+    }
+    lastError = error;
+    if (data?.is_active === false) break; // 明示的にinactiveなら即フォールバック
+    await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
   }
+
+  // 全リトライ失敗時のみフォールバック。role は最小権限の viewer にして誤って書き込み権を与えない
+  console.warn("fetchProfile failed, using fallback (viewer):", lastError);
+  const email = authUser.email || "";
   return {
-    id: data.id,
-    name: data.name,
-    email: data.email,
-    role: data.role,
-    company_id: data.company_id,
+    id: authUser.id,
+    name: authUser.user_metadata?.name || email.split("@")[0] || "",
+    email,
+    role: "viewer",
+    company_id: "",
   };
 }
 
@@ -109,6 +119,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
+    // INITIAL_SESSION の発火タイミングに依らず、マウント直後に getSession() で
+    // セッションがあれば即 profile を取得する。これを待たないとレンダリング初回で
+    // user=null となり、usePermission が全て false を返して編集ボタン等が消える
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (session?.user) {
+        const profile = await fetchProfile(session.user);
+        if (!cancelled) {
+          setUser(profile);
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
+    })();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -117,16 +146,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session?.user
       ) {
         const profile = await fetchProfile(session.user);
+        if (cancelled) return;
         setUser(profile);
         setIsLoading(false);
       } else if (event === "INITIAL_SESSION" && !session) {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       } else if (event === "SIGNED_OUT") {
-        setUser(null);
+        if (!cancelled) setUser(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (
