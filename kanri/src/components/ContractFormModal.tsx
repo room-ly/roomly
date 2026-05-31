@@ -13,10 +13,6 @@ interface SelectOption {
   tenant_id?: string | null;
   rent?: number | null;
   management_fee?: number | null;
-  deposit?: number | null;
-  deposit_unit?: string | null;
-  key_money?: number | null;
-  key_money_unit?: string | null;
 }
 
 interface ContractFormModalProps {
@@ -56,19 +52,8 @@ export default function ContractFormModal({
           | null;
         if (el && !el.value) el.value = value;
       };
-      const setAlways = (name: string, value: string) => {
-        const el = formRef.current!.elements.namedItem(name) as
-          | HTMLInputElement
-          | HTMLSelectElement
-          | null;
-        if (el) el.value = value;
-      };
       if (unit.rent != null) setIfEmpty("rent", String(unit.rent));
       if (unit.management_fee != null) setIfEmpty("management_fee", String(unit.management_fee));
-      if (unit.deposit != null) setIfEmpty("deposit", String(unit.deposit));
-      if (unit.deposit_unit) setAlways("deposit_unit", unit.deposit_unit);
-      if (unit.key_money != null) setIfEmpty("key_money", String(unit.key_money));
-      if (unit.key_money_unit) setAlways("key_money_unit", unit.key_money_unit);
     }
   }
 

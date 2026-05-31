@@ -790,7 +790,7 @@ export async function getUnitsForSelect() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("units")
-    .select("id, unit_number, rent, management_fee, deposit, deposit_unit, key_money, key_money_unit, property:properties(name), contracts(tenant_id, status)")
+    .select("id, unit_number, rent, management_fee, property:properties(name), contracts(tenant_id, status)")
     .order("unit_number");
   if (error) throw error;
   return (data ?? []).map((u: Row) => {
@@ -801,10 +801,6 @@ export async function getUnitsForSelect() {
       tenant_id: active?.tenant_id || null,
       rent: u.rent,
       management_fee: u.management_fee,
-      deposit: u.deposit,
-      deposit_unit: u.deposit_unit,
-      key_money: u.key_money,
-      key_money_unit: u.key_money_unit,
     };
   });
 }

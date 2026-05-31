@@ -176,12 +176,6 @@ export const unitSchema = z.object({
     message: "状態を選択してください",
   }),
   damage_notes: z.string().optional(),
-  deposit: z.coerce.number().min(0, "敷金は0以上を入力してください").optional()
-    .or(z.literal("").transform(() => undefined)),
-  deposit_unit: z.enum(["jpy", "months"]).optional(),
-  key_money: z.coerce.number().min(0, "礼金は0以上を入力してください").optional()
-    .or(z.literal("").transform(() => undefined)),
-  key_money_unit: z.enum(["jpy", "months"]).optional(),
 });
 
 export type UnitFormData = z.infer<typeof unitSchema>;

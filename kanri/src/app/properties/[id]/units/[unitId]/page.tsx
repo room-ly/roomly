@@ -6,7 +6,6 @@ import StatusBadge from "@/components/StatusBadge";
 import UnitDetailClient from "@/components/UnitDetailClient";
 import PropertyImages from "@/components/PropertyImages";
 import AuditLogSection from "@/components/AuditLogSection";
-import { formatDeposit } from "@/lib/deposit-unit";
 
 export default async function UnitDetailPage({
   params,
@@ -102,16 +101,6 @@ export default async function UnitDetailPage({
                 <div className="cfee-item">
                   <div className="cfee-label mono">管理費</div>
                   <div className="cfee-sub num">¥{Number(unit.management_fee).toLocaleString()}</div>
-                </div>
-              </div>
-              <div className="kv-grid" style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
-                <div className="field">
-                  <div className="field-label mono">募集敷金</div>
-                  <div className="field-value num">{formatDeposit(unit.deposit, unit.deposit_unit, unit.rent)}</div>
-                </div>
-                <div className="field">
-                  <div className="field-label mono">募集礼金</div>
-                  <div className="field-value num">{formatDeposit(unit.key_money, unit.key_money_unit, unit.rent)}</div>
                 </div>
               </div>
             </div>
