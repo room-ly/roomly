@@ -3,6 +3,7 @@
 import { useState } from "react";
 import StatusBadge from "./StatusBadge";
 import RentDetailClient from "./RentDetailClient";
+import AuditLogSection from "./AuditLogSection";
 
 const paymentMethodLabels: Record<string, string> = {
   transfer: "銀行振込",
@@ -283,6 +284,14 @@ export default function RentHistoryAndDetail({
             )}
           </div>
         </div>
+      )}
+
+      {current && (
+        <AuditLogSection
+          table="rent_billings"
+          recordId={current.id}
+          recordLabel={`${formatBillingMonth(current.billing_month)} の家賃請求`}
+        />
       )}
     </>
   );
