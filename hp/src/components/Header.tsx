@@ -64,19 +64,25 @@ export function Header() {
           </button>
           <a
             href="https://kanri.roomly.jp/login?demo=1"
-            className="inline-flex h-10 items-center rounded-full border border-rm-border-strong px-[18px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-surface"
+            className="inline-flex h-10 items-center rounded-full bg-rm-accent-deep px-[18px] text-[14px] font-medium text-white transition-colors hover:opacity-90"
           >
             デモを試す
           </a>
           <a
             href="https://kanri.roomly.jp/signup"
-            className="inline-flex h-10 items-center rounded-full bg-rm-primary px-[18px] text-[14px] font-medium text-rm-bg transition-colors hover:bg-rm-accent-deep hover:text-white"
+            className="inline-flex h-10 items-center rounded-full border border-rm-border-strong px-[18px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-surface"
           >
             無料で始める
           </a>
         </div>
 
-        <div className="flex items-center gap-3 sm:hidden">
+        <div className="flex items-center gap-2 sm:hidden">
+          <a
+            href="https://kanri.roomly.jp/login?demo=1"
+            className="inline-flex h-9 items-center rounded-full bg-rm-accent-deep px-[14px] text-[13px] font-medium text-white"
+          >
+            デモを試す
+          </a>
           <button
             onClick={toggleTheme}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rm-border-strong text-rm-text-secondary"

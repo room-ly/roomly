@@ -48,6 +48,23 @@ export default function PricingPage() {
           <p className="mt-5 text-[16px] text-rm-text-secondary">
             区画数に応じた分かりやすい料金。全プランで全機能が使えます。
           </p>
+          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
+            <a
+              href="https://kanri.roomly.jp/login?demo=1"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-rm-accent-deep px-[24px] text-[15px] font-medium text-white transition-colors hover:opacity-90"
+            >
+              会員登録不要でデモを試す
+            </a>
+            <a
+              href="https://kanri.roomly.jp/signup"
+              className="inline-flex h-12 items-center justify-center rounded-full border border-rm-border-strong px-[24px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-surface"
+            >
+              無料で始める
+            </a>
+          </div>
+          <p className="mt-3 text-[13px] text-rm-text-muted">
+            ログイン不要・所要時間1分でデモ環境を体験できます
+          </p>
         </div>
       </section>
 
