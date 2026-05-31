@@ -76,77 +76,21 @@ function readAttribution(): Record<string, string> | null {
   return Object.keys(result).length > 0 ? result : null;
 }
 
-// localStorage に最後に取得した profile をキャッシュしておく。
-// TOKEN_REFRESHED や一時的なRLS失敗で fetchProfile がコケた時に、admin → viewer に
-// 降格して編集ボタンが消える事故を防ぐ。同じ auth user id のものだけ復元する。
-const PROFILE_CACHE_KEY = "roomly_profile_cache_v1";
-
-function loadCachedProfile(authUserId: string): User | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(PROFILE_CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as User & { _id?: string };
-    if (parsed.id !== authUserId) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function saveCachedProfile(profile: User) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
-  } catch {
-    // 保存失敗は無視
-  }
-}
-
 // Supabase Auth ユーザーから public.users の情報を取得
-// 一時的なRLS/ネットワーク失敗で role がフォールバック値に落ちると、admin ユーザーでも
-// 編集ボタンが消える事故が起きるので、失敗時はリトライ→キャッシュ→viewerの順でフォールバック
 async function fetchProfile(authUser: SupabaseUser): Promise<User | null> {
-  let lastError: unknown = null;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const { data, error } = await supabase
-      .from("users")
-      .select("id, name, email, role, company_id, is_active")
-      .eq("id", authUser.id)
-      .single();
+  const { data } = await supabase
+    .from("users")
+    .select("id, name, email, role, company_id, is_active")
+    .eq("id", authUser.id)
+    .single();
 
-    if (!error && data && data.is_active !== false) {
-      const profile: User = {
-        id: data.id,
-        name: data.name,
-        email: data.email,
-        role: data.role,
-        company_id: data.company_id,
-      };
-      saveCachedProfile(profile);
-      return profile;
-    }
-    lastError = error;
-    if (data?.is_active === false) break; // 明示的にinactiveなら即フォールバック
-    await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
-  }
-
-  // リトライ全失敗時はキャッシュを優先（直前のセッションのroleを引き継ぐ）
-  const cached = loadCachedProfile(authUser.id);
-  if (cached) {
-    console.warn("fetchProfile failed, using cached profile:", lastError);
-    return cached;
-  }
-
-  // キャッシュも無い場合のみ viewer フォールバック
-  console.warn("fetchProfile failed and no cache, using fallback (viewer):", lastError);
-  const email = authUser.email || "";
+  if (!data || data.is_active === false) return null;
   return {
-    id: authUser.id,
-    name: authUser.user_metadata?.name || email.split("@")[0] || "",
-    email,
-    role: "viewer",
-    company_id: "",
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    role: data.role,
+    company_id: data.company_id,
   };
 }
 
@@ -157,89 +101,29 @@ export function AuthProvider({
   children: React.ReactNode;
   initialUser?: User | null;
 }) {
-  // SSR で取得済みの profile を初期値にする。これがあれば初回レンダリングから
-  // 編集ボタンの表示判定が確定するので「一瞬消える」事象が発生しない。
+  // 初期値は SSR で確定済みの profile。これにより初回レンダリングから user/role が
+  // 入っているので usePermission が即正しい値を返し、編集ボタンが一瞬消える事故が起きない
   const [user, setUser] = useState<User | null>(initialUser);
   const [isLoading, setIsLoading] = useState(initialUser === null);
-
-  // SSRで取得した初期値はキャッシュにも書いておく（クライアント遷移後のフォールバック源）
-  useEffect(() => {
-    if (initialUser) saveCachedProfile(initialUser);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
 
-    // INITIAL_SESSION の発火タイミングに依らず、マウント直後に getSession() で
-    // セッションがあれば即 profile を取得する。これを待たないとレンダリング初回で
-    // user=null となり、usePermission が全て false を返して編集ボタン等が消える
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (cancelled) return;
-      if (session?.user) {
-        // まずキャッシュで即埋めてレンダリング初回で編集ボタンが消えないようにする
-        const cached = loadCachedProfile(session.user.id);
-        if (cached && !cancelled) {
-          setUser(cached);
-          setIsLoading(false);
-        }
-        const profile = await fetchProfile(session.user);
-        if (!cancelled && profile) {
-          // 取得済み role が admin/manager/staff なのに viewer にだけ降格するパターンを防ぐ
-          setUser((prev) => {
-            if (
-              prev &&
-              prev.id === profile.id &&
-              prev.role !== "viewer" &&
-              profile.role === "viewer"
-            ) {
-              return prev;
-            }
-            return profile;
-          });
-          setIsLoading(false);
-        }
-      } else {
-        setIsLoading(false);
-      }
-    })();
-
+    // クライアント側では SIGNED_IN / SIGNED_OUT だけ拾えば十分。
+    // 初期値は SSR から渡っており、TOKEN_REFRESHED で role が変わることはない
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (
-        (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") &&
-        session?.user
-      ) {
+      if (event === "SIGNED_IN" && session?.user) {
         const profile = await fetchProfile(session.user);
-        if (cancelled || !profile) return;
-        setUser((prev) => {
-          // 既に高い権限で取れている場合、viewer 降格は無視する（一時的な fetch 失敗対策）
-          if (
-            prev &&
-            prev.id === profile.id &&
-            prev.role !== "viewer" &&
-            profile.role === "viewer"
-          ) {
-            return prev;
-          }
-          return profile;
-        });
-        setIsLoading(false);
-      } else if (event === "INITIAL_SESSION" && !session) {
-        if (!cancelled) setIsLoading(false);
-      } else if (event === "SIGNED_OUT") {
         if (!cancelled) {
-          setUser(null);
-          if (typeof window !== "undefined") {
-            try {
-              window.localStorage.removeItem(PROFILE_CACHE_KEY);
-            } catch {
-              // 無視
-            }
-          }
+          setUser(profile);
+          setIsLoading(false);
         }
+      } else if (event === "SIGNED_OUT") {
+        if (!cancelled) setUser(null);
+      } else if (event === "INITIAL_SESSION") {
+        if (!cancelled) setIsLoading(false);
       }
     });
 
