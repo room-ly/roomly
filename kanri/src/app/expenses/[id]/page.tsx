@@ -67,13 +67,7 @@ export default async function ExpenseDetailPage({
             <h1 className="detail-title">{expense.description}</h1>
             <div className="detail-kana">
               {expense.expense_date} —{" "}
-              {expense.property?.id ? (
-                <Link href={`/properties/${expense.property.id}`} className="rlink">
-                  {expense.property.name}
-                </Link>
-              ) : (
-                "物件未指定"
-              )}
+              {expense.property?.name || "物件未指定"}
             </div>
           </div>
           <div style={{ marginLeft: 8, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
@@ -275,11 +269,7 @@ export default async function ExpenseDetailPage({
                 {expense.case && (
                   <div className="field">
                     <div className="field-label mono">紐付け対応案件</div>
-                    <div className="field-value field-plain">
-                      <Link href={`/cases/${expense.case.id}`} className="rlink">
-                        {expense.case.title}
-                      </Link>
-                    </div>
+                    <div className="field-value field-plain">{expense.case.title}</div>
                   </div>
                 )}
                 {expense.invoice_number && (
@@ -404,6 +394,25 @@ export default async function ExpenseDetailPage({
                     <div className="field-value field-plain">
                       <Link href={`/tenants/${expense.contract.tenant.id}`} className="rlink">
                         {expense.contract.tenant.name}
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {expense.case && (
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>対応案件</h2>
+              </div>
+              <div className="section-body">
+                <div className="kv-list">
+                  <div className="field">
+                    <div className="field-label mono">案件</div>
+                    <div className="field-value">
+                      <Link href={`/cases/${expense.case.id}`} className="rlink">
+                        {expense.case.title}
                       </Link>
                     </div>
                   </div>

@@ -1016,7 +1016,7 @@ table {
 
 .dash2-chart-legend { display: flex; gap: 14px; }
 .legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-3); }
-.legend-line { display: inline-block; width: 16px; height: 2px; }
+.legend-line { display: inline-block; width: 16px; height: 0; border-top: 1px dashed var(--ink-3); }
 .legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 99px; }
 
 .dash2-chart {
@@ -1032,15 +1032,18 @@ table {
 .dash2-chart-area { position: relative; }
 .dash2-chart-target {
   position: absolute; left: 0; right: 0;
-  /* 棒グラフ(.dash2-chart-bars)が inset:24px で配置されているため、
-     目標ラインも同じ座標系に合わせる。値の%は内側領域(top:24px〜bottom:24px)基準で計算する */
-  top: calc(24px + (100% - 48px) * (1 - 0.95));
-  border-top: 1px dashed var(--accent); height: 0; z-index: 1;
+  /* 棒グラフ(.dash2-chart-bars)が inset:24px で配置されているため、目標ラインも同じ座標系に合わせる。
+     位置は会社設定値(--target-pos: 0〜100)で可変。内側領域(top:24px〜bottom:24px)基準で計算する */
+  top: calc(24px + (100% - 48px) * (1 - var(--target-pos, 95) / 100));
+  border-top: 1px dashed var(--accent-deep); height: 0;
+  /* 棒(z-index:2)より前面に出して、回収率が高くても目標線が常に見えるようにする */
+  z-index: 4; pointer-events: none;
 }
-.dash2-chart-target::after {
-  content: "目標 95%"; position: absolute; right: 0; top: -16px;
-  font-size: 9px; color: var(--accent-deep); font-family: var(--font-mono);
-  background: var(--surface); padding: 0 4px;
+.dash2-chart-target-label {
+  position: absolute; right: 0; top: -7px;
+  font-size: 9px; color: var(--accent-deep); font-weight: 600;
+  background: var(--surface); padding: 0 5px; border-radius: 3px;
+  white-space: nowrap; line-height: 14px;
 }
 .dash2-chart-bars { position: absolute; inset: 24px 0 24px; display: flex; gap: 6px; align-items: flex-end; }
 .dash2-chart-bar-col { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; position: relative; }
@@ -1054,11 +1057,39 @@ table {
 .dash2-chart-bar-col:hover .dash2-chart-val { color: var(--ink); }
 .dash2-chart-bar {
   width: 100%; background: var(--accent); border-radius: 3px 3px 0 0;
-  transition: height .4s ease-out, background .15s; margin-top: auto; z-index: 2; position: relative;
+  transition: height .4s ease-out, filter .15s; margin-top: auto; z-index: 2; position: relative;
 }
-.dash2-chart-bar.is-last { background: var(--ink); }
-.dash2-chart-bar-col:hover .dash2-chart-bar { background: var(--accent-deep); }
-.dash2-chart-bar-col:hover .dash2-chart-bar.is-last { background: var(--ink); }
+/* 目標達成=アクセント色 / 未達=警告色 で一目で分かるようにする */
+.dash2-chart-bar.is-achieved { background: var(--accent); }
+.dash2-chart-bar.is-below { background: var(--warn); }
+/* 当月(最新)は確定値でないため、塗りつぶしでなく縞模様で「進行中」を示す */
+.dash2-chart-bar.is-last {
+  background-image: repeating-linear-gradient(
+    -45deg, transparent, transparent 5px,
+    rgba(255, 255, 255, 0.18) 5px, rgba(255, 255, 255, 0.18) 10px
+  );
+}
+.dash2-chart-bar-col:hover .dash2-chart-bar { filter: brightness(0.92); }
+
+/* ホバー金額ツールチップ */
+.dash2-chart-tip {
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%) translateY(4px);
+  background: var(--ink); color: var(--bg); border-radius: 8px; padding: 9px 11px;
+  min-width: 148px; box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  opacity: 0; visibility: hidden; transition: opacity .15s, transform .15s;
+  z-index: 10; pointer-events: none;
+}
+.dash2-chart-tip::after {
+  content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: var(--ink);
+}
+.dash2-chart-bar-col:hover .dash2-chart-tip { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+.dash2-chart-tip-title { font-size: 11px; font-weight: 700; margin-bottom: 5px; opacity: .85; }
+.dash2-chart-tip-row { display: flex; justify-content: space-between; gap: 14px; font-size: 11px; line-height: 1.7; }
+.dash2-chart-tip-row > span:first-child { opacity: .7; }
+
+.dash2-chart-foot { margin-top: 10px; font-size: 12px; color: var(--ink-3); }
+.dash2-chart-foot strong { color: var(--ink); font-weight: 700; }
 .dash2-chart-label { position: absolute; bottom: -18px; font-size: 10px; color: var(--ink-4); }
 .dash2-chart-label.is-last { color: var(--ink); font-weight: 600; }
 

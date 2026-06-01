@@ -175,15 +175,21 @@ export default async function DashboardPage() {
       )}
 
       {/* Chart */}
-      {monthlyTrend.length > 0 && (
+      {monthlyTrend.length > 0 && (() => {
+        const targetRate = s.rent_collection_target_rate ?? 95;
+        // 目標線の縦位置（%）。100%付近でも見切れないよう上端から少し余白を確保する
+        const targetPos = Math.min(targetRate, 98);
+        const achievedCount = monthlyTrend.filter((m: Record<string, any>) => m.collectionRate >= targetRate).length;
+        return (
         <div className="dash2-section">
           <div className="dash2-section-head">
             <h2 className="dash2-section-title">
               家賃回収率<span className="dash2-section-title-sub">月次推移</span>
             </h2>
             <div className="dash2-chart-legend">
-              <span className="legend-item"><span className="legend-dot" style={{ background: "var(--accent)" }} /> 回収率</span>
-              <span className="legend-item"><span className="legend-line" style={{ background: "var(--accent)", borderTop: "1px dashed var(--accent)" }} /> 目標 95%</span>
+              <span className="legend-item"><span className="legend-dot" style={{ background: "var(--accent)" }} /> 目標達成</span>
+              <span className="legend-item"><span className="legend-dot" style={{ background: "var(--warn)" }} /> 未達</span>
+              <span className="legend-item"><span className="legend-line" /> 目標 {targetRate}%</span>
             </div>
           </div>
           <div className="dash2-chart">
@@ -195,19 +201,46 @@ export default async function DashboardPage() {
               <span>0%</span>
             </div>
             <div className="dash2-chart-area">
-              <div className="dash2-chart-target" />
+              {/* 目標ライン: 棒の前面(z-index)に描き、100%付近でも常に見える */}
+              <div className="dash2-chart-target" style={{ ["--target-pos" as string]: `${targetPos}` }}>
+                <span className="dash2-chart-target-label mono">目標 {targetRate}%</span>
+              </div>
               <div className="dash2-chart-bars">
                 {monthlyTrend.map((m: Record<string, any>, i: number) => {
                   const isLast = i === monthlyTrend.length - 1;
+                  const achieved = m.collectionRate >= targetRate;
                   return (
                     <div key={m.month} className="dash2-chart-bar-col">
                       <span className={`dash2-chart-val mono${isLast ? " is-last" : ""}`}>
                         {m.collectionRate}%
                       </span>
                       <div
-                        className={`dash2-chart-bar${isLast ? " is-last" : ""}`}
+                        className={`dash2-chart-bar${isLast ? " is-last" : ""}${achieved ? " is-achieved" : " is-below"}`}
                         style={{ height: `${m.collectionRate}%` }}
-                      />
+                      >
+                        {/* ホバー時に金額の内訳を表示 */}
+                        <div className="dash2-chart-tip">
+                          <div className="dash2-chart-tip-title mono">{m.label}</div>
+                          <div className="dash2-chart-tip-row">
+                            <span>回収率</span>
+                            <span className="mono" style={{ color: achieved ? "var(--accent)" : "var(--warn)" }}>{m.collectionRate}%</span>
+                          </div>
+                          <div className="dash2-chart-tip-row">
+                            <span>入金</span>
+                            <span className="mono">¥{Number(m.paidAmount).toLocaleString()}</span>
+                          </div>
+                          <div className="dash2-chart-tip-row">
+                            <span>請求</span>
+                            <span className="mono">¥{Number(m.totalAmount).toLocaleString()}</span>
+                          </div>
+                          {m.totalAmount - m.paidAmount > 0 && (
+                            <div className="dash2-chart-tip-row">
+                              <span>未回収</span>
+                              <span className="mono" style={{ color: "var(--danger)" }}>¥{Number(m.totalAmount - m.paidAmount).toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                       <span className={`dash2-chart-label mono${isLast ? " is-last" : ""}`}>
                         {m.label}
                       </span>
@@ -217,8 +250,12 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
+          <p className="dash2-chart-foot">
+            直近{monthlyTrend.length}ヶ月のうち <strong>{achievedCount}ヶ月</strong> が目標 {targetRate}% を達成
+          </p>
         </div>
-      )}
+        );
+      })()}
 
       {/* Pipeline */}
       <div className="dash2-section">

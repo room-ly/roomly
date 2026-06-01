@@ -8,9 +8,11 @@ export async function getDashboardData() {
   // 満了間近とみなす日数は会社設定（contract_alert_days）に従う。未設定なら90日。
   const { data: companyRow } = await supabase
     .from("companies")
-    .select("contract_alert_days")
+    .select("contract_alert_days, rent_collection_target_rate")
     .single();
   const alertDays = companyRow?.contract_alert_days ?? 90;
+  // 家賃回収率の目標値（%）。チャートの目標ライン表示に使う。未設定なら95。
+  const rentTargetRate = companyRow?.rent_collection_target_rate ?? 95;
   const inAlertDays = new Date(now.getTime() + alertDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const staleDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -135,6 +137,7 @@ export async function getDashboardData() {
       monthly_expenses: monthlyExpenseTotal,
       pending_remittances: pendingRemittances.length,
       contract_alert_days: alertDays,
+      rent_collection_target_rate: rentTargetRate,
     },
     overdueBillings,
     activeCases,

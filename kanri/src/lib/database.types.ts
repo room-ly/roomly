@@ -724,6 +724,7 @@ export type Database = {
           plan: string
           postal_code: string | null
           referrer: string | null
+          rent_collection_target_rate: number
           signup_gclid: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -760,6 +761,7 @@ export type Database = {
           plan?: string
           postal_code?: string | null
           referrer?: string | null
+          rent_collection_target_rate?: number
           signup_gclid?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -796,6 +798,7 @@ export type Database = {
           plan?: string
           postal_code?: string | null
           referrer?: string | null
+          rent_collection_target_rate?: number
           signup_gclid?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
