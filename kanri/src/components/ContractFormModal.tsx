@@ -372,6 +372,48 @@ export default function ContractFormModal({
               </div>
             </fieldset>
 
+            {/* 更新後の条件（契約更新の予約）。既存契約の編集時のみ表示 */}
+            {isEdit && (
+              <fieldset className="space-y-3 pt-3 border-t border-line">
+                <legend className="text-[11px] font-mono tracking-wider uppercase text-ink-4 mb-2">更新後の条件（契約更新）</legend>
+                <p className="text-[12px] text-ink-4 -mt-1">
+                  更新後の家賃や期間を予約できます。<strong>更新発効日</strong>が来ると、家賃請求は自動で更新後の金額に切り替わります。空欄の項目は現行条件のまま継続します。
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium text-ink-2 block mb-1">更新発効日</label>
+                    <input name="renewal_effective_date" type="date" defaultValue={editData?.renewal_effective_date || ""} className="input" />
+                    <p className="text-[11px] text-ink-4 mt-1">この日からの新条件。通常は現契約終了日の翌日。</p>
+                    {errors.renewal_effective_date && <p className="text-danger text-sm mt-1">{errors.renewal_effective_date[0]}</p>}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-ink-2 block mb-1">更新後の契約終了日</label>
+                    <input name="renewal_end_date" type="date" defaultValue={editData?.renewal_end_date || ""} className="input" />
+                    {errors.renewal_end_date && <p className="text-danger text-sm mt-1">{errors.renewal_end_date[0]}</p>}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-sm font-medium text-ink-2 block mb-1">更新後の賃料</label>
+                    <input name="renewal_rent" type="number" defaultValue={editData?.renewal_rent ?? ""} className="input" placeholder={editData?.rent ? `現行: ${editData.rent}` : "例: 80000"} />
+                    {errors.renewal_rent && <p className="text-danger text-sm mt-1">{errors.renewal_rent[0]}</p>}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-ink-2 block mb-1">更新後の管理費</label>
+                    <input name="renewal_management_fee" type="number" defaultValue={editData?.renewal_management_fee ?? ""} className="input" placeholder={editData?.management_fee != null ? `現行: ${editData.management_fee}` : "例: 5000"} />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-ink-2 block mb-1">次回更新料</label>
+                    <input name="renewal_fee_next" type="number" defaultValue={editData?.renewal_fee_next ?? ""} className="input" placeholder="例: 80000" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">更新メモ</label>
+                  <textarea name="renewal_notes" defaultValue={editData?.renewal_notes || ""} className="input" rows={2} placeholder="保証会社の更新、特約変更など" />
+                </div>
+              </fieldset>
+            )}
+
             <div className="flex justify-end gap-2 pt-3">
               <button type="button" onClick={onClose} className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-bg-2 transition-colors">
                 キャンセル

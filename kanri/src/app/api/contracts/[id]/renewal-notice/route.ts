@@ -45,14 +45,16 @@ export async function GET(
     const property = unit?.property as Record<string, string> | null;
     const today = new Date().toISOString().slice(0, 10);
 
-    // 新しい契約期間の提案: 現契約と同じ期間（年数）で end_date + 1日 から
+    // 更新後条件の予約があればそれを使う。なければ現契約と同じ期間（年数）で end_date + 1日 から提案。
     const newStart = (() => {
+      if (contract.renewal_effective_date) return contract.renewal_effective_date;
       if (!contract.end_date) return "";
       const d = new Date(contract.end_date);
       d.setDate(d.getDate() + 1);
       return d.toISOString().slice(0, 10);
     })();
     const newEnd = (() => {
+      if (contract.renewal_end_date) return contract.renewal_end_date;
       if (!contract.start_date || !contract.end_date) return "";
       const start = new Date(contract.start_date);
       const end = new Date(contract.end_date);
@@ -61,6 +63,14 @@ export async function GET(
       d.setFullYear(d.getFullYear() + years);
       return d.toISOString().slice(0, 10);
     })();
+    // 更新後の賃料・管理費（予約があればそちら、なければ現行を継続）
+    const newRentNum = contract.renewal_rent != null ? Number(contract.renewal_rent) : Number(contract.rent || 0);
+    const newMgmtNum = contract.renewal_management_fee != null ? Number(contract.renewal_management_fee) : Number(contract.management_fee || 0);
+    const newRent = newRentNum.toLocaleString();
+    const newManagementFee = newMgmtNum.toLocaleString();
+    const newMonthlyTotal = (newRentNum + newMgmtNum).toLocaleString();
+    const rentChanged = newRentNum !== Number(contract.rent || 0);
+    const mgmtChanged = newMgmtNum !== Number(contract.management_fee || 0);
 
     const propertyName = escapeHtml(property?.name ?? "");
     const unitNumber = escapeHtml(unit?.unit_number ?? "");
@@ -81,6 +91,10 @@ export async function GET(
     const renewalFee = contract.renewal_fee_unit === "months"
       ? `賃料の${Number(contract.renewal_fee || 0)}ヶ月分（¥${renewalFeeJpy}）`
       : `¥${renewalFeeJpy}`;
+    // 更新後の更新料: 予約された renewal_fee_next があればそれを優先、なければ現行の更新料設定を踏襲
+    const nextRenewalFee = contract.renewal_fee_next != null
+      ? `¥${Number(contract.renewal_fee_next || 0).toLocaleString()}`
+      : renewalFee;
     const companyName = escapeHtml(company?.name ?? "");
     const companyPostalCode = escapeHtml(company?.postal_code ?? "");
     const companyAddress = escapeHtml(company?.address ?? "");
@@ -230,10 +244,10 @@ export async function GET(
   <table>
     <tbody>
       <tr><th>新契約期間</th><td>${newStartJp} 〜 ${newEndJp}</td></tr>
-      <tr><th>賃料</th><td class="amount">¥${rent}</td></tr>
-      <tr><th>管理費・共益費</th><td class="amount">¥${managementFee}</td></tr>
-      <tr><th>月額合計</th><td class="amount"><strong>¥${monthlyTotal}</strong></td></tr>
-      <tr><th>更新料</th><td class="amount">${renewalFee}</td></tr>
+      <tr><th>賃料</th><td class="amount">${rentChanged ? `<span style="color:#999;text-decoration:line-through;margin-right:8px;">¥${rent}</span>` : ""}¥${newRent}</td></tr>
+      <tr><th>管理費・共益費</th><td class="amount">${mgmtChanged ? `<span style="color:#999;text-decoration:line-through;margin-right:8px;">¥${managementFee}</span>` : ""}¥${newManagementFee}</td></tr>
+      <tr><th>月額合計</th><td class="amount"><strong>¥${newMonthlyTotal}</strong></td></tr>
+      <tr><th>更新料</th><td class="amount">${nextRenewalFee}</td></tr>
     </tbody>
   </table>
 

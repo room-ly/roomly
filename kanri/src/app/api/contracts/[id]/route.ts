@@ -30,6 +30,8 @@ export async function PUT(
       move_out_date: parsed.data.move_out_date || null,
       signed_date: parsed.data.signed_date || null,
       important_explanation_date: parsed.data.important_explanation_date || null,
+      renewal_effective_date: parsed.data.renewal_effective_date || null,
+      renewal_end_date: parsed.data.renewal_end_date || null,
     };
 
     const { data: oldContract } = await supabase

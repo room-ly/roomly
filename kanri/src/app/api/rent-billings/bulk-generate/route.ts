@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { createNotification } from "@/lib/notify";
+import { effectiveTerms } from "@/lib/billing-status";
 
 // 翌月末日を計算する
 function getNextMonthEnd(billingMonth: string): string {
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     // 1. active契約を全件取得（rent, management_fee付き）
     const { data: contracts, error: contractError } = await supabase
       .from("contracts")
-      .select("id, rent, management_fee")
+      .select("id, rent, management_fee, end_date, renewal_effective_date, renewal_rent, renewal_management_fee, renewal_end_date")
       .eq("status", "active")
       .eq("company_id", company_id);
 
@@ -75,16 +76,20 @@ export async function POST(request: NextRequest) {
     // 3. 未生成分を抽出
     const toInsert = contracts
       .filter((c) => !existingContractIds.has(c.id))
-      .map((c) => ({
-        contract_id: c.id,
-        billing_month,
-        rent: c.rent ?? 0,
-        management_fee: c.management_fee ?? 0,
-        total_amount: (c.rent ?? 0) + (c.management_fee ?? 0),
-        due_date: getNextMonthEnd(billing_month),
-        status: "unpaid" as const,
-        company_id,
-      }));
+      .map((c) => {
+        // billing_month 時点で有効な賃料・管理費（更新発効日以降は更新後の値）
+        const { rent, management_fee } = effectiveTerms(c, billing_month);
+        return {
+          contract_id: c.id,
+          billing_month,
+          rent,
+          management_fee,
+          total_amount: rent + management_fee,
+          due_date: getNextMonthEnd(billing_month),
+          status: "unpaid" as const,
+          company_id,
+        };
+      });
 
     const skipped = contracts.length - toInsert.length;
 

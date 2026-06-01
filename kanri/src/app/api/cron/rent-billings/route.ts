@@ -5,6 +5,7 @@ import {
   isDayAfterClosing,
   billingMonthForClosing,
   calcDueDateWithCycle,
+  effectiveTerms,
 } from "@/lib/billing-status";
 
 // Vercel Cron から日次で叩かれる。「昨日が締日だった active契約」について
@@ -26,6 +27,10 @@ type Contract = {
   closing_day: number | null;
   payment_due_day: number | null;
   payment_month_offset: number | null;
+  renewal_effective_date: string | null;
+  renewal_rent: number | string | null;
+  renewal_management_fee: number | string | null;
+  renewal_end_date: string | null;
 };
 
 async function processRentBillings(supabase: ReturnType<typeof createAdminClient>) {
@@ -36,7 +41,7 @@ async function processRentBillings(supabase: ReturnType<typeof createAdminClient
   const { data: contracts, error: contractError } = await supabase
     .from("contracts")
     .select(
-      "id, company_id, start_date, end_date, move_out_date, rent, management_fee, closing_day, payment_due_day, payment_month_offset"
+      "id, company_id, start_date, end_date, move_out_date, rent, management_fee, closing_day, payment_due_day, payment_month_offset, renewal_effective_date, renewal_rent, renewal_management_fee, renewal_end_date"
     )
     .eq("status", "active");
 
@@ -51,7 +56,9 @@ async function processRentBillings(supabase: ReturnType<typeof createAdminClient
   const targets = (contracts as Contract[]).filter((c) => {
     if (!isDayAfterClosing(now, c.closing_day)) return false;
     if (c.start_date && c.start_date > todayStr) return false;
-    const cutoff = c.move_out_date ?? c.end_date;
+    // 更新後の終了日があればそちらを契約満了の基準にする
+    const contractEnd = effectiveTerms(c, todayStr).end_date;
+    const cutoff = c.move_out_date ?? contractEnd;
     if (cutoff && cutoff < todayStr) return false;
     return true;
   });
@@ -93,8 +100,8 @@ async function processRentBillings(supabase: ReturnType<typeof createAdminClient
       skipped++;
       continue;
     }
-    const rent = Number(c.rent) || 0;
-    const mgmt = Number(c.management_fee) || 0;
+    // billing_month 時点で有効な賃料・管理費（更新発効日以降は更新後の値）
+    const { rent, management_fee: mgmt } = effectiveTerms(c, billingMonth);
     toInsert.push({
       contract_id: c.id,
       billing_month: billingMonth,

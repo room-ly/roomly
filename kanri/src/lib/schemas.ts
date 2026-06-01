@@ -268,6 +268,13 @@ export const contractSchema = z
       message: "状態を選択してください",
     }),
     notes: optionalString,
+    // 契約更新（更新後条件の予約）。発効日以降、家賃などがこの値に切り替わる。
+    renewal_effective_date: optionalString,
+    renewal_rent: optionalNumber,
+    renewal_management_fee: optionalNumber,
+    renewal_end_date: optionalString,
+    renewal_fee_next: optionalNumber,
+    renewal_notes: optionalString,
   })
   .refine(
     (data) => {
@@ -279,6 +286,19 @@ export const contractSchema = z
     {
       message: "契約終了日は開始日以降にしてください",
       path: ["end_date"],
+    }
+  )
+  .refine(
+    (data) => {
+      // 更新後の終了日は、更新発効日以降であること
+      if (data.renewal_end_date && data.renewal_effective_date) {
+        return new Date(data.renewal_end_date) >= new Date(data.renewal_effective_date);
+      }
+      return true;
+    },
+    {
+      message: "更新後の契約終了日は更新発効日以降にしてください",
+      path: ["renewal_end_date"],
     }
   );
 

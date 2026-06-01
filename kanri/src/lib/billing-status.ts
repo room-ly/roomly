@@ -97,6 +97,36 @@ export function isDayAfterClosing(today: Date, closingDay: number | null | undef
   return d === effective;
 }
 
+// 契約更新（更新後条件の予約）を考慮し、指定時点で「有効な賃料・管理費・契約終了日」を返す。
+// renewal_effective_date 以降は renewal_* の値（設定があれば）を使う。
+// asOf は判定の基準日（YYYY-MM-DD）。家賃請求では billing_month を渡す。
+export interface ContractTermsLike {
+  rent: number | string | null;
+  management_fee?: number | string | null;
+  end_date?: string | null;
+  renewal_effective_date?: string | null;
+  renewal_rent?: number | string | null;
+  renewal_management_fee?: number | string | null;
+  renewal_end_date?: string | null;
+}
+
+export function effectiveTerms(
+  c: ContractTermsLike,
+  asOf: string,
+): { rent: number; management_fee: number; end_date: string | null } {
+  const renewed =
+    !!c.renewal_effective_date && asOf >= c.renewal_effective_date.slice(0, 10);
+  const rent =
+    renewed && c.renewal_rent != null ? Number(c.renewal_rent) : Number(c.rent || 0);
+  const management_fee =
+    renewed && c.renewal_management_fee != null
+      ? Number(c.renewal_management_fee)
+      : Number(c.management_fee || 0);
+  const end_date =
+    renewed && c.renewal_end_date ? c.renewal_end_date : c.end_date ?? null;
+  return { rent, management_fee, end_date };
+}
+
 // 「請求対象月（billing_month）」を、cron 実行日（締日の翌日）から逆算する。
 // today は締日の翌日なので、「昨日が属する月」が請求対象月になる。
 // 例: today=2026-07-01, closing_day=31 → 昨日=2026-06-30 → "2026-06-01"

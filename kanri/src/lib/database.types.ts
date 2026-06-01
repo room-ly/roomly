@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       affiliate_clicks: {
@@ -933,8 +908,14 @@ export type Database = {
           payment_due_day: number | null
           payment_method: string | null
           payment_month_offset: number
+          renewal_effective_date: string | null
+          renewal_end_date: string | null
           renewal_fee: number
+          renewal_fee_next: number | null
           renewal_fee_unit: string
+          renewal_management_fee: number | null
+          renewal_notes: string | null
+          renewal_rent: number | null
           rent: number
           signed_date: string | null
           special_terms: string | null
@@ -968,8 +949,14 @@ export type Database = {
           payment_due_day?: number | null
           payment_method?: string | null
           payment_month_offset?: number
+          renewal_effective_date?: string | null
+          renewal_end_date?: string | null
           renewal_fee?: number
+          renewal_fee_next?: number | null
           renewal_fee_unit?: string
+          renewal_management_fee?: number | null
+          renewal_notes?: string | null
+          renewal_rent?: number | null
           rent: number
           signed_date?: string | null
           special_terms?: string | null
@@ -1003,8 +990,14 @@ export type Database = {
           payment_due_day?: number | null
           payment_method?: string | null
           payment_month_offset?: number
+          renewal_effective_date?: string | null
+          renewal_end_date?: string | null
           renewal_fee?: number
+          renewal_fee_next?: number | null
           renewal_fee_unit?: string
+          renewal_management_fee?: number | null
+          renewal_notes?: string | null
+          renewal_rent?: number | null
           rent?: number
           signed_date?: string | null
           special_terms?: string | null
@@ -3314,9 +3307,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

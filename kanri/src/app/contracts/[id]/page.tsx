@@ -186,6 +186,64 @@ export default async function ContractDetailPage({
             </div>
           </div>
 
+          {/* 更新後の条件（契約更新の予約） */}
+          {contract.renewal_effective_date && (
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>更新後の条件</h2>
+                <span className="desc">{contract.renewal_effective_date} から適用</span>
+              </div>
+              <div className="section-body">
+                <div className="kv-grid">
+                  <div className="field">
+                    <div className="field-label mono">賃料</div>
+                    <div className="field-value field-plain num">
+                      {contract.renewal_rent != null ? (
+                        <>
+                          <span style={{ color: "var(--ink-4)", textDecoration: "line-through", marginRight: 8 }}>¥{Number(contract.rent).toLocaleString()}</span>
+                          ¥{Number(contract.renewal_rent).toLocaleString()}
+                        </>
+                      ) : (
+                        <span style={{ color: "var(--ink-3)" }}>変更なし（¥{Number(contract.rent).toLocaleString()}）</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">管理費</div>
+                    <div className="field-value field-plain num">
+                      {contract.renewal_management_fee != null ? (
+                        <>
+                          <span style={{ color: "var(--ink-4)", textDecoration: "line-through", marginRight: 8 }}>¥{Number(contract.management_fee).toLocaleString()}</span>
+                          ¥{Number(contract.renewal_management_fee).toLocaleString()}
+                        </>
+                      ) : (
+                        <span style={{ color: "var(--ink-3)" }}>変更なし</span>
+                      )}
+                    </div>
+                  </div>
+                  {contract.renewal_end_date && (
+                    <div className="field">
+                      <div className="field-label mono">更新後の契約終了日</div>
+                      <div className="field-value field-plain mono">{contract.renewal_effective_date} 〜 {contract.renewal_end_date}</div>
+                    </div>
+                  )}
+                  {Number(contract.renewal_fee_next) > 0 && (
+                    <div className="field">
+                      <div className="field-label mono">次回更新料</div>
+                      <div className="field-value num">¥{Number(contract.renewal_fee_next).toLocaleString()}</div>
+                    </div>
+                  )}
+                </div>
+                {contract.renewal_notes && (
+                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--line)" }}>
+                    <span className="field-label mono">更新メモ</span>
+                    <p style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{contract.renewal_notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* 請求履歴 */}
           {billings.length > 0 && (
             <div className="section">
