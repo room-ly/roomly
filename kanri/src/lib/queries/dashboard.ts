@@ -125,6 +125,8 @@ export async function getDashboardData() {
       occupancy_rate: totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 1000) / 10 : 0,
       total_rent_expected: totalExpected,
       total_rent_received: totalReceived,
+      // 今月の請求のうち、まだ入金されていない額（期限前含む＝これから入る見込み）
+      total_rent_unpaid: Math.max(totalExpected - totalReceived, 0),
       collection_rate: totalExpected > 0 ? Math.round((totalReceived / totalExpected) * 1000) / 10 : 0,
       overdue_count: overdueBillings.length,
       overdue_amount: overdueAmount,

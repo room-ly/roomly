@@ -79,7 +79,9 @@ export default async function DashboardPage() {
   // サマリーカードのミニグラフ用データ
   const expenseSeries = monthlyTrend.map((m: Record<string, any>) => Number(m.expenseAmount || 0));
   const hasExpenseTrend = expenseSeries.filter((v: number) => v > 0).length >= 2;
-  const vacancyPct = s.total_units > 0 ? Math.round((s.vacant_units / s.total_units) * 100) : 0;
+  // 今月の未収（請求のうち未入金）。回収進捗 = 入金/請求 をドーナツで表す
+  const unpaidAmount = s.total_rent_unpaid || 0;
+  const collectedPct = totalRentExpected > 0 ? Math.round((totalRentReceived / totalRentExpected) * 100) : 100;
 
   return (
     <>
@@ -158,21 +160,21 @@ export default async function DashboardPage() {
         </div>
         <div className="sum-card sum-card-graph">
           <div className="sum-main">
-            <span className="sum-label mono">空室</span>
+            <span className="sum-label mono">今月の未収</span>
             <span className="sum-value" style={{ fontSize: 16 }}>
-              {s.vacant_units > 0 ? (
-                <Link href="/properties" className="rlink">{s.vacant_units}戸</Link>
-              ) : "0戸"}
+              {unpaidAmount > 0 ? (
+                <Link href="/rent" className="rlink">¥{unpaidAmount.toLocaleString()}</Link>
+              ) : "¥0"}
             </span>
-            <span className="sum-foot mono">全{s.total_units}戸中 {vacancyPct}%</span>
+            <span className="sum-foot mono">回収 {collectedPct}% · 請求¥{totalRentExpected.toLocaleString()}</span>
           </div>
-          {s.total_units > 0 && (
+          {totalRentExpected > 0 && (
             <div className="sum-viz">
               <Donut
-                percent={vacancyPct}
-                id="donut-vac"
-                from={vacancyPct > 0 ? "var(--warn)" : "var(--viz-grad-from)"}
-                to={vacancyPct > 0 ? "#e0a857" : "var(--viz-grad-to)"}
+                percent={collectedPct}
+                id="donut-unpaid"
+                from={unpaidAmount > 0 ? "var(--warn)" : "var(--viz-grad-from)"}
+                to={unpaidAmount > 0 ? "#e0a857" : "var(--viz-grad-to)"}
               />
             </div>
           )}
