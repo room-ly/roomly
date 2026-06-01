@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { SYSTEM_USER_ID } from "@/lib/system-user";
 import { sendFollowupInactive7d } from "@/lib/email-followup";
 
 // Vercel Cron から日次で叩かれる。
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createAdminClient();
+    const supabase = createAdminClient(SYSTEM_USER_ID);
     // email_unsubscribes / email_followup_logs は database.types.ts 未反映なので
     // 該当テーブルへのアクセスは any 経由(型生成は別タスクで一括対応)
     const fromUntyped = (

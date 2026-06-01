@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { SYSTEM_USER_ID } from "@/lib/system-user";
 
 // Vercel Cron から月次で叩かれる。active契約について
 // 契約開始月〜今月までの未生成 rent_billings を埋める。
@@ -160,7 +161,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createAdminClient();
+    const supabase = createAdminClient(SYSTEM_USER_ID);
     const result = await processRentBillings(supabase);
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {

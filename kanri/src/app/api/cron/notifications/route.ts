@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { SYSTEM_USER_ID } from "@/lib/system-user";
 import {
   sendOverdueNotification,
   sendContractExpiryReminder,
@@ -132,7 +133,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createAdminClient();
+    const supabase = createAdminClient(SYSTEM_USER_ID);
     const overdue = await processOverdue(supabase);
     const expiry = await processExpiry(supabase);
     return NextResponse.json({ ok: true, overdue, expiry });

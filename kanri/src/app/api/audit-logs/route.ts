@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { SYSTEM_USER_ID, SYSTEM_USER_DISPLAY, isSystemUserId } from "@/lib/system-user";
 
 interface AuditLogRow {
   id: string;
@@ -40,8 +41,14 @@ export async function GET(request: NextRequest) {
 
     const rows = (data ?? []) as AuditLogRow[];
 
-    // user_idを name に解決（同じ会社の users から）
-    const userIds = Array.from(new Set(rows.map((l) => l.user_id).filter(Boolean))) as string[];
+    // user_idを name に解決（同じ会社の users から）。SYSTEM_USER_ID は users JOIN せず「システム」として返す
+    const userIds = Array.from(
+      new Set(
+        rows
+          .map((l) => l.user_id)
+          .filter((id): id is string => Boolean(id) && !isSystemUserId(id))
+      )
+    );
     let userMap: Record<string, { name: string; email: string }> = {};
     if (userIds.length > 0) {
       const { data: users } = await supabase
@@ -52,6 +59,7 @@ export async function GET(request: NextRequest) {
         (users ?? []).map((u) => [u.id, { name: u.name, email: u.email }])
       );
     }
+    userMap[SYSTEM_USER_ID] = { ...SYSTEM_USER_DISPLAY };
 
     const result = rows.map((l) => ({
       ...l,
