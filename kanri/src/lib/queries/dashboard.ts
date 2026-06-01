@@ -5,7 +5,13 @@ export async function getDashboardData() {
   const supabase = await createClient();
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
-  const in90days = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  // 満了間近とみなす日数は会社設定（contract_alert_days）に従う。未設定なら90日。
+  const { data: companyRow } = await supabase
+    .from("companies")
+    .select("contract_alert_days")
+    .single();
+  const alertDays = companyRow?.contract_alert_days ?? 90;
+  const inAlertDays = new Date(now.getTime() + alertDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const staleDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
   const [
@@ -44,10 +50,10 @@ export async function getDashboardData() {
       .or("priority.in.(high,urgent),created_at.lt." + staleDate),
     supabase
       .from("contracts")
-      .select("id, end_date, tenant:tenants(name), unit:units(unit_number, property_id, property:properties(name)), move_out_requests(id, status, desired_move_out_date)")
+      .select("id, end_date, contract_type, renewal_effective_date, renewal_rent, tenant:tenants(name), unit:units(unit_number, property_id, property:properties(name)), move_out_requests(id, status, desired_move_out_date)")
       .eq("status", "active")
       .gte("end_date", today)
-      .lte("end_date", in90days),
+      .lte("end_date", inAlertDays),
     supabase
       .from("contracts")
       .select("id, tenant:tenants(name), unit:units(unit_number, property:properties(name)), move_out_requests!inner(id, status, desired_move_out_date)")
@@ -128,6 +134,7 @@ export async function getDashboardData() {
       pending_move_outs: pendingMoveOuts.length,
       monthly_expenses: monthlyExpenseTotal,
       pending_remittances: pendingRemittances.length,
+      contract_alert_days: alertDays,
     },
     overdueBillings,
     activeCases,

@@ -361,8 +361,12 @@ export default async function DashboardPage() {
 
         <div className="dash2-table">
           <div className="dash2-table-head">
-            <h3 className="dash2-table-title">契約満了間近（3ヶ月以内）</h3>
+            <h3 className="dash2-table-title">契約満了間近（{s.contract_alert_days}日以内）</h3>
             <div className="dash2-table-meta">
+              {(() => {
+                const unhandled = expiringContracts.filter((c: Record<string, any>) => !c.renewal_effective_date).length;
+                return unhandled > 0 ? <span className="badge badge-warn mono">未対応 {unhandled}件</span> : null;
+              })()}
               <Link href="/contracts?filter=expiring" className="rlink is-muted" style={{ fontSize: 11 }}>すべて見る</Link>
             </div>
           </div>
@@ -375,18 +379,29 @@ export default async function DashboardPage() {
                   <th>入居者</th>
                   <th>物件・部屋</th>
                   <th>満了日</th>
-                  <th>種別</th>
+                  <th>更新</th>
+                  <th style={{ textAlign: "right" }}>案内</th>
                 </tr>
               </thead>
               <tbody>
                 {expiringContracts.map((c: Record<string, any>) => {
                   const href = `/contracts/${c.id}`;
+                  const reserved = !!c.renewal_effective_date;
                   return (
                     <tr key={c.id} className="row-hover row-link">
                       <td><Link href={href} className="strong">{c.tenant?.name}</Link></td>
                       <td><Link href={href} style={{ fontSize: 12, color: "var(--ink-3)" }}>{c.unit?.property?.name} {c.unit?.unit_number}</Link></td>
                       <td><Link href={href} className="mono" style={{ fontSize: 12 }}>{c.end_date}</Link></td>
-                      <td><Link href={href}><StatusBadge status={c.contract_type} /></Link></td>
+                      <td>
+                        {reserved ? (
+                          <span className="badge badge-ok mono" title={`${c.renewal_effective_date} から適用`}>更新予約済</span>
+                        ) : (
+                          <span className="badge badge-warn mono">未対応</span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <a href={`/api/contracts/${c.id}/renewal-notice`} target="_blank" rel="noopener noreferrer" className="rlink" style={{ fontSize: 12 }}>更新案内</a>
+                      </td>
                     </tr>
                   );
                 })}
