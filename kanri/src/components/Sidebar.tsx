@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { subscribeBadgeRefresh } from "@/lib/audit-events";
 import {
   LayoutDashboard,
   Building2,
@@ -107,6 +108,9 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
     isFirstRender.current = false;
     fetchBadgeCounts();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 入金・対応案件更新など、バッジ数に影響する操作後に再取得
+  useEffect(() => subscribeBadgeRefresh(() => fetchBadgeCounts()), [fetchBadgeCounts]);
 
   // AuthContext のセッション変更時にデータを再取得
   useEffect(() => {

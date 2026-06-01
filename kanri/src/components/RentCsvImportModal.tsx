@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { X, Upload, Check, AlertTriangle, HelpCircle } from "lucide-react";
+import { dispatchBadgeRefresh } from "@/lib/audit-events";
 
 interface MatchResult {
   csv: { date: string; amount: number; name: string };
@@ -402,6 +403,7 @@ export default function RentCsvImportModal({ isOpen, onClose }: Props) {
                 onClick={() => {
                   handleClose();
                   router.refresh();
+                  dispatchBadgeRefresh();
                 }}
                 className="btn btn-primary mt-6"
               >

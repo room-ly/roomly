@@ -52,6 +52,7 @@ export function Footer() {
               Company
             </h5>
             <div className="space-y-2.5">
+              <Link href="/about" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">運営者情報</Link>
               <Link href="/contact" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">お問い合わせ</Link>
               <Link href="/affiliate" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">アフィリエイト</Link>
               <Link href="/privacy" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">プライバシー</Link>

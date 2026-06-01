@@ -6,7 +6,7 @@ import { X, Loader2 } from "lucide-react";
 import { caseSchema, type CaseFormData } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase";
 import type { ZodError } from "zod";
-import { dispatchAuditLogRefresh } from "@/lib/audit-events";
+import { dispatchAuditLogRefresh, dispatchBadgeRefresh } from "@/lib/audit-events";
 
 interface SelectOption {
   id: string;
@@ -130,6 +130,7 @@ export default function CaseFormModal({
       onClose();
       router.refresh();
       dispatchAuditLogRefresh();
+      dispatchBadgeRefresh();
     } catch (err) {
       const zodErr = err as ZodError;
       if (zodErr.flatten) {
