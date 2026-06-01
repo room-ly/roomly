@@ -308,7 +308,7 @@ export default async function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {overdueBillings.map((b: Record<string, any>) => {
+                {overdueBillings.slice(0, 10).map((b: Record<string, any>) => {
                   const href = `/rent/${b.id}`;
                   return (
                     <tr key={b.id} className="row-hover row-link">
@@ -342,7 +342,7 @@ export default async function DashboardPage() {
                 <tr><th>件名</th><th>物件</th><th>優先度</th><th>状態</th></tr>
               </thead>
               <tbody>
-                {activeCases.map((c: Record<string, any>) => {
+                {activeCases.slice(0, 10).map((c: Record<string, any>) => {
                   const href = `/cases/${c.id}`;
                   return (
                     <tr key={c.id} className="row-hover row-link">
