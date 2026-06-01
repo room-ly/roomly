@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { DemoClickTracker } from "@/components/DemoButton";
 import { AffiliateTracker } from "@/components/AffiliateTracker";
+import { PostHogProvider } from "@/lib/posthog";
 
 const notoSansJP = Noto_Sans_JP({
   subsets: ["latin"],
@@ -57,11 +58,13 @@ export default function RootLayout({
         <GoogleAnalytics />
         <DemoClickTracker />
         <AffiliateTracker />
-        <ThemeProvider>
-          <Header />
-          <main className="min-h-screen">{children}</main>
-          <Footer />
-        </ThemeProvider>
+        <PostHogProvider>
+          <ThemeProvider>
+            <Header />
+            <main className="min-h-screen">{children}</main>
+            <Footer />
+          </ThemeProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
