@@ -178,6 +178,17 @@ export default function LoginPage() {
                 <p className="text-[13px] text-ink-3 mt-1.5">アカウント情報を入力してください</p>
               </div>
 
+              {isDemo && (
+                <div className="mb-6 p-4 rounded-lg bg-accent-tint border border-accent/20">
+                  <p className="text-[13px] font-medium text-accent-deep mb-1">
+                    デモアカウントで体験できます
+                  </p>
+                  <p className="text-[12px] text-ink-2 leading-relaxed">
+                    こちらのメールアドレス・パスワードはデモ用にご用意したものです。無料でログインして、自由に操作をお試しください。
+                  </p>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-[13px] font-medium text-ink-2 mb-1.5">
