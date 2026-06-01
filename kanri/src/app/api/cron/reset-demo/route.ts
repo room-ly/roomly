@@ -6,12 +6,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { generateResetSql } from "@/lib/demo-seed/generate-sql";
+import { runManagementSql } from "@/lib/management-sql";
 import { sendEmail, FROM_ADDRESSES } from "@/lib/email";
 
 // 1分以内に終わる前提（Vercel hobby cronは10秒、proは60秒）
 export const maxDuration = 60;
-
-const SUPABASE_PROJECT_REF = process.env.SUPABASE_PROJECT_REF ?? "grtiixrpqwsvxsfapsni";
 
 export async function GET(request: NextRequest) {
   // 認可: Vercel cron からの呼び出し（または手動トリガで Authorization 付与）のみ許可
@@ -21,15 +20,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
-  if (!accessToken) {
+  if (!process.env.SUPABASE_ACCESS_TOKEN) {
     return NextResponse.json({ error: "SUPABASE_ACCESS_TOKEN missing" }, { status: 500 });
   }
 
-  // デモ会社一覧を取得
-  const listRes = await runSql<{ id: string; name: string }>(
-    accessToken,
+  // デモ会社一覧を取得（参照系なので actor ラップ不要）
+  const listRes = await runManagementSql<{ id: string; name: string }>(
     "SELECT id, name FROM public.companies WHERE is_demo = TRUE;",
+    { actorId: null },
   );
   if (!listRes.ok) {
     return NextResponse.json({ error: "Failed to list demo companies", detail: listRes.error }, { status: 500 });
@@ -37,8 +35,10 @@ export async function GET(request: NextRequest) {
 
   const results: Array<{ id: string; name: string; ok: boolean; error?: string }> = [];
   for (const c of listRes.data) {
+    // generateResetSql が BEGIN/SET LOCAL request.headers/COMMIT を内包し、
+    // 監査ログに SYSTEM_USER_ID を記録するため、ここでは二重ラップを避けて actorId: null。
     const sql = generateResetSql(c.id);
-    const res = await runSql(accessToken, sql);
+    const res = await runManagementSql(sql, { actorId: null });
     if (res.ok) {
       results.push({ id: c.id, name: c.name, ok: true });
     } else {
@@ -68,31 +68,4 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ ok: allOk, results }, { status: allOk ? 200 : 500 });
-}
-
-type SqlResult<T> = { ok: true; data: T[] } | { ok: false; error: string };
-
-async function runSql<T = unknown>(accessToken: string, query: string): Promise<SqlResult<T>> {
-  const res = await fetch(
-    `https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_REF}/database/query`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query }),
-    },
-  );
-
-  if (!res.ok) {
-    const text = await res.text();
-    return { ok: false, error: `HTTP ${res.status}: ${text}` };
-  }
-
-  const body = (await res.json()) as T[] | { message: string };
-  if (!Array.isArray(body) && "message" in body) {
-    return { ok: false, error: body.message };
-  }
-  return { ok: true, data: body as T[] };
 }

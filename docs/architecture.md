@@ -55,6 +55,22 @@ roomly/
 | staff | 日常業務（修繕受付・入金確認等） |
 | viewer | 閲覧のみ |
 
+## 監査ログ（audit_logs）と操作者の記録
+
+主要テーブル（contracts / rent_billings / units 等）には `log_audit()` トリガーが付与され、INSERT/UPDATE/DELETE を記録する。`user_id`（操作者）は次の優先順で決まる:
+
+1. PostgREST が公開する `request.headers` の `X-Actor-Id`（service_role の API Route で明示付与）
+2. `auth.uid()`（anonキー＋ユーザーJWT経由の通常書き込み）
+3. `request.headers` GUC 自体が存在しない＝**PostgREST を通らない直接SQL経路**（マイグレーション / Management API の `database/query`）の場合は `SYSTEM_USER_ID`（`00000000-0000-0000-0000-000000000001`）にフォールバック
+4. それ以外で操作者不明なら NULL
+
+### Management API の `database/query` で業務テーブルを触るときの必須ルール
+
+`database/query` 経由の生SQLは PostgREST を通らず、放置すると `user_id` が NULL になる（過去にデモリセット cron とマイグレーションで大量の NULL を発生させた事故あり）。**この経路で監査対象テーブルを書き換えるときは必ず操作者を明示する:**
+
+- アプリコードからは `kanri/src/lib/management-sql.ts` の `runManagementSql()` を使う。`actorId`（デフォルト `SYSTEM_USER_ID`）を SQL 先頭の `SET LOCAL request.headers` として自動付与する。`database/query` を `fetch` で直叩きしない
+- マイグレーション（`supabase/migrations/`）で業務テーブルを一括 UPDATE/DELETE する場合、`log_audit()` のフォールバック（上記3）で自動的に `SYSTEM_USER_ID` が入るが、特定ユーザーの代理操作として残したいなら SQL 先頭で `SET LOCAL request.headers = '{"x-actor-id":"<uuid>"}';` を入れる
+
 ## 機能スコープ（MVP）
 
 ### 物件系
