@@ -17,6 +17,7 @@ type Contract = {
   move_out_date: string | null;
   rent: number | string;
   management_fee: number | string;
+  payment_due_day: number | null;
 };
 
 // YYYY-MM-01 をローカル基準で組み立てる（UTCずれ防止）
@@ -24,11 +25,14 @@ function toBillingMonth(year: number, month0: number): string {
   return `${year}-${String(month0 + 1).padStart(2, "0")}-01`;
 }
 
-// billing_month と同月の末日（当月分を当月末払い）
-function dueDateOf(billingMonth: string): string {
+// billing_month + 契約の payment_due_day から当月の支払期日を算出。
+// 未設定（null）の契約は月末払いとして扱う。指定日がその月に存在しない場合は月末日に丸める。
+function dueDateOf(billingMonth: string, paymentDueDay: number | null | undefined): string {
   const [y, m] = billingMonth.split("-").map(Number);
-  const d = new Date(Date.UTC(y, m, 0));
-  return d.toISOString().slice(0, 10);
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const target = paymentDueDay ?? lastDay;
+  const day = Math.min(Math.max(1, target), lastDay);
+  return `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 // 契約から、生成すべき billing_month の配列を作る
@@ -73,7 +77,7 @@ async function processRentBillings(supabase: ReturnType<typeof createAdminClient
   // 1. active契約を全件取得
   const { data: contracts, error: contractError } = await supabase
     .from("contracts")
-    .select("id, company_id, start_date, end_date, move_out_date, rent, management_fee")
+    .select("id, company_id, start_date, end_date, move_out_date, rent, management_fee, payment_due_day")
     .eq("status", "active");
 
   if (contractError) {
@@ -128,7 +132,7 @@ async function processRentBillings(supabase: ReturnType<typeof createAdminClient
         rent,
         management_fee: mgmt,
         total_amount: rent + mgmt,
-        due_date: dueDateOf(bm),
+        due_date: dueDateOf(bm, c.payment_due_day),
         status: "unpaid",
         company_id: c.company_id,
       });

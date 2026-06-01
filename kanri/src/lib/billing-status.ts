@@ -41,3 +41,16 @@ export function isOverdue(
 export function remainingAmount(b: BillingLike): number {
   return Math.max(0, Number(b.total_amount) - sumPayments(b));
 }
+
+// 契約の payment_day (1-31) と billing_month (YYYY-MM-01) から
+// 当月の支払期日 (YYYY-MM-DD) を計算する。
+// 指定日がその月に存在しない場合は月末日に丸める（例: 31日指定の2月 → 2/28）。
+export function calcDueDate(billingMonth: string, paymentDay: number | null | undefined): string {
+  const [y, m] = billingMonth.slice(0, 7).split("-").map(Number);
+  // m は1-indexedなので、UTC指定で当月末日を取る: Date.UTC(y, m, 0) → 当月末
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const target = paymentDay ?? lastDay;
+  const day = Math.min(Math.max(1, target), lastDay);
+  return `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+

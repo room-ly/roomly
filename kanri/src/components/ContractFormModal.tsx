@@ -296,13 +296,14 @@ export default function ContractFormModal({
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">支払期日（毎月）</label>
                   <select name="payment_due_day" defaultValue={editData?.payment_due_day ?? ""} className="input">
-                    <option value="">未設定</option>
-                    <option value="25">25日</option>
-                    <option value="27">27日</option>
-                    <option value="28">末日前</option>
-                    <option value="1">翌月1日</option>
-                    <option value="5">翌月5日</option>
+                    <option value="">未設定（月末）</option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                      <option key={d} value={d}>
+                        {d === 31 ? "末日" : `${d}日`}
+                      </option>
+                    ))}
                   </select>
+                  <p className="text-[11px] text-ink-4 mt-1">毎月この日が家賃の支払期日になります。月によって存在しない日（2/31等）は自動的に月末日として扱われます。</p>
                 </div>
               </div>
               <div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { contractSchema } from "@/lib/schemas";
+import { calcDueDate } from "@/lib/billing-status";
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,8 +63,7 @@ export async function POST(request: NextRequest) {
     if (contract.status === "active") {
       const startDate = new Date(contract.start_date);
       const billingMonth = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}-01`;
-      const nextMonth = new Date(startDate.getFullYear(), startDate.getMonth() + 2, 0);
-      const dueDate = nextMonth.toISOString().slice(0, 10);
+      const dueDate = calcDueDate(billingMonth, contract.payment_due_day ?? null);
       const totalAmount = Number(contract.rent) + Number(contract.management_fee);
 
       const { error: billingError } = await supabase.from("rent_billings").insert({

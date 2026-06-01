@@ -147,6 +147,14 @@ export default async function ContractDetailPage({
                   <div className="field-label mono">契約期間</div>
                   <div className="field-value field-plain mono">{contract.start_date} 〜 {contract.end_date || "期限なし"}</div>
                 </div>
+                <div className="field">
+                  <div className="field-label mono">支払期日</div>
+                  <div className="field-value field-plain">
+                    {contract.payment_due_day
+                      ? (contract.payment_due_day === 31 ? "毎月末日" : `毎月${contract.payment_due_day}日`)
+                      : "毎月末日（未設定）"}
+                  </div>
+                </div>
                 {contract.guarantor_name && (
                   <div className="field">
                     <div className="field-label mono">保証人</div>
