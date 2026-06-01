@@ -24,10 +24,10 @@ function toBillingMonth(year: number, month0: number): string {
   return `${year}-${String(month0 + 1).padStart(2, "0")}-01`;
 }
 
-// billing_month の翌月末日（請求の支払期日）
+// billing_month と同月の末日（当月分を当月末払い）
 function dueDateOf(billingMonth: string): string {
   const [y, m] = billingMonth.split("-").map(Number);
-  const d = new Date(Date.UTC(y, m + 1, 0));
+  const d = new Date(Date.UTC(y, m, 0));
   return d.toISOString().slice(0, 10);
 }
 
