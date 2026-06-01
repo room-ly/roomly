@@ -41,6 +41,12 @@ export default function LoginPage() {
       } else {
         if (isDemo) {
           navigator.sendBeacon("/api/demo-click");
+          // GA4カスタムイベント（Google広告のCVはここに切り替える）
+          (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag?.(
+            "event",
+            "demo_login",
+            { method: "password" }
+          );
         }
         router.push("/");
         router.refresh();
