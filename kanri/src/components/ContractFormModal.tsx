@@ -21,9 +21,6 @@ interface ContractFormModalProps {
   units: SelectOption[];
   tenants: SelectOption[];
   editData?: Record<string, any> | null;
-  // 契約更新（再契約）モード。更新元契約のデータを渡すと、その条件をプリフィルした
-  // 新規契約として作成し、保存時に更新元を満了（expired）にする。
-  renewData?: Record<string, any> | null;
 }
 
 export default function ContractFormModal({
@@ -32,17 +29,13 @@ export default function ContractFormModal({
   units,
   tenants,
   editData,
-  renewData,
 }: ContractFormModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
-  const isRenew = !!renewData;
-  // フォームのプリフィル元。編集＝対象契約、更新＝更新元契約、新規＝なし
-  const prefill = editData ?? renewData ?? null;
-  const [selectedUnitId, setSelectedUnitId] = useState(prefill?.unit_id || prefill?.unit?.id || "");
-  const [selectedTenantId, setSelectedTenantId] = useState(prefill?.tenant_id || prefill?.tenant?.id || "");
+  const [selectedUnitId, setSelectedUnitId] = useState(editData?.unit_id || editData?.unit?.id || "");
+  const [selectedTenantId, setSelectedTenantId] = useState(editData?.tenant_id || editData?.tenant?.id || "");
 
   function handleUnitChange(unitId: string) {
     setSelectedUnitId(unitId);
@@ -50,8 +43,8 @@ export default function ContractFormModal({
     if (unit?.tenant_id) {
       setSelectedTenantId(unit.tenant_id);
     }
-    // 新規作成時のみ、部屋の募集条件をフォーム初期値としてコピー（更新・編集時はコピーしない）
-    if (!editData && !isRenew && unit && formRef.current) {
+    // 新規作成時のみ、部屋の募集条件をフォーム初期値としてコピー
+    if (!editData && unit && formRef.current) {
       const setIfEmpty = (name: string, value: string) => {
         const el = formRef.current!.elements.namedItem(name) as
           | HTMLInputElement
@@ -70,31 +63,18 @@ export default function ContractFormModal({
   const lastTargetRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isOpen) return;
-    const target = editData?.id ? `edit:${editData.id}` : renewData?.id ? `renew:${renewData.id}` : "__new__";
+    const target = editData?.id ?? "__new__";
     if (lastTargetRef.current === target) return;
     lastTargetRef.current = target;
 
-    setSelectedUnitId(prefill?.unit_id || prefill?.unit?.id || "");
-    setSelectedTenantId(prefill?.tenant_id || prefill?.tenant?.id || "");
+    setSelectedUnitId(editData?.unit_id || editData?.unit?.id || "");
+    setSelectedTenantId(editData?.tenant_id || editData?.tenant?.id || "");
     setErrors({});
     setApiError("");
     formRef.current?.reset();
-  }, [isOpen, editData, renewData, prefill]);
+  }, [isOpen, editData]);
 
   const isEdit = !!editData;
-
-  // 更新（再契約）時のデフォルト契約期間: 旧契約終了日の翌日〜2年後の前日
-  function renewDefaultDates() {
-    if (!renewData?.end_date) return { start: "", end: "" };
-    const end = new Date(renewData.end_date);
-    const newStart = new Date(end);
-    newStart.setDate(newStart.getDate() + 1);
-    const newEnd = new Date(newStart);
-    newEnd.setFullYear(newEnd.getFullYear() + 2);
-    newEnd.setDate(newEnd.getDate() - 1);
-    return { start: newStart.toISOString().slice(0, 10), end: newEnd.toISOString().slice(0, 10) };
-  }
-  const renewDates = renewDefaultDates();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -163,7 +143,7 @@ export default function ContractFormModal({
       <div className="bg-surface rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 pb-4 border-b border-line">
           <h2 className="text-[15px] font-semibold">
-            {isEdit ? "契約を編集" : isRenew ? "契約を更新（再契約）" : "新規契約"}
+            {isEdit ? "契約を編集" : "新規契約"}
           </h2>
           <button onClick={onClose} className="text-ink-3 hover:text-ink transition-colors">
             <X size={18} />
@@ -178,14 +158,6 @@ export default function ContractFormModal({
           )}
 
           <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
-            {isRenew && (
-              <>
-                <input type="hidden" name="previous_contract_id" value={renewData!.id} />
-                <div className="bg-bg-2 text-ink-2 text-[13px] rounded-lg px-3 py-2.5">
-                  前契約の条件を引き継いだ新しい契約を作成します。家賃や期間など変更があれば修正してください。保存すると<strong>前契約は「満了」</strong>になり、履歴として残ります。
-                </div>
-              </>
-            )}
             {/* 基本情報 */}
             <fieldset className="space-y-3">
               <legend className="text-[11px] font-mono tracking-wider uppercase text-ink-4 mb-2">基本情報</legend>
@@ -214,14 +186,14 @@ export default function ContractFormModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">契約種別 <span className="text-danger">*</span></label>
-                  <select name="contract_type" defaultValue={prefill?.contract_type || "ordinary"} className="input">
+                  <select name="contract_type" defaultValue={editData?.contract_type || "ordinary"} className="input">
                     <option value="ordinary">普通借家</option>
                     <option value="fixed">定期借家</option>
                   </select>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">状態 <span className="text-danger">*</span></label>
-                  <select name="status" defaultValue={isRenew ? "active" : editData?.status || "active"} className="input">
+                  <select name="status" defaultValue={editData?.status || "active"} className="input">
                     <option value="active">有効</option>
                     <option value="pending">準備中</option>
                     <option value="expired">満了</option>
@@ -237,7 +209,7 @@ export default function ContractFormModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">契約開始日 <span className="text-danger">*</span></label>
-                  <input name="start_date" type="date" defaultValue={isRenew ? renewDates.start : editData?.start_date || ""} className="input"
+                  <input name="start_date" type="date" defaultValue={editData?.start_date || ""} className="input"
                     onChange={(e) => {
                       const endInput = e.currentTarget.form?.elements.namedItem("end_date") as HTMLInputElement | null;
                       if (endInput && !endInput.value && e.target.value) {
@@ -252,13 +224,13 @@ export default function ContractFormModal({
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">契約終了日</label>
-                  <input name="end_date" type="date" defaultValue={isRenew ? renewDates.end : editData?.end_date || ""} className="input" />
+                  <input name="end_date" type="date" defaultValue={editData?.end_date || ""} className="input" />
                   {errors.end_date && <p className="text-danger text-sm mt-1">{errors.end_date[0]}</p>}
                 </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">退去予定日</label>
-                <input name="move_out_date" type="date" defaultValue={isRenew ? "" : prefill?.move_out_date || ""} className="input" />
+                <input name="move_out_date" type="date" defaultValue={editData?.move_out_date || ""} className="input" />
                 {errors.move_out_date && <p className="text-danger text-sm mt-1">{errors.move_out_date[0]}</p>}
               </div>
             </fieldset>
@@ -269,12 +241,12 @@ export default function ContractFormModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">賃料 <span className="text-danger">*</span></label>
-                  <input name="rent" type="number" defaultValue={prefill?.rent || ""} className="input" placeholder="例: 80000" />
+                  <input name="rent" type="number" defaultValue={editData?.rent || ""} className="input" placeholder="例: 80000" />
                   {errors.rent && <p className="text-danger text-sm mt-1">{errors.rent[0]}</p>}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">管理費</label>
-                  <input name="management_fee" type="number" defaultValue={prefill?.management_fee ?? "0"} className="input" placeholder="例: 5000" />
+                  <input name="management_fee" type="number" defaultValue={editData?.management_fee ?? "0"} className="input" placeholder="例: 5000" />
                   {errors.management_fee && <p className="text-danger text-sm mt-1">{errors.management_fee[0]}</p>}
                 </div>
               </div>
@@ -282,8 +254,8 @@ export default function ContractFormModal({
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">敷金</label>
                   <div className="flex gap-2">
-                    <input name="deposit" type="number" step="0.01" defaultValue={prefill?.deposit ?? ""} className="input min-w-0" style={{ flex: "1 1 0", width: "auto" }} placeholder="例: 80000 / 2" />
-                    <select name="deposit_unit" defaultValue={prefill?.deposit_unit || "jpy"} className="input shrink-0" style={{ width: "5rem" }}>
+                    <input name="deposit" type="number" step="0.01" defaultValue={editData?.deposit ?? ""} className="input min-w-0" style={{ flex: "1 1 0", width: "auto" }} placeholder="例: 80000 / 2" />
+                    <select name="deposit_unit" defaultValue={editData?.deposit_unit || "jpy"} className="input shrink-0" style={{ width: "5rem" }}>
                       <option value="jpy">円</option>
                       <option value="months">ヶ月</option>
                     </select>
@@ -292,8 +264,8 @@ export default function ContractFormModal({
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">礼金</label>
                   <div className="flex gap-2">
-                    <input name="key_money" type="number" step="0.01" defaultValue={prefill?.key_money ?? ""} className="input min-w-0" style={{ flex: "1 1 0", width: "auto" }} placeholder="例: 80000 / 1" />
-                    <select name="key_money_unit" defaultValue={prefill?.key_money_unit || "jpy"} className="input shrink-0" style={{ width: "5rem" }}>
+                    <input name="key_money" type="number" step="0.01" defaultValue={editData?.key_money ?? ""} className="input min-w-0" style={{ flex: "1 1 0", width: "auto" }} placeholder="例: 80000 / 1" />
+                    <select name="key_money_unit" defaultValue={editData?.key_money_unit || "jpy"} className="input shrink-0" style={{ width: "5rem" }}>
                       <option value="jpy">円</option>
                       <option value="months">ヶ月</option>
                     </select>
@@ -302,8 +274,8 @@ export default function ContractFormModal({
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">更新料</label>
                   <div className="flex gap-2">
-                    <input name="renewal_fee" type="number" step="0.01" defaultValue={prefill?.renewal_fee ?? ""} className="input min-w-0" style={{ flex: "1 1 0", width: "auto" }} placeholder="例: 80000 / 1" />
-                    <select name="renewal_fee_unit" defaultValue={prefill?.renewal_fee_unit || "jpy"} className="input shrink-0" style={{ width: "5rem" }}>
+                    <input name="renewal_fee" type="number" step="0.01" defaultValue={editData?.renewal_fee ?? ""} className="input min-w-0" style={{ flex: "1 1 0", width: "auto" }} placeholder="例: 80000 / 1" />
+                    <select name="renewal_fee_unit" defaultValue={editData?.renewal_fee_unit || "jpy"} className="input shrink-0" style={{ width: "5rem" }}>
                       <option value="jpy">円</option>
                       <option value="months">ヶ月</option>
                     </select>
@@ -313,7 +285,7 @@ export default function ContractFormModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">支払方法</label>
-                  <select name="payment_method" defaultValue={prefill?.payment_method || ""} className="input">
+                  <select name="payment_method" defaultValue={editData?.payment_method || ""} className="input">
                     <option value="">未設定</option>
                     <option value="transfer">銀行振込</option>
                     <option value="debit">口座振替</option>
@@ -323,7 +295,7 @@ export default function ContractFormModal({
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">締日（毎月）</label>
-                  <select name="closing_day" defaultValue={prefill?.closing_day ?? 31} className="input">
+                  <select name="closing_day" defaultValue={editData?.closing_day ?? 31} className="input">
                     {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
                       <option key={d} value={d}>
                         {d === 31 ? "末日" : `${d}日`}
@@ -334,7 +306,7 @@ export default function ContractFormModal({
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">支払期日（毎月）</label>
-                  <select name="payment_due_day" defaultValue={prefill?.payment_due_day ?? 31} className="input">
+                  <select name="payment_due_day" defaultValue={editData?.payment_due_day ?? 31} className="input">
                     {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
                       <option key={d} value={d}>
                         {d === 31 ? "末日" : `${d}日`}
@@ -345,7 +317,7 @@ export default function ContractFormModal({
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">支払サイクル</label>
-                  <select name="payment_month_offset" defaultValue={prefill?.payment_month_offset ?? 1} className="input">
+                  <select name="payment_month_offset" defaultValue={editData?.payment_month_offset ?? 1} className="input">
                     <option value="0">当月払い（前家賃）</option>
                     <option value="1">翌月払い（後家賃）</option>
                   </select>
@@ -354,7 +326,7 @@ export default function ContractFormModal({
               </div>
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">仲介手数料</label>
-                <input name="brokerage_fee" type="number" defaultValue={prefill?.brokerage_fee ?? ""} className="input" placeholder="例: 80000" />
+                <input name="brokerage_fee" type="number" defaultValue={editData?.brokerage_fee ?? ""} className="input" placeholder="例: 80000" />
               </div>
             </fieldset>
 
@@ -364,16 +336,16 @@ export default function ContractFormModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">保証人</label>
-                  <input name="guarantor_name" type="text" defaultValue={prefill?.guarantor_name || ""} className="input" placeholder="氏名" />
+                  <input name="guarantor_name" type="text" defaultValue={editData?.guarantor_name || ""} className="input" placeholder="氏名" />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">保証人電話</label>
-                  <input name="guarantor_phone" type="tel" defaultValue={prefill?.guarantor_phone || ""} className="input" />
+                  <input name="guarantor_phone" type="tel" defaultValue={editData?.guarantor_phone || ""} className="input" />
                 </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">保険会社</label>
-                <input name="insurance_company" type="text" defaultValue={prefill?.insurance_company || ""} className="input" />
+                <input name="insurance_company" type="text" defaultValue={editData?.insurance_company || ""} className="input" />
               </div>
             </fieldset>
 
@@ -383,20 +355,20 @@ export default function ContractFormModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">契約締結日</label>
-                  <input name="signed_date" type="date" defaultValue={isRenew ? "" : prefill?.signed_date || ""} className="input" />
+                  <input name="signed_date" type="date" defaultValue={editData?.signed_date || ""} className="input" />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">重説実施日</label>
-                  <input name="important_explanation_date" type="date" defaultValue={isRenew ? "" : prefill?.important_explanation_date || ""} className="input" />
+                  <input name="important_explanation_date" type="date" defaultValue={editData?.important_explanation_date || ""} className="input" />
                 </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">特約事項</label>
-                <textarea name="special_terms" defaultValue={prefill?.special_terms || ""} className="input" rows={3} placeholder="ペット不可、楽器演奏不可等" />
+                <textarea name="special_terms" defaultValue={editData?.special_terms || ""} className="input" rows={3} placeholder="ペット不可、楽器演奏不可等" />
               </div>
               <div>
                 <label className="text-sm font-medium text-ink-2 block mb-1">備考</label>
-                <textarea name="notes" defaultValue={prefill?.notes || ""} className="input" rows={2} />
+                <textarea name="notes" defaultValue={editData?.notes || ""} className="input" rows={2} />
               </div>
             </fieldset>
 
@@ -406,7 +378,7 @@ export default function ContractFormModal({
               </button>
               <button type="submit" disabled={loading} className="btn btn-primary disabled:opacity-50 disabled:cursor-wait flex items-center gap-1.5">
                 {loading && <Loader2 size={14} className="animate-spin" />}
-                {loading ? "保存中..." : isEdit ? "更新する" : isRenew ? "再契約を作成" : "作成する"}
+                {loading ? "保存中..." : isEdit ? "更新する" : "作成する"}
               </button>
             </div>
           </form>

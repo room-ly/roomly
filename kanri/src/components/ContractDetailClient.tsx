@@ -22,7 +22,6 @@ interface ContractDetailClientProps {
 export default function ContractDetailClient({ contract, units, tenants, moveOutRequests }: ContractDetailClientProps) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
-  const [renewOpen, setRenewOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const canEdit = usePermission("contracts:edit");
@@ -60,11 +59,6 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
             <FileText size={13} /> 退去届
           </a>
         )}
-        {canEdit && contract.status === "active" && (
-          <button onClick={() => setRenewOpen(true)} className="btn btn-secondary flex items-center gap-1.5 text-[13px]">
-            <RefreshCw size={13} /> 契約更新
-          </button>
-        )}
         {canEdit && (
           <button onClick={() => setModalOpen(true)} className="btn btn-secondary flex items-center gap-1.5 text-[13px]">
             <Pencil size={13} /> 編集
@@ -78,7 +72,6 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
       </div>
 
       <ContractFormModal key={modalOpen ? "open" : "closed"} isOpen={modalOpen} onClose={() => setModalOpen(false)} units={units} tenants={tenants} editData={editData} />
-      <ContractFormModal key={renewOpen ? "renew-open" : "renew-closed"} isOpen={renewOpen} onClose={() => setRenewOpen(false)} units={units} tenants={tenants} renewData={contract} />
       <ConfirmDialog isOpen={deleteOpen} title="契約を削除" message="この契約を削除しますか？関連する請求データは残りますが、契約情報は復元できません。" loading={deleting} onConfirm={handleDelete} onCancel={() => setDeleteOpen(false)} />
     </>
   );
