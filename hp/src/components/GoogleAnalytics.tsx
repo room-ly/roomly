@@ -16,7 +16,15 @@ export default function GoogleAnalytics() {
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${GA_ID}');
+          // hp.roomly.jp ⇄ kanri.roomly.jp のサブドメイン間でセッション・流入元を引き継ぐ。
+          // cookie_domain を親ドメインに固定し、linker で _gl パラメータを相互に受け渡す。
+          gtag('config', '${GA_ID}', {
+            cookie_domain: '.roomly.jp',
+            linker: {
+              domains: ['hp.roomly.jp', 'kanri.roomly.jp'],
+              accept_incoming: true,
+            },
+          });
         `}
       </Script>
     </>
