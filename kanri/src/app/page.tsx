@@ -131,7 +131,7 @@ export default async function DashboardPage() {
             <span className="sum-foot mono">{s.occupied_units}/{s.total_units}戸</span>
           </div>
           <div className="sum-viz">
-            <Donut percent={s.occupancy_rate} />
+            <Donut percent={s.occupancy_rate} id="donut-occ" />
           </div>
         </div>
         <div className="sum-card sum-card-graph">
@@ -144,7 +144,7 @@ export default async function DashboardPage() {
           </div>
           {hasExpenseTrend && (
             <div className="sum-viz">
-              <Sparkline values={expenseSeries} />
+              <Sparkline values={expenseSeries} id="spark-exp" />
             </div>
           )}
         </div>
@@ -168,7 +168,12 @@ export default async function DashboardPage() {
           </div>
           {s.total_units > 0 && (
             <div className="sum-viz">
-              <Donut percent={vacancyPct} color={vacancyPct > 0 ? "var(--warn)" : "var(--success)"} />
+              <Donut
+                percent={vacancyPct}
+                id="donut-vac"
+                from={vacancyPct > 0 ? "var(--warn)" : "var(--viz-grad-from)"}
+                to={vacancyPct > 0 ? "#e0a857" : "var(--viz-grad-to)"}
+              />
             </div>
           )}
         </div>

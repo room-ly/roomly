@@ -18,6 +18,10 @@
   --accent-deep: #3f5a4c;
   --accent-soft: #d8e1d8;
   --accent-tint: #eef2ec;
+  /* ミニグラフの先進感グラデーション（セージ→ティール→ライム寄り） */
+  --viz-grad-from: #3f9d7a;
+  --viz-grad-to: #8fce6b;
+  --viz-glow: rgba(63, 157, 122, 0.35);
 
   --warn: #b7833c;
   --warn-tint: #f8eed8;
@@ -55,6 +59,10 @@
   --accent-deep: #aac6b3;
   --accent-soft: #2c382f;
   --accent-tint: #1f2a23;
+  /* ダークではネオン寄りに発光を強める */
+  --viz-grad-from: #34e0a1;
+  --viz-grad-to: #b6f24e;
+  --viz-glow: rgba(52, 224, 161, 0.45);
 
   --warn: #d4a766;
   --warn-tint: #2c2418;
@@ -416,13 +424,42 @@ table {
 .sum-card-graph { flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; }
 .sum-card-graph .sum-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .sum-card-graph .sum-viz { flex-shrink: 0; display: flex; align-items: center; }
-.sum-spark { display: block; }
-.sum-spark-fill { fill: var(--accent); opacity: 0.10; }
-.sum-spark-line { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
-.sum-spark-dot { fill: var(--accent); }
+.sum-spark { display: block; overflow: visible; }
+.sum-spark-fill { /* fill はコンポーネント側のインラインで指定（カードごとにユニークID） */ }
+.sum-spark-line {
+  fill: none; stroke-width: 2;
+  stroke-linejoin: round; stroke-linecap: round;
+  filter: drop-shadow(0 1px 4px var(--viz-glow));
+  stroke-dasharray: var(--spark-len, 300);
+  stroke-dashoffset: var(--spark-len, 300);
+  animation: sparkDraw 1.1s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.sum-spark-dot {
+  fill: var(--viz-grad-to);
+  filter: drop-shadow(0 0 5px var(--viz-glow));
+  animation: dotPop 0.4s ease 1s both;
+}
+@keyframes sparkDraw { to { stroke-dashoffset: 0; } }
+@keyframes dotPop { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+
+.sum-donut { overflow: visible; }
 .sum-donut-track { fill: none; stroke: var(--line); }
-.sum-donut-val { fill: none; stroke: var(--accent); stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+.sum-donut-val {
+  fill: none; stroke-linecap: round;
+  transform: rotate(-90deg); transform-origin: center;
+  filter: drop-shadow(0 0 4px var(--viz-glow));
+  stroke-dasharray: var(--donut-dash);
+  stroke-dashoffset: var(--donut-circ);
+  animation: donutFill 1.1s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+@keyframes donutFill { to { stroke-dashoffset: 0; } }
 .sum-donut-label { font-family: var(--font-mono); font-size: 12px; font-weight: 600; fill: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sum-spark-line, .sum-spark-dot, .sum-donut-val { animation: none; }
+  .sum-spark-line { stroke-dashoffset: 0; }
+  .sum-donut-val { stroke-dashoffset: 0; }
+}
 
 @media (max-width: 1100px) { .cols-summary { grid-template-columns: 1fr 1fr; } }
 
