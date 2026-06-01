@@ -19,6 +19,12 @@ describe("generateResetSql", () => {
     expect(sql.endsWith("COMMIT;")).toBe(true);
   });
 
+  it("先頭で request.headers に SYSTEM_USER_ID を仕込み、監査ログがシステム実行として記録される", () => {
+    // BEGIN; の直後に SET LOCAL があること（トランザクション全体に効く）
+    expect(sql).toMatch(/^BEGIN;\s*\n\s*SET LOCAL request\.headers = /);
+    expect(sql).toContain('"x-actor-id":"00000000-0000-0000-0000-000000000001"');
+  });
+
   it("依存関係順に削除している（cases → owner_remittances → ... → properties → owners）", () => {
     const order = [
       "DELETE FROM public.case_logs",

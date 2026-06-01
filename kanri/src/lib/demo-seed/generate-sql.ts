@@ -6,6 +6,7 @@ import {
   SEED_CASES, SEED_EXPENSES,
   BILLING_CONTRACTS_ASC, MISS_TOTAL, MISS_OVERDUE, PAYMENT_BANKS, PAYMENT_HOLDERS,
 } from "./seed-data";
+import { SYSTEM_USER_ID } from "@/lib/system-user";
 
 // SQL リテラル化（最低限のエスケープ。シングルクォートのみ）
 function lit(v: unknown): string {
@@ -165,8 +166,15 @@ UPDATE public.contracts
   // ============================================
   // すべてを単一のトランザクションとして連結
   // ============================================
+  // このSQLは Management API の database/query 経由で実行されるため PostgREST を通らず、
+  // 監査トリガー log_audit() が auth.uid() も X-Actor-Id ヘッダーも拾えず user_id=NULL になる。
+  // トランザクション先頭で request.headers GUC に SYSTEM_USER_ID を仕込み、
+  // log_audit() がシステム実行として user_id を記録できるようにする。
+  const actorHeader = `SET LOCAL request.headers = ${lit(JSON.stringify({ "x-actor-id": SYSTEM_USER_ID }))};`;
+
   return [
     "BEGIN;",
+    actorHeader,
     deletes,
     ownersSql,
     propertiesSql,
