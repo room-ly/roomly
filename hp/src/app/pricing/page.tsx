@@ -108,6 +108,60 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* なぜこの価格でやれるのか */}
+      <section className="px-7 pb-24">
+        <div className="mx-auto max-w-3xl">
+          <span className="eyebrow">Why so affordable</span>
+          <h2 className="mt-4 text-[clamp(24px,3vw,34px)] font-medium leading-tight tracking-tight text-rm-primary">
+            なぜ、この価格でやれるのか
+          </h2>
+          <p className="mt-5 text-[15px] leading-relaxed text-rm-text-secondary">
+            「安い」と聞くと、機能が足りないのか、対応が遅いのか、と身構える方もいると思います。
+            Roomlyの価格は、品質を削った結果ではありません。コストのかかる部分を、そもそも持たない設計にしているからです。
+          </p>
+          <ul className="mt-8 space-y-4 text-[15px] leading-relaxed text-rm-text-secondary">
+            <li className="flex gap-3">
+              <span className="mt-[2px] text-rm-accent-deep">—</span>
+              <span>
+                <strong className="text-rm-text">少人数で運営し、人件費を抱え込まない。</strong>{" "}
+                大きな組織を維持するためのコストが価格に乗りません。その分を、そのまま料金に還元しています。
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="mt-[2px] text-rm-accent-deep">—</span>
+              <span>
+                <strong className="text-rm-text">AIを使い倒すから、安くても遅くない。</strong>{" "}
+                開発・改善・問い合わせ対応にAIをフル活用しています。少人数でも開発スピードや改善の頻度を落とさず、
+                「安かろう悪かろう」になりません。
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="mt-[2px] text-rm-accent-deep">—</span>
+              <span>
+                <strong className="text-rm-text">料金をシンプルにして、見積もりの手間をなくす。</strong>{" "}
+                区画数で決まる分かりやすい料金体系です。複雑なオプション課金や個別見積もりにかかる手間を省いた分、価格を抑えています。
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="mt-[2px] text-rm-accent-deep">—</span>
+              <span>
+                <strong className="text-rm-text">プランで機能を出し分けない。</strong>{" "}
+                「この機能は上位プランだけ」といった制限は設けていません。プランごとに機能を出し分ける仕組みは、
+                作るのも保守するのも手間がかかります。それをやめて全機能を開放することで、無駄な開発コストを削り、価格を抑えています。
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <span className="mt-[2px] text-rm-accent-deep">—</span>
+              <span>
+                <strong className="text-rm-text">触って分かる設計で、営業・サポートの手間を減らす。</strong>{" "}
+                登録なしで試せるデモを用意し、画面を見ればすぐ使えるように作っています。商談やサポートにかかるコストを抑え、
+                その分を価格に回しています。
+              </span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
       {/* CTA */}
       <section data-section="cta" className="px-7 py-24">
         <div className="mx-auto max-w-2xl text-center">
