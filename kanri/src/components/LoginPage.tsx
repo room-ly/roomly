@@ -43,6 +43,7 @@ export default function LoginPage() {
           navigator.sendBeacon("/api/demo-click");
         }
         router.push("/");
+        router.refresh();
       }
     } catch {
       setError("ログインに失敗しました");
@@ -61,6 +62,7 @@ export default function LoginPage() {
         setLoading(false);
       } else {
         router.push("/");
+        router.refresh();
       }
     } catch {
       setError("認証に失敗しました");
