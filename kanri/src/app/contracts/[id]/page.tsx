@@ -262,12 +262,16 @@ export default async function ContractDetailPage({
                     {billings.map((b: any) => {
                       const derived = deriveBillingStatus(b);
                       return (
-                        <tr key={b.id} className={`row-hover ${derived === "overdue" ? "bg-danger-tint" : ""}`}>
+                        <tr key={b.id} className={`row-hover row-link ${derived === "overdue" ? "bg-danger-tint" : ""}`}>
                           <td>
-                            <Link href={`/rent/${b.id}`} className="rlink">{(b.billing_month as string)?.slice(0, 7) ?? b.billing_month}</Link>
+                            <Link href={`/rent/${b.id}`}><span className="rlink">{(b.billing_month as string)?.slice(0, 7) ?? b.billing_month}</span></Link>
                           </td>
-                          <td className="num">¥{Number(b.total_amount).toLocaleString()}</td>
-                          <td><StatusBadge status={derived} /></td>
+                          <td className="num">
+                            <Link href={`/rent/${b.id}`}>¥{Number(b.total_amount).toLocaleString()}</Link>
+                          </td>
+                          <td>
+                            <Link href={`/rent/${b.id}`}><StatusBadge status={derived} /></Link>
+                          </td>
                         </tr>
                       );
                     })}
