@@ -195,7 +195,7 @@ export default async function DashboardPage() {
               <span>0%</span>
             </div>
             <div className="dash2-chart-area">
-              <div className="dash2-chart-target" style={{ bottom: "95%" }} />
+              <div className="dash2-chart-target" />
               <div className="dash2-chart-bars">
                 {monthlyTrend.map((m: Record<string, any>, i: number) => {
                   const isLast = i === monthlyTrend.length - 1;

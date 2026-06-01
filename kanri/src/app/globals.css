@@ -1032,6 +1032,9 @@ table {
 .dash2-chart-area { position: relative; }
 .dash2-chart-target {
   position: absolute; left: 0; right: 0;
+  /* 棒グラフ(.dash2-chart-bars)が inset:24px で配置されているため、
+     目標ラインも同じ座標系に合わせる。値の%は内側領域(top:24px〜bottom:24px)基準で計算する */
+  top: calc(24px + (100% - 48px) * (1 - 0.95));
   border-top: 1px dashed var(--accent); height: 0; z-index: 1;
 }
 .dash2-chart-target::after {
