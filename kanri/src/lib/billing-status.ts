@@ -77,25 +77,38 @@ export function calcDueDateWithCycle(
   return clampDateInMonth(ty, tm, paymentDueDay ?? lastDay);
 }
 
-// 「今日が closing_day と一致するか」を判定。
-// closing_day がその月に存在しない場合は、その月の月末日と一致した日も真とする。
-// 例: closing_day=31 で 2月の場合、2/28（or 2/29）が一致と判定される。
-export function isClosingDay(today: Date, closingDay: number | null | undefined): boolean {
+// 「今日が締日の翌日か」を判定（請求生成のトリガー）。
+// 締日その日はまだ利用分が確定していないので、翌日に走らせて前日締めの請求を作る。
+// 月末締め（closing_day=31 等）の場合、翌月1日が「翌日」になる。
+// その月に存在しない締日（2/31等）は月末日として扱うため、3/1 が「2月締めの翌日」になる。
+export function isDayAfterClosing(today: Date, closingDay: number | null | undefined): boolean {
   const cd = closingDay ?? 31;
-  const y = today.getUTCFullYear();
-  const m1 = today.getUTCMonth() + 1;
-  const d = today.getUTCDate();
+  // 「昨日が締日だったか」を判定
+  const yesterday = new Date(Date.UTC(
+    today.getUTCFullYear(),
+    today.getUTCMonth(),
+    today.getUTCDate() - 1,
+  ));
+  const y = yesterday.getUTCFullYear();
+  const m1 = yesterday.getUTCMonth() + 1;
+  const d = yesterday.getUTCDate();
   const lastDay = new Date(Date.UTC(y, m1, 0)).getUTCDate();
   const effective = Math.min(Math.max(1, cd), lastDay);
   return d === effective;
 }
 
-// 「締日が closingDay の月の billing_month」を、today を起点に決める。
-// 例: today=2026-06-30, closing_day=31 → "2026-06-01"
-//     today=2026-06-20, closing_day=20 → "2026-06-01"
+// 「請求対象月（billing_month）」を、cron 実行日（締日の翌日）から逆算する。
+// today は締日の翌日なので、「昨日が属する月」が請求対象月になる。
+// 例: today=2026-07-01, closing_day=31 → 昨日=2026-06-30 → "2026-06-01"
+//     today=2026-06-21, closing_day=20 → 昨日=2026-06-20 → "2026-06-01"
 export function billingMonthForClosing(today: Date): string {
-  const y = today.getUTCFullYear();
-  const m1 = today.getUTCMonth() + 1;
+  const yesterday = new Date(Date.UTC(
+    today.getUTCFullYear(),
+    today.getUTCMonth(),
+    today.getUTCDate() - 1,
+  ));
+  const y = yesterday.getUTCFullYear();
+  const m1 = yesterday.getUTCMonth() + 1;
   return `${y}-${String(m1).padStart(2, "0")}-01`;
 }
 

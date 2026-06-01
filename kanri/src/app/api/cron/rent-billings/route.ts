@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { SYSTEM_USER_ID } from "@/lib/system-user";
 import {
-  isClosingDay,
+  isDayAfterClosing,
   billingMonthForClosing,
   calcDueDateWithCycle,
 } from "@/lib/billing-status";
 
-// Vercel Cron から日次で叩かれる。「今日が締日と一致する active契約」について
-// 当月の rent_billings を生成する（既存があればスキップ）。
+// Vercel Cron から日次で叩かれる。「昨日が締日だった active契約」について
+// 当該月の rent_billings を生成する（既存があればスキップ）。
+// 締日その日はまだ確定していないので、翌日朝に走らせる。
 // end_date / move_out_date を越えた契約は生成しない。
 // 全社横断で動くため service_role クライアントを使う。
 
@@ -46,9 +47,9 @@ async function processRentBillings(supabase: ReturnType<typeof createAdminClient
     return { generated: 0, skipped: 0, contracts: 0 };
   }
 
-  // 2. 「今日が締日」の契約だけに絞る。契約期間外も除外
+  // 2. 「昨日が締日」の契約だけに絞る。契約期間外も除外
   const targets = (contracts as Contract[]).filter((c) => {
-    if (!isClosingDay(now, c.closing_day)) return false;
+    if (!isDayAfterClosing(now, c.closing_day)) return false;
     if (c.start_date && c.start_date > todayStr) return false;
     const cutoff = c.move_out_date ?? c.end_date;
     if (cutoff && cutoff < todayStr) return false;
