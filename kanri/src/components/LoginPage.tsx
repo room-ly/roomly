@@ -179,23 +179,51 @@ export default function LoginPage() {
                 </button>
               </div>
             </>
+          ) : isDemo ? (
+            <>
+              <div className="text-center mb-8">
+                <h2 className="text-lg font-semibold text-ink">デモを体験する</h2>
+                <p className="text-[13px] text-ink-3 mt-1.5">サンプルデータ入りの管理画面をすぐに試せます</p>
+              </div>
+
+              <div className="mb-6 p-4 rounded-lg bg-accent-tint border border-accent/20">
+                <p className="text-[13px] text-ink-2 leading-relaxed">
+                  会員登録は不要です。物件・入居者・契約・家賃管理など、すべての機能を自由に操作いただけます。
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <div className="p-3 rounded-lg bg-danger-tint text-danger text-[13px]">
+                    {error}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-accent text-white rounded-full font-medium text-[14px] transition-colors hover:bg-accent-deep disabled:opacity-70 inline-flex items-center justify-center gap-2"
+                >
+                  {loading && <Loader2 size={16} className="animate-spin" />}
+                  {loading ? "起動中..." : "デモを開始する"}
+                </button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <a
+                  href="/login"
+                  className="text-[13px] text-ink-3 hover:text-accent transition-colors"
+                >
+                  既存アカウントでログイン
+                </a>
+              </div>
+            </>
           ) : (
             <>
               <div className="text-center mb-8">
                 <h2 className="text-lg font-semibold text-ink">ログイン</h2>
                 <p className="text-[13px] text-ink-3 mt-1.5">アカウント情報を入力してください</p>
               </div>
-
-              {isDemo && (
-                <div className="mb-6 p-4 rounded-lg bg-accent-tint border border-accent/20">
-                  <p className="text-[13px] font-medium text-accent-deep mb-1">
-                    デモアカウントで体験できます
-                  </p>
-                  <p className="text-[12px] text-ink-2 leading-relaxed">
-                    こちらのメールアドレス・パスワードはデモ用にご用意したものです。無料でログインして、自由に操作をお試しください。
-                  </p>
-                </div>
-              )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>

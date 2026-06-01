@@ -115,13 +115,13 @@ export function Header() {
           <div className="mt-2 flex gap-2">
             <a
               href="https://kanri.roomly.jp/login?demo=1"
-              className="flex-1 rounded-full border border-rm-border-strong py-2.5 text-center text-[14px] font-medium text-rm-primary"
+              className="flex-1 rounded-full bg-rm-accent-deep py-2.5 text-center text-[14px] font-medium text-white"
             >
               デモを試す
             </a>
             <a
               href="https://kanri.roomly.jp/signup"
-              className="flex-1 rounded-full bg-rm-primary py-2.5 text-center text-[14px] font-medium text-rm-bg"
+              className="flex-1 rounded-full border border-rm-border-strong py-2.5 text-center text-[14px] font-medium text-rm-primary"
             >
               無料で始める
             </a>

@@ -66,14 +66,17 @@ export default function Home() {
               物件・入居者・契約・家賃・修繕・送金——すべてを一つの画面で。Excelとメールから卒業する、最小で十分なSaaS。
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full border border-rm-border-strong px-[22px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-surface">
+              <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full bg-rm-accent-deep px-[22px] text-[15px] font-medium text-white transition-colors hover:opacity-90">
                 デモを試す
               </a>
-              <a href="https://kanri.roomly.jp/signup" className="inline-flex h-12 items-center gap-2 rounded-full bg-rm-primary px-[22px] text-[15px] font-medium text-rm-bg transition-colors hover:bg-rm-accent-deep hover:text-white">
+              <a href="https://kanri.roomly.jp/signup" className="inline-flex h-12 items-center gap-2 rounded-full border border-rm-border-strong px-[22px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-surface">
                 無料で始める
               </a>
             </div>
-            <div className="mt-7 flex flex-wrap gap-[18px] text-[13px] text-rm-text-muted">
+            <p className="mt-4 text-[13px] text-rm-text-muted">
+              会員登録不要・1分でサンプルデータ入りの管理画面を体験できます
+            </p>
+            <div className="mt-5 flex flex-wrap gap-[18px] text-[13px] text-rm-text-muted">
               {["10区画まで無料", "クレカ不要", "最短5分"].map((t) => (
                 <span key={t} className="inline-flex items-center gap-1.5">{CHECK_SVG} {t}</span>
               ))}
@@ -101,6 +104,38 @@ export default function Home() {
             ))}
           </div>
         </Reveal>
+      </section>
+
+      {/* Demo Preview */}
+      <section data-section="demo-preview" className="px-7 py-24">
+        <div className="mx-auto max-w-[1180px]">
+          <SectionHead eyebrow="Try the Demo" desc="会員登録もカード登録も不要。サンプルデータ入りの管理画面をブラウザで即体験できます。">
+            ボタン一つで、<Em>そのまま触れる</Em>。
+          </SectionHead>
+          <Reveal>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+              {[
+                { title: "物件一覧", desc: "建物・部屋・稼働状況・家賃をひと目で把握できる管理画面" },
+                { title: "家賃管理", desc: "入金・滞納をリアルタイムで把握。督促リストも自動で作成" },
+                { title: "オーナー送金", desc: "月次精算・管理費差引・送金明細まで数クリックで完了" },
+                { title: "契約・入退去", desc: "契約作成から更新・解約・原状回復までを一本化" },
+                { title: "修繕・問い合わせ", desc: "受付から業者手配・完了報告まで履歴を時系列で保存" },
+                { title: "ダッシュボード", desc: "稼働率・入金率・滞納件数を1画面で経営状況を確認" },
+              ].map((item) => (
+                <div key={item.title} className="rounded-2xl border border-rm-border bg-rm-surface p-6 transition-all hover:border-rm-accent">
+                  <p className="text-[15px] font-semibold text-rm-primary">{item.title}</p>
+                  <p className="mt-2 text-[13px] text-rm-text-secondary leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+          <div className="mt-12 flex flex-col items-center gap-3">
+            <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full bg-rm-accent-deep px-[26px] text-[15px] font-medium text-white transition-colors hover:opacity-90">
+              いますぐデモを試す
+            </a>
+            <p className="text-[12px] text-rm-text-muted">会員登録不要・1分で起動・すべての機能を操作できます</p>
+          </div>
+        </div>
       </section>
 
       {/* Feature Rows */}
@@ -228,8 +263,8 @@ export default function Home() {
                 ))}
               </ul>
               <div className="mt-7 flex flex-wrap gap-2.5">
-                <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-10 items-center rounded-full border border-rm-border-strong px-[18px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-surface-tint">デモを試す</a>
-                <a href="https://kanri.roomly.jp/signup" className="inline-flex h-10 items-center gap-2 rounded-full bg-rm-primary px-[18px] text-[14px] font-medium text-rm-bg transition-colors hover:bg-rm-accent-deep hover:text-white">無料で始める</a>
+                <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-10 items-center rounded-full bg-rm-accent-deep px-[18px] text-[14px] font-medium text-white transition-colors hover:opacity-90">デモを試す</a>
+                <a href="https://kanri.roomly.jp/signup" className="inline-flex h-10 items-center gap-2 rounded-full border border-rm-border-strong px-[18px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-surface-tint">無料で始める</a>
               </div>
               <p className="mt-4 text-[12px] text-rm-text-muted">※ 10区画を超えても自動課金されません。カード登録・プラン切り替えはご自身のタイミングで。</p>
             </div>
@@ -294,13 +329,14 @@ export default function Home() {
               </h2>
               <p className="mx-auto mt-6 max-w-[38em] text-[16px] opacity-65">10区画まで完全無料。クレジットカード不要、最短5分で始められます。</p>
               <div className="mt-9 inline-flex flex-wrap justify-center gap-3">
-                <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full border px-[22px] text-[15px] font-medium text-rm-bg transition-colors hover:bg-white/10" style={{ borderColor: "color-mix(in srgb, var(--rm-bg) 25%, transparent)" }}>
+                <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-12 items-center gap-2 rounded-full bg-rm-bg px-[22px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-accent hover:text-white">
                   デモを試す
                 </a>
-                <a href="https://kanri.roomly.jp/signup" className="inline-flex h-12 items-center gap-2 rounded-full bg-rm-bg px-[22px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-accent hover:text-white">
+                <a href="https://kanri.roomly.jp/signup" className="inline-flex h-12 items-center rounded-full border px-[22px] text-[15px] font-medium text-rm-bg transition-colors hover:bg-white/10" style={{ borderColor: "color-mix(in srgb, var(--rm-bg) 25%, transparent)" }}>
                   無料で始める
                 </a>
               </div>
+              <p className="mt-4 text-[12px] opacity-55">会員登録不要・1分でサンプル管理画面を体験できます</p>
             </div>
           </div>
         </Reveal>

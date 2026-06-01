@@ -140,10 +140,10 @@ export function FeatureDetail({ title, lead, sections, faqs, relatedColumns, can
             10区画まで無料。クレジットカード不要で、すぐに始められます。
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full border border-rm-border-strong px-[22px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-surface">
+            <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full bg-rm-accent-deep px-[22px] text-[15px] font-medium text-white transition-colors hover:opacity-90">
               デモを試す
             </a>
-            <a href="https://kanri.roomly.jp/signup" className="inline-flex h-12 items-center rounded-full bg-rm-primary px-[22px] text-[15px] font-medium text-rm-bg transition-colors hover:bg-rm-accent-deep hover:text-white">
+            <a href="https://kanri.roomly.jp/signup" className="inline-flex h-12 items-center rounded-full border border-rm-border-strong px-[22px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-surface">
               無料で始める
             </a>
           </div>

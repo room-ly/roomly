@@ -188,13 +188,13 @@ export default async function BlogPostPage({
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <a
                 href="https://kanri.roomly.jp/login?demo=1"
-                className="inline-flex h-11 items-center rounded-full border border-rm-bg/30 px-[20px] text-[14px] font-medium text-rm-bg transition-colors hover:bg-rm-bg/10"
+                className="inline-flex h-11 items-center rounded-full bg-rm-bg px-[20px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-accent-tint"
               >
                 デモを試す
               </a>
               <a
                 href="https://kanri.roomly.jp/signup"
-                className="inline-flex h-11 items-center rounded-full bg-rm-bg px-[20px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-accent-tint"
+                className="inline-flex h-11 items-center rounded-full border border-rm-bg/30 px-[20px] text-[14px] font-medium text-rm-bg transition-colors hover:bg-rm-bg/10"
               >
                 無料で始める
               </a>
