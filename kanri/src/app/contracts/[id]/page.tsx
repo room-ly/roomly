@@ -79,9 +79,7 @@ export default async function ContractDetailPage({
         </div>
         <div className="sum-card">
           <span className="sum-label mono">入居者</span>
-          <span className="sum-value" style={{ fontSize: 16 }}>
-            <Link href={`/tenants/${tenant?.id}`} className="rlink">{tenant?.name || "—"}</Link>
-          </span>
+          <span className="sum-value" style={{ fontSize: 16 }}>{tenant?.name || "—"}</span>
         </div>
         <div className="sum-card">
           <span className="sum-label mono">残日数</span>
