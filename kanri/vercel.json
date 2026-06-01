@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/rent-billings",
-      "schedule": "0 0 1 * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/affiliate-recurring",

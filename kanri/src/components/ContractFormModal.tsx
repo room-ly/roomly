@@ -294,16 +294,34 @@ export default function ContractFormModal({
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-ink-2 block mb-1">支払期日（毎月）</label>
-                  <select name="payment_due_day" defaultValue={editData?.payment_due_day ?? ""} className="input">
-                    <option value="">未設定（月末）</option>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">締日（毎月）</label>
+                  <select name="closing_day" defaultValue={editData?.closing_day ?? 31} className="input">
                     {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
                       <option key={d} value={d}>
                         {d === 31 ? "末日" : `${d}日`}
                       </option>
                     ))}
                   </select>
-                  <p className="text-[11px] text-ink-4 mt-1">毎月この日が家賃の支払期日になります。月によって存在しない日（2/31等）は自動的に月末日として扱われます。</p>
+                  <p className="text-[11px] text-ink-4 mt-1">この日が来ると当月分の家賃請求が自動生成されます。</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">支払期日（毎月）</label>
+                  <select name="payment_due_day" defaultValue={editData?.payment_due_day ?? 31} className="input">
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                      <option key={d} value={d}>
+                        {d === 31 ? "末日" : `${d}日`}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-ink-4 mt-1">月によって存在しない日（2/31等）は月末日として扱われます。</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink-2 block mb-1">支払サイクル</label>
+                  <select name="payment_month_offset" defaultValue={editData?.payment_month_offset ?? 1} className="input">
+                    <option value="0">当月払い（前家賃）</option>
+                    <option value="1">翌月払い（後家賃）</option>
+                  </select>
+                  <p className="text-[11px] text-ink-4 mt-1">締めた月の家賃を当月内に払うか翌月に払うか。</p>
                 </div>
               </div>
               <div>

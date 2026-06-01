@@ -148,11 +148,17 @@ export default async function ContractDetailPage({
                   <div className="field-value field-plain mono">{contract.start_date} 〜 {contract.end_date || "期限なし"}</div>
                 </div>
                 <div className="field">
-                  <div className="field-label mono">支払期日</div>
+                  <div className="field-label mono">家賃サイクル</div>
                   <div className="field-value field-plain">
-                    {contract.payment_due_day
-                      ? (contract.payment_due_day === 31 ? "毎月末日" : `毎月${contract.payment_due_day}日`)
-                      : "毎月末日（未設定）"}
+                    {(() => {
+                      const cd = contract.closing_day ?? 31;
+                      const pd = contract.payment_due_day ?? 31;
+                      const offset = contract.payment_month_offset ?? 1;
+                      const closing = cd === 31 ? "末日" : `${cd}日`;
+                      const due = pd === 31 ? "末日" : `${pd}日`;
+                      const when = offset === 0 ? "当月" : "翌月";
+                      return `毎月${closing}締め・${when}${due}払い`;
+                    })()}
                   </div>
                 </div>
                 {contract.guarantor_name && (

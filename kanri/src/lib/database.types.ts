@@ -39,6 +39,533 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_clicks: {
+        Row: {
+          affiliate_id: string | null
+          clicked_at: string
+          code: string
+          id: string
+          ip_hash: string | null
+          landing_path: string | null
+          referrer: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          visitor_id: string
+        }
+        Insert: {
+          affiliate_id?: string | null
+          clicked_at?: string
+          code: string
+          id?: string
+          ip_hash?: string | null
+          landing_path?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visitor_id: string
+        }
+        Update: {
+          affiliate_id?: string | null
+          clicked_at?: string
+          code?: string
+          id?: string
+          ip_hash?: string | null
+          landing_path?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_clicks_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_conversions: {
+        Row: {
+          affiliate_id: string
+          amount_jpy: number
+          approved_at: string | null
+          approved_by: string | null
+          company_id: string
+          conversion_type: string
+          created_at: string
+          id: string
+          mrr_at_conversion_jpy: number | null
+          notes: string | null
+          occurred_at: string
+          paid_at: string | null
+          payout_id: string | null
+          recurring_month_index: number | null
+          status: string
+        }
+        Insert: {
+          affiliate_id: string
+          amount_jpy: number
+          approved_at?: string | null
+          approved_by?: string | null
+          company_id: string
+          conversion_type: string
+          created_at?: string
+          id?: string
+          mrr_at_conversion_jpy?: number | null
+          notes?: string | null
+          occurred_at?: string
+          paid_at?: string | null
+          payout_id?: string | null
+          recurring_month_index?: number | null
+          status?: string
+        }
+        Update: {
+          affiliate_id?: string
+          amount_jpy?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          company_id?: string
+          conversion_type?: string
+          created_at?: string
+          id?: string
+          mrr_at_conversion_jpy?: number | null
+          notes?: string | null
+          occurred_at?: string
+          paid_at?: string | null
+          payout_id?: string | null
+          recurring_month_index?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_conversions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_conversions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_login_attempts: {
+        Row: {
+          affiliate_code: string | null
+          attempted_at: string
+          city: string | null
+          country: string | null
+          email: string | null
+          ga_client_id: string | null
+          gclid: string | null
+          id: string
+          ip_address: string | null
+          landing_path: string | null
+          referrer: string | null
+          region: string | null
+          success: boolean
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          affiliate_code?: string | null
+          attempted_at?: string
+          city?: string | null
+          country?: string | null
+          email?: string | null
+          ga_client_id?: string | null
+          gclid?: string | null
+          id?: string
+          ip_address?: string | null
+          landing_path?: string | null
+          referrer?: string | null
+          region?: string | null
+          success?: boolean
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          affiliate_code?: string | null
+          attempted_at?: string
+          city?: string | null
+          country?: string | null
+          email?: string | null
+          ga_client_id?: string | null
+          gclid?: string | null
+          id?: string
+          ip_address?: string | null
+          landing_path?: string | null
+          referrer?: string | null
+          region?: string | null
+          success?: boolean
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: []
+      }
+      affiliate_payouts: {
+        Row: {
+          affiliate_id: string
+          conversion_count: number
+          created_at: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          payout_reference: string | null
+          period_end: string
+          period_start: string
+          scheduled_at: string | null
+          status: string
+          total_amount_jpy: number
+        }
+        Insert: {
+          affiliate_id: string
+          conversion_count: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payout_reference?: string | null
+          period_end: string
+          period_start: string
+          scheduled_at?: string | null
+          status?: string
+          total_amount_jpy: number
+        }
+        Update: {
+          affiliate_id?: string
+          conversion_count?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payout_reference?: string | null
+          period_end?: string
+          period_start?: string
+          scheduled_at?: string | null
+          status?: string
+          total_amount_jpy?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_payouts_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_prospects: {
+        Row: {
+          category: string | null
+          contact_email: string | null
+          contact_form_url: string | null
+          contact_phone: string | null
+          converted_affiliate_id: string | null
+          created_at: string
+          followers_count: number | null
+          id: string
+          last_contacted_at: string | null
+          name: string
+          next_action: string | null
+          next_action_at: string | null
+          notes: string | null
+          organization: string | null
+          priority: number | null
+          prospect_type: string | null
+          social_url: string | null
+          status: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          category?: string | null
+          contact_email?: string | null
+          contact_form_url?: string | null
+          contact_phone?: string | null
+          converted_affiliate_id?: string | null
+          created_at?: string
+          followers_count?: number | null
+          id?: string
+          last_contacted_at?: string | null
+          name: string
+          next_action?: string | null
+          next_action_at?: string | null
+          notes?: string | null
+          organization?: string | null
+          priority?: number | null
+          prospect_type?: string | null
+          social_url?: string | null
+          status?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          category?: string | null
+          contact_email?: string | null
+          contact_form_url?: string | null
+          contact_phone?: string | null
+          converted_affiliate_id?: string | null
+          created_at?: string
+          followers_count?: number | null
+          id?: string
+          last_contacted_at?: string | null
+          name?: string
+          next_action?: string | null
+          next_action_at?: string | null
+          notes?: string | null
+          organization?: string | null
+          priority?: number | null
+          prospect_type?: string | null
+          social_url?: string | null
+          status?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_prospects_converted_affiliate_id_fkey"
+            columns: ["converted_affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_signup_attempts: {
+        Row: {
+          affiliate_code: string | null
+          attempted_at: string
+          city: string | null
+          country: string | null
+          email: string | null
+          error_code: string | null
+          error_message: string | null
+          ga_client_id: string | null
+          gclid: string | null
+          id: string
+          ip_address: string | null
+          landing_path: string | null
+          referrer: string | null
+          region: string | null
+          success: boolean
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          affiliate_code?: string | null
+          attempted_at?: string
+          city?: string | null
+          country?: string | null
+          email?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          ga_client_id?: string | null
+          gclid?: string | null
+          id?: string
+          ip_address?: string | null
+          landing_path?: string | null
+          referrer?: string | null
+          region?: string | null
+          success?: boolean
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          affiliate_code?: string | null
+          attempted_at?: string
+          city?: string | null
+          country?: string | null
+          email?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          ga_client_id?: string | null
+          gclid?: string | null
+          id?: string
+          ip_address?: string | null
+          landing_path?: string | null
+          referrer?: string | null
+          region?: string | null
+          success?: boolean
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: []
+      }
+      affiliates: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          bank_account_holder: string | null
+          bank_account_number: string | null
+          bank_account_type: string | null
+          bank_branch: string | null
+          bank_name: string | null
+          code: string
+          commission_initial_jpy: number
+          commission_recurring_months: number
+          commission_recurring_rate: number
+          created_at: string
+          email: string
+          id: string
+          invoice_registration_number: string | null
+          name: string
+          notes: string | null
+          payout_method: string | null
+          phone: string | null
+          prospect_type: string | null
+          rejected_at: string | null
+          rejected_reason: string | null
+          social_url: string | null
+          source: string
+          status: string
+          updated_at: string
+          user_id: string | null
+          website_url: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_account_type?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
+          code: string
+          commission_initial_jpy?: number
+          commission_recurring_months?: number
+          commission_recurring_rate?: number
+          created_at?: string
+          email: string
+          id?: string
+          invoice_registration_number?: string | null
+          name: string
+          notes?: string | null
+          payout_method?: string | null
+          phone?: string | null
+          prospect_type?: string | null
+          rejected_at?: string | null
+          rejected_reason?: string | null
+          social_url?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_account_type?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
+          code?: string
+          commission_initial_jpy?: number
+          commission_recurring_months?: number
+          commission_recurring_rate?: number
+          created_at?: string
+          email?: string
+          id?: string
+          invoice_registration_number?: string | null
+          name?: string
+          notes?: string | null
+          payout_method?: string | null
+          phone?: string | null
+          prospect_type?: string | null
+          rejected_at?: string | null
+          rejected_reason?: string | null
+          social_url?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          after_values: Json | null
+          before_values: Json | null
+          company_id: string
+          created_at: string
+          id: string
+          record_id: string
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          after_values?: Json | null
+          before_values?: Json | null
+          company_id: string
+          created_at?: string
+          id?: string
+          record_id: string
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          after_values?: Json | null
+          before_values?: Json | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          record_id?: string
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       case_logs: {
         Row: {
           action: string
@@ -202,13 +729,17 @@ export type Database = {
       companies: {
         Row: {
           address: string | null
+          affiliate_code: string | null
+          affiliate_id: string | null
+          attribution_visitor_id: string | null
           contract_alert_days: number
           created_at: string
           default_approver_user_id: string | null
           estate_agent_license: string | null
           estate_agent_name: string | null
           estate_license: string | null
-          expense_approval_threshold: number
+          expense_approval_threshold: number | null
+          ga_client_id: string | null
           id: string
           is_demo: boolean
           landing_path: string | null
@@ -234,13 +765,17 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          affiliate_code?: string | null
+          affiliate_id?: string | null
+          attribution_visitor_id?: string | null
           contract_alert_days?: number
           created_at?: string
           default_approver_user_id?: string | null
           estate_agent_license?: string | null
           estate_agent_name?: string | null
           estate_license?: string | null
-          expense_approval_threshold?: number
+          expense_approval_threshold?: number | null
+          ga_client_id?: string | null
           id?: string
           is_demo?: boolean
           landing_path?: string | null
@@ -266,13 +801,17 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          affiliate_code?: string | null
+          affiliate_id?: string | null
+          attribution_visitor_id?: string | null
           contract_alert_days?: number
           created_at?: string
           default_approver_user_id?: string | null
           estate_agent_license?: string | null
           estate_agent_name?: string | null
           estate_license?: string | null
-          expense_approval_threshold?: number
+          expense_approval_threshold?: number | null
+          ga_client_id?: string | null
           id?: string
           is_demo?: boolean
           landing_path?: string | null
@@ -297,6 +836,13 @@ export type Database = {
           utm_term?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "companies_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "companies_default_approver_user_id_fkey"
             columns: ["default_approver_user_id"]
@@ -365,6 +911,7 @@ export type Database = {
       contracts: {
         Row: {
           brokerage_fee: number | null
+          closing_day: number
           company_id: string
           contract_type: string
           created_at: string
@@ -385,6 +932,7 @@ export type Database = {
           notes: string | null
           payment_due_day: number | null
           payment_method: string | null
+          payment_month_offset: number
           renewal_fee: number
           renewal_fee_unit: string
           rent: number
@@ -398,6 +946,7 @@ export type Database = {
         }
         Insert: {
           brokerage_fee?: number | null
+          closing_day?: number
           company_id: string
           contract_type?: string
           created_at?: string
@@ -418,6 +967,7 @@ export type Database = {
           notes?: string | null
           payment_due_day?: number | null
           payment_method?: string | null
+          payment_month_offset?: number
           renewal_fee?: number
           renewal_fee_unit?: string
           rent: number
@@ -431,6 +981,7 @@ export type Database = {
         }
         Update: {
           brokerage_fee?: number | null
+          closing_day?: number
           company_id?: string
           contract_type?: string
           created_at?: string
@@ -451,6 +1002,7 @@ export type Database = {
           notes?: string | null
           payment_due_day?: number | null
           payment_method?: string | null
+          payment_month_offset?: number
           renewal_fee?: number
           renewal_fee_unit?: string
           rent?: number
@@ -700,6 +1252,74 @@ export type Database = {
           },
         ]
       }
+      email_followup_logs: {
+        Row: {
+          company_id: string | null
+          email: string
+          id: string
+          resend_id: string | null
+          sent_at: string
+          template: string
+          user_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          email: string
+          id?: string
+          resend_id?: string | null
+          sent_at?: string
+          template: string
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          email?: string
+          id?: string
+          resend_id?: string | null
+          sent_at?: string
+          template?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_followup_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_unsubscribes: {
+        Row: {
+          category: string
+          created_at: string
+          email: string
+          id: string
+          resubscribed_at: string | null
+          token: string
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          email: string
+          id?: string
+          resubscribed_at?: string | null
+          token: string
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          email?: string
+          id?: string
+          resubscribed_at?: string | null
+          token?: string
+          unsubscribed_at?: string | null
+        }
+        Relationships: []
+      }
       expense_allocations: {
         Row: {
           allocation_method: string
@@ -944,8 +1564,10 @@ export type Database = {
         Row: {
           attempted_at: string
           city: string | null
+          company_id: string | null
           country: string | null
           email: string
+          ga_client_id: string | null
           gclid: string | null
           id: string
           ip_address: string | null
@@ -954,6 +1576,7 @@ export type Database = {
           region: string | null
           success: boolean
           user_agent: string | null
+          user_id: string | null
           utm_campaign: string | null
           utm_content: string | null
           utm_medium: string | null
@@ -963,8 +1586,10 @@ export type Database = {
         Insert: {
           attempted_at?: string
           city?: string | null
+          company_id?: string | null
           country?: string | null
           email: string
+          ga_client_id?: string | null
           gclid?: string | null
           id?: string
           ip_address?: string | null
@@ -973,6 +1598,7 @@ export type Database = {
           region?: string | null
           success?: boolean
           user_agent?: string | null
+          user_id?: string | null
           utm_campaign?: string | null
           utm_content?: string | null
           utm_medium?: string | null
@@ -982,8 +1608,10 @@ export type Database = {
         Update: {
           attempted_at?: string
           city?: string | null
+          company_id?: string | null
           country?: string | null
           email?: string
+          ga_client_id?: string | null
           gclid?: string | null
           id?: string
           ip_address?: string | null
@@ -992,6 +1620,7 @@ export type Database = {
           region?: string | null
           success?: boolean
           user_agent?: string | null
+          user_id?: string | null
           utm_campaign?: string | null
           utm_content?: string | null
           utm_medium?: string | null
@@ -1925,6 +2554,7 @@ export type Database = {
           email: string | null
           error_code: string | null
           error_message: string | null
+          ga_client_id: string | null
           gclid: string | null
           id: string
           ip_address: string | null
@@ -1949,6 +2579,7 @@ export type Database = {
           email?: string | null
           error_code?: string | null
           error_message?: string | null
+          ga_client_id?: string | null
           gclid?: string | null
           id?: string
           ip_address?: string | null
@@ -1973,6 +2604,7 @@ export type Database = {
           email?: string | null
           error_code?: string | null
           error_message?: string | null
+          ga_client_id?: string | null
           gclid?: string | null
           id?: string
           ip_address?: string | null
@@ -2242,6 +2874,39 @@ export type Database = {
           },
         ]
       }
+      tool_logs: {
+        Row: {
+          created_at: string
+          id: number
+          inputs: Json
+          ip: string | null
+          referer: string | null
+          result: Json | null
+          tool_slug: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          inputs: Json
+          ip?: string | null
+          referer?: string | null
+          result?: Json | null
+          tool_slug: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          inputs?: Json
+          ip?: string | null
+          referer?: string | null
+          result?: Json | null
+          tool_slug?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       train_lines: {
         Row: {
           company_name: string | null
@@ -2275,13 +2940,9 @@ export type Database = {
           company_id: string
           created_at: string
           damage_notes: string | null
-          deposit: number
-          deposit_unit: string
           equipment: string[] | null
           floor: number | null
           id: string
-          key_money: number
-          key_money_unit: string
           layout: string | null
           management_fee: number
           notes: string | null
@@ -2296,13 +2957,9 @@ export type Database = {
           company_id: string
           created_at?: string
           damage_notes?: string | null
-          deposit?: number
-          deposit_unit?: string
           equipment?: string[] | null
           floor?: number | null
           id?: string
-          key_money?: number
-          key_money_unit?: string
           layout?: string | null
           management_fee?: number
           notes?: string | null
@@ -2317,13 +2974,9 @@ export type Database = {
           company_id?: string
           created_at?: string
           damage_notes?: string | null
-          deposit?: number
-          deposit_unit?: string
           equipment?: string[] | null
           floor?: number | null
           id?: string
-          key_money?: number
-          key_money_unit?: string
           layout?: string | null
           management_fee?: number
           notes?: string | null
@@ -2447,14 +3100,89 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_login_by_geo: {
+        Row: {
+          city: string | null
+          country: string | null
+          failure_count: number | null
+          last_seen_at: string | null
+          region: string | null
+          success_count: number | null
+          unique_emails: number | null
+          unique_ips: number | null
+        }
+        Relationships: []
+      }
+      v_login_by_source: {
+        Row: {
+          last_seen_at: string | null
+          success_count: number | null
+          unique_success_emails: number | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Relationships: []
+      }
+      v_login_daily: {
+        Row: {
+          day: string | null
+          failure_count: number | null
+          success_count: number | null
+          total_attempts: number | null
+          unique_success_emails: number | null
+          unique_success_ips: number | null
+        }
+        Relationships: []
+      }
+      v_signup_attribution: {
+        Row: {
+          attempts: number | null
+          conversions: number | null
+          cv_rate_percent: number | null
+          last_seen_at: string | null
+          unique_countries: number | null
+          unique_ips: number | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Relationships: []
+      }
+      v_signup_by_geo: {
+        Row: {
+          attempts: number | null
+          city: string | null
+          conversions: number | null
+          country: string | null
+          last_seen_at: string | null
+          region: string | null
+          unique_ips: number | null
+        }
+        Relationships: []
+      }
+      v_signup_funnel: {
+        Row: {
+          auth_failures: number | null
+          company_insert_failures: number | null
+          day: string | null
+          duplicate_email_failures: number | null
+          other_failures: number | null
+          profile_failures: number | null
+          success_count: number | null
+          success_rate_percent: number | null
+          total_attempts: number | null
+          validation_failures: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _recalc_unit_status: { Args: { p_unit_id: string }; Returns: undefined }
       company_id: { Args: never; Returns: string }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      generate_affiliate_code: { Args: never; Returns: string }
       is_subscription_active: { Args: { company_id: string }; Returns: boolean }
-      reset_demo_data: { Args: { demo_company_id: string }; Returns: undefined }
       tenant_id: { Args: never; Returns: string }
       user_role: { Args: never; Returns: string }
       user_type: { Args: never; Returns: string }
@@ -2593,4 +3321,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-

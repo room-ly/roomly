@@ -255,6 +255,9 @@ export const contractSchema = z
     important_explanation_date: optionalString,
     payment_method: optionalString,
     payment_due_day: optionalPositiveInt,
+    closing_day: optionalPositiveInt,
+    payment_month_offset: z.coerce.number().int().min(0).max(1).optional()
+      .or(z.literal("").transform(() => undefined)),
     guarantor_name: optionalString,
     guarantor_phone: phoneField,
     insurance_company: optionalString,
