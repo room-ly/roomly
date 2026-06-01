@@ -27,10 +27,43 @@ export async function POST(request: NextRequest) {
       move_out_date: parsed.data.move_out_date || null,
       signed_date: parsed.data.signed_date || null,
       important_explanation_date: parsed.data.important_explanation_date || null,
+      previous_contract_id: parsed.data.previous_contract_id || null,
       company_id,
     };
 
-    // 同一部屋にactive契約が既にある場合はエラー
+    // 契約更新（再契約）の場合は、新契約を作る前に更新元契約を満了（expired）にする。
+    // これにより「同一部屋にactiveは1つ」の制約に抵触せず、旧条件は履歴として残る。
+    if (data.previous_contract_id) {
+      const { data: prev, error: prevErr } = await supabase
+        .from("contracts")
+        .select("id, unit_id")
+        .eq("id", data.previous_contract_id)
+        .single();
+      if (prevErr || !prev) {
+        return NextResponse.json(
+          { error: "更新元の契約が見つかりません" },
+          { status: 404 }
+        );
+      }
+      if (prev.unit_id !== parsed.data.unit_id) {
+        return NextResponse.json(
+          { error: "更新元契約と部屋が一致しません" },
+          { status: 400 }
+        );
+      }
+      const { error: expireErr } = await supabase
+        .from("contracts")
+        .update({ status: "expired" })
+        .eq("id", data.previous_contract_id);
+      if (expireErr) {
+        return NextResponse.json(
+          { error: "更新元契約の満了処理に失敗しました" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // 同一部屋にactive契約が既にある場合はエラー（更新元は上で満了済みなので除外される）
     if (parsed.data.status === "active") {
       const { data: existing } = await supabase
         .from("contracts")

@@ -268,6 +268,8 @@ export const contractSchema = z
       message: "状態を選択してください",
     }),
     notes: optionalString,
+    // 契約更新（再契約）時のみ設定。更新元契約のIDを保持する
+    previous_contract_id: z.guid().optional().or(z.literal("").transform(() => undefined)),
   })
   .refine(
     (data) => {
