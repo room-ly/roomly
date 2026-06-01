@@ -131,7 +131,6 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
       postal_code: fd.get("postal_code"),
       address: fd.get("address"),
       contract_alert_days: fd.get("contract_alert_days"),
-      rent_collection_target_rate: fd.get("rent_collection_target_rate"),
       estate_license: fd.get("estate_license"),
       estate_agent_name: fd.get("estate_agent_name"),
       estate_agent_license: fd.get("estate_agent_license"),

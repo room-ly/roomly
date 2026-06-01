@@ -9,6 +9,7 @@ import Link from "next/link";
 import { getDashboardData, getMonthlyTrend } from "@/lib/queries";
 import StatusBadge from "@/components/StatusBadge";
 import { deriveBillingStatus } from "@/lib/billing-status";
+import { Sparkline, Donut } from "@/components/MiniViz";
 
 export default async function DashboardPage() {
   const [dashData, monthlyTrend] = await Promise.all([
@@ -75,6 +76,11 @@ export default async function DashboardPage() {
   const totalRentExpected = s.total_rent_expected || 0;
   const totalRentReceived = s.total_rent_received || 0;
 
+  // サマリーカードのミニグラフ用データ
+  const expenseSeries = monthlyTrend.map((m: Record<string, any>) => Number(m.expenseAmount || 0));
+  const hasExpenseTrend = expenseSeries.filter((v: number) => v > 0).length >= 2;
+  const vacancyPct = s.total_units > 0 ? Math.round((s.vacant_units / s.total_units) * 100) : 0;
+
   return (
     <>
       {/* Hero + Pulse */}
@@ -118,16 +124,29 @@ export default async function DashboardPage() {
 
       {/* 経費・送金サマリー */}
       <div className="cols-summary" style={{ marginBottom: 20 }}>
-        <div className="sum-card">
-          <span className="sum-label mono">入居率</span>
-          <span className="sum-value serif-i">{s.occupancy_rate}%</span>
-          <span className="sum-foot mono">{s.occupied_units}/{s.total_units}戸</span>
+        <div className="sum-card sum-card-graph">
+          <div className="sum-main">
+            <span className="sum-label mono">入居率</span>
+            <span className="sum-value serif-i">{s.occupancy_rate}%</span>
+            <span className="sum-foot mono">{s.occupied_units}/{s.total_units}戸</span>
+          </div>
+          <div className="sum-viz">
+            <Donut percent={s.occupancy_rate} />
+          </div>
         </div>
-        <div className="sum-card">
-          <span className="sum-label mono">今月の経費</span>
-          <span className="sum-value" style={{ fontSize: 16 }}>
-            <Link href="/expenses" className="rlink">¥{s.monthly_expenses.toLocaleString()}</Link>
-          </span>
+        <div className="sum-card sum-card-graph">
+          <div className="sum-main">
+            <span className="sum-label mono">今月の経費</span>
+            <span className="sum-value" style={{ fontSize: 16 }}>
+              <Link href="/expenses" className="rlink">¥{s.monthly_expenses.toLocaleString()}</Link>
+            </span>
+            <span className="sum-foot mono">直近{monthlyTrend.length}ヶ月の推移</span>
+          </div>
+          {hasExpenseTrend && (
+            <div className="sum-viz">
+              <Sparkline values={expenseSeries} />
+            </div>
+          )}
         </div>
         <div className="sum-card">
           <span className="sum-label mono">未送金</span>
@@ -137,13 +156,21 @@ export default async function DashboardPage() {
             </Link>
           </span>
         </div>
-        <div className="sum-card">
-          <span className="sum-label mono">空室</span>
-          <span className="sum-value" style={{ fontSize: 16 }}>
-            {s.vacant_units > 0 ? (
-              <Link href="/properties" className="rlink">{s.vacant_units}戸</Link>
-            ) : "0戸"}
-          </span>
+        <div className="sum-card sum-card-graph">
+          <div className="sum-main">
+            <span className="sum-label mono">空室</span>
+            <span className="sum-value" style={{ fontSize: 16 }}>
+              {s.vacant_units > 0 ? (
+                <Link href="/properties" className="rlink">{s.vacant_units}戸</Link>
+              ) : "0戸"}
+            </span>
+            <span className="sum-foot mono">全{s.total_units}戸中 {vacancyPct}%</span>
+          </div>
+          {s.total_units > 0 && (
+            <div className="sum-viz">
+              <Donut percent={vacancyPct} color={vacancyPct > 0 ? "var(--warn)" : "var(--success)"} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -176,10 +203,9 @@ export default async function DashboardPage() {
 
       {/* Chart */}
       {monthlyTrend.length > 0 && (() => {
-        const targetRate = s.rent_collection_target_rate ?? 95;
-        // 目標線の縦位置（%）。100%付近でも見切れないよう上端から少し余白を確保する
-        const targetPos = Math.min(targetRate, 98);
-        const achievedCount = monthlyTrend.filter((m: Record<string, any>) => m.collectionRate >= targetRate).length;
+        // 家賃回収率は「100%が正常・それ以外は取りこぼし」という性質のため、
+        // 可変の目標値は設けず100%を基準線とする。100%未満の月は未回収=要注意。
+        const fullCount = monthlyTrend.filter((m: Record<string, any>) => m.collectionRate >= 100).length;
         return (
         <div className="dash2-section">
           <div className="dash2-section-head">
@@ -187,9 +213,8 @@ export default async function DashboardPage() {
               家賃回収率<span className="dash2-section-title-sub">月次推移</span>
             </h2>
             <div className="dash2-chart-legend">
-              <span className="legend-item"><span className="legend-dot" style={{ background: "var(--accent)" }} /> 目標達成</span>
-              <span className="legend-item"><span className="legend-dot" style={{ background: "var(--warn)" }} /> 未達</span>
-              <span className="legend-item"><span className="legend-line" /> 目標 {targetRate}%</span>
+              <span className="legend-item"><span className="legend-dot" style={{ background: "var(--accent)" }} /> 全額回収</span>
+              <span className="legend-item"><span className="legend-dot" style={{ background: "var(--warn)" }} /> 未回収あり</span>
             </div>
           </div>
           <div className="dash2-chart">
@@ -201,14 +226,14 @@ export default async function DashboardPage() {
               <span>0%</span>
             </div>
             <div className="dash2-chart-area">
-              {/* 目標ライン: 棒の前面(z-index)に描き、100%付近でも常に見える */}
-              <div className="dash2-chart-target" style={{ ["--target-pos" as string]: `${targetPos}` }}>
-                <span className="dash2-chart-target-label mono">目標 {targetRate}%</span>
+              {/* 100%の基準線。棒の前面(z-index)に描き、満額の月でも常に見える */}
+              <div className="dash2-chart-target">
+                <span className="dash2-chart-target-label mono">100%</span>
               </div>
               <div className="dash2-chart-bars">
                 {monthlyTrend.map((m: Record<string, any>, i: number) => {
                   const isLast = i === monthlyTrend.length - 1;
-                  const achieved = m.collectionRate >= targetRate;
+                  const achieved = m.collectionRate >= 100;
                   return (
                     <div key={m.month} className="dash2-chart-bar-col">
                       <span className={`dash2-chart-val mono${isLast ? " is-last" : ""}`}>
@@ -251,7 +276,7 @@ export default async function DashboardPage() {
             </div>
           </div>
           <p className="dash2-chart-foot">
-            直近{monthlyTrend.length}ヶ月のうち <strong>{achievedCount}ヶ月</strong> が目標 {targetRate}% を達成
+            直近{monthlyTrend.length}ヶ月のうち <strong>{fullCount}ヶ月</strong> が全額回収（100%）
           </p>
         </div>
         );

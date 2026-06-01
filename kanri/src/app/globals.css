@@ -411,6 +411,19 @@ table {
 .sum-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
 .sum-value { font-size: 22px; line-height: 1.1; letter-spacing: -0.015em; color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .sum-foot { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+
+/* サマリーカードのミニグラフ配置（左:数値 / 右:グラフ） */
+.sum-card-graph { flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; }
+.sum-card-graph .sum-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.sum-card-graph .sum-viz { flex-shrink: 0; display: flex; align-items: center; }
+.sum-spark { display: block; }
+.sum-spark-fill { fill: var(--accent); opacity: 0.10; }
+.sum-spark-line { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.sum-spark-dot { fill: var(--accent); }
+.sum-donut-track { fill: none; stroke: var(--line); }
+.sum-donut-val { fill: none; stroke: var(--accent); stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+.sum-donut-label { font-family: var(--font-mono); font-size: 12px; font-weight: 600; fill: var(--ink); }
+
 @media (max-width: 1100px) { .cols-summary { grid-template-columns: 1fr 1fr; } }
 
 /* ====== Kanban ====== */
@@ -1032,16 +1045,16 @@ table {
 .dash2-chart-area { position: relative; }
 .dash2-chart-target {
   position: absolute; left: 0; right: 0;
-  /* 棒グラフ(.dash2-chart-bars)が inset:24px で配置されているため、目標ラインも同じ座標系に合わせる。
-     位置は会社設定値(--target-pos: 0〜100)で可変。内側領域(top:24px〜bottom:24px)基準で計算する */
-  top: calc(24px + (100% - 48px) * (1 - var(--target-pos, 95) / 100));
-  border-top: 1px dashed var(--accent-deep); height: 0;
-  /* 棒(z-index:2)より前面に出して、回収率が高くても目標線が常に見えるようにする */
+  /* 100%の基準線。棒グラフ(.dash2-chart-bars)が inset:24px で配置されているため、
+     その内側領域の最上部(=100%の高さ)に合わせる */
+  top: 24px;
+  border-top: 1px dashed var(--ink-3); height: 0;
+  /* 棒(z-index:2)より前面に出して、満額の月でも基準線が常に見えるようにする */
   z-index: 4; pointer-events: none;
 }
 .dash2-chart-target-label {
   position: absolute; right: 0; top: -7px;
-  font-size: 9px; color: var(--accent-deep); font-weight: 600;
+  font-size: 9px; color: var(--ink-3); font-weight: 600;
   background: var(--surface); padding: 0 5px; border-radius: 3px;
   white-space: nowrap; line-height: 14px;
 }

@@ -8,11 +8,9 @@ export async function getDashboardData() {
   // 満了間近とみなす日数は会社設定（contract_alert_days）に従う。未設定なら90日。
   const { data: companyRow } = await supabase
     .from("companies")
-    .select("contract_alert_days, rent_collection_target_rate")
+    .select("contract_alert_days")
     .single();
   const alertDays = companyRow?.contract_alert_days ?? 90;
-  // 家賃回収率の目標値（%）。チャートの目標ライン表示に使う。未設定なら95。
-  const rentTargetRate = companyRow?.rent_collection_target_rate ?? 95;
   const inAlertDays = new Date(now.getTime() + alertDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const staleDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -137,7 +135,6 @@ export async function getDashboardData() {
       monthly_expenses: monthlyExpenseTotal,
       pending_remittances: pendingRemittances.length,
       contract_alert_days: alertDays,
-      rent_collection_target_rate: rentTargetRate,
     },
     overdueBillings,
     activeCases,
@@ -160,10 +157,16 @@ export async function getMonthlyTrend() {
 
   // 月ごとの家賃請求データ（家賃ページと同じく rent_payments 実額ベース）
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-  const { data: billings } = await supabase
-    .from("rent_billings")
-    .select("billing_month, status, total_amount, rent_payments(amount)")
-    .gte("billing_month", sixMonthsAgo.toISOString().slice(0, 10));
+  const [{ data: billings }, { data: expenses }] = await Promise.all([
+    supabase
+      .from("rent_billings")
+      .select("billing_month, status, total_amount, rent_payments(amount)")
+      .gte("billing_month", sixMonthsAgo.toISOString().slice(0, 10)),
+    supabase
+      .from("expenses")
+      .select("amount, expense_date")
+      .gte("expense_date", sixMonthsAgo.toISOString().slice(0, 10)),
+  ]);
 
   const trend = months.map((month) => {
     const monthBillings = (billings ?? []).filter(
@@ -180,12 +183,16 @@ export async function getMonthlyTrend() {
       );
       return s + Math.min(sum, Number(b.total_amount));
     }, 0);
+    const expenseTotal = (expenses ?? [])
+      .filter((e: Row) => (e.expense_date as string)?.slice(0, 7) === month)
+      .reduce((s: number, e: Row) => s + Number(e.amount || 0), 0);
     return {
       month,
       label: `${month.slice(5)}月`,
       totalAmount: total,
       paidAmount: paid,
       collectionRate: total > 0 ? Math.round((paid / total) * 100) : 0,
+      expenseAmount: expenseTotal,
     };
   });
 

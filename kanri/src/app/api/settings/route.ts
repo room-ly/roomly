@@ -11,7 +11,7 @@ export async function PUT(request: NextRequest) {
     const supabase = await createClient();
     const companyId = await getCompanyId();
 
-    const allowed = ["name", "phone", "address", "postal_code", "usage_type", "contract_alert_days", "rent_collection_target_rate", "estate_license", "estate_agent_name", "estate_agent_license", "default_approver_user_id", "expense_approval_threshold"];
+    const allowed = ["name", "phone", "address", "postal_code", "usage_type", "contract_alert_days", "estate_license", "estate_agent_name", "estate_agent_license", "default_approver_user_id", "expense_approval_threshold"];
     const update: Record<string, any> = {};
     for (const key of allowed) {
       if (key in body) update[key] = body[key];
@@ -21,11 +21,6 @@ export async function PUT(request: NextRequest) {
     }
     if (update.contract_alert_days !== undefined) {
       update.contract_alert_days = Number(update.contract_alert_days);
-    }
-    if (update.rent_collection_target_rate !== undefined) {
-      // 0〜100の範囲にクランプ（DB側のCHECK制約と整合）
-      const v = Math.round(Number(update.rent_collection_target_rate));
-      update.rent_collection_target_rate = Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 95;
     }
     if (update.default_approver_user_id !== undefined) {
       update.default_approver_user_id = update.default_approver_user_id || null;
