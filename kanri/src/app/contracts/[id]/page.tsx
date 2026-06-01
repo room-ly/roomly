@@ -400,7 +400,13 @@ export default async function ContractDetailPage({
                 </div>
                 <div className="field">
                   <div className="field-label mono">部屋</div>
-                  <div className="field-value field-plain mono">{unit?.unit_number || "—"}</div>
+                  <div className="field-value mono">
+                    {unit?.id && property?.id ? (
+                      <Link href={`/properties/${property.id}/units/${unit.id}`} className="rlink">{unit.unit_number || "—"}</Link>
+                    ) : (
+                      <span className="field-plain">{unit?.unit_number || "—"}</span>
+                    )}
+                  </div>
                 </div>
                 {property?.address && (
                   <div className="field">
