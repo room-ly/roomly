@@ -51,15 +51,15 @@ describe('calcCollectionRate', () => {
     expect(result.overdueAmount).toBe(0)
   })
 
-  it('一部滞納', () => {
+  it('一部未払い（滞納額は派生に移行したため常に0）', () => {
     const billings = [
       { status: 'paid', total_amount: 100000 },
-      { status: 'overdue', total_amount: 50000 },
+      { status: 'unpaid', total_amount: 50000 },
     ]
     const result = calcCollectionRate(billings)
     // 100000 / 150000 = 66.666... → 66.7
     expect(result.rate).toBe(66.7)
-    expect(result.overdueAmount).toBe(50000)
+    expect(result.overdueAmount).toBe(0)
   })
 
   it('空配列', () => {

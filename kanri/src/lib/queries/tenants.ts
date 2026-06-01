@@ -1,10 +1,12 @@
 import { createClient, type Row } from "./_shared";
+import { isOverdue } from "@/lib/billing-status";
 
 // 入居者一覧（アクティブ契約・部屋・物件情報付き）
 export async function getTenantsWithInfo() {
   const supabase = await createClient();
+  const today = new Date().toISOString().slice(0, 10);
 
-  const [tenantsRes, contractsRes] = await Promise.all([
+  const [tenantsRes, contractsRes, overdueBillingsRes] = await Promise.all([
     supabase.from("tenants").select("*").order("name"),
     supabase
       .from("contracts")
@@ -12,14 +14,27 @@ export async function getTenantsWithInfo() {
         "id, tenant_id, unit_id, rent, status, unit:units(unit_number, property:properties(name))"
       )
       .eq("status", "active"),
+    supabase
+      .from("rent_billings")
+      .select("contract_id, total_amount, due_date, rent_payments(amount)")
+      .lt("due_date", today),
   ]);
 
   const tenants = (tenantsRes.data ?? []) as Row[];
   const contracts = (contractsRes.data ?? []) as Row[];
+  const overdueContractIds = new Set(
+    ((overdueBillingsRes.data ?? []) as Row[])
+      .filter((b) => isOverdue(b as any, today))
+      .map((b) => b.contract_id as string)
+  );
 
   return tenants.map((t: Row) => {
     const contract = contracts.find((c: Row) => c.tenant_id === t.id);
-    return { ...t, contract: contract ?? null };
+    return {
+      ...t,
+      contract: contract ?? null,
+      _has_overdue: contract ? overdueContractIds.has(contract.id as string) : false,
+    };
   });
 }
 

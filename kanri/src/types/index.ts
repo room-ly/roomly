@@ -8,7 +8,8 @@ export type ContractStatus = "active" | "expired" | "terminated" | "pending";
 
 export type ContractType = "fixed" | "ordinary";
 
-export type BillingStatus = "unpaid" | "partial" | "paid" | "overdue";
+// DBに保存するステータス。「overdue（滞納）」は due_date と支払い実額から派生（lib/billing-status.ts）
+export type BillingStatus = "unpaid" | "partial" | "paid";
 
 export type PaymentMethod = "transfer" | "card" | "cash" | "debit";
 

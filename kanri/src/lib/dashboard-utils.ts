@@ -21,19 +21,16 @@ export function calcOccupancyRate(units: UnitData[]): number {
   return Math.round((occupied / units.length) * 1000) / 10
 }
 
-// 家賃回収率計算
+// 家賃回収率計算（DB上のstatusベース。「滞納額」は派生扱いに移行したのでここでは0固定）
 export function calcCollectionRate(billings: BillingData[]): { rate: number; overdueAmount: number } {
   const totalExpected = billings.reduce((s, b) => s + Number(b.total_amount), 0)
   const totalReceived = billings
     .filter(b => b.status === 'paid')
     .reduce((s, b) => s + Number(b.total_amount), 0)
-  const overdueAmount = billings
-    .filter(b => b.status === 'overdue')
-    .reduce((s, b) => s + Number(b.total_amount), 0)
 
   return {
     rate: totalExpected > 0 ? Math.round((totalReceived / totalExpected) * 1000) / 10 : 0,
-    overdueAmount,
+    overdueAmount: 0,
   }
 }
 

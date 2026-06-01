@@ -125,14 +125,6 @@ export async function PUT(
       );
     }
 
-    if (body.status === "overdue") {
-      await createNotification({
-        title: `家賃滞納: ${updated.billing_month}`,
-        type: "danger",
-        link: `/rent/${id}`,
-      });
-    }
-
     return NextResponse.json(updated);
   } catch {
     return NextResponse.json(

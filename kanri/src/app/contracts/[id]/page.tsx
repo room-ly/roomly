@@ -9,6 +9,7 @@ import MoveOutChecklist from "@/components/MoveOutChecklist";
 import DepositBalancePanel from "@/components/DepositBalancePanel";
 import AuditLogSection from "@/components/AuditLogSection";
 import { formatDeposit, toJpy } from "@/lib/deposit-unit";
+import { deriveBillingStatus } from "@/lib/billing-status";
 
 const contractTypeLabels: Record<string, string> = {
   fixed: "定期借家",
@@ -188,15 +189,18 @@ export default async function ContractDetailPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {billings.map((b: any) => (
-                      <tr key={b.id} className={`row-hover ${b.status === "overdue" ? "bg-danger-tint" : ""}`}>
-                        <td>
-                          <Link href={`/rent/${b.id}`} className="rlink">{(b.billing_month as string)?.slice(0, 7) ?? b.billing_month}</Link>
-                        </td>
-                        <td className="num">¥{Number(b.total_amount).toLocaleString()}</td>
-                        <td><StatusBadge status={b.status} /></td>
-                      </tr>
-                    ))}
+                    {billings.map((b: any) => {
+                      const derived = deriveBillingStatus(b);
+                      return (
+                        <tr key={b.id} className={`row-hover ${derived === "overdue" ? "bg-danger-tint" : ""}`}>
+                          <td>
+                            <Link href={`/rent/${b.id}`} className="rlink">{(b.billing_month as string)?.slice(0, 7) ?? b.billing_month}</Link>
+                          </td>
+                          <td className="num">¥{Number(b.total_amount).toLocaleString()}</td>
+                          <td><StatusBadge status={derived} /></td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

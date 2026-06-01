@@ -6,6 +6,7 @@ import MonthSelector from "./MonthSelector";
 import FilterableTable from "./FilterableTable";
 import StatusBadge from "./StatusBadge";
 import { RentPaymentButton } from "./RentPageClient";
+import { deriveBillingStatus, sumPayments } from "@/lib/billing-status";
 
 interface RentTableProps {
   data: Record<string, any>[];
@@ -50,19 +51,12 @@ export default function RentTable({ data, availableMonths, selectedMonth }: Rent
       .sort((a, b) => a.label.localeCompare(b.label, "ja"));
   }, [data]);
 
-  // 滞納判定: due_date を過ぎていて、入金合計が請求額に達していない
-  // status カラムが古いまま放置されていても矛盾しないよう、その場で計算する
-  const todayStr = new Date().toISOString().slice(0, 10);
+  // ステータスは Single Source of Truth として billing-status.ts に集約
   const isUnpaid = (b: Record<string, any>) => {
-    const total = Number(b.total_amount) || 0;
-    const paid = (b.rent_payments ?? []).reduce(
-      (s: number, p: any) => s + (Number(p.amount) || 0),
-      0
-    );
-    return paid < total;
+    const s = deriveBillingStatus(b);
+    return s === "unpaid" || s === "partial" || s === "overdue";
   };
-  const isOverdue = (b: Record<string, any>) =>
-    isUnpaid(b) && b.due_date && b.due_date < todayStr;
+  const isOverdue = (b: Record<string, any>) => deriveBillingStatus(b) === "overdue";
 
   const paidItems = monthFiltered.filter((b) => !isUnpaid(b));
   const overdueItems = monthFiltered.filter((b) => isOverdue(b));
@@ -76,13 +70,10 @@ export default function RentTable({ data, availableMonths, selectedMonth }: Rent
   const totalExpected = monthFiltered.reduce((s, b) => s + Number(b.total_amount), 0);
   const totalPaid = paidItems.reduce((s, b) => s + Number(b.total_amount), 0);
   const collectionRate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0;
-  const overdueAmount = overdueItems.reduce((s, b) => {
-    const paid = (b.rent_payments ?? []).reduce(
-      (sum: number, p: any) => sum + (Number(p.amount) || 0),
-      0
-    );
-    return s + (Number(b.total_amount) - paid);
-  }, 0);
+  const overdueAmount = overdueItems.reduce(
+    (s, b) => s + (Number(b.total_amount) - sumPayments(b)),
+    0
+  );
 
   const tabs: { key: StatusTab; label: string; count: number; danger?: boolean }[] = [
     { key: "all", label: "すべて", count: monthFiltered.length },
@@ -179,7 +170,7 @@ export default function RentTable({ data, availableMonths, selectedMonth }: Rent
             align: "right" as const,
             sortable: true,
             render: (item) => {
-              const paid = (item.rent_payments as any[] || []).reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+              const paid = sumPayments(item);
               const diff = paid - Number(item.total_amount);
               return (
                 <div>
@@ -197,17 +188,7 @@ export default function RentTable({ data, availableMonths, selectedMonth }: Rent
           {
             key: "status",
             label: "状態",
-            render: (item) => {
-              // due_date と入金額から実際の状態を導出（DBのstatusが古いままでも正しく表示）
-              const paid = (item.rent_payments as any[] || []).reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
-              const total = Number(item.total_amount) || 0;
-              let derived: string;
-              if (paid >= total) derived = "paid";
-              else if (paid > 0) derived = "partial";
-              else if (isOverdue(item)) derived = "overdue";
-              else derived = "unpaid";
-              return <StatusBadge status={derived} />;
-            },
+            render: (item) => <StatusBadge status={deriveBillingStatus(item)} />,
           },
           {
             key: "_action",
@@ -218,7 +199,7 @@ export default function RentTable({ data, availableMonths, selectedMonth }: Rent
                   billing={{
                     id: item.id,
                     total_amount: Number(item.total_amount),
-                    paid_amount: (item.rent_payments as any[] || []).reduce((s: number, p: any) => s + Number(p.amount || 0), 0),
+                    paid_amount: sumPayments(item),
                     tenant_name: item.contract?.tenant?.name || "—",
                     unit_label: `${item.contract?.unit?.property?.name || ""} ${item.contract?.unit?.unit_number || ""}`,
                     billing_month: item.billing_month,

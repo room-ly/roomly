@@ -5,6 +5,7 @@ import {
   sendOverdueNotification,
   sendContractExpiryReminder,
 } from "@/lib/notifications";
+import { isOverdue } from "@/lib/billing-status";
 
 // Vercel Cron から日次で叩かれる。滞納・契約満了の通知メールを送る。
 // 全社横断で処理するため service_role クライアントを使う。
@@ -15,21 +16,23 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-// 滞納通知: status=overdue かつ 本日まだ通知していない請求を抽出して送信
+// 滞納通知: due_date 超過かつ未払いの請求を派生で抽出し、本日未通知のものに送信
 async function processOverdue(supabase: ReturnType<typeof createAdminClient>) {
   const t = today();
   const { data: billings, error } = await supabase
     .from("rent_billings")
     .select(
-      "id, billing_month, total_amount, overdue_notified_at, contract:contracts(tenant:tenants(name, email), unit:units(unit_number, property:properties(name)))"
+      "id, billing_month, total_amount, due_date, overdue_notified_at, rent_payments(amount), contract:contracts(tenant:tenants(name, email), unit:units(unit_number, property:properties(name)))"
     )
-    .eq("status", "overdue");
+    .lt("due_date", t);
 
   if (error) throw new Error(`滞納抽出失敗: ${error.message}`);
 
+  const overdueBillings = (billings ?? []).filter((b) => isOverdue(b as any, t));
+
   let sent = 0;
   let skipped = 0;
-  for (const b of billings ?? []) {
+  for (const b of overdueBillings) {
     const row = b as Record<string, any>;
     // 本日すでに通知済みならスキップ（毎日送らない）
     if (row.overdue_notified_at === t) {
@@ -62,7 +65,7 @@ async function processOverdue(supabase: ReturnType<typeof createAdminClient>) {
       skipped++;
     }
   }
-  return { sent, skipped, total: billings?.length ?? 0 };
+  return { sent, skipped, total: overdueBillings.length };
 }
 
 // 契約満了リマインダー: active かつ end_date が30日以内、本日未通知の契約を抽出して送信

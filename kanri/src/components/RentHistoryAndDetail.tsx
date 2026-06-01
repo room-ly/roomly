@@ -4,6 +4,7 @@ import { useState } from "react";
 import StatusBadge from "./StatusBadge";
 import RentDetailClient from "./RentDetailClient";
 import AuditLogSection from "./AuditLogSection";
+import { deriveBillingStatus } from "@/lib/billing-status";
 
 const paymentMethodLabels: Record<string, string> = {
   transfer: "銀行振込",
@@ -18,18 +19,7 @@ function formatBillingMonth(s: string | null | undefined): string {
   return s.slice(0, 7);
 }
 
-function deriveStatus(b: any): string {
-  const total = Number(b.total_amount) || 0;
-  const paid = (b.rent_payments ?? []).reduce(
-    (s: number, p: any) => s + Number(p.amount || 0),
-    0
-  );
-  if (paid >= total) return "paid";
-  if (paid > 0) return "partial";
-  const todayStr = new Date().toISOString().slice(0, 10);
-  if (b.due_date && b.due_date < todayStr) return "overdue";
-  return "unpaid";
-}
+const deriveStatus = (b: any): string => deriveBillingStatus(b);
 
 interface Props {
   history: any[];

@@ -47,14 +47,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (billing.status === "overdue") {
-      await createNotification({
-        title: `家賃滞納: ${parsed.data.billing_month}`,
-        type: "danger",
-        link: `/rent/${billing.id}`,
-      });
-    }
-
     return NextResponse.json(billing, { status: 201 });
   } catch (err) {
     return NextResponse.json(

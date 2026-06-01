@@ -271,7 +271,7 @@ async function handleMatch(request: NextRequest) {
     .select(
       "id, billing_month, total_amount, status, contract:contracts(tenant:tenants(name, name_kana), unit:units(unit_number, property:properties(name))), rent_payments(amount)"
     )
-    .in("status", ["unpaid", "partial", "overdue"]);
+    .in("status", ["unpaid", "partial"]);
 
   if (billingMonth) {
     query = query.eq("billing_month", billingMonth);

@@ -40,7 +40,7 @@ export async function getContractDetail(id: string) {
       .single(),
     supabase
       .from("rent_billings")
-      .select("id, billing_month, total_amount, status")
+      .select("id, billing_month, total_amount, due_date, status, rent_payments(amount)")
       .eq("contract_id", id)
       .order("billing_month", { ascending: false })
       .limit(12),

@@ -1,4 +1,5 @@
 import { createClient, type Row } from "./_shared";
+import { isOverdue } from "@/lib/billing-status";
 
 // 会社情報
 export async function getCompany() {
@@ -18,13 +19,14 @@ export async function getBadgeCounts() {
   const staleThreshold = new Date();
   staleThreshold.setDate(staleThreshold.getDate() - 3);
   const staleDate = staleThreshold.toISOString();
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   const [overdueRes, casesUrgentRes, casesStaleRes, companyRes, authRes] =
     await Promise.all([
       supabase
         .from("rent_billings")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "overdue"),
+        .select("id, total_amount, due_date, rent_payments(amount)")
+        .lt("due_date", todayStr),
       supabase
         .from("cases")
         .select("id", { count: "exact", head: true })
@@ -64,7 +66,7 @@ export async function getBadgeCounts() {
   const userEmail = profileRes.data?.email ?? authRes.data?.user?.email ?? "";
   const userName = profileRes.data?.name ?? "";
 
-  const rent = overdueRes.count ?? 0;
+  const rent = ((overdueRes.data ?? []) as Row[]).filter((b) => isOverdue(b as any, todayStr)).length;
   const cases = (casesUrgentRes.count ?? 0) + (casesStaleRes.count ?? 0);
   const contracts = ((contractsRes.data ?? []) as Row[]).filter((c: Row) => {
     const reqs = (c.move_out_requests ?? []) as Row[];

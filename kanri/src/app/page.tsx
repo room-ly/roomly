@@ -8,6 +8,7 @@ import {
 import Link from "next/link";
 import { getDashboardData, getMonthlyTrend } from "@/lib/queries";
 import StatusBadge from "@/components/StatusBadge";
+import { deriveBillingStatus } from "@/lib/billing-status";
 
 export default async function DashboardPage() {
   const [dashData, monthlyTrend] = await Promise.all([
@@ -315,7 +316,7 @@ export default async function DashboardPage() {
                       <td><Link href={href} className="strong">{b.contract?.tenant?.name || "—"}</Link></td>
                       <td><Link href={href} className="mono" style={{ fontSize: 12, color: "var(--ink-2)" }}>{(b.billing_month as string)?.slice(0, 7) ?? b.billing_month}</Link></td>
                       <td><Link href={href} className="num">¥{Number(b.total_amount).toLocaleString()}</Link></td>
-                      <td><Link href={href}><StatusBadge status={b.status} /></Link></td>
+                      <td><Link href={href}><StatusBadge status={deriveBillingStatus(b)} /></Link></td>
                     </tr>
                   );
                 })}

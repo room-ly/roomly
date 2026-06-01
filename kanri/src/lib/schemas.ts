@@ -288,7 +288,7 @@ export const rentBillingSchema = z.object({
     .positive("請求額は0より大きい値を入力してください"),
   billing_month: z.string().min(1, "対象月は必須です"),
   due_date: z.string().min(1, "支払期限は必須です"),
-  status: z.enum(["unpaid", "partial", "paid", "overdue"], {
+  status: z.enum(["unpaid", "partial", "paid"], {
     message: "状態を選択してください",
   }),
 });
