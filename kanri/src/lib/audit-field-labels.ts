@@ -311,6 +311,7 @@ const ENUM_LABELS: EnumMap = {
       partial: "一部入金",
       paid: "入金済",
       overdue: "滞納",
+      exempt: "対象外",
     },
   },
   rent_payments: {

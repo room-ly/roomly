@@ -32,6 +32,9 @@ export default function RentTable({ data, availableMonths, selectedMonth }: Rent
     const params = new URLSearchParams(searchParams.toString());
     params.set("month", month);
     params.delete("page");
+    // status指定が残っているとサーバー側で全期間扱いになり月絞り込みが無視されるため除去する。
+    // 表示中のステータスタブは activeTab で client 側に保持されるのでリセットされない。
+    params.delete("status");
     router.push(`${pathname}?${params.toString()}`);
   };
 

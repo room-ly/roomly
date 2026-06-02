@@ -143,15 +143,7 @@ export default function RentHistoryAndDetail({
         <div className="section">
           <div className="section-head-bar">
             <h2>{formatBillingMonth(current.billing_month)} の詳細</h2>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <BillingExemptToggle
-                billingId={current.id}
-                billingMonth={current.billing_month}
-                status={current.status}
-                hasPayments={currentPayments.length > 0}
-              />
-              <StatusBadge status={currentStatus} />
-            </div>
+            <StatusBadge status={currentStatus} />
           </div>
           <div className="section-body">
             {/* 請求内訳 */}
@@ -243,19 +235,27 @@ export default function RentHistoryAndDetail({
             {/* 入金履歴 */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <h3 style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-2)" }}>入金履歴</h3>
-              {currentStatus !== "exempt" && (currentStatus !== "paid" || currentRemaining < 0) && (
-                <RentDetailClient
-                  billing={{
-                    id: current.id,
-                    total_amount: Number(current.total_amount),
-                    paid_amount: currentPaidTotal,
-                    tenant_name: tenantName,
-                    unit_label: `${propertyName} ${unitNumber}`,
-                    billing_month: current.billing_month,
-                  }}
-                  showRefund={currentRemaining < 0}
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <BillingExemptToggle
+                  billingId={current.id}
+                  billingMonth={current.billing_month}
+                  status={current.status}
+                  hasPayments={currentPayments.length > 0}
                 />
-              )}
+                {currentStatus !== "exempt" && (currentStatus !== "paid" || currentRemaining < 0) && (
+                  <RentDetailClient
+                    billing={{
+                      id: current.id,
+                      total_amount: Number(current.total_amount),
+                      paid_amount: currentPaidTotal,
+                      tenant_name: tenantName,
+                      unit_label: `${propertyName} ${unitNumber}`,
+                      billing_month: current.billing_month,
+                    }}
+                    showRefund={currentRemaining < 0}
+                  />
+                )}
+              </div>
             </div>
             {currentPayments.length === 0 ? (
               <p style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "center", padding: "16px 0" }}>

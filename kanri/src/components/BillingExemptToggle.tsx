@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 
 interface Props {
   billingId: string;
@@ -47,6 +48,7 @@ export default function BillingExemptToggle({
         return;
       }
       router.refresh();
+      dispatchAuditLogRefresh();
     } finally {
       setBusy(false);
     }
