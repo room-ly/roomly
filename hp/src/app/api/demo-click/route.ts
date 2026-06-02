@@ -16,10 +16,13 @@ const PREFECTURE_MAP: Record<string, string> = {
   "45": "宮崎県", "46": "鹿児島県", "47": "沖縄県",
 };
 
-const supabase = createClient(
-  process.env.ROOMLY_SUPABASE_URL!,
-  process.env.ROOMLY_SUPABASE_ANON_KEY!
-);
+// クライアントはリクエスト時に遅延生成する（環境変数の無いビルド/プレビューで落ちないように）
+function getSupabase() {
+  const url = process.env.ROOMLY_SUPABASE_URL;
+  const key = process.env.ROOMLY_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,6 +41,9 @@ export async function POST(request: NextRequest) {
     const regionCode = request.headers.get("x-vercel-ip-country-region") || "";
     const city = request.headers.get("x-vercel-ip-city") || "";
     const region = country === "JP" ? (PREFECTURE_MAP[regionCode] || regionCode) : regionCode;
+
+    const supabase = getSupabase();
+    if (!supabase) return NextResponse.json({ ok: true, skipped: "no-config" });
 
     await supabase.from("demo_clicks").insert({
       project: "roomly",

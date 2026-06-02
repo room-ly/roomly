@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.ROOMLY_SUPABASE_URL!,
-  process.env.ROOMLY_SUPABASE_SERVICE_ROLE_KEY || process.env.ROOMLY_SUPABASE_ANON_KEY!
-);
+// クライアントはリクエスト時に遅延生成する。
+// トップレベルで createClient すると、環境変数の無いビルド/プレビュー環境で
+// 「supabaseUrl is required」でビルドが落ちるため。
+function getSupabase() {
+  const url = process.env.ROOMLY_SUPABASE_URL;
+  const key = process.env.ROOMLY_SUPABASE_SERVICE_ROLE_KEY || process.env.ROOMLY_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 const ALLOWED_TOOLS = new Set([
   "management-fee",
@@ -42,6 +47,12 @@ export async function POST(request: NextRequest) {
 
     const userAgent = request.headers.get("user-agent") || "";
     const referer = request.headers.get("referer") || "";
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      // 環境変数未設定（プレビュー等）ではログを取らずに正常終了
+      return NextResponse.json({ ok: true, skipped: "no-config" });
+    }
 
     await supabase.from("tool_logs").insert({
       tool_slug,

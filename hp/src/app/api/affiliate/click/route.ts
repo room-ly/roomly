@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
 
-const supabase = createClient(
-  process.env.ROOMLY_SUPABASE_URL!,
-  process.env.ROOMLY_SUPABASE_ANON_KEY!
-);
+// クライアントはリクエスト時に遅延生成する（環境変数の無いビルド/プレビューで落ちないように）
+function getSupabase() {
+  const url = process.env.ROOMLY_SUPABASE_URL;
+  const key = process.env.ROOMLY_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 function hashIp(ip: string): string {
   return createHash("sha256")
@@ -60,6 +63,9 @@ export async function POST(request: NextRequest) {
     // → リアルタイム性が必要なので、PostgREST の rpc で resolve する方が良いが、
     //   ここでは「affiliate_clicksにcodeとnull affiliate_idでinsert、後でDBトリガで解決」
     //   という設計を採用する。トリガは別マイグレで追加済みとする。
+
+    const supabase = getSupabase();
+    if (!supabase) return NextResponse.json({ ok: true, skipped: "no-config" });
 
     const { error } = await supabase.from("affiliate_clicks").insert({
       code,
