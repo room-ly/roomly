@@ -1,0 +1,40 @@
+# CodeQL によるコードの静的セキュリティ解析
+# JS/TS のコードを走査し、SQLインジェクション・XSS・パストラバーサル等の
+# 脆弱性をPR/アラートとして検出する。publicリポジトリなので無料。
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # 週1（月曜 18:00 JST = 09:00 UTC）でフル解析
+    - cron: "0 9 * * 1"
+
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          # セキュリティ寄りの拡張クエリも有効化（誤検知は増えるが網羅性が上がる）
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:javascript-typescript"
