@@ -190,3 +190,68 @@ jobs:
       - run: npm ci
       # lp は eslint 未導入のため lint はスキップ
       - run: npm run build
+
+  # ===== Vercel 本番デプロイ =====
+  # GitHub→Vercel の Git 連携（GitHub App）が main への push を取りこぼし、
+  # 自動デプロイが止まっていたため、CI から明示的に本番デプロイする。
+  # 変更があったプロジェクトだけ、かつ各プロジェクトの CI が成功したときに走る。
+  # lp は独立した Vercel プロジェクトが無いためここでは対象外（必要時に手動デプロイ）。
+  deploy-kanri:
+    name: deploy kanri (Vercel)
+    needs: [changes, kanri]
+    if: needs.changes.outputs.kanri == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: prj_XPNaBjV9ekVAHGCOXUleqY7aQPZX
+    steps:
+      - uses: actions/checkout@v6
+      - run: npm i -g vercel@latest
+      - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  deploy-hp:
+    name: deploy hp (Vercel)
+    needs: [changes, hp]
+    if: needs.changes.outputs.hp == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: prj_OIta2EWgG9azJBXO0xEfUi10aSRN
+    steps:
+      - uses: actions/checkout@v6
+      - run: npm i -g vercel@latest
+      - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  deploy-portal:
+    name: deploy portal (Vercel)
+    needs: [changes, portal]
+    if: needs.changes.outputs.portal == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: prj_idqfuetIIORt2uIVXZ5WSH0kmXij
+    steps:
+      - uses: actions/checkout@v6
+      - run: npm i -g vercel@latest
+      - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  deploy-admin:
+    name: deploy admin (Vercel)
+    needs: [changes, admin]
+    if: needs.changes.outputs.admin == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: prj_vEUsfdpoHk3LRgFxDpXGo2QrLiSz
+    steps:
+      - uses: actions/checkout@v6
+      - run: npm i -g vercel@latest
+      - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
