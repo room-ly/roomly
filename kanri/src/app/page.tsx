@@ -160,19 +160,19 @@ export default async function DashboardPage() {
         </div>
         <div className="sum-card sum-card-graph">
           <div className="sum-main">
-            <span className="sum-label mono">今月の未収</span>
-            <span className="sum-value" style={{ fontSize: 16 }}>
+            <span className="sum-label mono">今月の回収率</span>
+            <span className="sum-value serif-i">{collectedPct}%</span>
+            <span className="sum-foot mono">
               {unpaidAmount > 0 ? (
-                <Link href="/rent" className="rlink">¥{unpaidAmount.toLocaleString()}</Link>
-              ) : "¥0"}
+                <Link href="/rent" className="rlink">未収 ¥{unpaidAmount.toLocaleString()}</Link>
+              ) : "全額回収済"}
             </span>
-            <span className="sum-foot mono">回収 {collectedPct}% · 請求¥{totalRentExpected.toLocaleString()}</span>
           </div>
           {totalRentExpected > 0 && (
             <div className="sum-viz">
               <Donut
                 percent={collectedPct}
-                id="donut-unpaid"
+                id="donut-collected"
                 from={unpaidAmount > 0 ? "var(--warn)" : "var(--viz-grad-from)"}
                 to={unpaidAmount > 0 ? "#e0a857" : "var(--viz-grad-to)"}
               />
