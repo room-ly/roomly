@@ -15,7 +15,7 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.98.0",
     "heic2any": "^0.0.4",
-    "lucide-react": "^0.575.0",
+    "lucide-react": "^1.17.0",
     "next": "^16.2.6",
     "posthog-js": "^1.373.4",
     "react": "19.2.3",
