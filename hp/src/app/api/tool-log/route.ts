@@ -68,3 +68,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 }
+
+// CIからのVercel自動デプロイ疎通確認
