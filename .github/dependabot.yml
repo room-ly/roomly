@@ -1,0 +1,157 @@
+# Dependabot 設定
+# 依存パッケージの更新を自動でPR化する。
+# 方針:
+#   - セキュリティ更新は Dependabot が常時自動でPRを出す（この設定とは独立して即時）
+#   - 通常のバージョン追従は週1。minor/patch はプロジェクトごとに1つのPRへまとめ（grouped）、
+#     major はメジャー更新ごとに個別PR（破壊的変更をレビューしやすくするため）
+#   - PRが散らからないよう各プロジェクトの同時オープンPR数に上限を設ける
+version: 2
+
+updates:
+  # ---- npm 各プロジェクト ----
+  # kanri / hp / admin / lp / portal / sumai は同じ方針を共有する。
+  # directory を変えるだけなので、設定はほぼ同型で並べている。
+
+  - package-ecosystem: npm
+    directory: /kanri
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(kanri)"
+      include: scope
+    groups:
+      # minor/patch はまとめて1PR。major は除外して個別PRにする
+      kanri-minor-patch:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+      - kanri
+
+  - package-ecosystem: npm
+    directory: /hp
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(hp)"
+      include: scope
+    groups:
+      hp-minor-patch:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+      - hp
+
+  - package-ecosystem: npm
+    directory: /admin
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(admin)"
+      include: scope
+    groups:
+      admin-minor-patch:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+      - admin
+
+  - package-ecosystem: npm
+    directory: /lp
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(lp)"
+      include: scope
+    groups:
+      lp-minor-patch:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+      - lp
+
+  - package-ecosystem: npm
+    directory: /portal
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(portal)"
+      include: scope
+    groups:
+      portal-minor-patch:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+      - portal
+
+  - package-ecosystem: npm
+    directory: /sumai
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(sumai)"
+      include: scope
+    groups:
+      sumai-minor-patch:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+      - sumai
+
+  # ---- GitHub Actions ----
+  # actions/checkout・setup-node 等のバージョン追従。
+  # Node20非推奨警告などはここの更新で解消する。
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: scope
+    groups:
+      github-actions:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+      - ci
