@@ -19,7 +19,7 @@ jobs:
       admin: ${{ steps.filter.outputs.admin }}
       lp: ${{ steps.filter.outputs.lp }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -44,7 +44,7 @@ jobs:
     name: シークレットスキャン
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: gitleaks インストール
@@ -63,7 +63,7 @@ jobs:
       run:
         working-directory: kanri
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 20
@@ -94,7 +94,7 @@ jobs:
       run:
         working-directory: hp
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 20
@@ -126,7 +126,7 @@ jobs:
       run:
         working-directory: portal
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 20
@@ -153,7 +153,7 @@ jobs:
       run:
         working-directory: admin
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 20
@@ -181,7 +181,7 @@ jobs:
       run:
         working-directory: lp
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 20
