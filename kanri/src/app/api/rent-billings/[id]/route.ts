@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { rentPaymentSchema } from "@/lib/schemas";
 import { createNotification } from "@/lib/notify";
+import type { TablesUpdate } from "@/lib/database.types";
 
 // 入金登録（部分入金対応）
 export async function PUT(
@@ -120,7 +121,7 @@ export async function PUT(
     const companyId = await getCompanyId();
     const { data: updated, error } = await supabase
       .from("rent_billings")
-      .update(updateData)
+      .update(updateData as TablesUpdate<"rent_billings">)
       .eq("id", id)
       .eq("company_id", companyId)
       .select()

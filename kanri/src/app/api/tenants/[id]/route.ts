@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { tenantSchema } from "@/lib/schemas";
+import type { TablesUpdate } from "@/lib/database.types";
 
 export async function PUT(
   request: NextRequest,
@@ -29,7 +30,7 @@ export async function PUT(
 
     const { data: tenant, error } = await supabase
       .from("tenants")
-      .update(data)
+      .update(data as TablesUpdate<"tenants">)
       .eq("id", id)
       .eq("company_id", companyId)
       .select()

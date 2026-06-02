@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { calcPropertyManagementFee } from "@/lib/remittance-calc";
+import type { TablesInsert } from "@/lib/database.types";
 
 // GET: 送金一覧
 export async function GET() {
@@ -155,7 +156,7 @@ export async function POST(request: NextRequest) {
         manual_override: isManual,
         manual_net_amount: isManual ? Number(manual_net_amount) : null,
         company_id,
-      })
+      } as TablesInsert<"owner_remittances">)
       .select()
       .single();
 

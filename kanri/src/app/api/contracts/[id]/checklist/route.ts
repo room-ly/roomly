@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
+import type { TablesUpdate } from "@/lib/database.types";
 
 const DEFAULT_CHECKLIST = [
   { category: "notice", item_name: "退去日確定", sort_order: 0 },
@@ -95,7 +96,7 @@ export async function PUT(
 
     const { error } = await supabase
       .from("move_out_checklist_items")
-      .update(updates)
+      .update(updates as TablesUpdate<"move_out_checklist_items">)
       .eq("id", item_id);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

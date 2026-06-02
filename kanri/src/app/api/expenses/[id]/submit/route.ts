@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId, getCurrentUserRole, requirePermission } from "@/lib/supabase-server";
 import { resolveExpenseApprover } from "@/lib/expense-approver";
 import { createNotification } from "@/lib/notify";
+import type { TablesUpdate } from "@/lib/database.types";
 
 export async function POST(
   _request: NextRequest,
@@ -73,7 +74,7 @@ export async function POST(
 
     const { data, error } = await supabase
       .from("expenses")
-      .update(update)
+      .update(update as TablesUpdate<"expenses">)
       .eq("id", id)
       .eq("company_id", company_id)
       .select()

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
 import { stripPhone } from "@/lib/phone";
+import type { TablesUpdate } from "@/lib/database.types";
 
 export async function PUT(request: NextRequest) {
   try {
@@ -37,7 +38,7 @@ export async function PUT(request: NextRequest) {
 
     const { error } = await supabase
       .from("companies")
-      .update(update)
+      .update(update as TablesUpdate<"companies">)
       .eq("id", companyId);
 
     if (error) {

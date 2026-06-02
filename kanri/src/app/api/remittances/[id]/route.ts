@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
+import type { TablesUpdate } from "@/lib/database.types";
 
 const ALLOWED_FIELDS = [
   "status", "notes", "payment_method",
@@ -30,7 +31,7 @@ export async function PUT(
 
     const { data, error } = await supabase
       .from("owner_remittances")
-      .update(updateData)
+      .update(updateData as TablesUpdate<"owner_remittances">)
       .eq("id", id)
       .eq("company_id", companyId)
       .select("*, owner:owners(name)")
