@@ -1,8 +1,20 @@
 // 家賃請求のステータス派生ロジック（Single Source of Truth）
-// DBに保存するステータスは unpaid / partial / paid の3種類のみ。
+// DBに保存するステータスは unpaid / partial / paid / exempt の4種類。
 // 「滞納（overdue）」は due_date と支払い実額から動的に派生させる。
+// 「対象外（exempt）」はフリーレント月・入居前後の月など、家賃が発生しない月。
+// 入金がなくても未納・滞納にカウントせず、回収率の分母からも除外する。
 
-export type DerivedBillingStatus = "paid" | "partial" | "unpaid" | "overdue";
+export type DerivedBillingStatus =
+  | "paid"
+  | "partial"
+  | "unpaid"
+  | "overdue"
+  | "exempt";
+
+// 集計（未納件数・回収率の分母など）から除外すべき請求かどうか。
+export function isExempt(b: BillingLike): boolean {
+  return b.status === "exempt";
+}
 
 export interface BillingLike {
   total_amount?: number | string | null;
@@ -23,6 +35,7 @@ export function deriveBillingStatus(
   b: BillingLike,
   today: string = new Date().toISOString().slice(0, 10)
 ): DerivedBillingStatus {
+  if (b.status === "exempt") return "exempt";
   const total = Number(b.total_amount) || 0;
   const paid = sumPayments(b);
   if (total > 0 && paid >= total) return "paid";

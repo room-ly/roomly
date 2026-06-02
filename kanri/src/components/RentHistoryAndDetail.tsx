@@ -3,6 +3,7 @@
 import { useState } from "react";
 import StatusBadge from "./StatusBadge";
 import RentDetailClient from "./RentDetailClient";
+import BillingExemptToggle from "./BillingExemptToggle";
 import AuditLogSection from "./AuditLogSection";
 import { deriveBillingStatus } from "@/lib/billing-status";
 
@@ -142,7 +143,15 @@ export default function RentHistoryAndDetail({
         <div className="section">
           <div className="section-head-bar">
             <h2>{formatBillingMonth(current.billing_month)} の詳細</h2>
-            <StatusBadge status={currentStatus} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <BillingExemptToggle
+                billingId={current.id}
+                billingMonth={current.billing_month}
+                status={current.status}
+                hasPayments={currentPayments.length > 0}
+              />
+              <StatusBadge status={currentStatus} />
+            </div>
           </div>
           <div className="section-body">
             {/* 請求内訳 */}
@@ -167,7 +176,24 @@ export default function RentHistoryAndDetail({
               )}
             </div>
 
-            {/* 入金バー */}
+            {/* 対象外（フリーレント・入居前後等）は集計外であることを案内 */}
+            {currentStatus === "exempt" && (
+              <p
+                style={{
+                  marginTop: 16,
+                  fontSize: 12,
+                  color: "var(--ink-3)",
+                  background: "var(--bg-2)",
+                  borderRadius: 8,
+                  padding: "10px 12px",
+                }}
+              >
+                この月は「対象外」に設定されています。フリーレント月・入居前後の月など家賃が発生しない月として、未納・滞納や回収率の集計から除外されます。
+              </p>
+            )}
+
+            {/* 入金バー（対象外の月は入金管理しない） */}
+            {currentStatus !== "exempt" && (
             <div style={{ marginTop: 20, marginBottom: 20 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
                 <span style={{ color: "var(--ink-3)" }}>入金済 ¥{currentPaidTotal.toLocaleString()}</span>
@@ -212,11 +238,12 @@ export default function RentHistoryAndDetail({
                 </p>
               )}
             </div>
+            )}
 
             {/* 入金履歴 */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <h3 style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-2)" }}>入金履歴</h3>
-              {(currentStatus !== "paid" || currentRemaining < 0) && (
+              {currentStatus !== "exempt" && (currentStatus !== "paid" || currentRemaining < 0) && (
                 <RentDetailClient
                   billing={{
                     id: current.id,

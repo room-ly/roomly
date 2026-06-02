@@ -43,6 +43,14 @@ export async function PUT(
         );
       }
 
+      // 対象外（フリーレント・入居前後等）の月には入金登録できない
+      if (billing.status === "exempt") {
+        return NextResponse.json(
+          { error: "対象外の月には入金を登録できません。先に対象外を解除してください。" },
+          { status: 400 }
+        );
+      }
+
       // 既存の入金合計を計算
       const existingPayments = (billing.rent_payments || []).reduce(
         (sum: number, p: { amount: number }) => sum + Number(p.amount),

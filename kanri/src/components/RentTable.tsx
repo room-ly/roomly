@@ -6,7 +6,7 @@ import MonthSelector from "./MonthSelector";
 import FilterableTable from "./FilterableTable";
 import StatusBadge from "./StatusBadge";
 import { RentPaymentButton } from "./RentPageClient";
-import { deriveBillingStatus, sumPayments } from "@/lib/billing-status";
+import { deriveBillingStatus, sumPayments, isExempt } from "@/lib/billing-status";
 
 interface RentTableProps {
   data: Record<string, any>[];
@@ -14,7 +14,7 @@ interface RentTableProps {
   selectedMonth: string; // "all" もしくは YYYY-MM-DD
 }
 
-type StatusTab = "all" | "paid" | "overdue";
+type StatusTab = "all" | "paid" | "overdue" | "exempt";
 
 export default function RentTable({ data, availableMonths, selectedMonth }: RentTableProps) {
   const router = useRouter();
@@ -58,16 +58,19 @@ export default function RentTable({ data, availableMonths, selectedMonth }: Rent
   };
   const isOverdue = (b: Record<string, any>) => deriveBillingStatus(b) === "overdue";
 
-  const paidItems = monthFiltered.filter((b) => !isUnpaid(b));
-  const overdueItems = monthFiltered.filter((b) => isOverdue(b));
+  // 対象外（フリーレント・入居前後等）は請求総額・回収率・未納集計から除外する
+  const exemptItems = monthFiltered.filter((b) => isExempt(b));
+  const billable = monthFiltered.filter((b) => !isExempt(b));
+  const paidItems = billable.filter((b) => !isUnpaid(b));
+  const overdueItems = billable.filter((b) => isOverdue(b));
 
-  const tabFiltered = useMemo(() => {
-    if (activeTab === "paid") return paidItems;
-    if (activeTab === "overdue") return overdueItems;
-    return monthFiltered;
-  }, [monthFiltered, activeTab, paidItems, overdueItems]);
+  let tabFiltered: typeof monthFiltered;
+  if (activeTab === "paid") tabFiltered = paidItems;
+  else if (activeTab === "overdue") tabFiltered = overdueItems;
+  else if (activeTab === "exempt") tabFiltered = exemptItems;
+  else tabFiltered = monthFiltered;
 
-  const totalExpected = monthFiltered.reduce((s, b) => s + Number(b.total_amount), 0);
+  const totalExpected = billable.reduce((s, b) => s + Number(b.total_amount), 0);
   const totalPaid = paidItems.reduce((s, b) => s + Number(b.total_amount), 0);
   const collectionRate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0;
   const overdueAmount = overdueItems.reduce(
@@ -79,6 +82,9 @@ export default function RentTable({ data, availableMonths, selectedMonth }: Rent
     { key: "all", label: "すべて", count: monthFiltered.length },
     { key: "paid", label: "入金済", count: paidItems.length },
     { key: "overdue", label: "滞納", count: overdueItems.length, danger: true },
+    ...(exemptItems.length > 0
+      ? [{ key: "exempt" as StatusTab, label: "対象外", count: exemptItems.length }]
+      : []),
   ];
 
   return (

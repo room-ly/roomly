@@ -37,6 +37,7 @@ export async function getDashboardData() {
       .from("rent_billings")
       .select("id, billing_month, total_amount, due_date, status, contract:contracts(id, tenant:tenants(name)), rent_payments(amount)")
       .lt("due_date", today)
+      .neq("status", "exempt")
       .order("billing_month", { ascending: false }),
     supabase
       .from("cases")
@@ -66,6 +67,7 @@ export async function getDashboardData() {
     supabase
       .from("rent_billings")
       .select("total_amount, status, billing_month, rent_payments(amount)")
+      .neq("status", "exempt")
       .gte("billing_month", `${now.toISOString().slice(0, 7)}-01`)
       .lt("billing_month", `${new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().slice(0, 10)}`),
     supabase
@@ -163,6 +165,7 @@ export async function getMonthlyTrend() {
     supabase
       .from("rent_billings")
       .select("billing_month, status, total_amount, rent_payments(amount)")
+      .neq("status", "exempt")
       .gte("billing_month", sixMonthsAgo.toISOString().slice(0, 10)),
     supabase
       .from("expenses")
