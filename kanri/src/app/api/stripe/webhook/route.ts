@@ -73,19 +73,8 @@ async function updateCompanySubscription(
     });
   }
 
-  // 初回有料化のタイミングでGA4にpurchaseイベントを送信（Smart Bidding学習用）
-  if (isFirstActive && prev?.ga_client_id) {
-    const valueJpy =
-      plan?.price ?? calcCustomPrice(maxUnits) ?? 5000;
-    await sendGa4Purchase({
-      clientId: prev.ga_client_id,
-      transactionId: subscription.id,
-      valueJpy,
-      planLabel: plan?.label,
-      maxUnits,
-      gclid: prev.signup_gclid ?? null,
-    });
-  }
+  // GA4 purchase の送信は invoice.payment_succeeded で毎月行う（初回も継続も）。
+  // ここではアフィリエイト初回報酬の計上のみ行う。
 
   // 初回有料化のタイミングでアフィリエイト報酬(first_payment)を計上
   // 報酬計算: affiliate毎の commission_initial_jpy（デフォルト¥0）
@@ -154,6 +143,51 @@ export async function POST(request: NextRequest) {
     case "customer.subscription.deleted": {
       const subscription = event.data.object as Stripe.Subscription;
       await updateCompanySubscription(subscription, { id: event.id, type: event.type });
+      break;
+    }
+
+    case "invoice.payment_succeeded": {
+      // 毎月の課金成功でGA4にpurchaseを送る（Smart Bidding学習用）
+      // 初回/継続を区別したいときは payment_type パラメータでセグメント可能。
+      // transaction_id を invoice.id にすることでGoogle広告側で重複排除される。
+      const invoice = event.data.object as any;
+      const subId = invoice.subscription;
+      const amountPaid = invoice.amount_paid as number | undefined;
+      if (subId && amountPaid && amountPaid > 0) {
+        const subscription = await getStripe().subscriptions.retrieve(
+          typeof subId === "string" ? subId : subId.id
+        );
+        const companyId = subscription.metadata.company_id;
+        if (companyId) {
+          const priceId = subscription.items.data[0]?.price?.id;
+          const plan = priceId ? getPlanByPriceId(priceId) : null;
+          const maxUnits =
+            plan?.maxUnits ?? parseInt(subscription.metadata.max_units || "50");
+          const admin = getAdmin();
+          const { data: company } = await admin
+            .from("companies")
+            .select("ga_client_id, signup_gclid")
+            .eq("id", companyId)
+            .single();
+          if (company?.ga_client_id) {
+            // Stripeの billing_reason は "subscription_create"(初回) /
+            // "subscription_cycle"(月次更新) / "subscription_update"(プラン変更) など
+            const paymentType: "first" | "recurring" =
+              invoice.billing_reason === "subscription_create"
+                ? "first"
+                : "recurring";
+            await sendGa4Purchase({
+              clientId: company.ga_client_id,
+              transactionId: invoice.id,
+              valueJpy: amountPaid,
+              planLabel: plan?.label,
+              maxUnits,
+              gclid: company.signup_gclid ?? null,
+              paymentType,
+            });
+          }
+        }
+      }
       break;
     }
 

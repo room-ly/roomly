@@ -13,6 +13,10 @@ type PurchasePayload = {
   planLabel?: string;
   maxUnits?: number;
   gclid?: string | null;
+  // "first": 初回有料化 / "recurring": 月次継続課金
+  // Google広告/GA4のSmart Biddingは購入の都度purchaseを送るのが標準。
+  // 初回と継続を区別したいときはこのパラメータでGA4のレポートをセグメント可能。
+  paymentType?: "first" | "recurring";
 };
 
 const ENDPOINT = "https://www.google-analytics.com/mp/collect";
@@ -48,6 +52,7 @@ export async function sendGa4Purchase(payload: PurchasePayload): Promise<void> {
             },
           ],
           ...(payload.maxUnits ? { max_units: payload.maxUnits } : {}),
+          ...(payload.paymentType ? { payment_type: payload.paymentType } : {}),
         },
       },
     ],
