@@ -152,13 +152,13 @@ export default function FilterableTable({
       {/* テーブル */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-[13px]">
+          <table className="w-full min-w-[640px] text-[13px]">
             <thead>
               <tr className="text-left text-ink-3 border-b border-line">
                 {columns.map((col) => (
                   <th
                     key={col.key}
-                    className={`px-3 sm:px-5 py-2.5 font-medium ${
+                    className={`px-3 sm:px-5 py-2.5 font-medium whitespace-nowrap ${
                       col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : ""
                     } ${col.sortable ? "cursor-pointer select-none hover:text-ink transition-colors" : ""}`}
                     onClick={col.sortable ? () => toggleSort(col.key) : undefined}
@@ -193,7 +193,7 @@ export default function FilterableTable({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-3 sm:px-5 py-2.5 ${
+                        className={`px-3 sm:px-5 py-2.5 whitespace-nowrap ${
                           col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : ""
                         }`}
                       >

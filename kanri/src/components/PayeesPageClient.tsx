@@ -56,8 +56,8 @@ export default function PayeesPageClient({ payees }: PayeesPageClientProps) {
           支払先が登録されていません
         </div>
       ) : (
-        <div className="card mt-4 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="card mt-4 overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-2">
                 <th className="text-left px-4 py-3 font-medium text-ink-2">取引先名</th>

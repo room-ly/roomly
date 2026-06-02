@@ -104,17 +104,17 @@ export default function UnitTable({ propertyId, propertyType, units, contracts, 
         )}
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-[13px]">
+        <table className="w-full min-w-[640px] text-[13px]">
           <thead>
             <tr className="text-left text-ink-3 border-b border-line">
-              <th className="px-5 py-2.5 font-medium">部屋番号</th>
-              <th className="px-5 py-2.5 font-medium">階</th>
-              <th className="px-5 py-2.5 font-medium">間取り</th>
-              <th className="px-5 py-2.5 font-medium">面積</th>
-              <th className="px-5 py-2.5 font-medium text-right">賃料</th>
-              <th className="px-5 py-2.5 font-medium text-right">管理費</th>
-              <th className="px-5 py-2.5 font-medium">状態</th>
-              <th className="px-5 py-2.5 font-medium">入居者</th>
+              <th className="px-5 py-2.5 font-medium whitespace-nowrap">部屋番号</th>
+              <th className="px-5 py-2.5 font-medium whitespace-nowrap">階</th>
+              <th className="px-5 py-2.5 font-medium whitespace-nowrap">間取り</th>
+              <th className="px-5 py-2.5 font-medium whitespace-nowrap">面積</th>
+              <th className="px-5 py-2.5 font-medium text-right whitespace-nowrap">賃料</th>
+              <th className="px-5 py-2.5 font-medium text-right whitespace-nowrap">管理費</th>
+              <th className="px-5 py-2.5 font-medium whitespace-nowrap">状態</th>
+              <th className="px-5 py-2.5 font-medium whitespace-nowrap">入居者</th>
             </tr>
           </thead>
           <tbody>
@@ -130,18 +130,18 @@ export default function UnitTable({ propertyId, propertyType, units, contracts, 
                   }}
                   className={`border-b border-line last:border-0 transition-colors ${isHidden ? "select-none" : "hover:bg-bg-2/30 cursor-pointer"}`}
                 >
-                  <td className={`px-5 py-2.5 font-medium ${isHidden ? "blur-[3px]" : ""}`}>{unit.unit_number}</td>
-                  <td className={`px-5 py-2.5 ${isHidden ? "blur-[3px]" : ""}`}>{unit.floor ? `${unit.floor}F` : "—"}</td>
-                  <td className={`px-5 py-2.5 ${isHidden ? "blur-[3px]" : ""}`}>{unit.layout || "—"}</td>
-                  <td className={`px-5 py-2.5 ${isHidden ? "blur-[3px]" : ""}`}>{unit.area_sqm ? `${Number(unit.area_sqm)}m²` : "—"}</td>
-                  <td className={`px-5 py-2.5 text-right tabular-nums ${isHidden ? "blur-[3px]" : ""}`}>¥{Number(unit.rent).toLocaleString()}</td>
-                  <td className={`px-5 py-2.5 text-right tabular-nums ${isHidden ? "blur-[3px]" : ""}`}>¥{Number(unit.management_fee).toLocaleString()}</td>
-                  <td className={`px-5 py-2.5 ${isHidden ? "blur-[3px]" : ""}`}>
+                  <td className={`px-5 py-2.5 font-medium whitespace-nowrap ${isHidden ? "blur-[3px]" : ""}`}>{unit.unit_number}</td>
+                  <td className={`px-5 py-2.5 whitespace-nowrap ${isHidden ? "blur-[3px]" : ""}`}>{unit.floor ? `${unit.floor}F` : "—"}</td>
+                  <td className={`px-5 py-2.5 whitespace-nowrap ${isHidden ? "blur-[3px]" : ""}`}>{unit.layout || "—"}</td>
+                  <td className={`px-5 py-2.5 whitespace-nowrap ${isHidden ? "blur-[3px]" : ""}`}>{unit.area_sqm ? `${Number(unit.area_sqm)}m²` : "—"}</td>
+                  <td className={`px-5 py-2.5 text-right tabular-nums whitespace-nowrap ${isHidden ? "blur-[3px]" : ""}`}>¥{Number(unit.rent).toLocaleString()}</td>
+                  <td className={`px-5 py-2.5 text-right tabular-nums whitespace-nowrap ${isHidden ? "blur-[3px]" : ""}`}>¥{Number(unit.management_fee).toLocaleString()}</td>
+                  <td className={`px-5 py-2.5 whitespace-nowrap ${isHidden ? "blur-[3px]" : ""}`}>
                     <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-medium ${s.cls}`}>
                       {s.text}
                     </span>
                   </td>
-                  <td className={`px-5 py-2.5 text-ink-2 ${isHidden ? "blur-[3px]" : ""}`}>{contract?.tenant?.name || "—"}</td>
+                  <td className={`px-5 py-2.5 text-ink-2 whitespace-nowrap ${isHidden ? "blur-[3px]" : ""}`}>{contract?.tenant?.name || "—"}</td>
                 </tr>
               );
             })}

@@ -184,7 +184,8 @@ export default function PaymentsPageClient({ remittances, expenses }: PaymentsPa
               <span className="text-xs text-ink-3">{selectedRemittanceIds.size}/{remittances.length}件選択</span>
             </div>
           </div>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-sm">
             <tbody className="divide-y divide-border">
               {remittances.map((r) => {
                 const owner = r.owner as Record<string, any> | null;
@@ -213,6 +214,7 @@ export default function PaymentsPageClient({ remittances, expenses }: PaymentsPa
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -230,7 +232,8 @@ export default function PaymentsPageClient({ remittances, expenses }: PaymentsPa
               <span className="text-xs text-ink-3">{selectedExpenseIds.size}/{expenses.length}件選択</span>
             </div>
           </div>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-sm">
             <tbody className="divide-y divide-border">
               {expenses.map((e) => {
                 const payee = e.payee as Record<string, any> | null;
@@ -263,6 +266,7 @@ export default function PaymentsPageClient({ remittances, expenses }: PaymentsPa
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

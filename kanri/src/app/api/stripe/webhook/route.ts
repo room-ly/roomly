@@ -150,9 +150,12 @@ export async function POST(request: NextRequest) {
       // 毎月の課金成功でGA4にpurchaseを送る（Smart Bidding学習用）
       // 初回/継続を区別したいときは payment_type パラメータでセグメント可能。
       // transaction_id を invoice.id にすることでGoogle広告側で重複排除される。
-      const invoice = event.data.object as any;
+      const invoice = event.data.object as Stripe.Invoice & {
+        subscription?: string | { id: string } | null;
+        billing_reason?: string | null;
+      };
       const subId = invoice.subscription;
-      const amountPaid = invoice.amount_paid as number | undefined;
+      const amountPaid = invoice.amount_paid;
       if (subId && amountPaid && amountPaid > 0) {
         const subscription = await getStripe().subscriptions.retrieve(
           typeof subId === "string" ? subId : subId.id

@@ -374,6 +374,12 @@ table {
 .section-head-bar .right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .section-body { padding: 20px; }
 .section-body.flush { padding: 0; }
+/* タブレット幅（iPadはサイドバー固定でメインが狭い）でテーブルが折り返して潰れるのを防ぐ。
+   折り返さず、収まらなければ横スクロールさせる */
+.section-body.flush { overflow-x: auto; }
+.section-body.flush > .tbl { min-width: 720px; }
+.section-body.flush > .tbl th,
+.section-body.flush > .tbl td { white-space: nowrap; }
 
 /* ====== Toolbar ====== */
 .toolbar {
