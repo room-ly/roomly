@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { dispatchAuditLogRefresh } from "@/lib/audit-events";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface Props {
   billingId: string;
@@ -24,17 +25,15 @@ export default function BillingExemptToggle({
 }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  // 確認モーダルで実行予定のアクション（null なら閉じている）
+  const [pending, setPending] = useState<"exempt" | "unpaid" | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const isExempt = status === "exempt";
+  const monthLabel = billingMonth?.slice(0, 7) ?? "この月";
 
-  const apply = async (next: "exempt" | "unpaid") => {
-    if (busy) return;
-    const monthLabel = billingMonth?.slice(0, 7) ?? "この月";
-    const msg =
-      next === "exempt"
-        ? `${monthLabel} を「対象外」にします。\n未納・滞納や回収率の集計から外れます。よろしいですか？`
-        : `${monthLabel} の「対象外」を解除します。\n通常どおり未納・入金の集計対象に戻ります。よろしいですか？`;
-    if (!window.confirm(msg)) return;
-
+  const confirm = async () => {
+    if (busy || !pending) return;
+    const next = pending;
     setBusy(true);
     try {
       const res = await fetch(`/api/rent-billings/${billingId}`, {
@@ -44,9 +43,10 @@ export default function BillingExemptToggle({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        window.alert(data.error || "更新に失敗しました");
+        setError(data.error || "更新に失敗しました");
         return;
       }
+      setPending(null);
       router.refresh();
       dispatchAuditLogRefresh();
     } finally {
@@ -54,17 +54,51 @@ export default function BillingExemptToggle({
     }
   };
 
+  const dialog = (
+    <>
+      <ConfirmDialog
+        isOpen={pending !== null}
+        title={
+          pending === "exempt"
+            ? `${monthLabel} を対象外にする`
+            : `${monthLabel} の対象外を解除`
+        }
+        message={
+          pending === "exempt"
+            ? "未納・滞納や回収率の集計から外れます。よろしいですか？"
+            : "通常どおり未納・入金の集計対象に戻ります。よろしいですか？"
+        }
+        confirmLabel={pending === "exempt" ? "対象外にする" : "解除する"}
+        variant="neutral"
+        loading={busy}
+        onConfirm={confirm}
+        onCancel={() => setPending(null)}
+      />
+      <ConfirmDialog
+        isOpen={error !== null}
+        title="更新に失敗しました"
+        message={error ?? ""}
+        confirmLabel="閉じる"
+        onConfirm={() => setError(null)}
+        onCancel={() => setError(null)}
+      />
+    </>
+  );
+
   if (isExempt) {
     return (
-      <button
-        type="button"
-        className="rlink"
-        style={{ fontSize: 12, background: "none", border: "none", cursor: "pointer", color: "var(--ink-3)" }}
-        disabled={busy}
-        onClick={() => apply("unpaid")}
-      >
-        対象外を解除
-      </button>
+      <>
+        <button
+          type="button"
+          className="rlink"
+          style={{ fontSize: 12, background: "none", border: "none", cursor: "pointer", color: "var(--ink-3)" }}
+          disabled={busy}
+          onClick={() => setPending("unpaid")}
+        >
+          対象外を解除
+        </button>
+        {dialog}
+      </>
     );
   }
 
@@ -72,15 +106,18 @@ export default function BillingExemptToggle({
   if (hasPayments) return null;
 
   return (
-    <button
-      type="button"
-      className="rlink"
-      style={{ fontSize: 12, background: "none", border: "none", cursor: "pointer", color: "var(--ink-3)" }}
-      disabled={busy}
-      onClick={() => apply("exempt")}
-      title="フリーレント月や入居前後の月など、家賃が発生しない月を集計から外します"
-    >
-      対象外にする
-    </button>
+    <>
+      <button
+        type="button"
+        className="rlink"
+        style={{ fontSize: 12, background: "none", border: "none", cursor: "pointer", color: "var(--ink-3)" }}
+        disabled={busy}
+        onClick={() => setPending("exempt")}
+        title="フリーレント月や入居前後の月など、家賃が発生しない月を集計から外します"
+      >
+        対象外にする
+      </button>
+      {dialog}
+    </>
   );
 }
