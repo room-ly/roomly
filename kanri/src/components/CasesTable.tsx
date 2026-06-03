@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback, useRef } from "react";
+import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import MonthSelector from "./MonthSelector";
@@ -49,6 +49,13 @@ export default function CasesTable({ data, initialFilter }: CasesTableProps) {
   const router = useRouter();
   const [view, setView] = useState<"table" | "kanban">("table");
   const [items, setItems] = useState(data);
+
+  // router.refresh() などで親から渡される data が更新されたら state を同期する。
+  // （登録/更新後にリロードしないと一覧へ反映されない問題への対処。
+  //  items を持つのはカンバンD&Dの楽観的更新のためで、data 自体が正）
+  useEffect(() => {
+    setItems(data);
+  }, [data]);
   const dragItem = useRef<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
