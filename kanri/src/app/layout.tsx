@@ -25,7 +25,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  let sidebarData: {
+  type SidebarData = {
     badgeCounts: Record<string, number>;
     contractAlertDays: number;
     companyName: string;
@@ -33,45 +33,51 @@ export default async function RootLayout({
     userEmail: string;
     isDemo: boolean;
     loanFeatureEnabled: boolean;
-  } | null = null;
-
-  try {
-    const data = await getBadgeCounts();
-    const { company_name, user_name, user_email, contract_alert_days, is_demo, loan_feature_enabled, ...counts } = data;
-    sidebarData = {
-      badgeCounts: counts as Record<string, number>,
-      contractAlertDays: contract_alert_days,
-      companyName: company_name,
-      userName: user_name,
-      userEmail: user_email,
-      isDemo: is_demo,
-      loanFeatureEnabled: loan_feature_enabled,
-    };
-  } catch {
-    // 未認証（ログインページ等）では取得できない
-  }
-
-  // SSR で users テーブルから profile を引いて AuthProvider に初期値として渡す。
-  // これによりクライアントの fetchProfile が解決するまでの「user=null」期間がなくなり、
-  // 編集ボタン等が一瞬消える事故が物理的に発生しない。
-  let initialUser: {
+  };
+  type InitialUser = {
     id: string;
     name: string;
     email: string;
     role: string;
     company_id: string;
-  } | null = null;
-  try {
-    const supabase = await createServerSupabase();
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser) {
+  };
+
+  // sidebarData と initialUser は互いに独立した別々の Supabase 処理なので並列に取得する。
+  // layout は全ページのレンダリングをブロックするため、ここを直列にすると遷移後の初期表示が遅くなる。
+  const loadSidebarData = async (): Promise<SidebarData | null> => {
+    try {
+      const data = await getBadgeCounts();
+      const { company_name, user_name, user_email, contract_alert_days, is_demo, loan_feature_enabled, ...counts } = data;
+      return {
+        badgeCounts: counts as Record<string, number>,
+        contractAlertDays: contract_alert_days,
+        companyName: company_name,
+        userName: user_name,
+        userEmail: user_email,
+        isDemo: is_demo,
+        loanFeatureEnabled: loan_feature_enabled,
+      };
+    } catch {
+      // 未認証（ログインページ等）では取得できない
+      return null;
+    }
+  };
+
+  // SSR で users テーブルから profile を引いて AuthProvider に初期値として渡す。
+  // これによりクライアントの fetchProfile が解決するまでの「user=null」期間がなくなり、
+  // 編集ボタン等が一瞬消える事故が物理的に発生しない。
+  const loadInitialUser = async (): Promise<InitialUser | null> => {
+    try {
+      const supabase = await createServerSupabase();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return null;
       const { data: profile } = await supabase
         .from("users")
         .select("id, name, email, role, company_id, is_active")
         .eq("id", authUser.id)
         .single();
       if (profile && profile.is_active !== false) {
-        initialUser = {
+        return {
           id: profile.id,
           name: profile.name,
           email: profile.email,
@@ -79,10 +85,17 @@ export default async function RootLayout({
           company_id: profile.company_id,
         };
       }
+      return null;
+    } catch {
+      // 未認証 or DB一時障害 → クライアント側fetchProfileに任せる
+      return null;
     }
-  } catch {
-    // 未認証 or DB一時障害 → クライアント側fetchProfileに任せる
-  }
+  };
+
+  const [sidebarData, initialUser] = await Promise.all([
+    loadSidebarData(),
+    loadInitialUser(),
+  ]);
 
   return (
     <html lang="ja" suppressHydrationWarning>

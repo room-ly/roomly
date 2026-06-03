@@ -137,21 +137,25 @@ export function AuthProvider({
     email: string,
     password: string
   ): Promise<{ error?: string; mfaRequired?: boolean }> => {
-    // アカウントロックチェック
-    const checkRes = await fetch("/api/auth/login-check", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, action: "check" }),
-    });
-    const checkData = await checkRes.json();
+    // アカウントロックチェックと認証を並列に投げて、直列の往復待ちをなくす。
+    // ロックは login_attempts の読み取り判定のみで signInWithPassword と副作用が独立しているため、
+    // 両方の結果が揃ってから「ロック中なら認証成否に関わらずエラー」を返せば安全に高速化できる。
+    const [checkData, signInResult] = await Promise.all([
+      fetch("/api/auth/login-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, action: "check" }),
+      })
+        .then((r) => r.json())
+        .catch(() => ({ locked: false })),
+      supabase.auth.signInWithPassword({ email, password }),
+    ]);
+
     if (checkData.locked) {
       return { error: "ログイン試行回数の上限に達しました。30分後に再度お試しください。" };
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = signInResult;
 
     // 成功・失敗の記録（広告流入の検証用）は画面遷移をブロックさせない。
     // GA client_id の取得は最大800msかかりうるので、記録fetchごと裏に回す。
