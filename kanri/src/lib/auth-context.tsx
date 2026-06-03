@@ -148,27 +148,33 @@ export function AuthProvider({
       return { error: "ログイン試行回数の上限に達しました。30分後に再度お試しください。" };
     }
 
-    // 広告計測用にlocalStorage保持中のattributionを同送
-    const attribution = readAttribution() ?? {};
-    const gaClientId = await getGaClientId();
-    if (gaClientId) attribution.ga_client_id = gaClientId;
-
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    // 成功・失敗どちらも記録する（広告流入の検証に使う）
-    await fetch("/api/auth/login-check", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email,
-        action: "record",
-        success: !error,
-        attribution,
-      }),
-    });
+    // 成功・失敗の記録（広告流入の検証用）は画面遷移をブロックさせない。
+    // GA client_id の取得は最大800msかかりうるので、記録fetchごと裏に回す。
+    // 失敗時はこの後すぐ return するため、記録は fire-and-forget で問題ない。
+    void (async () => {
+      try {
+        const attribution = readAttribution() ?? {};
+        const gaClientId = await getGaClientId();
+        if (gaClientId) attribution.ga_client_id = gaClientId;
+        await fetch("/api/auth/login-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            action: "record",
+            success: !error,
+            attribution,
+          }),
+        });
+      } catch {
+        // 記録の失敗はログインの成否に影響させない
+      }
+    })();
 
     if (error) {
       return { error: error.message };
