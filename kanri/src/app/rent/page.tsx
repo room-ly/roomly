@@ -31,8 +31,12 @@ export default async function RentPage({
   const page = Math.max(1, Number(pageStr) || 1);
   const sortValue = sort || "billing_month:desc";
 
-  // 月一覧を先に取得し、選択月の妥当性を判定
-  const availableMonths = await getAvailableBillingMonths();
+  // 月一覧と滞納集計を並列取得。getOverdueAgingはselectedMonthに依存しないので、
+  // 月一覧の取得を待つ間に同時に走らせて1往復分のレイテンシを削る。
+  const [availableMonths, aging] = await Promise.all([
+    getAvailableBillingMonths(),
+    getOverdueAging(),
+  ]);
   // status指定時は全月対象（滞納一覧などからの遷移）。それ以外は month パラメータ or 今月 or 最新月
   let selectedMonth: string | undefined;
   if (month === "all" || status) {
@@ -44,10 +48,8 @@ export default async function RentPage({
     selectedMonth = availableMonths.includes(current) ? current : availableMonths[0];
   }
 
-  const [{ data: billings, total }, aging] = await Promise.all([
-    getRentBillings(page, PAGE_SIZE, sortValue, selectedMonth),
-    getOverdueAging(),
-  ]);
+  // selectedMonth が決まってから請求一覧を取得（agingは上で取得済み）
+  const { data: billings, total } = await getRentBillings(page, PAGE_SIZE, sortValue, selectedMonth);
 
   return (
     <>
