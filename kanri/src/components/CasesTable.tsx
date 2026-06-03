@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import { useMemo, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import MonthSelector from "./MonthSelector";
@@ -48,16 +48,43 @@ function getCurrentMonth() {
 export default function CasesTable({ data, initialFilter }: CasesTableProps) {
   const router = useRouter();
   const [view, setView] = useState<"table" | "kanban">("table");
-  const [items, setItems] = useState(data);
-
-  // router.refresh() などで親から渡される data が更新されたら state を同期する。
-  // （登録/更新後にリロードしないと一覧へ反映されない問題への対処。
-  //  items を持つのはカンバンD&Dの楽観的更新のためで、data 自体が正）
-  useEffect(() => {
-    setItems(data);
-  }, [data]);
   const dragItem = useRef<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+
+  // カンバンD&Dの楽観的更新は「保留中のステータス上書き」だけを state に持ち、
+  // 表示の正は常に prop の data とする。これにより登録/更新後の router.refresh() で
+  // data が更新されれば即座に反映される（state を data のコピーで持つと同期漏れでズレる）。
+  const [pendingStatus, setPendingStatus] = useState<Record<string, string>>({});
+
+  // data が pending と同じ状態に追いついた（router.refresh() でサーバーの値が
+  // 反映された、あるいは別経路で更新された）エントリは pending から落とす。
+  // これで pending は「まだ data に反映されていない楽観的上書き」だけを保持する。
+  const settledIds = useMemo(
+    () =>
+      Object.keys(pendingStatus).filter((id) => {
+        const row = data.find((m) => m.id === id);
+        return !row || row.status === pendingStatus[id];
+      }),
+    [data, pendingStatus]
+  );
+  if (settledIds.length > 0) {
+    setPendingStatus((prev) => {
+      const next = { ...prev };
+      for (const id of settledIds) delete next[id];
+      return next;
+    });
+  }
+
+  // data に pending の上書きを重ねた、表示用の確定データ
+  const items = useMemo(
+    () =>
+      Object.keys(pendingStatus).length === 0
+        ? data
+        : data.map((m) =>
+            pendingStatus[m.id] ? { ...m, status: pendingStatus[m.id] } : m
+          ),
+    [data, pendingStatus]
+  );
 
   const availableMonths = useMemo(() => getAvailableMonths(items), [items]);
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -108,7 +135,15 @@ export default function CasesTable({ data, initialFilter }: CasesTableProps) {
     const item = items.find((m) => m.id === id);
     if (!item || item.status === colKey) return;
 
-    setItems((prev) => prev.map((m) => m.id === id ? { ...m, status: colKey } : m));
+    // 楽観的に列を移動して見せる（保留中の上書きとして保持）
+    setPendingStatus((prev) => ({ ...prev, [id]: colKey }));
+
+    const rollback = () =>
+      setPendingStatus((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
 
     try {
       const res = await fetch(`/api/cases/${id}`, {
@@ -117,12 +152,17 @@ export default function CasesTable({ data, initialFilter }: CasesTableProps) {
         body: JSON.stringify({ status: colKey }),
       });
       if (!res.ok) {
-        setItems((prev) => prev.map((m) => m.id === id ? { ...m, status: item.status } : m));
+        rollback();
+        return;
       }
+      // サーバー反映成功 → data を取り直す。pending は残したままにし、
+      // 新しい data が pending と一致した時点で settled 検出により自動で落ちる
+      // （rollback すると refresh 完了までの一瞬、元の列にカードが戻って見える）。
+      router.refresh();
     } catch {
-      setItems((prev) => prev.map((m) => m.id === id ? { ...m, status: item.status } : m));
+      rollback();
     }
-  }, [items]);
+  }, [items, router]);
 
   return (
     <>
