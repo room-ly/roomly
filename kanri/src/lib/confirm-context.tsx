@@ -2,10 +2,12 @@
 
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import PromptDialog from "@/components/PromptDialog";
 
-// window.confirm / window.alert をアプリ標準の中央モーダルに統一するための仕組み。
+// window.confirm / window.alert / window.prompt をアプリ標準の中央モーダルに統一するための仕組み。
 // useConfirm() … Promise<boolean> を返す確認ダイアログ
 // useNotify()  … OKのみの通知ダイアログ（旧 window.alert）
+// usePrompt()  … Promise<string|null> を返す入力ダイアログ（旧 window.prompt）
 
 interface ConfirmOptions {
   title: string;
@@ -15,8 +17,18 @@ interface ConfirmOptions {
   variant?: "danger" | "neutral";
 }
 
+interface PromptOptions {
+  title: string;
+  message?: string;
+  inputType?: string;
+  placeholder?: string;
+  defaultValue?: string;
+  confirmLabel?: string;
+}
+
 type ConfirmFn = (options: ConfirmOptions) => Promise<boolean>;
 type NotifyFn = (options: { title: string; message?: string }) => void;
+type PromptFn = (options: PromptOptions) => Promise<string | null>;
 
 interface DialogState {
   isOpen: boolean;
@@ -28,9 +40,20 @@ interface DialogState {
   notifyOnly: boolean;
 }
 
-const ConfirmContext = createContext<{ confirm: ConfirmFn; notify: NotifyFn }>({
+interface PromptState {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  inputType: string;
+  placeholder: string;
+  defaultValue: string;
+  confirmLabel: string;
+}
+
+const ConfirmContext = createContext<{ confirm: ConfirmFn; notify: NotifyFn; prompt: PromptFn }>({
   confirm: async () => false,
   notify: () => {},
+  prompt: async () => null,
 });
 
 const CLOSED: DialogState = {
@@ -42,15 +65,34 @@ const CLOSED: DialogState = {
   notifyOnly: false,
 };
 
+const PROMPT_CLOSED: PromptState = {
+  isOpen: false,
+  title: "",
+  message: "",
+  inputType: "text",
+  placeholder: "",
+  defaultValue: "",
+  confirmLabel: "OK",
+};
+
 export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<DialogState>(CLOSED);
+  const [promptState, setPromptState] = useState<PromptState>(PROMPT_CLOSED);
   // 解決待ちの resolve を保持する
   const resolveRef = useRef<((result: boolean) => void) | null>(null);
+  const promptResolveRef = useRef<((result: string | null) => void) | null>(null);
 
   const settle = useCallback((result: boolean) => {
     const resolve = resolveRef.current;
     resolveRef.current = null;
     setState(CLOSED);
+    resolve?.(result);
+  }, []);
+
+  const settlePrompt = useCallback((result: string | null) => {
+    const resolve = promptResolveRef.current;
+    promptResolveRef.current = null;
+    setPromptState(PROMPT_CLOSED);
     resolve?.(result);
   }, []);
 
@@ -80,8 +122,23 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const prompt = useCallback<PromptFn>((options) => {
+    return new Promise<string | null>((resolve) => {
+      promptResolveRef.current = resolve;
+      setPromptState({
+        isOpen: true,
+        title: options.title,
+        message: options.message ?? "",
+        inputType: options.inputType ?? "text",
+        placeholder: options.placeholder ?? "",
+        defaultValue: options.defaultValue ?? "",
+        confirmLabel: options.confirmLabel ?? "OK",
+      });
+    });
+  }, []);
+
   return (
-    <ConfirmContext.Provider value={{ confirm, notify }}>
+    <ConfirmContext.Provider value={{ confirm, notify, prompt }}>
       {children}
       <ConfirmDialog
         isOpen={state.isOpen}
@@ -93,6 +150,17 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
         onConfirm={() => settle(true)}
         onCancel={() => settle(false)}
       />
+      <PromptDialog
+        isOpen={promptState.isOpen}
+        title={promptState.title}
+        message={promptState.message}
+        inputType={promptState.inputType}
+        placeholder={promptState.placeholder}
+        defaultValue={promptState.defaultValue}
+        confirmLabel={promptState.confirmLabel}
+        onConfirm={(value) => settlePrompt(value)}
+        onCancel={() => settlePrompt(null)}
+      />
     </ConfirmContext.Provider>
   );
 }
@@ -103,4 +171,8 @@ export function useConfirm() {
 
 export function useNotify() {
   return useContext(ConfirmContext).notify;
+}
+
+export function usePrompt() {
+  return useContext(ConfirmContext).prompt;
 }

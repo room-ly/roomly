@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Wand2, Upload, Plus, Trash2, Check, Loader2 } from "lucide-react";
 import { usePermission } from "@/lib/use-permission";
-import { useConfirm, useNotify } from "@/lib/confirm-context";
+import { useConfirm, useNotify, usePrompt } from "@/lib/confirm-context";
 import LoanRepaymentCsvModal from "./LoanRepaymentCsvModal";
 
 interface Props {
@@ -30,6 +30,7 @@ export default function LoanDetailClient({ loan, repayments }: Props) {
   const router = useRouter();
   const confirm = useConfirm();
   const notify = useNotify();
+  const prompt = usePrompt();
   const canEdit = usePermission("loans:edit");
   const [busy, setBusy] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
@@ -52,7 +53,12 @@ export default function LoanDetailClient({ loan, repayments }: Props) {
   }
 
   async function addManualRow() {
-    const payment_date = prompt("返済日を入力してください（YYYY-MM-DD）");
+    const payment_date = await prompt({
+      title: "繰上返済を追加",
+      message: "返済日を選択してください",
+      inputType: "date",
+      confirmLabel: "追加する",
+    });
     if (!payment_date) return;
     setBusy(true);
     try {
