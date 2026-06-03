@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback, useRef } from "react";
+import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import MonthSelector from "./MonthSelector";
@@ -20,6 +20,13 @@ const categoryLabels: Record<string, string> = {
   other: "その他",
 };
 
+const priorityLabels: Record<string, string> = {
+  urgent: "緊急",
+  high: "高",
+  normal: "中",
+  low: "低",
+};
+
 const KANBAN_COLS = [
   { key: "open", label: "未対応", tone: "warn" },
   { key: "in_progress", label: "対応中", tone: "info" },
@@ -30,7 +37,10 @@ const KANBAN_COLS = [
 interface CasesTableProps {
   data: Record<string, any>[];
   initialFilter?: string;
+  initialPriority?: string;
 }
+
+const PRIORITY_FILTER_OPTIONS = Object.entries(priorityLabels).map(([value, label]) => ({ value, label }));
 
 function getAvailableMonths(data: Record<string, any>[]): string[] {
   const set = new Set<string>();
@@ -45,9 +55,19 @@ function getCurrentMonth() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export default function CasesTable({ data, initialFilter }: CasesTableProps) {
+export default function CasesTable({ data, initialFilter, initialPriority }: CasesTableProps) {
   const router = useRouter();
   const [view, setView] = useState<"table" | "kanban">("table");
+  // 優先度フィルタはテーブル/カンバン両ビューに効かせたいので CasesTable 側で保持する
+  // （状態・種別フィルタはテーブル専用のため FilterableTable 内部の state のまま）。
+  const [priorityFilter, setPriorityFilter] = useState<string>(
+    initialPriority && priorityLabels[initialPriority] ? initialPriority : "all"
+  );
+  // 同一ルート内で ?priority=urgent 等にディープリンクされた場合、CasesTable は
+  // 再マウントされず initialPriority prop だけが変わる。クエリの変化を state に同期する。
+  useEffect(() => {
+    setPriorityFilter(initialPriority && priorityLabels[initialPriority] ? initialPriority : "all");
+  }, [initialPriority]);
   const dragItem = useRef<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
@@ -102,16 +122,22 @@ export default function CasesTable({ data, initialFilter }: CasesTableProps) {
     return [...monthFiltered].sort((a, b) => (priorityOrder[a.priority] ?? 4) - (priorityOrder[b.priority] ?? 4));
   }, [monthFiltered]);
 
+  // 優先度フィルタを適用した表示用データ（テーブル・カンバン共通）
+  const priorityFiltered = useMemo(() => {
+    if (priorityFilter === "all") return sorted;
+    return sorted.filter((m) => m.priority === priorityFilter);
+  }, [sorted, priorityFilter]);
+
   const byStatus = useMemo(() => {
     const map: Record<string, Record<string, any>[]> = {};
     for (const col of KANBAN_COLS) map[col.key] = [];
-    for (const item of sorted) {
+    for (const item of priorityFiltered) {
       const key = item.status || "open";
       if (map[key]) map[key].push(item);
       else map.open.push(item);
     }
     return map;
-  }, [sorted]);
+  }, [priorityFiltered]);
 
   const handleDragStart = useCallback((id: string) => {
     dragItem.current = id;
@@ -183,6 +209,17 @@ export default function CasesTable({ data, initialFilter }: CasesTableProps) {
             カンバン
           </span>
         </div>
+        <select
+          className="input"
+          style={{ width: "auto", minWidth: 120, marginLeft: "auto" }}
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter(e.target.value)}
+        >
+          <option value="all">優先度: すべて</option>
+          {PRIORITY_FILTER_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
       </div>
 
       {view === "kanban" ? (
@@ -234,7 +271,7 @@ export default function CasesTable({ data, initialFilter }: CasesTableProps) {
         </div>
       ) : (
         <FilterableTable
-          data={sorted}
+          data={priorityFiltered}
           searchFields={["title", "property.name", "vendor_name"]}
           searchPlaceholder="件名・物件名で検索..."
           initialFilters={initialFilter === "open" ? { status: "open" } : {}}

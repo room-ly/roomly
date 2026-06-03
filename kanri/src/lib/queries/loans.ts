@@ -34,6 +34,73 @@ export async function getLoanDetail(id: string) {
   return { loan, repayments: (repayments ?? []) as Row[] };
 }
 
+// 指定オーナー・指定月のローン返済額を集計する。
+// オーナーレポート（送金明細）に「返済後キャッシュフロー」を出すために使う。
+// monthStart は YYYY-MM-01 形式（owner_remittances.remittance_month と同じ）。
+export async function getOwnerLoanRepaymentForMonth(ownerId: string, monthStart: string) {
+  const supabase = await createClient();
+
+  // 当該オーナーに紐づくローンを取得
+  const { data: loans } = await supabase
+    .from("loans")
+    .select("id, name, lender_name")
+    .eq("owner_id", ownerId);
+  const loanList = (loans ?? []) as Row[];
+  if (loanList.length === 0) {
+    return { hasLoan: false, totalPrincipal: 0, totalInterest: 0, totalRepayment: 0, items: [] as Row[] };
+  }
+
+  // 月初〜翌月初の範囲で返済予定行を集計
+  const start = monthStart; // YYYY-MM-01
+  const d = new Date(`${monthStart}T00:00:00Z`);
+  const nextMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
+  const end = nextMonth.toISOString().slice(0, 10);
+
+  const loanIds = loanList.map((l) => l.id);
+  const { data: reps } = await supabase
+    .from("loan_repayments")
+    .select("loan_id, principal_amount, interest_amount, total_amount, payment_date")
+    .in("loan_id", loanIds)
+    .gte("payment_date", start)
+    .lt("payment_date", end);
+
+  const loanById = new Map(loanList.map((l) => [l.id, l]));
+  const byLoan = new Map<string, { name: string; lender: string; principal: number; interest: number; total: number }>();
+  let totalPrincipal = 0;
+  let totalInterest = 0;
+  let totalRepayment = 0;
+
+  for (const r of reps ?? []) {
+    const principal = Number(r.principal_amount ?? 0);
+    const interest = Number(r.interest_amount ?? 0);
+    const total = Number(r.total_amount ?? principal + interest);
+    totalPrincipal += principal;
+    totalInterest += interest;
+    totalRepayment += total;
+
+    const meta = loanById.get(r.loan_id);
+    const cur = byLoan.get(r.loan_id) ?? {
+      name: meta?.name ?? "ローン",
+      lender: meta?.lender_name ?? "",
+      principal: 0,
+      interest: 0,
+      total: 0,
+    };
+    cur.principal += principal;
+    cur.interest += interest;
+    cur.total += total;
+    byLoan.set(r.loan_id, cur);
+  }
+
+  return {
+    hasLoan: true,
+    totalPrincipal,
+    totalInterest,
+    totalRepayment,
+    items: Array.from(byLoan.values()),
+  };
+}
+
 // ローンサマリー（一覧画面ヘッダー用の集計）
 // 残高は各ローンの「最後の返済予定行の balance_after」または借入元本で代替
 export async function getLoanSummary() {

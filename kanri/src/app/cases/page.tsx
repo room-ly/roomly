@@ -17,9 +17,9 @@ const SORT_OPTIONS = [
 export default async function CasesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; page?: string; sort?: string }>;
+  searchParams: Promise<{ filter?: string; priority?: string; page?: string; sort?: string }>;
 }) {
-  const { filter, page: pageStr, sort } = await searchParams;
+  const { filter, priority, page: pageStr, sort } = await searchParams;
   const page = Math.max(1, Number(pageStr) || 1);
   const sortValue = sort || "reported_date:desc";
   const [{ data: cases, total }, properties] = await Promise.all([
@@ -40,7 +40,7 @@ export default async function CasesPage({
       <div className="flex justify-end mb-3">
         <Suspense><SortSelect options={SORT_OPTIONS} defaultValue={sortValue} /></Suspense>
       </div>
-      <CasesTable data={cases} initialFilter={filter} />
+      <CasesTable data={cases} initialFilter={filter} initialPriority={priority} />
       <ServerPagination page={page} pageSize={PAGE_SIZE} total={total} />
     </>
   );

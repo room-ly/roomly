@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Phone, Mail } from "lucide-react";
-import { getRemittanceDetail, getOwnersForSelect } from "@/lib/queries";
+import { getRemittanceDetail, getOwnersForSelect, getCompany, getOwnerLoanRepaymentForMonth } from "@/lib/queries";
 import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import RemittanceDetailClient from "@/components/RemittanceDetailClient";
@@ -18,14 +18,26 @@ export default async function RemittanceDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [result, owners] = await Promise.all([
+  const [result, owners, company] = await Promise.all([
     getRemittanceDetail(id),
     getOwnersForSelect(),
+    getCompany(),
   ]);
   if (!result) notFound();
 
   const { remittance, items } = result;
   const owner = remittance.owner;
+
+  // ローン機能ONのとき、当該オーナー・当該月のローン返済を取得して
+  // 「返済後キャッシュフロー（手残り）」を出す。
+  const loanEnabled = company?.loan_feature_enabled === true;
+  const loanRepayment =
+    loanEnabled && owner?.id && remittance.remittance_month
+      ? await getOwnerLoanRepaymentForMonth(owner.id, remittance.remittance_month.slice(0, 10))
+      : null;
+  const netAmount = Number(remittance.net_amount);
+  const afterLoanCashflow =
+    loanRepayment?.hasLoan ? netAmount - loanRepayment.totalRepayment : null;
 
   return (
     <>
@@ -141,6 +153,81 @@ export default async function RemittanceDetailPage({
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* 返済後キャッシュフロー（ローン機能ON & 当該オーナーにローンがある場合のみ） */}
+          {loanRepayment?.hasLoan && (
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>返済後キャッシュフロー</h2>
+                <span className="desc">オーナーのローン返済を差し引いた手残り</span>
+              </div>
+              <div className="section-body">
+                <div className="kv-grid" style={{ marginBottom: 16 }}>
+                  <div className="field">
+                    <div className="field-label mono">送金額（受取）</div>
+                    <div className="field-value field-plain num">¥{netAmount.toLocaleString()}</div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">ローン返済（当月）</div>
+                    <div className="field-value field-plain num" style={{ color: "var(--danger)" }}>
+                      -¥{loanRepayment.totalRepayment.toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">うち元金 / 利息</div>
+                    <div className="field-value field-plain num">
+                      ¥{loanRepayment.totalPrincipal.toLocaleString()} / ¥{loanRepayment.totalInterest.toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="field">
+                    <div className="field-label mono">返済後 手残り</div>
+                    <div
+                      className="field-value field-plain num"
+                      style={{ fontWeight: 600, color: (afterLoanCashflow ?? 0) < 0 ? "var(--danger)" : "var(--success)" }}
+                    >
+                      {(afterLoanCashflow ?? 0) < 0 ? "-" : ""}¥{Math.abs(afterLoanCashflow ?? 0).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+
+                {loanRepayment.items.length > 0 && (
+                  <table className="tbl">
+                    <thead>
+                      <tr>
+                        <th>ローン</th>
+                        <th style={{ textAlign: "right" }}>元金</th>
+                        <th style={{ textAlign: "right" }}>利息</th>
+                        <th style={{ textAlign: "right" }}>返済額</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loanRepayment.items.map((it: any, i: number) => (
+                        <tr key={i}>
+                          <td>{it.name}{it.lender && <span className="text-ink-3" style={{ marginLeft: 6, fontSize: 12 }}>{it.lender}</span>}</td>
+                          <td className="num">¥{it.principal.toLocaleString()}</td>
+                          <td className="num">¥{it.interest.toLocaleString()}</td>
+                          <td className="num" style={{ fontWeight: 500 }}>¥{it.total.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+                <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 10 }}>
+                  ※ 当月の返済予定（償還予定表）から算出した参考値です。実際の引落額と異なる場合があります。
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ローン機能ONだが当該オーナーにローン未登録の場合の導線 */}
+          {loanEnabled && loanRepayment && !loanRepayment.hasLoan && (
+            <div className="section">
+              <div className="section-body" style={{ fontSize: 13, color: "var(--ink-3)" }}>
+                このオーナーにローンを登録すると、送金額からローン返済を差し引いた「返済後の手残り」をここに表示します。
+                <Link href="/loans" className="rlink" style={{ marginLeft: 6 }}>ローンを登録</Link>
               </div>
             </div>
           )}

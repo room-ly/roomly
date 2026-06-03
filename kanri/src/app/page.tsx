@@ -401,6 +401,9 @@ export default async function DashboardPage() {
               {s.open_cases > 0 && (
                 <span className="badge badge-warn mono">{s.open_cases}件</span>
               )}
+              {activeCases.some((c: Record<string, any>) => c.priority === "urgent") && (
+                <Link href="/cases?priority=urgent" className="rlink" style={{ fontSize: 11, color: "var(--danger)" }}>緊急のみ</Link>
+              )}
               <Link href="/cases" className="rlink is-muted" style={{ fontSize: 11 }}>すべて見る</Link>
             </div>
           </div>
