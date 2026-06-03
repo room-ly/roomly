@@ -286,6 +286,40 @@ const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
     account_number: f("口座番号"),
     account_holder_kana: f("口座名義カナ"),
   },
+  loans: {
+    owner_id: f("オーナー"),
+    name: f("ローン名"),
+    lender_name: f("借入先金融機関"),
+    loan_number: f("証書番号"),
+    principal_amount: f("当初借入元本", "money"),
+    interest_rate: f("金利(年率%)"),
+    interest_type: f("金利種別"),
+    repayment_method: f("返済方式"),
+    term_months: f("返済期間(月)"),
+    disbursement_date: f("実行日", "date"),
+    first_payment_date: f("初回返済日", "date"),
+    final_payment_date: f("最終返済日", "date"),
+    payment_day: f("毎月の返済日"),
+    bank_account_label: f("引落口座"),
+  },
+  loan_properties: {
+    loan_id: f("ローン"),
+    property_id: f("物件"),
+    allocation_ratio: f("按分比率", "percent"),
+  },
+  loan_repayments: {
+    loan_id: f("ローン"),
+    installment_no: f("回数"),
+    payment_date: f("返済日", "date"),
+    principal_amount: f("元金", "money"),
+    interest_amount: f("利息", "money"),
+    total_amount: f("返済額", "money"),
+    balance_after: f("返済後残高", "money"),
+    entry_type: f("区分"),
+    source: f("入力元"),
+    is_paid: f("支払済", "bool"),
+    paid_at: f("支払日", "date"),
+  },
 };
 
 function getDef(table: string, column: string): FieldDef | undefined {
@@ -409,9 +443,9 @@ const ENUM_LABELS: EnumMap = {
     status: {
       open: "未対応",
       in_progress: "対応中",
-      pending: "保留",
-      resolved: "対応済",
-      closed: "完了",
+      on_hold: "保留",
+      completed: "完了",
+      cancelled: "キャンセル",
     },
     category: {
       repair: "設備修繕",
@@ -474,6 +508,7 @@ const ENUM_LABELS: EnumMap = {
   },
   owner_remittances: {
     status: {
+      draft: "下書き",
       pending: "未送金",
       sent: "送金済",
       hold: "保留",
@@ -504,6 +539,32 @@ const ENUM_LABELS: EnumMap = {
       viewer: "閲覧のみ",
     },
   },
+  loans: {
+    interest_type: {
+      fixed: "固定金利",
+      variable: "変動金利",
+    },
+    repayment_method: {
+      equal_principal_and_interest: "元利均等",
+      equal_principal: "元金均等",
+    },
+    status: {
+      active: "返済中",
+      completed: "完済",
+      refinanced: "借換",
+    },
+  },
+  loan_repayments: {
+    entry_type: {
+      scheduled: "予定",
+      prepayment: "繰上返済",
+      adjustment: "調整",
+    },
+    source: {
+      imported: "取込",
+      manual: "手動",
+    },
+  },
   audit_logs: {
     action: {
       create: "作成",
@@ -530,6 +591,7 @@ const REF_TABLES: Record<string, string> = {
   owner_id: "owners",
   case_id: "cases",
   billing_id: "rent_billings",
+  loan_id: "loans",
   // approver / submitted / approved 系は users を参照
   approver_user_id: "users",
   submitted_by: "users",

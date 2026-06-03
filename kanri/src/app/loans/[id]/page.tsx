@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getLoanDetail, getCompany, getLoanCashflow } from "@/lib/queries";
 import PageHeader from "@/components/PageHeader";
 import LoanDetailClient from "@/components/LoanDetailClient";
+import AuditLogSection from "@/components/AuditLogSection";
 
 export default async function LoanDetailPage({
   params,
@@ -29,6 +30,9 @@ export default async function LoanDetailPage({
         description="返済予定表（償還予定表）。借入条件から自動生成、CSV取込、手動編集ができます。"
       />
       <LoanDetailClient loan={detail.loan} repayments={detail.repayments} cashflow={cashflow} />
+      <div style={{ marginTop: 24 }}>
+        <AuditLogSection table="loans" recordId={detail.loan.id} recordLabel="ローン" />
+      </div>
     </>
   );
 }

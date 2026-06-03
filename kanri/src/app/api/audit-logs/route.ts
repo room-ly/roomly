@@ -25,6 +25,7 @@ const REF_RESOLVERS: Record<
   },
   cases: { select: "id, title", toName: (r) => String(r.title ?? "") },
   rent_billings: { select: "id, billing_month", toName: (r) => r.billing_month ? `${String(r.billing_month).slice(0, 7)} 請求` : "請求" },
+  loans: { select: "id, name", toName: (r) => String(r.name ?? "") },
 };
 
 interface AuditLogRow {
