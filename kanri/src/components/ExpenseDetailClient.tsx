@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
-import ExpenseFormModal from "./ExpenseFormModal";
+import ExpenseFormModal, { type CaseOption, type ContractOption } from "./ExpenseFormModal";
 import ConfirmDialog from "./ConfirmDialog";
 import { usePermission } from "@/lib/use-permission";
 import { useNotify } from "@/lib/confirm-context";
@@ -14,13 +14,29 @@ interface SelectOption {
   owner_id?: string;
 }
 
+interface PayeeOption {
+  id: string;
+  label: string;
+  category?: string;
+}
+
 interface ExpenseDetailClientProps {
   expense: Record<string, any>;
   properties: SelectOption[];
   owners: SelectOption[];
+  payees?: PayeeOption[];
+  cases?: CaseOption[];
+  contracts?: ContractOption[];
 }
 
-export default function ExpenseDetailClient({ expense, properties, owners }: ExpenseDetailClientProps) {
+export default function ExpenseDetailClient({
+  expense,
+  properties,
+  owners,
+  payees = [],
+  cases = [],
+  contracts = [],
+}: ExpenseDetailClientProps) {
   const router = useRouter();
   const notify = useNotify();
   const [modalOpen, setModalOpen] = useState(false);
@@ -51,7 +67,16 @@ export default function ExpenseDetailClient({ expense, properties, owners }: Exp
         )}
       </div>
 
-      <ExpenseFormModal isOpen={modalOpen} onClose={() => setModalOpen(false)} properties={properties} owners={owners} editData={expense} />
+      <ExpenseFormModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        properties={properties}
+        owners={owners}
+        payees={payees}
+        cases={cases}
+        contracts={contracts}
+        editData={expense}
+      />
       <ConfirmDialog isOpen={deleteOpen} title="経費を削除" message="この経費データを削除しますか？復元できません。" loading={deleting} onConfirm={handleDelete} onCancel={() => setDeleteOpen(false)} />
     </>
   );

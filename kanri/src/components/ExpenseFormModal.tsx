@@ -60,7 +60,7 @@ export default function ExpenseFormModal({
   owners,
   payees = [],
   cases = [],
-  contracts = [],
+  // contracts は入居者負担廃止に伴い経費フォームでは未使用（型互換のため prop は残す）
   editData,
 }: ExpenseFormModalProps) {
   const router = useRouter();
@@ -70,8 +70,11 @@ export default function ExpenseFormModal({
 
   const [amount, setAmount] = useState<number>(num(editData?.amount));
   const [ownerAmount, setOwnerAmount] = useState<number>(num(editData?.owner_amount));
-  const [tenantAmount, setTenantAmount] = useState<number>(num(editData?.tenant_amount));
-  const [companyAmount, setCompanyAmount] = useState<number>(num(editData?.company_amount));
+  // 入居者負担は経費フォームから廃止（敷金口座で精算）。既存値は自社負担に畳み込む。
+  const [tenantAmount, setTenantAmount] = useState<number>(0);
+  const [companyAmount, setCompanyAmount] = useState<number>(
+    num(editData?.company_amount) + num(editData?.tenant_amount),
+  );
 
   const [selectedPropertyId, setSelectedPropertyId] = useState(editData?.property_id || "");
   const [unitId] = useState(editData?.unit_id || "");
@@ -127,8 +130,10 @@ export default function ExpenseFormModal({
 
     setAmount(num(editData?.amount));
     setOwnerAmount(num(editData?.owner_amount));
-    setTenantAmount(num(editData?.tenant_amount));
-    setCompanyAmount(num(editData?.company_amount));
+    // 入居者負担は経費フォームから廃止（敷金口座で精算）。
+    // 既存データに tenant_amount が残っていれば自社負担に畳み込み、合計を保つ。
+    setTenantAmount(0);
+    setCompanyAmount(num(editData?.company_amount) + num(editData?.tenant_amount));
     setSelectedPropertyId(editData?.property_id || "");
     setContractId(editData?.contract_id || "");
     setCaseId(editData?.case_id || "");
@@ -140,14 +145,9 @@ export default function ExpenseFormModal({
     setErrors({});
     setApiError("");
     formRef.current?.reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, editData]);
 
   const isEdit = !!editData;
-
-  const filteredContracts = unitId
-    ? contracts.filter((c) => c.unit_id === unitId)
-    : contracts;
 
   const filteredCases = selectedPropertyId
     ? cases.filter((c) => !c.property_id || c.property_id === selectedPropertyId)
@@ -279,7 +279,14 @@ export default function ExpenseFormModal({
     } catch (err) {
       const zodErr = err as ZodError;
       if (zodErr.flatten) {
-        setErrors(zodErr.flatten().fieldErrors as Record<string, string[]>);
+        const fieldErrors = zodErr.flatten().fieldErrors as Record<string, string[]>;
+        setErrors(fieldErrors);
+        // 入居者負担ありで契約未選択など、クライアント側バリデーション失敗時にも
+        // 上部にメッセージを出す(無言で何も起きないと「押せない」ように見えるため)
+        const firstMsg =
+          fieldErrors.contract_id?.[0] ||
+          Object.values(fieldErrors).find((m) => m?.length)?.[0];
+        setApiError(firstMsg || "入力内容を確認してください");
       }
     } finally {
       setLoading(false);
@@ -377,8 +384,6 @@ export default function ExpenseFormModal({
             amount={amount}
             ownerAmount={ownerAmount}
             setOwnerAmount={setOwnerAmount}
-            tenantAmount={tenantAmount}
-            setTenantAmount={setTenantAmount}
             companyAmount={companyAmount}
             setCompanyAmount={setCompanyAmount}
             breakdownOk={breakdownOk}
@@ -413,30 +418,6 @@ export default function ExpenseFormModal({
             </div>
           </div>
 
-          {/* 入居者負担時の契約セレクタ */}
-          {tenantAmount > 0 && (
-            <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">
-                契約 <span className="text-danger">*</span>
-              </label>
-              <select
-                value={contractId}
-                onChange={(e) => setContractId(e.target.value)}
-                className="input"
-              >
-                <option value="">選択してください</option>
-                {filteredContracts.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label}
-                    {c.deposit ? `（敷金 ¥${Number(c.deposit).toLocaleString()}）` : ""}
-                  </option>
-                ))}
-              </select>
-              <p className="text-[11px] text-ink-3 mt-1">
-                入居者負担分は敷金から自動的に相殺されます
-              </p>
-            </div>
-          )}
 
           {selectedPropertyId && (
             <AllocationSection

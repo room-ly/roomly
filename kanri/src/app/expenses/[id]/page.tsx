@@ -1,10 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import {
-  getExpenseDetail,
-  getPropertiesForSelect,
-  getOwnersForSelect,
-} from "@/lib/queries";
+import { getExpenseDetail, getExpenseFormOptions } from "@/lib/queries";
 import { createClient, getCompanyId, getCurrentUserRole } from "@/lib/supabase-server";
 import StatusBadge from "@/components/StatusBadge";
 import ExpenseDetailClient from "@/components/ExpenseDetailClient";
@@ -26,13 +22,15 @@ export default async function ExpenseDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [expense, properties, owners, me] = await Promise.all([
+  const [expense, formOptions, me] = await Promise.all([
     getExpenseDetail(id),
-    getPropertiesForSelect(),
-    getOwnersForSelect(),
+    getExpenseFormOptions(),
     getCurrentUserRole(),
   ]);
   if (!expense) notFound();
+
+  const { properties, owners, payees, cases: caseOptions, contracts: contractOptions } =
+    formOptions;
 
   // 稟議機能ON/OFF判定（threshold が NULL なら OFF）+ 承認者候補
   const supabase = await createClient();
@@ -109,7 +107,14 @@ export default async function ExpenseDetailPage({
           </div>
         </div>
         <div className="detail-header-actions" style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <ExpenseDetailClient expense={expense} properties={properties} owners={owners} />
+          <ExpenseDetailClient
+            expense={expense}
+            properties={properties}
+            owners={owners}
+            payees={payees}
+            cases={caseOptions}
+            contracts={contractOptions}
+          />
         </div>
       </div>
 
