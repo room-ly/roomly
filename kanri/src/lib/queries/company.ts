@@ -38,7 +38,7 @@ export async function getBadgeCounts() {
         .in("status", ["open", "in_progress"])
         .in("priority", ["low", "normal"])
         .lt("created_at", staleDate),
-      supabase.from("companies").select("name, contract_alert_days, is_demo").single(),
+      supabase.from("companies").select("name, contract_alert_days, is_demo, loan_feature_enabled").single(),
       supabase.auth.getUser(),
     ]);
 
@@ -84,5 +84,6 @@ export async function getBadgeCounts() {
     user_name: userName,
     user_email: userEmail,
     is_demo: (companyRes.data?.is_demo as boolean) ?? false,
+    loan_feature_enabled: (companyRes.data?.loan_feature_enabled as boolean) ?? false,
   };
 }

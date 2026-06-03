@@ -12,7 +12,7 @@ export async function PUT(request: NextRequest) {
     const supabase = await createClient();
     const companyId = await getCompanyId();
 
-    const allowed = ["name", "phone", "address", "postal_code", "usage_type", "contract_alert_days", "estate_license", "estate_agent_name", "estate_agent_license", "default_approver_user_id", "expense_approval_threshold"];
+    const allowed = ["name", "phone", "address", "postal_code", "usage_type", "contract_alert_days", "estate_license", "estate_agent_name", "estate_agent_license", "default_approver_user_id", "expense_approval_threshold", "loan_feature_enabled"];
     const update: Record<string, any> = {};
     for (const key of allowed) {
       if (key in body) update[key] = body[key];
@@ -25,6 +25,9 @@ export async function PUT(request: NextRequest) {
     }
     if (update.default_approver_user_id !== undefined) {
       update.default_approver_user_id = update.default_approver_user_id || null;
+    }
+    if (update.loan_feature_enabled !== undefined) {
+      update.loan_feature_enabled = Boolean(update.loan_feature_enabled);
     }
     if (update.expense_approval_threshold !== undefined) {
       // null/空文字/0は「稟議機能OFF」を意味するため null として保存

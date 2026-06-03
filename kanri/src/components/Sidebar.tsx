@@ -22,6 +22,7 @@ import {
   Settings,
   BookUser,
   CreditCard,
+  Landmark,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import type { SidebarInitialData } from "./AppShell";
@@ -61,6 +62,18 @@ const navGroups = [
   },
 ];
 
+// ローン機能はデフォルトOFFの拡張機能。ONの会社だけ Finance グループに表示する
+const LOAN_NAV_ITEM: NavItem = { href: "/loans", label: "ローン", icon: Landmark };
+
+function buildNavGroups(loanEnabled: boolean) {
+  if (!loanEnabled) return navGroups;
+  return navGroups.map((g) =>
+    g.group === "Finance"
+      ? { ...g, items: [...g.items, LOAN_NAV_ITEM] }
+      : g,
+  );
+}
+
 export default function Sidebar({ children, initialData }: { children: React.ReactNode; initialData: SidebarInitialData | null }) {
   const pathname = usePathname();
   const { logout, user: authUser } = useAuth();
@@ -68,6 +81,7 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
   const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>(initialData?.badgeCounts ?? {});
   const [alertDays, setAlertDays] = useState<number>(initialData?.contractAlertDays ?? 90);
   const [companyName, setCompanyName] = useState<string>(initialData?.companyName ?? "");
+  const [loanEnabled, setLoanEnabled] = useState<boolean>(initialData?.loanFeatureEnabled ?? false);
   const [displayUser, setDisplayUser] = useState<{ name: string; email: string }>({
     name: initialData?.userName ?? "",
     email: initialData?.userEmail ?? "",
@@ -84,7 +98,7 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
         return res.json();
       })
       .then((data) => {
-        const { company_name, user_name, user_email, contract_alert_days, ...counts } = data;
+        const { company_name, user_name, user_email, contract_alert_days, loan_feature_enabled, ...counts } = data;
         const hasData = Object.values(counts).some((v) => (v as number) > 0) || user_name || user_email;
         if (!hasData && retryCount < 2) {
           setTimeout(() => fetchBadgeCounts(retryCount + 1), 1500);
@@ -92,6 +106,7 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
         }
         setBadgeCounts(counts as Record<string, number>);
         if (typeof contract_alert_days === "number") setAlertDays(contract_alert_days);
+        if (typeof loan_feature_enabled === "boolean") setLoanEnabled(loan_feature_enabled);
         if (company_name) setCompanyName(company_name);
         if (user_name || user_email) {
           setDisplayUser({ name: user_name || "", email: user_email || "" });
@@ -193,7 +208,7 @@ export default function Sidebar({ children, initialData }: { children: React.Rea
 
       {/* ナビゲーション */}
       <nav className="mt-4 flex-1 overflow-y-auto overflow-x-hidden pr-1">
-        {navGroups.map((g) => {
+        {buildNavGroups(loanEnabled).map((g) => {
           const filteredItems = g.items;
           if (filteredItems.length === 0) return null;
           return (

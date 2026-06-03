@@ -718,6 +718,7 @@ export type Database = {
           id: string
           is_demo: boolean
           landing_path: string | null
+          loan_feature_enabled: boolean
           max_units: number
           name: string
           phone: string | null
@@ -754,6 +755,7 @@ export type Database = {
           id?: string
           is_demo?: boolean
           landing_path?: string | null
+          loan_feature_enabled?: boolean
           max_units?: number
           name: string
           phone?: string | null
@@ -790,6 +792,7 @@ export type Database = {
           id?: string
           is_demo?: boolean
           landing_path?: string | null
+          loan_feature_enabled?: boolean
           max_units?: number
           name?: string
           phone?: string | null
@@ -1549,6 +1552,211 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_properties: {
+        Row: {
+          allocation_ratio: number | null
+          company_id: string
+          created_at: string
+          id: string
+          loan_id: string
+          property_id: string
+        }
+        Insert: {
+          allocation_ratio?: number | null
+          company_id: string
+          created_at?: string
+          id?: string
+          loan_id: string
+          property_id: string
+        }
+        Update: {
+          allocation_ratio?: number | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          loan_id?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_properties_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_properties_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_properties_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_repayments: {
+        Row: {
+          balance_after: number | null
+          company_id: string
+          created_at: string
+          entry_type: string
+          id: string
+          installment_no: number | null
+          interest_amount: number
+          is_paid: boolean
+          loan_id: string
+          notes: string | null
+          paid_at: string | null
+          payment_date: string
+          principal_amount: number
+          source: string
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          balance_after?: number | null
+          company_id: string
+          created_at?: string
+          entry_type?: string
+          id?: string
+          installment_no?: number | null
+          interest_amount?: number
+          is_paid?: boolean
+          loan_id: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_date: string
+          principal_amount?: number
+          source?: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          balance_after?: number | null
+          company_id?: string
+          created_at?: string
+          entry_type?: string
+          id?: string
+          installment_no?: number | null
+          interest_amount?: number
+          is_paid?: boolean
+          loan_id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_date?: string
+          principal_amount?: number
+          source?: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_repayments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_repayments_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loans: {
+        Row: {
+          bank_account_label: string | null
+          company_id: string
+          created_at: string
+          disbursement_date: string | null
+          final_payment_date: string | null
+          first_payment_date: string | null
+          id: string
+          interest_rate: number | null
+          interest_type: string
+          lender_name: string
+          loan_number: string | null
+          name: string
+          notes: string | null
+          owner_id: string | null
+          payment_day: number | null
+          principal_amount: number
+          repayment_method: string
+          status: string
+          term_months: number | null
+          updated_at: string
+        }
+        Insert: {
+          bank_account_label?: string | null
+          company_id: string
+          created_at?: string
+          disbursement_date?: string | null
+          final_payment_date?: string | null
+          first_payment_date?: string | null
+          id?: string
+          interest_rate?: number | null
+          interest_type?: string
+          lender_name: string
+          loan_number?: string | null
+          name: string
+          notes?: string | null
+          owner_id?: string | null
+          payment_day?: number | null
+          principal_amount: number
+          repayment_method?: string
+          status?: string
+          term_months?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bank_account_label?: string | null
+          company_id?: string
+          created_at?: string
+          disbursement_date?: string | null
+          final_payment_date?: string | null
+          first_payment_date?: string | null
+          id?: string
+          interest_rate?: number | null
+          interest_type?: string
+          lender_name?: string
+          loan_number?: string | null
+          name?: string
+          notes?: string | null
+          owner_id?: string | null
+          payment_day?: number | null
+          principal_amount?: number
+          repayment_method?: string
+          status?: string
+          term_months?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loans_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owners"
             referencedColumns: ["id"]
           },
         ]

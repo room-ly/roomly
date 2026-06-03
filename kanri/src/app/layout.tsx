@@ -32,11 +32,12 @@ export default async function RootLayout({
     userName: string;
     userEmail: string;
     isDemo: boolean;
+    loanFeatureEnabled: boolean;
   } | null = null;
 
   try {
     const data = await getBadgeCounts();
-    const { company_name, user_name, user_email, contract_alert_days, is_demo, ...counts } = data;
+    const { company_name, user_name, user_email, contract_alert_days, is_demo, loan_feature_enabled, ...counts } = data;
     sidebarData = {
       badgeCounts: counts as Record<string, number>,
       contractAlertDays: contract_alert_days,
@@ -44,6 +45,7 @@ export default async function RootLayout({
       userName: user_name,
       userEmail: user_email,
       isDemo: is_demo,
+      loanFeatureEnabled: loan_feature_enabled,
     };
   } catch {
     // 未認証（ログインページ等）では取得できない

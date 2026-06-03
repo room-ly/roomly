@@ -41,6 +41,10 @@ export type Permission =
   | "remittances:create"
   | "remittances:edit"
   | "remittances:delete"
+  | "loans:read"
+  | "loans:create"
+  | "loans:edit"
+  | "loans:delete"
   | "settings:read"
   | "settings:edit"
   | "users:read"
@@ -65,6 +69,7 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     "expenses:read", "expenses:create", "expenses:edit", "expenses:delete", "expenses:approve",
     "owners:read", "owners:create", "owners:edit", "owners:delete",
     "remittances:read", "remittances:create", "remittances:edit", "remittances:delete",
+    "loans:read", "loans:create", "loans:edit", "loans:delete",
     "settings:read", "settings:edit",
     "users:read", "users:create", "users:edit", "users:delete",
     "export:csv", "export:pdf",
@@ -79,6 +84,7 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     "expenses:read", "expenses:create", "expenses:edit", "expenses:approve",
     "owners:read", "owners:create", "owners:edit",
     "remittances:read", "remittances:create", "remittances:edit",
+    "loans:read", "loans:create", "loans:edit",
     "settings:read",
     "users:read",
     "export:csv", "export:pdf",
@@ -93,6 +99,7 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     "expenses:read",
     "owners:read",
     "remittances:read",
+    "loans:read",
     "settings:read",
   ],
 };

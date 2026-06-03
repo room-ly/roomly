@@ -9,6 +9,7 @@ export * from "./owners";
 export * from "./expenses";
 export * from "./rent";
 export * from "./remittances";
+export * from "./loans";
 export * from "./deposits";
 export * from "./payees";
 export * from "./users";

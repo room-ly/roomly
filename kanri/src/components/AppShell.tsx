@@ -15,6 +15,7 @@ export interface SidebarInitialData {
   userName: string;
   userEmail: string;
   isDemo: boolean;
+  loanFeatureEnabled: boolean;
 }
 
 export default function AppShell({ children, sidebarData }: { children: React.ReactNode; sidebarData: SidebarInitialData | null }) {
