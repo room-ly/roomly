@@ -10,7 +10,7 @@ import {
 } from "@/lib/schemas-expense";
 import type { ZodError } from "zod";
 import { dispatchAuditLogRefresh } from "@/lib/audit-events";
-import SplitModeSection, { type SplitMode } from "./expense-form/SplitModeSection";
+import SplitModeSection from "./expense-form/SplitModeSection";
 import AllocationSection, { type AllocationDraft } from "./expense-form/AllocationSection";
 import MetaFields from "./expense-form/MetaFields";
 
@@ -68,18 +68,6 @@ export default function ExpenseFormModal({
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
 
-  const initialSplit: SplitMode = (() => {
-    if (!editData) return "company";
-    if (num(editData.tenant_amount) > 0 && !num(editData.owner_amount) && !num(editData.company_amount))
-      return "tenant";
-    if (num(editData.owner_amount) > 0 && !num(editData.tenant_amount) && !num(editData.company_amount))
-      return "owner";
-    if (num(editData.company_amount) > 0 && !num(editData.owner_amount) && !num(editData.tenant_amount))
-      return "company";
-    return "custom";
-  })();
-
-  const [splitMode, setSplitMode] = useState<SplitMode>(initialSplit);
   const [amount, setAmount] = useState<number>(num(editData?.amount));
   const [ownerAmount, setOwnerAmount] = useState<number>(num(editData?.owner_amount));
   const [tenantAmount, setTenantAmount] = useState<number>(num(editData?.tenant_amount));
@@ -115,23 +103,14 @@ export default function ExpenseFormModal({
     }
   }, [propertyRow]);
 
-  // splitMode 変更で内訳を再計算
+  // 金額入力時、内訳が未入力(全て0)なら自社負担にデフォルトで全額を入れる。
+  // 既に内訳が入っている場合はユーザーの手入力を尊重して触らない。
   useEffect(() => {
-    if (splitMode === "owner") {
-      setOwnerAmount(amount);
-      setTenantAmount(0);
-      setCompanyAmount(0);
-    } else if (splitMode === "tenant") {
-      setOwnerAmount(0);
-      setTenantAmount(amount);
-      setCompanyAmount(0);
-    } else if (splitMode === "company") {
-      setOwnerAmount(0);
-      setTenantAmount(0);
+    if (amount > 0 && ownerAmount === 0 && tenantAmount === 0 && companyAmount === 0) {
       setCompanyAmount(amount);
     }
-    // custom は手動入力に任せる
-  }, [splitMode, amount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [amount]);
 
   const sumBreakdown = ownerAmount + tenantAmount + companyAmount;
   const breakdownOk = sumBreakdown === amount;
@@ -146,7 +125,6 @@ export default function ExpenseFormModal({
     if (lastTargetRef.current === target) return;
     lastTargetRef.current = target;
 
-    setSplitMode(initialSplit);
     setAmount(num(editData?.amount));
     setOwnerAmount(num(editData?.owner_amount));
     setTenantAmount(num(editData?.tenant_amount));
@@ -396,8 +374,6 @@ export default function ExpenseFormModal({
           </div>
 
           <SplitModeSection
-            splitMode={splitMode}
-            setSplitMode={setSplitMode}
             amount={amount}
             ownerAmount={ownerAmount}
             setOwnerAmount={setOwnerAmount}
