@@ -20,13 +20,62 @@ async function convertHeicToWebp(file: File): Promise<File> {
   return new File([blob], name, { type: "image/webp" });
 }
 
+// 物件・部屋写真の最大長辺。これ以上大きい画像は縮小する。
+// 一覧カードや詳細のプレビュー用途には2000pxあれば十分で、原寸(スマホ/カメラは4000px級・数MB)を
+// そのまま保存・配信するのは転送量と表示速度の無駄になる。
+const MAX_DIMENSION = 2000;
+const WEBP_QUALITY = 0.82;
+
+// JPEG/PNG等のラスタ画像をcanvasでリサイズしつつWebPに再エンコードする。
+// 劣化がほぼ分からない品質(0.82)で数MB→数百KBに落とし、表示と転送を軽くする。
+// HEICはブラウザがcanvasに描けないため対象外（convertHeicToWebpで別途変換）。
+async function resizeToWebp(file: File): Promise<File> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+    const w = Math.round(bitmap.width * scale);
+    const h = Math.round(bitmap.height * scale);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bitmap.close();
+      return file; // 変換不可なら原本のまま（アップロード自体は通す）
+    }
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close();
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/webp", WEBP_QUALITY)
+    );
+    if (!blob) return file;
+
+    // 万一WebP化で逆に大きくなった場合（既に十分小さい画像等）は原本を使う
+    if (blob.size >= file.size) return file;
+
+    const name = file.name.replace(/\.[^.]+$/, "") + ".webp";
+    return new File([blob], name, { type: "image/webp" });
+  } catch {
+    // createImageBitmap失敗（未対応形式等）は原本のままアップロードする
+    return file;
+  }
+}
+
 async function prepareFiles(files: File[]): Promise<File[]> {
   return Promise.all(
-    files.map((f) =>
-      /\.heic$/i.test(f.name) || f.type === "image/heic" || f.type === "image/heif"
-        ? convertHeicToWebp(f)
-        : f
-    )
+    files.map(async (f) => {
+      // HEIC/HEIF は専用ライブラリでWebP化
+      if (/\.heic$/i.test(f.name) || f.type === "image/heic" || f.type === "image/heif") {
+        return convertHeicToWebp(f);
+      }
+      // GIF はアニメーションが壊れるのでcanvas変換しない
+      if (f.type === "image/gif") return f;
+      // その他のラスタ画像(JPEG/PNG/WebP等)はリサイズ+WebP再エンコード
+      if (/^image\//.test(f.type)) return resizeToWebp(f);
+      return f;
+    })
   );
 }
 
