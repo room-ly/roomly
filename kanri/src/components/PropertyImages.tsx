@@ -35,9 +35,12 @@ interface PropertyImagesProps {
   unitId?: string;
   // trueにすると閲覧のみ（追加・削除・メイン設定ボタンを出さない）
   readOnly?: boolean;
+  // falseのとき画像を取得しない。閉じたモーダル内にマウントされている間の無駄なfetchを防ぐ
+  // （物件一覧では各カードが編集モーダルを内包しており、全カード分の画像APIが裏で走っていた）
+  enabled?: boolean;
 }
 
-export default function PropertyImages({ propertyId, unitId, readOnly: readOnlyProp }: PropertyImagesProps) {
+export default function PropertyImages({ propertyId, unitId, readOnly: readOnlyProp, enabled = true }: PropertyImagesProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<PropertyImage[]>([]);
@@ -75,8 +78,9 @@ export default function PropertyImages({ propertyId, unitId, readOnly: readOnlyP
   }, [apiPath]);
 
   useEffect(() => {
+    if (!enabled) return;
     fetchImages();
-  }, [fetchImages]);
+  }, [fetchImages, enabled]);
 
   // 同じ物件/部屋の画像セクションが複数ある場合（編集モーダル内と詳細ページ）に
   // 互いを再取得させるためのイベントキー

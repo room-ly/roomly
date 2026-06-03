@@ -132,7 +132,7 @@ export default function UnitFormModal({
         {isEdit && editData && (
           <div className="mb-4">
             <p className="text-[13px] font-medium text-ink-2 mb-2">部屋画像</p>
-            <PropertyImages propertyId={propertyId} unitId={editData.id} />
+            <PropertyImages propertyId={propertyId} unitId={editData.id} enabled={isOpen} />
           </div>
         )}
 

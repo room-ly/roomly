@@ -1,18 +1,21 @@
-import { getProperties, getOwners, getUsersForSelect } from "@/lib/queries";
+import { getProperties, getOwnersForSelect, getUsersForSelect } from "@/lib/queries";
 import PageHeader from "@/components/PageHeader";
 import PropertiesPageClient from "@/components/PropertiesPageClient";
 import PropertiesGrid from "@/components/PropertiesGrid";
 
 export default async function PropertiesPage() {
+  // この画面でownersはドロップダウンの選択肢(id, name)にしか使わない。
+  // getOwners()はオーナー配下の全物件・全部屋をネスト取得する重いクエリで、ここでは過剰だった。
+  // 選択肢用の軽量クエリ getOwnersForSelect() に置き換えてRSCのサーバー時間を削減する。
   const [properties, owners, users] = await Promise.all([
     getProperties(),
-    getOwners(),
+    getOwnersForSelect(),
     getUsersForSelect(),
   ]);
 
-  const ownerOptions = owners.map((o: Record<string, any>) => ({
+  const ownerOptions = owners.map((o: { id: string; label: string }) => ({
     id: o.id,
-    name: o.name,
+    name: o.label,
   }));
 
   return (

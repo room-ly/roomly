@@ -203,7 +203,7 @@ export default function PropertyFormModal({
         {isEdit && editData && (
           <div className="mb-4">
             <p className="text-[13px] font-medium text-ink-2 mb-2">物件画像</p>
-            <PropertyImages propertyId={editData.id} />
+            <PropertyImages propertyId={editData.id} enabled={isOpen} />
           </div>
         )}
 
