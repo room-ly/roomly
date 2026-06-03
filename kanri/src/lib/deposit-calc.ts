@@ -18,7 +18,8 @@ export type DepositSummary = {
  * - refunded: 'refund'（退去時の返金）
  * - additionalBilled: 'additional_billing'（敷金不足分を入居者に追加請求した分。残高計算には含めない）
  *
- * balance = initial - charged + refunded
+ * balance = initial - charged - refunded
+ * 取崩しも返金も預り金を減らす方向。残った balance が「これから返すべき残額」。
  * additional_billing は rent_billings 側で別途追跡されるため残高には影響させない。
  */
 export function computeDepositBalance(initial: number, txs: DepositTx[]): DepositSummary {
@@ -50,6 +51,6 @@ export function computeDepositBalance(initial: number, txs: DepositTx[]): Deposi
     charged,
     refunded,
     additionalBilled,
-    balance: totalInitial - charged + refunded,
+    balance: totalInitial - charged - refunded,
   };
 }
