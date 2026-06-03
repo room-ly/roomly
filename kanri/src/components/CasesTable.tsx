@@ -190,6 +190,21 @@ export default function CasesTable({ data, initialFilter, initialPriority }: Cas
     }
   }, [items, router]);
 
+  // 優先度フィルタUI（テーブルでは FilterableTable のフィルタ行に、カンバンでは独自行に差し込む）
+  const prioritySelect = (
+    <select
+      className="input"
+      style={{ width: "auto", minWidth: 120 }}
+      value={priorityFilter}
+      onChange={(e) => setPriorityFilter(e.target.value)}
+    >
+      <option value="all">優先度: すべて</option>
+      {PRIORITY_FILTER_OPTIONS.map((opt) => (
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
+      ))}
+    </select>
+  );
+
   return (
     <>
       <MonthSelector selectedMonth={selectedMonth} availableMonths={availableMonths} onChange={setSelectedMonth} />
@@ -209,20 +224,11 @@ export default function CasesTable({ data, initialFilter, initialPriority }: Cas
             カンバン
           </span>
         </div>
-        <select
-          className="input"
-          style={{ width: "auto", minWidth: 120, marginLeft: "auto" }}
-          value={priorityFilter}
-          onChange={(e) => setPriorityFilter(e.target.value)}
-        >
-          <option value="all">優先度: すべて</option>
-          {PRIORITY_FILTER_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
       </div>
 
       {view === "kanban" ? (
+        <>
+        <div className="flex flex-wrap items-center gap-2 mb-4">{prioritySelect}</div>
         <div className="kanban">
           {KANBAN_COLS.map((col) => (
             <div
@@ -269,6 +275,7 @@ export default function CasesTable({ data, initialFilter, initialPriority }: Cas
             </div>
           ))}
         </div>
+        </>
       ) : (
         <FilterableTable
           data={priorityFiltered}
@@ -293,6 +300,7 @@ export default function CasesTable({ data, initialFilter, initialPriority }: Cas
               options: Object.entries(categoryLabels).map(([value, label]) => ({ value, label })),
             },
           ]}
+          extraFilters={prioritySelect}
           columns={[
             { key: "title", label: "件名", sortable: true, render: (item) => <span className="strong">{item.title}</span> },
             { key: "property.name", label: "物件", render: (item) => <span style={{ color: "var(--ink-2)" }}>{item.property?.name || "—"}</span> },

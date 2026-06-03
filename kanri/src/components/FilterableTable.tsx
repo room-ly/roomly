@@ -24,6 +24,8 @@ interface FilterableTableProps {
   searchPlaceholder?: string;
   filters?: FilterOption[];
   initialFilters?: Record<string, string>;
+  // フィルタ行に並べる追加UI（親が state を持つフィルタ。例: テーブル/カンバン共通の優先度フィルタ）
+  extraFilters?: React.ReactNode;
   pageSize?: number;
   rowClassName?: (item: Record<string, any>) => string;
   onRowClick?: (item: Record<string, any>) => void;
@@ -42,6 +44,7 @@ export default function FilterableTable({
   searchPlaceholder = "検索...",
   filters = [],
   initialFilters = {},
+  extraFilters,
   pageSize = 20,
   rowClassName,
   onRowClick,
@@ -141,6 +144,7 @@ export default function FilterableTable({
               ))}
             </select>
           ))}
+          {extraFilters}
           {search || Object.values(filterValues).some((v) => v && v !== "all") ? (
             <span className="text-[12px] text-ink-3">
               {filtered.length}件
