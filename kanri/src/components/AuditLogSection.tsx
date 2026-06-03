@@ -94,6 +94,7 @@ function computeDiffs(log: AuditLog): FieldDiff[] {
 
 export default function AuditLogSection({ table, recordId, recordLabel }: AuditLogSectionProps) {
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [refNames, setRefNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -103,8 +104,11 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
         `/api/audit-logs?table=${encodeURIComponent(table)}&record_id=${encodeURIComponent(recordId)}&limit=30`,
         { cache: "no-store" },
       );
-      const data = res.ok ? await res.json() : [];
-      setLogs(Array.isArray(data) ? data : []);
+      const data = res.ok ? await res.json() : null;
+      // 新形式 { logs, refNames }（後方互換: 配列が返ってきた場合もそのまま扱う）
+      const nextLogs = Array.isArray(data) ? data : (data?.logs ?? []);
+      setLogs(Array.isArray(nextLogs) ? nextLogs : []);
+      setRefNames(Array.isArray(data) ? {} : (data?.refNames ?? {}));
     } finally {
       setLoading(false);
     }
@@ -188,14 +192,14 @@ export default function AuditLogSection({ table, recordId, recordLabel }: AuditL
                                 <td className="py-0.5">
                                   {log.action === "update" ? (
                                     <span>
-                                      <span className="text-ink-3 line-through">{formatFieldValue(d.before, t, table, d.key)}</span>
+                                      <span className="text-ink-3 line-through">{formatFieldValue(d.before, t, table, d.key, refNames)}</span>
                                       <span className="mx-2 text-ink-3">→</span>
-                                      <span className="text-ink">{formatFieldValue(d.after, t, table, d.key)}</span>
+                                      <span className="text-ink">{formatFieldValue(d.after, t, table, d.key, refNames)}</span>
                                     </span>
                                   ) : log.action === "create" ? (
-                                    <span className="text-ink">{formatFieldValue(d.after, t, table, d.key)}</span>
+                                    <span className="text-ink">{formatFieldValue(d.after, t, table, d.key, refNames)}</span>
                                   ) : (
-                                    <span className="text-ink-3 line-through">{formatFieldValue(d.before, t, table, d.key)}</span>
+                                    <span className="text-ink-3 line-through">{formatFieldValue(d.before, t, table, d.key, refNames)}</span>
                                   )}
                                 </td>
                               </tr>

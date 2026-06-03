@@ -68,7 +68,7 @@ const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
     management_fee_amount: f("管理手数料額", "money"),
     parking: f("駐車場"),
     parking_fee: f("駐車場料金", "money"),
-    owner_id: f("オーナーID"),
+    owner_id: f("オーナー"),
     approver_user_id: f("承認者"),
     appeal_points: f("アピールポイント"),
     estate_license: f("宅建業免許"),
@@ -124,7 +124,7 @@ const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
     deposit_unit: f("敷金 単位"),
     key_money: f("礼金", "money"),
     key_money_unit: f("礼金 単位"),
-    property_id: f("物件ID"),
+    property_id: f("物件"),
     damage_notes: f("損耗メモ"),
     equipment: f("設備"),
   },
@@ -154,8 +154,8 @@ const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
     guarantor_workplace_phone: f("連帯保証人 勤務先電話"),
   },
   contracts: {
-    unit_id: f("部屋ID"),
-    tenant_id: f("入居者ID"),
+    unit_id: f("部屋"),
+    tenant_id: f("入居者"),
     contract_type: f("契約種別"),
     start_date: f("契約開始日", "date"),
     end_date: f("契約終了日", "date"),
@@ -181,7 +181,7 @@ const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
     expiry_notified_at: f("満了通知日", "date"),
   },
   rent_billings: {
-    contract_id: f("契約ID"),
+    contract_id: f("契約"),
     billing_month: f("請求月", "month"),
     rent: f("賃料", "money"),
     management_fee: f("管理費", "money"),
@@ -192,7 +192,7 @@ const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
     overdue_notified_at: f("延滞通知日", "date"),
   },
   rent_payments: {
-    billing_id: f("請求ID"),
+    billing_id: f("請求"),
     amount: f("金額", "money"),
     payment_method: f("支払方法"),
     payment_date: f("入金日", "date"),
@@ -202,9 +202,9 @@ const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
     description: f("詳細"),
     category: f("カテゴリ"),
     priority: f("優先度"),
-    property_id: f("物件ID"),
-    unit_id: f("部屋ID"),
-    tenant_id: f("入居者ID"),
+    property_id: f("物件"),
+    unit_id: f("部屋"),
+    tenant_id: f("入居者"),
     reported_date: f("受付日", "date"),
     completed_date: f("完了日", "date"),
     vendor_name: f("業者名"),
@@ -213,7 +213,7 @@ const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
     estimated_cost: f("見積金額", "money"),
     actual_cost: f("実費", "money"),
     source: f("発生元"),
-    payee_id: f("支払先ID"),
+    payee_id: f("支払先"),
   },
   expenses: {
     expense_date: f("経費発生日", "date"),
@@ -223,12 +223,12 @@ const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
     company_amount: f("自社負担額", "money"),
     category: f("カテゴリ"),
     description: f("内容"),
-    payee_id: f("支払先ID"),
-    property_id: f("物件ID"),
-    unit_id: f("部屋ID"),
-    owner_id: f("オーナーID"),
-    case_id: f("対応案件ID"),
-    contract_id: f("契約ID"),
+    payee_id: f("支払先"),
+    property_id: f("物件"),
+    unit_id: f("部屋"),
+    owner_id: f("オーナー"),
+    case_id: f("対応案件"),
+    contract_id: f("契約"),
     vendor_name: f("業者名"),
     invoice_number: f("請求書番号"),
     tax_category: f("税区分"),
@@ -264,7 +264,7 @@ const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
     emergency_contact_relation: f("緊急連絡先 続柄"),
   },
   owner_remittances: {
-    owner_id: f("オーナーID"),
+    owner_id: f("オーナー"),
     remittance_month: f("送金対象月", "month"),
     total_rent: f("家賃収入", "money"),
     management_fee_deducted: f("管理手数料控除", "money"),
@@ -413,6 +413,23 @@ const ENUM_LABELS: EnumMap = {
       resolved: "対応済",
       closed: "完了",
     },
+    category: {
+      repair: "設備修繕",
+      key: "鍵対応",
+      common_area: "共用部",
+      tenant_trouble: "入居者間トラブル",
+      neighbor: "近隣対応",
+      inspection: "点検立会",
+      inquiry: "質問・相談",
+      request: "要望",
+      complaint: "クレーム",
+      other: "その他",
+    },
+    source: {
+      admin: "管理画面",
+      tenant: "入居者",
+      portal: "ポータル",
+    },
   },
   expenses: {
     status: {
@@ -501,19 +518,57 @@ export function enumLabel(table: string, column: string, value: unknown): string
   return ENUM_LABELS[table]?.[column]?.[value] ?? null;
 }
 
+// UUID を参照するカラム → 参照先テーブル のマッピング。
+// 監査ログ表示で UUID を人間可読名（物件名・部屋番号・入居者名等）に解決するのに使う。
+// 参照先テーブル名は解決処理（API側）が名前カラムを引くためのキー。
+const REF_TABLES: Record<string, string> = {
+  property_id: "properties",
+  unit_id: "units",
+  tenant_id: "tenants",
+  contract_id: "contracts",
+  payee_id: "payees",
+  owner_id: "owners",
+  case_id: "cases",
+  billing_id: "rent_billings",
+  // approver / submitted / approved 系は users を参照
+  approver_user_id: "users",
+  submitted_by: "users",
+  approved_by: "users",
+};
+
+// このカラムが UUID 参照かどうか／参照先テーブルを返す
+export function refTableForColumn(column: string): string | null {
+  return REF_TABLES[column] ?? null;
+}
+
+export function isRefColumn(column: string): boolean {
+  return column in REF_TABLES;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // 値を型に応じて整形する。未対応の型はそのまま文字列化。
 // table / column を渡すと enum の日本語ラベルに変換する。
+// refNames（UUID → 表示名）を渡すと ID 参照カラムを人間可読名に変換する。
 export function formatFieldValue(
   value: unknown,
   type: FieldType,
   table?: string,
   column?: string,
+  refNames?: Record<string, string>,
 ): string {
   if (value === null || value === undefined || value === "") return "—";
 
   if (table && column) {
     const label = enumLabel(table, column, value);
     if (label) return label;
+  }
+
+  // ID 参照カラムは UUID を表示名に解決する。
+  // 解決できない（参照先が削除済み等）場合は生 UUID を顧客に見せず「（削除済み）」と表記。
+  if (column && isRefColumn(column) && typeof value === "string") {
+    if (refNames && refNames[value]) return refNames[value];
+    if (UUID_RE.test(value)) return "（削除済み）";
   }
 
   switch (type) {
