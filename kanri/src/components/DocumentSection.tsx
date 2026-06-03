@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Upload, Download, Trash2, X, Paperclip, FileText, File as FileIcon } from "lucide-react";
 import { usePermission } from "@/lib/use-permission";
+import { useConfirm } from "@/lib/confirm-context";
 
 interface DocumentSectionProps {
   propertyId?: string;
@@ -37,6 +38,7 @@ function isPdfMime(mime?: string | null) {
 }
 
 export default function DocumentSection({ propertyId, tenantId, title = "書類" }: DocumentSectionProps) {
+  const confirm = useConfirm();
   const [docs, setDocs] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(true);
   // 書類アップロード・削除は properties:edit を満たせば許可（viewerはNG）
@@ -84,7 +86,7 @@ export default function DocumentSection({ propertyId, tenantId, title = "書類"
   }
 
   async function handleDelete(id: string, fileName: string) {
-    if (!confirm(`「${fileName}」を削除しますか？`)) return;
+    if (!(await confirm({ title: `「${fileName}」を削除しますか？`, variant: "danger", confirmLabel: "削除する" }))) return;
     const res = await fetch(`/api/documents?id=${id}`, { method: "DELETE" });
     if (res.ok) fetchDocs();
   }

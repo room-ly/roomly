@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import TenantFormModal from "./TenantFormModal";
 import { usePermission } from "@/lib/use-permission";
+import { useConfirm, useNotify } from "@/lib/confirm-context";
 
 interface TenantDetailClientProps {
   tenant: Record<string, any>;
@@ -12,15 +13,17 @@ interface TenantDetailClientProps {
 
 export default function TenantDetailClient({ tenant }: TenantDetailClientProps) {
   const router = useRouter();
+  const confirm = useConfirm();
+  const notify = useNotify();
   const [modalOpen, setModalOpen] = useState(false);
   const canEdit = usePermission("tenants:edit");
   const canDelete = usePermission("tenants:delete");
 
   async function handleDelete() {
-    if (!confirm(`「${tenant.name}」を削除しますか？`)) return;
+    if (!(await confirm({ title: `「${tenant.name}」を削除しますか？`, variant: "danger", confirmLabel: "削除する" }))) return;
     const res = await fetch(`/api/tenants/${tenant.id}`, { method: "DELETE" });
     if (res.ok) router.push("/tenants");
-    else alert("削除に失敗しました");
+    else notify({ title: "削除に失敗しました" });
   }
 
   return (

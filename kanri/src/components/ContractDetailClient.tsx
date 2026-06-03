@@ -6,6 +6,7 @@ import { Pencil, Trash2, FileText, FileCheck, RefreshCw } from "lucide-react";
 import ContractFormModal from "./ContractFormModal";
 import ConfirmDialog from "./ConfirmDialog";
 import { usePermission } from "@/lib/use-permission";
+import { useNotify } from "@/lib/confirm-context";
 
 interface SelectOption {
   id: string;
@@ -21,6 +22,7 @@ interface ContractDetailClientProps {
 
 export default function ContractDetailClient({ contract, units, tenants, moveOutRequests }: ContractDetailClientProps) {
   const router = useRouter();
+  const notify = useNotify();
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -37,7 +39,7 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
     setDeleting(true);
     const res = await fetch(`/api/contracts/${contract.id}`, { method: "DELETE" });
     if (res.ok) router.push("/contracts");
-    else { alert("削除に失敗しました"); setDeleting(false); }
+    else { notify({ title: "削除に失敗しました" }); setDeleting(false); }
   }
 
   return (

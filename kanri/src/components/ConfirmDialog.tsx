@@ -10,11 +10,13 @@ interface ConfirmDialogProps {
   loading?: boolean;
   // danger: 削除など破壊的操作（赤・警告アイコン） / neutral: 設定変更など（落ち着いた色・情報アイコン）
   variant?: "danger" | "neutral";
+  // 通知用途（OKのみ）でキャンセルボタンを隠す
+  hideCancel?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-export default function ConfirmDialog({ isOpen, title, message, confirmLabel = "削除する", loading, variant = "danger", onConfirm, onCancel }: ConfirmDialogProps) {
+export default function ConfirmDialog({ isOpen, title, message, confirmLabel = "削除する", loading, variant = "danger", hideCancel, onConfirm, onCancel }: ConfirmDialogProps) {
   if (!isOpen) return null;
 
   const isNeutral = variant === "neutral";
@@ -38,9 +40,11 @@ export default function ConfirmDialog({ isOpen, title, message, confirmLabel = "
           </div>
         </div>
         <div className="flex justify-end gap-2">
-          <button onClick={onCancel} className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-surface-2 transition-colors">
-            キャンセル
-          </button>
+          {!hideCancel && (
+            <button onClick={onCancel} className="bg-bg-2 text-ink-2 rounded-lg px-4 py-2 text-sm hover:bg-surface-2 transition-colors">
+              キャンセル
+            </button>
+          )}
           <button onClick={onConfirm} disabled={loading} className={confirmBtnClass}>
             {loading && <Loader2 size={14} className="animate-spin" />}
             {loading ? "処理中..." : confirmLabel}

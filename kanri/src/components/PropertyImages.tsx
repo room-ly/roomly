@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePermission } from "@/lib/use-permission";
+import { useConfirm } from "@/lib/confirm-context";
 import {
   ChevronLeft,
   ChevronRight,
@@ -91,6 +92,7 @@ interface PropertyImagesProps {
 
 export default function PropertyImages({ propertyId, unitId, readOnly: readOnlyProp, enabled = true }: PropertyImagesProps) {
   const router = useRouter();
+  const confirm = useConfirm();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<PropertyImage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -215,7 +217,7 @@ export default function PropertyImages({ propertyId, unitId, readOnly: readOnlyP
   }
 
   async function deleteImage(imageId: string) {
-    if (!confirm("この画像を削除しますか？")) return;
+    if (!(await confirm({ title: "この画像を削除しますか？", variant: "danger", confirmLabel: "削除する" }))) return;
     setError("");
     try {
       const res = await fetch(apiPath, {

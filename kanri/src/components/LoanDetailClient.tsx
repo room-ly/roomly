@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Wand2, Upload, Plus, Trash2, Check, Loader2 } from "lucide-react";
 import { usePermission } from "@/lib/use-permission";
+import { useConfirm, useNotify } from "@/lib/confirm-context";
 import LoanRepaymentCsvModal from "./LoanRepaymentCsvModal";
 
 interface Props {
@@ -27,6 +28,8 @@ const ENTRY_LABEL: Record<string, string> = {
 
 export default function LoanDetailClient({ loan, repayments }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
+  const notify = useNotify();
   const canEdit = usePermission("loans:edit");
   const [busy, setBusy] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
@@ -36,12 +39,12 @@ export default function LoanDetailClient({ loan, repayments }: Props) {
   const links = (loan.loan_properties ?? []) as Record<string, any>[];
 
   async function generate() {
-    if (!confirm("借入条件から返済予定表を生成します。既存の自動生成行は置き換えられます（手動追加行・繰上返済は残ります）。よろしいですか？")) return;
+    if (!(await confirm({ title: "返済予定表を生成しますか？", message: "借入条件から返済予定表を生成します。既存の自動生成行は置き換えられます（手動追加行・繰上返済は残ります）。", confirmLabel: "生成する", variant: "neutral" }))) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/loans/${loan.id}/schedule`, { method: "POST" });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) alert(data.error || "生成に失敗しました");
+      if (!res.ok) notify({ title: data.error || "生成に失敗しました" });
       else router.refresh();
     } finally {
       setBusy(false);
@@ -58,7 +61,7 @@ export default function LoanDetailClient({ loan, repayments }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payment_date, entry_type: "prepayment", principal_amount: 0, interest_amount: 0 }),
       });
-      if (!res.ok) alert("追加に失敗しました");
+      if (!res.ok) notify({ title: "追加に失敗しました" });
       else router.refresh();
     } finally {
       setBusy(false);
@@ -73,7 +76,7 @@ export default function LoanDetailClient({ loan, repayments }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ repayment_id: id, ...editRow }),
       });
-      if (!res.ok) alert("更新に失敗しました");
+      if (!res.ok) notify({ title: "更新に失敗しました" });
       else {
         setEditingId(null);
         router.refresh();
@@ -102,7 +105,7 @@ export default function LoanDetailClient({ loan, repayments }: Props) {
   }
 
   async function deleteRow(id: string) {
-    if (!confirm("この返済行を削除しますか？")) return;
+    if (!(await confirm({ title: "この返済行を削除しますか？", confirmLabel: "削除する", variant: "danger" }))) return;
     setBusy(true);
     try {
       await fetch(`/api/loans/${loan.id}/repayments?repayment_id=${id}`, { method: "DELETE" });

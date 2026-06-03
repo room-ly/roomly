@@ -7,6 +7,7 @@ import { Building2, MoreVertical, Pencil, Trash2, Loader2 } from "lucide-react";
 import { formatBuiltYear } from "@/lib/wareki";
 import PropertyFormModal from "./PropertyFormModal";
 import { usePermission } from "@/lib/use-permission";
+import { useConfirm } from "@/lib/confirm-context";
 
 interface Owner {
   id: string;
@@ -27,6 +28,7 @@ interface PropertyCardProps {
 
 export default function PropertyCard({ property: prop, owners, users = [] }: PropertyCardProps) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [menuOpen, setMenuOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -41,7 +43,7 @@ export default function PropertyCard({ property: prop, owners, users = [] }: Pro
 
   async function handleDelete() {
     if (deleting) return;
-    if (!confirm("この物件を削除しますか？関連する部屋も全て削除されます。")) return;
+    if (!(await confirm({ title: "この物件を削除しますか？", message: "関連する部屋も全て削除されます。", variant: "danger", confirmLabel: "削除する" }))) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/properties/${prop.id}`, { method: "DELETE" });

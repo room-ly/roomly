@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { formatPhone } from "@/lib/phone";
+import { useConfirm, useNotify } from "@/lib/confirm-context";
 import OwnerFormModal from "./OwnerFormModal";
 
 interface OwnerCardProps {
@@ -12,6 +13,8 @@ interface OwnerCardProps {
 
 export default function OwnerCard({ owner }: OwnerCardProps) {
   const router = useRouter();
+  const confirm = useConfirm();
+  const notify = useNotify();
   const [menuOpen, setMenuOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -28,13 +31,13 @@ export default function OwnerCard({ owner }: OwnerCardProps) {
   }, [menuOpen]);
 
   async function handleDelete() {
-    if (!confirm(`「${owner.name}」を削除しますか？`)) return;
+    if (!(await confirm({ title: `「${owner.name}」を削除しますか？`, variant: "danger", confirmLabel: "削除する" }))) return;
     setDeleting(true);
     const res = await fetch(`/api/owners/${owner.id}`, { method: "DELETE" });
     if (res.ok) {
       router.refresh();
     } else {
-      alert("削除に失敗しました");
+      notify({ title: "削除に失敗しました" });
     }
     setDeleting(false);
     setMenuOpen(false);

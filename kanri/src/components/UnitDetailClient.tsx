@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, Trash2, FileText } from "lucide-react";
 import UnitFormModal from "./UnitFormModal";
 import { usePermission } from "@/lib/use-permission";
+import { useConfirm } from "@/lib/confirm-context";
 
 interface UnitDetailClientProps {
   propertyId: string;
@@ -18,6 +19,7 @@ export default function UnitDetailClient({
   activeContract,
 }: UnitDetailClientProps) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const canEdit = usePermission("units:edit");
@@ -26,7 +28,7 @@ export default function UnitDetailClient({
   const canMoveOut = usePermission("contracts:edit");
 
   async function handleDelete() {
-    if (!confirm("この部屋を削除しますか？")) return;
+    if (!(await confirm({ title: "この部屋を削除しますか？", variant: "danger", confirmLabel: "削除する" }))) return;
     setDeleting(true);
     const res = await fetch(`/api/units/${unit.id}`, { method: "DELETE" });
     if (res.ok) {

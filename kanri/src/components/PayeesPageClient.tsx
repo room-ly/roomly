@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import PayeeFormModal from "./PayeeFormModal";
 import { usePermission } from "@/lib/use-permission";
+import { useConfirm, useNotify } from "@/lib/confirm-context";
 
 const CATEGORY_LABEL: Record<string, string> = {
   repair: "修繕業者",
@@ -19,6 +20,8 @@ interface PayeesPageClientProps {
 
 export default function PayeesPageClient({ payees }: PayeesPageClientProps) {
   const router = useRouter();
+  const confirm = useConfirm();
+  const notify = useNotify();
   const [isOpen, setIsOpen] = useState(false);
   const [editData, setEditData] = useState<Record<string, any> | null>(null);
   const canCreate = usePermission("expenses:create");
@@ -26,10 +29,10 @@ export default function PayeesPageClient({ payees }: PayeesPageClientProps) {
   const canDelete = usePermission("expenses:delete");
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`「${name}」を削除しますか？`)) return;
+    if (!(await confirm({ title: `「${name}」を削除しますか？`, variant: "danger", confirmLabel: "削除する" }))) return;
     const res = await fetch(`/api/payees/${id}`, { method: "DELETE" });
     if (res.ok) router.refresh();
-    else alert("削除に失敗しました");
+    else notify({ title: "削除に失敗しました" });
   }
 
   function openEdit(p: Record<string, any>) {

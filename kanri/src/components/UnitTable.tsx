@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, ArrowRight } from "lucide-react";
+import { useNotify } from "@/lib/confirm-context";
 import UnitFormModal from "./UnitFormModal";
 
 interface PlanOption {
@@ -30,6 +31,7 @@ interface UnitTableProps {
 
 export default function UnitTable({ propertyId, propertyType, units, contracts, showAddButton }: UnitTableProps) {
   const router = useRouter();
+  const notify = useNotify();
   const [addOpen, setAddOpen] = useState(false);
   const [checking, setChecking] = useState(false);
   const [limitInfo, setLimitInfo] = useState<LimitInfo | null>(null);
@@ -69,11 +71,11 @@ export default function UnitTable({ propertyId, propertyType, units, contracts, 
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert(data.error || "チェックアウトの作成に失敗しました");
+        notify({ title: data.error || "チェックアウトの作成に失敗しました" });
         setUpgrading(false);
       }
     } catch {
-      alert("エラーが発生しました");
+      notify({ title: "エラーが発生しました" });
       setUpgrading(false);
     }
   }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, Trash2, FileText } from "lucide-react";
 import OwnerFormModal from "./OwnerFormModal";
 import { usePermission } from "@/lib/use-permission";
+import { useConfirm, useNotify } from "@/lib/confirm-context";
 
 interface OwnerDetailClientProps {
   owner: Record<string, any>;
@@ -12,6 +13,8 @@ interface OwnerDetailClientProps {
 
 export default function OwnerDetailClient({ owner }: OwnerDetailClientProps) {
   const router = useRouter();
+  const confirm = useConfirm();
+  const notify = useNotify();
   const [modalOpen, setModalOpen] = useState(false);
   const [reportMonth, setReportMonth] = useState(() => {
     const now = new Date();
@@ -22,10 +25,10 @@ export default function OwnerDetailClient({ owner }: OwnerDetailClientProps) {
   const canDelete = usePermission("owners:delete");
 
   async function handleDelete() {
-    if (!confirm(`「${owner.name}」を削除しますか？`)) return;
+    if (!(await confirm({ title: `「${owner.name}」を削除しますか？`, variant: "danger", confirmLabel: "削除する" }))) return;
     const res = await fetch(`/api/owners/${owner.id}`, { method: "DELETE" });
     if (res.ok) router.push("/owners");
-    else alert("削除に失敗しました");
+    else notify({ title: "削除に失敗しました" });
   }
 
   function openReport() {

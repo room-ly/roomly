@@ -6,6 +6,7 @@ import { Pencil, Trash2, Mail } from "lucide-react";
 import CaseFormModal from "./CaseFormModal";
 import ConfirmDialog from "./ConfirmDialog";
 import { usePermission } from "@/lib/use-permission";
+import { useNotify } from "@/lib/confirm-context";
 
 interface SelectOption {
   id: string;
@@ -24,6 +25,7 @@ export default function CaseDetailClient({ caseRow, properties }: CaseDetailClie
   const [deleting, setDeleting] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
   const [notifying, setNotifying] = useState(false);
+  const notify = useNotify();
   const canEdit = usePermission("cases:edit");
   const canDelete = usePermission("cases:delete");
 
@@ -34,7 +36,7 @@ export default function CaseDetailClient({ caseRow, properties }: CaseDetailClie
     setDeleting(true);
     const res = await fetch(`/api/cases/${caseRow.id}`, { method: "DELETE" });
     if (res.ok) router.push("/cases");
-    else { alert("削除に失敗しました"); setDeleting(false); }
+    else { notify({ title: "削除に失敗しました" }); setDeleting(false); }
   }
 
   async function handleNotifyOwner() {
@@ -43,10 +45,10 @@ export default function CaseDetailClient({ caseRow, properties }: CaseDetailClie
       const res = await fetch(`/api/cases/${caseRow.id}/notify-owner`, { method: "POST" });
       if (res.ok) {
         setNotifyOpen(false);
-        alert(`${owner?.name || "オーナー"}様にメールを送信しました`);
+        notify({ title: `${owner?.name || "オーナー"}様にメールを送信しました` });
       } else {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || "メール送信に失敗しました");
+        notify({ title: err.error || "メール送信に失敗しました" });
       }
     } finally {
       setNotifying(false);

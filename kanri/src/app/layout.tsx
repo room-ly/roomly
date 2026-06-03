@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-context";
 import { AuthProvider } from "@/lib/auth-context";
+import { ConfirmProvider } from "@/lib/confirm-context";
 import { PostHogProvider } from "@/lib/posthog";
 import AppShell from "@/components/AppShell";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
@@ -104,9 +105,11 @@ export default async function RootLayout({
         <ThemeProvider>
           <AuthProvider initialUser={initialUser}>
             <PostHogProvider>
-              <AppShell sidebarData={sidebarData}>
-                {children}
-              </AppShell>
+              <ConfirmProvider>
+                <AppShell sidebarData={sidebarData}>
+                  {children}
+                </AppShell>
+              </ConfirmProvider>
             </PostHogProvider>
           </AuthProvider>
         </ThemeProvider>

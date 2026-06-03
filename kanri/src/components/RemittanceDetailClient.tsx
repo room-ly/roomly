@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import RemittanceFormModal from "./RemittanceFormModal";
 import { usePermission } from "@/lib/use-permission";
+import { useConfirm, useNotify } from "@/lib/confirm-context";
 
 interface OwnerOption {
   id: string;
@@ -18,15 +19,17 @@ interface RemittanceDetailClientProps {
 
 export default function RemittanceDetailClient({ remittance, owners }: RemittanceDetailClientProps) {
   const router = useRouter();
+  const confirm = useConfirm();
+  const notify = useNotify();
   const [modalOpen, setModalOpen] = useState(false);
   const canEdit = usePermission("remittances:edit");
   const canDelete = usePermission("remittances:delete");
 
   async function handleDelete() {
-    if (!confirm("この送金データを削除しますか？")) return;
+    if (!(await confirm({ title: "この送金データを削除しますか？", variant: "danger", confirmLabel: "削除する" }))) return;
     const res = await fetch(`/api/remittances/${remittance.id}`, { method: "DELETE" });
     if (res.ok) router.push("/remittances");
-    else alert("削除に失敗しました");
+    else notify({ title: "削除に失敗しました" });
   }
 
   return (

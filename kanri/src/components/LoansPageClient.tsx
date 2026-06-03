@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, Landmark } from "lucide-react";
 import { usePermission } from "@/lib/use-permission";
+import { useConfirm, useNotify } from "@/lib/confirm-context";
 import LoanFormModal from "./LoanFormModal";
 
 interface SelectItem {
@@ -37,6 +38,8 @@ const yen = (v: number | null | undefined) =>
 
 export default function LoansPageClient({ loans, summary, properties, owners }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
+  const notify = useNotify();
   const [isOpen, setIsOpen] = useState(false);
   const [editData, setEditData] = useState<Record<string, any> | null>(null);
   const canCreate = usePermission("loans:create");
@@ -44,10 +47,10 @@ export default function LoansPageClient({ loans, summary, properties, owners }: 
   const canDelete = usePermission("loans:delete");
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`「${name}」を削除しますか？返済予定表も削除されます。`)) return;
+    if (!(await confirm({ title: `「${name}」を削除しますか？`, message: "返済予定表も削除されます。", variant: "danger", confirmLabel: "削除する" }))) return;
     const res = await fetch(`/api/loans/${id}`, { method: "DELETE" });
     if (res.ok) router.refresh();
-    else alert("削除に失敗しました");
+    else notify({ title: "削除に失敗しました" });
   }
 
   return (

@@ -6,6 +6,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import ExpenseFormModal from "./ExpenseFormModal";
 import ConfirmDialog from "./ConfirmDialog";
 import { usePermission } from "@/lib/use-permission";
+import { useNotify } from "@/lib/confirm-context";
 
 interface SelectOption {
   id: string;
@@ -21,6 +22,7 @@ interface ExpenseDetailClientProps {
 
 export default function ExpenseDetailClient({ expense, properties, owners }: ExpenseDetailClientProps) {
   const router = useRouter();
+  const notify = useNotify();
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -31,7 +33,7 @@ export default function ExpenseDetailClient({ expense, properties, owners }: Exp
     setDeleting(true);
     const res = await fetch(`/api/expenses/${expense.id}`, { method: "DELETE" });
     if (res.ok) router.push("/expenses");
-    else { alert("削除に失敗しました"); setDeleting(false); }
+    else { notify({ title: "削除に失敗しました" }); setDeleting(false); }
   }
 
   return (

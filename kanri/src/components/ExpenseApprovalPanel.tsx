@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { dispatchAuditLogRefresh } from "@/lib/audit-events";
+import { useConfirm } from "@/lib/confirm-context";
 
 interface Props {
   expenseId: string;
@@ -25,6 +26,7 @@ export default function ExpenseApprovalPanel({
   canEditSettings,
 }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [loading, setLoading] = useState(false);
   const [reason, setReason] = useState("");
   const [showReject, setShowReject] = useState(false);
@@ -35,7 +37,7 @@ export default function ExpenseApprovalPanel({
   if (status !== "pending_approval" && status !== "draft") return null;
 
   async function turnOff() {
-    if (!confirm("稟議機能をオフにしますか？\n承認待ちの経費は手動で承認/却下が必要です。")) return;
+    if (!(await confirm({ title: "稟議機能をオフにしますか？", message: "承認待ちの経費は手動で承認/却下が必要です。", confirmLabel: "オフにする", variant: "neutral" }))) return;
     setLoading(true);
     setError("");
     try {

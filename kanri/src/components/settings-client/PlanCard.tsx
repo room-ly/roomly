@@ -2,6 +2,7 @@
 
 import { Crown, ExternalLink } from "lucide-react";
 import type { PlanInfo, PlanOption } from "./constants";
+import { useNotify } from "@/lib/confirm-context";
 
 export default function PlanCard({
   plans,
@@ -18,6 +19,7 @@ export default function PlanCard({
   customUnits: string;
   setCustomUnits: (v: string) => void;
 }) {
+  const notify = useNotify();
   return (
     <div className="card p-5 mb-4">
       <h2 className="text-[14px] font-semibold mb-4">プラン</h2>
@@ -151,7 +153,7 @@ export default function PlanCard({
                             if (data.url) {
                               window.location.href = data.url;
                             } else {
-                              alert(data.detail || data.error || "エラーが発生しました");
+                              notify({ title: data.detail || data.error || "エラーが発生しました" });
                               setCheckingOut(null);
                             }
                           }}
@@ -212,7 +214,7 @@ export default function PlanCard({
                           if (data.url) {
                             window.location.href = data.url;
                           } else {
-                            alert(data.detail || data.error || "エラーが発生しました");
+                            notify({ title: data.detail || data.error || "エラーが発生しました" });
                             setCheckingOut(null);
                           }
                         }}
