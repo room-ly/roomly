@@ -23,6 +23,7 @@ export default function LoanFormModal({ isOpen, onClose, editData, properties, o
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [ownerId, setOwnerId] = useState<string>("");
   const [selectedProps, setSelectedProps] = useState<string[]>([]);
   const [ratios, setRatios] = useState<Record<string, string>>({});
 
@@ -35,6 +36,7 @@ export default function LoanFormModal({ isOpen, onClose, editData, properties, o
     if (lastTargetRef.current === target) return;
     lastTargetRef.current = target;
 
+    setOwnerId(editData?.owner_id || "");
     const links = (editData?.loan_properties ?? []) as Record<string, any>[];
     setSelectedProps(links.map((l) => l.property?.id).filter(Boolean));
     const r: Record<string, string> = {};
@@ -47,6 +49,20 @@ export default function LoanFormModal({ isOpen, onClose, editData, properties, o
   }, [isOpen, editData]);
 
   const isEdit = !!editData;
+
+  // オーナーを選ぶとそのオーナーの物件だけに絞る。未選択（自社借入）なら全物件。
+  const visibleProperties = ownerId
+    ? properties.filter((p) => p.owner_id === ownerId)
+    : properties;
+
+  // オーナー変更時、表示対象外になった選択物件を外す
+  function handleOwnerChange(newOwnerId: string) {
+    setOwnerId(newOwnerId);
+    if (newOwnerId) {
+      const allowed = new Set(properties.filter((p) => p.owner_id === newOwnerId).map((p) => p.id));
+      setSelectedProps((prev) => prev.filter((id) => allowed.has(id)));
+    }
+  }
 
   function toggleProperty(id: string) {
     setSelectedProps((prev) =>
@@ -116,6 +132,26 @@ export default function LoanFormModal({ isOpen, onClose, editData, properties, o
         )}
 
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+          {/* 借入オーナー: 最初に決める。地主管理の人は自分を選ぶ。
+              選ぶとそのオーナーの物件だけが下の対象物件に出る */}
+          <div>
+            <label className="text-sm font-medium text-ink-2 block mb-1">借入オーナー</label>
+            <select
+              name="owner_id"
+              value={ownerId}
+              onChange={(e) => handleOwnerChange(e.target.value)}
+              className="input"
+            >
+              <option value="">指定しない（自社借入）</option>
+              {owners.map((o) => (
+                <option key={o.id} value={o.id}>{o.label}</option>
+              ))}
+            </select>
+            <p className="text-xs text-ink-3 mt-1">
+              オーナーを選ぶと、そのオーナーの物件だけが下の「対象物件」に表示されます。
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
               <label className="text-sm font-medium text-ink-2 block mb-1">
@@ -174,15 +210,6 @@ export default function LoanFormModal({ isOpen, onClose, editData, properties, o
               <input name="first_payment_date" type="date" defaultValue={editData?.first_payment_date || ""} className="input" />
             </div>
             <div>
-              <label className="text-sm font-medium text-ink-2 block mb-1">借入オーナー（任意）</label>
-              <select name="owner_id" defaultValue={editData?.owner_id || ""} className="input">
-                <option value="">指定しない（自社借入）</option>
-                {owners.map((o) => (
-                  <option key={o.id} value={o.id}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">状態</label>
               <select name="status" defaultValue={editData?.status || "active"} className="input">
                 <option value="active">返済中</option>
@@ -196,15 +223,17 @@ export default function LoanFormModal({ isOpen, onClose, editData, properties, o
             </div>
           </div>
 
-          {/* 対象物件（多対多。共同担保・複数棟一括ローンに対応） */}
+          {/* 対象物件（多対多。通常は1物件、共同担保・複数棟一括ローンは複数選択） */}
           <div>
-            <label className="text-sm font-medium text-ink-2 block mb-1">対象物件（複数選択可）</label>
-            <p className="text-xs text-ink-3 mb-2">共同担保・複数棟一括ローンは複数選択。按分比率（%）は任意です。</p>
+            <label className="text-sm font-medium text-ink-2 block mb-1">対象物件</label>
+            <p className="text-xs text-ink-3 mb-2">通常は1物件を選択。共同担保・複数棟一括ローンの場合のみ複数選択（按分比率%は任意）。</p>
             <div className="border border-border rounded-lg divide-y divide-border max-h-48 overflow-y-auto">
-              {properties.length === 0 ? (
-                <div className="p-3 text-sm text-ink-3">物件が登録されていません</div>
+              {visibleProperties.length === 0 ? (
+                <div className="p-3 text-sm text-ink-3">
+                  {ownerId ? "このオーナーの物件が登録されていません" : "物件が登録されていません"}
+                </div>
               ) : (
-                properties.map((p) => {
+                visibleProperties.map((p) => {
                   const checked = selectedProps.includes(p.id);
                   return (
                     <label key={p.id} className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-surface-2">
