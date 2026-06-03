@@ -8,9 +8,21 @@ import { usePermission } from "@/lib/use-permission";
 import { useConfirm, useNotify, usePrompt } from "@/lib/confirm-context";
 import LoanRepaymentCsvModal from "./LoanRepaymentCsvModal";
 
+interface Cashflow {
+  monthStart: string;
+  propertyCount: number;
+  monthlyRentIncome: number;
+  principal: number;
+  interest: number;
+  repayment: number;
+  cashflow: number;
+  hasRepayment: boolean;
+}
+
 interface Props {
   loan: Record<string, any>;
   repayments: Record<string, any>[];
+  cashflow: Cashflow;
 }
 
 const yen = (v: number | null | undefined) =>
@@ -26,7 +38,7 @@ const ENTRY_LABEL: Record<string, string> = {
   adjustment: "調整",
 };
 
-export default function LoanDetailClient({ loan, repayments }: Props) {
+export default function LoanDetailClient({ loan, repayments, cashflow }: Props) {
   const router = useRouter();
   const confirm = useConfirm();
   const notify = useNotify();
@@ -155,6 +167,39 @@ export default function LoanDetailClient({ loan, repayments }: Props) {
           />
         </div>
         {loan.notes && <p className="text-sm text-ink-2 mt-3 pt-3 border-t border-border whitespace-pre-wrap">{loan.notes}</p>}
+      </div>
+
+      {/* 当月キャッシュフロー（紐づく物件の家賃収入 − 当月返済） */}
+      <div className="card p-5 mb-4">
+        <div className="flex items-baseline justify-between mb-3">
+          <h2 className="text-sm font-semibold text-ink-2">当月キャッシュフロー</h2>
+          <span className="text-xs text-ink-3">{cashflow.monthStart.slice(0, 7)} 時点</span>
+        </div>
+        {cashflow.propertyCount === 0 ? (
+          <p className="text-sm text-ink-3">
+            このローンに物件が紐づいていません。物件を紐づけると、家賃収入と返済を比較した手残りを表示します。
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+              <Field label={`家賃収入（入居中・${cashflow.propertyCount}物件）`} value={yen(cashflow.monthlyRentIncome)} />
+              <Field label="ローン返済（当月）" value={cashflow.hasRepayment ? `-${yen(cashflow.repayment)}` : "—"} />
+              <Field label="うち元金 / 利息" value={cashflow.hasRepayment ? `${yen(cashflow.principal)} / ${yen(cashflow.interest)}` : "—"} />
+              <div>
+                <div className="text-ink-3 text-xs mb-0.5">返済後 手残り</div>
+                <div
+                  className="font-semibold break-words"
+                  style={{ color: cashflow.cashflow < 0 ? "var(--danger)" : "var(--success)" }}
+                >
+                  {cashflow.cashflow < 0 ? "-" : ""}¥{Math.abs(cashflow.cashflow).toLocaleString()}
+                </div>
+              </div>
+            </div>
+            <p className="text-[11px] text-ink-3 mt-3">
+              ※ 入居中区画の家賃合計と当月の返済予定から算出した参考値です。空室・滞納・その他経費は含みません。
+            </p>
+          </>
+        )}
       </div>
 
       {/* 操作 */}

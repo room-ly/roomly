@@ -34,70 +34,67 @@ export async function getLoanDetail(id: string) {
   return { loan, repayments: (repayments ?? []) as Row[] };
 }
 
-// 指定オーナー・指定月のローン返済額を集計する。
-// オーナーレポート（送金明細）に「返済後キャッシュフロー」を出すために使う。
-// monthStart は YYYY-MM-01 形式（owner_remittances.remittance_month と同じ）。
-export async function getOwnerLoanRepaymentForMonth(ownerId: string, monthStart: string) {
+// ローンのキャッシュフロー分析。
+// このローンが紐づく物件の家賃収入（入居中区画の家賃合計）と、当月の返済額を比較し、
+// 「家賃収入 − 返済 = 手残り」を出す。自社所有物件・個人大家の収支把握に使う。
+// 受託管理（他人の物件・他人のローン）の文脈では使わない＝送金明細には出さない。
+export async function getLoanCashflow(loanId: string, monthStart: string) {
   const supabase = await createClient();
 
-  // 当該オーナーに紐づくローンを取得
-  const { data: loans } = await supabase
-    .from("loans")
-    .select("id, name, lender_name")
-    .eq("owner_id", ownerId);
-  const loanList = (loans ?? []) as Row[];
-  if (loanList.length === 0) {
-    return { hasLoan: false, totalPrincipal: 0, totalInterest: 0, totalRepayment: 0, items: [] as Row[] };
+  // このローンに紐づく物件IDを取得
+  const { data: linkRows } = await supabase
+    .from("loan_properties")
+    .select("property_id, allocation_ratio")
+    .eq("loan_id", loanId);
+  const links = (linkRows ?? []) as Row[];
+  const propertyIds = links.map((l) => l.property_id).filter(Boolean);
+
+  // 物件の入居中区画の家賃合計（＝月額家賃収入の概算）
+  let monthlyRentIncome = 0;
+  if (propertyIds.length > 0) {
+    const { data: units } = await supabase
+      .from("units")
+      .select("rent, status, property_id")
+      .in("property_id", propertyIds)
+      .eq("status", "occupied");
+    for (const u of units ?? []) {
+      monthlyRentIncome += Number(u.rent ?? 0);
+    }
   }
 
-  // 月初〜翌月初の範囲で返済予定行を集計
+  // 当月の返済額（月初〜翌月初）
   const start = monthStart; // YYYY-MM-01
   const d = new Date(`${monthStart}T00:00:00Z`);
   const nextMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
   const end = nextMonth.toISOString().slice(0, 10);
 
-  const loanIds = loanList.map((l) => l.id);
   const { data: reps } = await supabase
     .from("loan_repayments")
-    .select("loan_id, principal_amount, interest_amount, total_amount, payment_date")
-    .in("loan_id", loanIds)
+    .select("principal_amount, interest_amount, total_amount, payment_date")
+    .eq("loan_id", loanId)
     .gte("payment_date", start)
     .lt("payment_date", end);
 
-  const loanById = new Map(loanList.map((l) => [l.id, l]));
-  const byLoan = new Map<string, { name: string; lender: string; principal: number; interest: number; total: number }>();
-  let totalPrincipal = 0;
-  let totalInterest = 0;
-  let totalRepayment = 0;
-
+  let principal = 0;
+  let interest = 0;
+  let repayment = 0;
   for (const r of reps ?? []) {
-    const principal = Number(r.principal_amount ?? 0);
-    const interest = Number(r.interest_amount ?? 0);
-    const total = Number(r.total_amount ?? principal + interest);
-    totalPrincipal += principal;
-    totalInterest += interest;
-    totalRepayment += total;
-
-    const meta = loanById.get(r.loan_id);
-    const cur = byLoan.get(r.loan_id) ?? {
-      name: meta?.name ?? "ローン",
-      lender: meta?.lender_name ?? "",
-      principal: 0,
-      interest: 0,
-      total: 0,
-    };
-    cur.principal += principal;
-    cur.interest += interest;
-    cur.total += total;
-    byLoan.set(r.loan_id, cur);
+    const p = Number(r.principal_amount ?? 0);
+    const i = Number(r.interest_amount ?? 0);
+    principal += p;
+    interest += i;
+    repayment += Number(r.total_amount ?? p + i);
   }
 
   return {
-    hasLoan: true,
-    totalPrincipal,
-    totalInterest,
-    totalRepayment,
-    items: Array.from(byLoan.values()),
+    monthStart,
+    propertyCount: propertyIds.length,
+    monthlyRentIncome,
+    principal,
+    interest,
+    repayment,
+    cashflow: monthlyRentIncome - repayment,
+    hasRepayment: (reps ?? []).length > 0,
   };
 }
 
