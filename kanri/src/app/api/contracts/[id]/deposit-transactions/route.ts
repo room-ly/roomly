@@ -4,12 +4,20 @@ import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-se
 
 // 契約の敷金口座への手動トランザクション（取崩し / 返金 / 追加預り）。
 // 退去時の原状回復精算や、在living中の充当などをここから記録する。
-const schema = z.object({
-  transaction_type: z.enum(["charge", "refund", "initial_deposit"]),
-  amount: z.coerce.number().int().positive("金額は0より大きい値を入力してください"),
-  occurred_at: z.string().min(1, "日付は必須です"),
-  notes: z.string().max(500).optional().nullable(),
-});
+const schema = z
+  .object({
+    transaction_type: z.enum(["charge", "refund", "initial_deposit"]),
+    amount: z.coerce.number().int().positive("金額は0より大きい値を入力してください"),
+    occurred_at: z.string().min(1, "日付は必須です"),
+    notes: z.string().max(500).optional().nullable(),
+    // 取崩しの理由（charge のときのみ）
+    reason: z.enum(["restoration", "unpaid_rent", "penalty", "other"]).optional().nullable(),
+  })
+  // reason は charge のときだけ意味を持つ。他の種別では無視して NULL にする。
+  .transform((d) => ({
+    ...d,
+    reason: d.transaction_type === "charge" ? (d.reason ?? "other") : null,
+  }));
 
 export async function POST(
   request: NextRequest,
@@ -55,6 +63,7 @@ export async function POST(
         transaction_type: parsed.data.transaction_type,
         occurred_at: parsed.data.occurred_at,
         notes: parsed.data.notes ?? null,
+        reason: parsed.data.reason,
         created_by: user?.id ?? null,
       })
       .select()

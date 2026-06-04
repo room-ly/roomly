@@ -1085,6 +1085,7 @@ export type Database = {
           id: string
           notes: string | null
           occurred_at: string
+          reason: string | null
           transaction_type: string
         }
         Insert: {
@@ -1098,6 +1099,7 @@ export type Database = {
           id?: string
           notes?: string | null
           occurred_at?: string
+          reason?: string | null
           transaction_type: string
         }
         Update: {
@@ -1111,6 +1113,7 @@ export type Database = {
           id?: string
           notes?: string | null
           occurred_at?: string
+          reason?: string | null
           transaction_type?: string
         }
         Relationships: [

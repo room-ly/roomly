@@ -10,6 +10,7 @@ type Tx = DepositTx & {
   notes?: string | null;
   expense_id?: string | null;
   billing_id?: string | null;
+  reason?: string | null;
 };
 
 interface Props {
@@ -29,6 +30,17 @@ const MANUAL_TYPES = [
   { value: "refund", label: "返金", hint: "退去時に残額を返金" },
   { value: "initial_deposit", label: "追加預り", hint: "敷金を追加で預かった" },
 ] as const;
+
+// 取崩しの理由。原状回復費は費用(経費)と紐づきうるが、未払い家賃・違約金の充当は費用にならない。
+const CHARGE_REASONS = [
+  { value: "restoration", label: "原状回復費" },
+  { value: "unpaid_rent", label: "未払い家賃の充当" },
+  { value: "penalty", label: "違約金・遅延損害金" },
+  { value: "other", label: "その他" },
+] as const;
+const REASON_LABEL: Record<string, string> = Object.fromEntries(
+  CHARGE_REASONS.map((r) => [r.value, r.label]),
+);
 
 export default function DepositBalancePanel({
   contractId,
@@ -51,6 +63,8 @@ export default function DepositBalancePanel({
   // 手動記録フォーム
   const [showManual, setShowManual] = useState(false);
   const [manualType, setManualType] = useState<(typeof MANUAL_TYPES)[number]["value"]>("charge");
+  const [manualReason, setManualReason] =
+    useState<(typeof CHARGE_REASONS)[number]["value"]>("restoration");
   const [manualAmount, setManualAmount] = useState(0);
   const [manualDate, setManualDate] = useState(new Date().toISOString().slice(0, 10));
   const [manualNotes, setManualNotes] = useState("");
@@ -72,6 +86,7 @@ export default function DepositBalancePanel({
           amount: manualAmount,
           occurred_at: manualDate,
           notes: manualNotes || null,
+          reason: manualType === "charge" ? manualReason : null,
         }),
       });
       if (!res.ok) {
@@ -294,6 +309,27 @@ export default function DepositBalancePanel({
                 />
               </div>
             </div>
+            {manualType === "charge" && (
+              <div className="mb-2">
+                <label className="text-[11px] text-ink-3 block mb-1">取崩しの理由</label>
+                <select
+                  value={manualReason}
+                  onChange={(e) => setManualReason(e.target.value as typeof manualReason)}
+                  className="input"
+                >
+                  {CHARGE_REASONS.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+                {manualReason === "restoration" && (
+                  <p className="text-[10px] text-ink-3 mt-1">
+                    原状回復費は業者への支払いを経費としても記録すると、収支に正しく反映されます。
+                  </p>
+                )}
+              </div>
+            )}
             <div className="mb-2">
               <label className="text-[11px] text-ink-3 block mb-1">内容（任意）</label>
               <input
@@ -338,7 +374,14 @@ export default function DepositBalancePanel({
                     <td className="mono">{t.occurred_at}</td>
                     <td>
                       {t.transaction_type === "charge" && (
-                        <span className="charge-tag danger">取崩し</span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="charge-tag danger">取崩し</span>
+                          {t.reason && REASON_LABEL[t.reason] && (
+                            <span className="text-[11px] text-ink-3">
+                              {REASON_LABEL[t.reason]}
+                            </span>
+                          )}
+                        </span>
                       )}
                       {t.transaction_type === "refund" && (
                         <span className="charge-tag accent">返金</span>
