@@ -152,7 +152,7 @@ export default function ExpensesTable({ data, approvalEnabled = true }: Expenses
       {/* サマリー */}
       <div className="cols-summary">
         <div className="sum-card">
-          <span className="sum-label mono">経費総額</span>
+          <span className="sum-label mono">費用総額</span>
           <span className="sum-value serif-i">¥{totalAmount.toLocaleString()}</span>
           <span className="sum-foot mono">{monthFiltered.length}件</span>
         </div>
@@ -328,7 +328,7 @@ export default function ExpensesTable({ data, approvalEnabled = true }: Expenses
                   <td
                     colSpan={cols.length}
                     style={{ textAlign: "center", color: "var(--ink-3)", padding: "32px 0" }}
-                  >{`${monthLabel}の経費データがありません`}</td>
+                  >{`${monthLabel}の費用データがありません`}</td>
                 </tr>
               ) : (
                 filtered.map((item, idx) => {
@@ -339,7 +339,7 @@ export default function ExpensesTable({ data, approvalEnabled = true }: Expenses
                       key={item.id || idx}
                       className="row-hover"
                       style={{ cursor: "pointer" }}
-                      onClick={() => router.push(`/expenses/${item.id}`)}
+                      onClick={() => router.push(`/costs/${item.id}`)}
                     >
                       <td className="mono" style={{ fontSize: 12 }}>
                         {item.expense_date

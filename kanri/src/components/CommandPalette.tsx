@@ -19,7 +19,7 @@ const ALL_PAGES: SearchItem[] = [
   { kind: "page", label: "契約", route: "/contracts", sub: "Workspace", keywords: "契約 contracts workspace" },
   { kind: "page", label: "家賃", route: "/rent", sub: "Operations", keywords: "家賃 rent operations" },
   { kind: "page", label: "対応案件", route: "/cases", sub: "Operations", keywords: "対応案件 修繕 鍵 クレーム 騒音 質問 cases maintenance inquiries operations" },
-  { kind: "page", label: "経費", route: "/expenses", sub: "Operations", keywords: "経費 expenses operations" },
+  { kind: "page", label: "費用", route: "/costs", sub: "Operations", keywords: "費用 経費 expenses costs operations" },
   { kind: "page", label: "オーナー", route: "/owners", sub: "Finance", keywords: "オーナー owners finance" },
   { kind: "page", label: "送金", route: "/remittances", sub: "Finance", keywords: "送金 remittances finance" },
   { kind: "page", label: "設定", route: "/settings", sub: "System", keywords: "設定 settings system" },

@@ -94,7 +94,7 @@ export default function BasicSection({
       </div>
 
       <div>
-        <Label>経費承認者</Label>
+        <Label>費用承認者</Label>
         <select
           name="approver_user_id"
           defaultValue={editData?.approver_user_id || ""}
@@ -108,7 +108,7 @@ export default function BasicSection({
           ))}
         </select>
         <p className="text-xs text-ink-3 mt-1">
-          この物件の経費が承認待ちになった際にボタンが出る人を指定します。未指定なら会社設定の「デフォルト承認者」が使われます。
+          この物件の費用が承認待ちになった際にボタンが出る人を指定します。未指定なら会社設定の「デフォルト承認者」が使われます。
         </p>
       </div>
     </Section>

@@ -40,7 +40,7 @@ export default function AllocationSection({
           checked={allocate}
           onChange={(e) => setAllocate(e.target.checked)}
         />
-        共用部経費として部屋に按分
+        共用部費用として部屋に按分
       </label>
       {allocate && (
         <div className="mt-3 space-y-2">

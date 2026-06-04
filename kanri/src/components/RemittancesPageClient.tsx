@@ -75,7 +75,7 @@ export default function RemittancesPageClient({ owners, remittances, ownerSummar
                   <th>オーナー</th>
                   <th style={{ textAlign: "right" }}>家賃収入</th>
                   <th style={{ textAlign: "right" }}>管理手数料</th>
-                  <th style={{ textAlign: "right" }}>経費控除</th>
+                  <th style={{ textAlign: "right" }}>費用控除</th>
                   <th style={{ textAlign: "right" }}>送金額</th>
                   <th>方法</th>
                   <th>状態</th>

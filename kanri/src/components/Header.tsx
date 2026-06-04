@@ -17,7 +17,7 @@ const breadcrumbMap: Record<string, string> = {
   "/contracts": "契約",
   "/rent": "家賃",
   "/cases": "対応案件",
-  "/expenses": "経費",
+  "/costs": "費用",
   "/owners": "オーナー",
   "/remittances": "送金",
   "/payments": "支払い出力",

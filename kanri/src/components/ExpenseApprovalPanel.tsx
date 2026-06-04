@@ -37,7 +37,7 @@ export default function ExpenseApprovalPanel({
   if (status !== "pending_approval" && status !== "draft") return null;
 
   async function turnOff() {
-    if (!(await confirm({ title: "稟議機能をオフにしますか？", message: "承認待ちの経費は手動で承認/却下が必要です。", confirmLabel: "オフにする", variant: "neutral" }))) return;
+    if (!(await confirm({ title: "稟議機能をオフにしますか？", message: "承認待ちの費用は手動で承認/却下が必要です。", confirmLabel: "オフにする", variant: "neutral" }))) return;
     setLoading(true);
     setError("");
     try {
@@ -159,7 +159,7 @@ export default function ExpenseApprovalPanel({
         {status === "pending_approval" && (
           <div>
             <p className="text-sm text-ink-2 mb-2">
-              この経費は承認待ちです。
+              この費用は承認待ちです。
               {approverName ? (
                 <>
                   承認者は <strong>{approverName}</strong>

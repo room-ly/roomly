@@ -48,7 +48,7 @@ const navGroups = [
     items: [
       { href: "/rent", label: "家賃", icon: Banknote },
       { href: "/cases", label: "対応案件", icon: Wrench },
-      { href: "/expenses", label: "経費", icon: Receipt },
+      { href: "/costs", label: "費用", icon: Receipt },
     ] as NavItem[],
   },
   {

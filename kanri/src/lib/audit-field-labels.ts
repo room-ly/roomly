@@ -216,7 +216,7 @@ const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
     payee_id: f("支払先"),
   },
   expenses: {
-    expense_date: f("経費発生日", "date"),
+    expense_date: f("費用発生日", "date"),
     amount: f("金額", "money"),
     owner_amount: f("オーナー負担額", "money"),
     tenant_amount: f("入居者負担額", "money"),
@@ -268,7 +268,7 @@ const TABLE_FIELDS: Record<string, Record<string, FieldDef>> = {
     remittance_month: f("送金対象月", "month"),
     total_rent: f("家賃収入", "money"),
     management_fee_deducted: f("管理手数料控除", "money"),
-    expense_deducted: f("経費控除", "money"),
+    expense_deducted: f("費用控除", "money"),
     net_amount: f("送金額", "money"),
     payment_method: f("支払方法"),
     sent_date: f("送金日", "date"),

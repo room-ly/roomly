@@ -48,7 +48,7 @@ export default function ExpenseDetailClient({
   async function handleDelete() {
     setDeleting(true);
     const res = await fetch(`/api/expenses/${expense.id}`, { method: "DELETE" });
-    if (res.ok) router.push("/expenses");
+    if (res.ok) router.push("/costs");
     else { notify({ title: "削除に失敗しました" }); setDeleting(false); }
   }
 
@@ -77,7 +77,7 @@ export default function ExpenseDetailClient({
         contracts={contracts}
         editData={expense}
       />
-      <ConfirmDialog isOpen={deleteOpen} title="経費を削除" message="この経費データを削除しますか？復元できません。" loading={deleting} onConfirm={handleDelete} onCancel={() => setDeleteOpen(false)} />
+      <ConfirmDialog isOpen={deleteOpen} title="費用を削除" message="この費用データを削除しますか？復元できません。" loading={deleting} onConfirm={handleDelete} onCancel={() => setDeleteOpen(false)} />
     </>
   );
 }

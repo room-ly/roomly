@@ -43,7 +43,7 @@ export async function POST(
       .single();
     if (!expense?.contract_id) {
       return NextResponse.json(
-        { error: "経費に紐づく契約がありません" },
+        { error: "費用に紐づく契約がありません" },
         { status: 400 },
       );
     }

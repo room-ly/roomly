@@ -14,9 +14,9 @@ export default function ExpenseApprovalCard({
 }) {
   return (
     <div className="card p-5 mb-4">
-      <h2 className="text-[14px] font-semibold mb-1">経費承認</h2>
+      <h2 className="text-[14px] font-semibold mb-1">費用承認</h2>
       <p className="text-[12px] text-ink-3 mb-4">
-        オーナー負担の経費がしきい値以上のとき、ここで指定したユーザーに承認権限が出ます。
+        オーナー負担の費用がしきい値以上のとき、ここで指定したユーザーに承認権限が出ます。
       </p>
       <div className="space-y-3">
         <div>
@@ -30,7 +30,7 @@ export default function ExpenseApprovalCard({
             className="input"
             style={{ width: "20rem", maxWidth: "100%" }}
           >
-            <option value="">未設定（承認者が必要な経費は提出できません）</option>
+            <option value="">未設定（承認者が必要な費用は提出できません）</option>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
                 {u.name}（{roleLabels[u.role] || u.role}）
@@ -41,7 +41,7 @@ export default function ExpenseApprovalCard({
         <div>
           <label className="block text-[13px] font-medium text-ink-2 mb-1">承認しきい値（税込）</label>
           <p className="text-[12px] text-ink-3 mb-2">
-            オーナー負担額がこの金額以上の経費は、承認待ちとして上記の承認者の判断を仰ぎます。
+            オーナー負担額がこの金額以上の費用は、承認待ちとして上記の承認者の判断を仰ぎます。
           </p>
           <div className="flex items-center gap-2">
             <span className="text-[13px] text-ink-3">¥</span>

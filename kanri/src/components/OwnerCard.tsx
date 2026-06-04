@@ -110,7 +110,7 @@ export default function OwnerCard({ owner }: OwnerCardProps) {
           </div>
           {owner.expenseDeducted > 0 && (
             <div className="flex justify-between">
-              <span className="text-ink-3">経費控除</span>
+              <span className="text-ink-3">費用控除</span>
               <span className="text-warn font-medium tabular-nums">-¥{owner.expenseDeducted.toLocaleString()}</span>
             </div>
           )}

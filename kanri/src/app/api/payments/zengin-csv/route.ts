@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const hasExpenses = Array.isArray(expense_ids) && expense_ids.length > 0;
 
     if (!hasRemittances && !hasExpenses) {
-      return NextResponse.json({ error: "送金IDまたは経費IDを1件以上指定してください" }, { status: 400 });
+      return NextResponse.json({ error: "送金IDまたは費用IDを1件以上指定してください" }, { status: 400 });
     }
 
     const supabase = await createClient();
@@ -93,11 +93,11 @@ export async function POST(request: NextRequest) {
       for (const e of expenses ?? []) {
         const p = e.payee as Record<string, any> | null;
         if (!p) {
-          skipped.push(`経費: ${e.description}（支払先未設定）`);
+          skipped.push(`費用: ${e.description}（支払先未設定）`);
           continue;
         }
         if (!p.bank_code || !p.branch_code || !p.account_number || !p.account_holder_kana) {
-          skipped.push(`経費: ${e.description}（${p.name} の口座情報不足）`);
+          skipped.push(`費用: ${e.description}（${p.name} の口座情報不足）`);
           continue;
         }
         transfers.push({
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
           accountNumber: p.account_number,
           accountHolder: p.account_holder_kana,
           amount: Number(e.amount),
-          label: `経費: ${e.description}`,
+          label: `費用: ${e.description}`,
         });
       }
     }
