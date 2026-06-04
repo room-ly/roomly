@@ -1418,7 +1418,6 @@ export type Database = {
           owner_amount: number
           owner_id: string | null
           paid_at: string | null
-          paid_by: string
           payee_id: string | null
           payment_due_date: string | null
           property_id: string | null
@@ -1450,7 +1449,6 @@ export type Database = {
           owner_amount?: number
           owner_id?: string | null
           paid_at?: string | null
-          paid_by?: string
           payee_id?: string | null
           payment_due_date?: string | null
           property_id?: string | null
@@ -1482,7 +1480,6 @@ export type Database = {
           owner_amount?: number
           owner_id?: string | null
           paid_at?: string | null
-          paid_by?: string
           payee_id?: string | null
           payment_due_date?: string | null
           property_id?: string | null
@@ -2109,6 +2106,8 @@ export type Database = {
       }
       owner_remittances: {
         Row: {
+          carryover_from_prev: number
+          carryover_to_next: number
           company_id: string
           created_at: string
           expense_deducted: number
@@ -2128,6 +2127,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          carryover_from_prev?: number
+          carryover_to_next?: number
           company_id: string
           created_at?: string
           expense_deducted?: number
@@ -2147,6 +2148,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          carryover_from_prev?: number
+          carryover_to_next?: number
           company_id?: string
           created_at?: string
           expense_deducted?: number

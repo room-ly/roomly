@@ -91,21 +91,12 @@ export async function GET(request: NextRequest) {
       0
     );
 
-    // 前月繰越（未収金）の取得: 同オーナーの直前月レコードの carryover_to_next
-    const prevMonthDate = new Date(monthStart);
-    prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
-    const prevMonth = prevMonthDate.toISOString().slice(0, 10);
-    const { data: prevRem } = await supabase
-      .from("owner_remittances")
-      .select("carryover_to_next")
-      .eq("owner_id", owner_id)
-      .eq("remittance_month", prevMonth)
-      .maybeSingle();
-    const carryoverFromPrev = Number((prevRem as { carryover_to_next?: number } | null)?.carryover_to_next ?? 0);
-
-    const provisional = totalRent - managementFeeDeducted - expenseDeducted - carryoverFromPrev;
+    // 不足分（費用がオーナーの家賃収入を超過した分）は翌月繰越にせず、当月のオーナー請求とする。
+    // 空室が続くと繰越では永遠に回収できないため。
+    const provisional = totalRent - managementFeeDeducted - expenseDeducted;
     const netAmount = provisional >= 0 ? provisional : 0;
-    const carryoverToNext = provisional >= 0 ? 0 : -provisional;
+    // owner_bill_amount = オーナーへ請求する不足分。DB列は carryover_to_next を流用（意味は当月の請求額）。
+    const ownerBillAmount = provisional >= 0 ? 0 : -provisional;
 
     return NextResponse.json({
       owner_id,
@@ -113,8 +104,9 @@ export async function GET(request: NextRequest) {
       total_rent: totalRent,
       management_fee_deducted: managementFeeDeducted,
       expense_deducted: expenseDeducted,
-      carryover_from_prev: carryoverFromPrev,
-      carryover_to_next: carryoverToNext,
+      carryover_from_prev: 0,
+      carryover_to_next: ownerBillAmount,
+      owner_bill_amount: ownerBillAmount,
       net_amount: netAmount,
       property_breakdown: propertyBreakdown,
       expense_count: (expenses ?? []).length,

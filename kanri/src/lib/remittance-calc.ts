@@ -56,8 +56,7 @@ export interface RemittanceCalcInput {
   ownerName: string;
   managementFeeRate: number; // パーセント（例: 5.0）
   properties: RemittanceProperty[];
-  expenses: RemittanceExpense[]; // オーナー負担経費
-  carryoverFromPrev?: number; // 前月から繰り越された未収金（控除として作用）
+  expenses: RemittanceExpense[]; // オーナー負担費用
 }
 
 export interface RemittanceItem {
@@ -75,9 +74,8 @@ export interface RemittanceResult {
   totalRent: number;
   managementFeeDeducted: number;
   expenseDeducted: number;
-  carryoverFromPrev: number;
-  carryoverToNext: number;
-  netAmount: number; // 必ず0以上。不足分は carryoverToNext に記録
+  netAmount: number; // 必ず0以上
+  ownerBillAmount: number; // 費用が家賃収入を超過した不足分。オーナーへ請求する額
 }
 
 // 月次送金計算
@@ -131,21 +129,10 @@ export function calcRemittance(input: RemittanceCalcInput): RemittanceResult {
     });
   }
 
-  // 前月繰越（未収金）控除
-  const carryoverFromPrev = Math.max(0, Math.round(Number(input.carryoverFromPrev) || 0));
-  if (carryoverFromPrev > 0) {
-    items.push({
-      propertyName: "",
-      unitNumber: "",
-      itemType: "carryover",
-      description: "前月繰越（未収金）",
-      amount: -carryoverFromPrev,
-    });
-  }
-
-  const provisional = totalRent - managementFeeDeducted - expenseDeducted - carryoverFromPrev;
+  // 費用が家賃収入を超過した不足分は翌月繰越にせず、当月のオーナー請求とする。
+  const provisional = totalRent - managementFeeDeducted - expenseDeducted;
   const netAmount = provisional >= 0 ? provisional : 0;
-  const carryoverToNext = provisional >= 0 ? 0 : -provisional;
+  const ownerBillAmount = provisional >= 0 ? 0 : -provisional;
 
   return {
     ownerId: input.ownerId,
@@ -154,8 +141,7 @@ export function calcRemittance(input: RemittanceCalcInput): RemittanceResult {
     totalRent,
     managementFeeDeducted,
     expenseDeducted,
-    carryoverFromPrev,
-    carryoverToNext,
     netAmount,
+    ownerBillAmount,
   };
 }

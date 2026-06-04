@@ -115,29 +115,17 @@ export async function POST(request: NextRequest) {
       0
     );
 
-    // 前月繰越（未収金）の取得
-    const prevMonthDate = new Date(monthStart);
-    prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
-    const prevMonth = prevMonthDate.toISOString().slice(0, 10);
-    const { data: prevRem } = await supabase
-      .from("owner_remittances")
-      .select("carryover_to_next")
-      .eq("owner_id", owner_id)
-      .eq("remittance_month", prevMonth)
-      .maybeSingle();
-    const carryoverFromPrev = Number((prevRem as { carryover_to_next?: number } | null)?.carryover_to_next ?? 0);
-
-    const provisional = totalRent - managementFeeDeducted - expenseDeducted - carryoverFromPrev;
-    const autoNet = provisional >= 0 ? provisional : 0;
-    // 手動指定がなければ、不足分を翌月繰越にする。
-    // 手動指定がある場合は「実際に送金した額」が確定値となるので、
-    // 自動計算で本来送るべきだった金額との差分を carryover_to_next に反映する。
+    // 不足分（費用がオーナーの家賃収入を超過した分）は翌月繰越にせず、当月のオーナー請求とする。
+    // 空室が続くと繰越では永遠に回収できないため。前月繰越の控除は廃止。
     const company_id = await getCompanyId();
     const payment_method = reqPaymentMethod || "transfer";
     const isManual = manual_net_amount !== undefined && manual_net_amount !== null;
+    const idealNet = totalRent - managementFeeDeducted - expenseDeducted;
+    const autoNet = idealNet >= 0 ? idealNet : 0;
     const finalNet = isManual ? Math.max(0, Number(manual_net_amount)) : autoNet;
-    // 自動計算ベースの理想送金額を基準に未収金を算出。手動で減らした分も繰越に積まれる。
-    const idealNet = totalRent - managementFeeDeducted - expenseDeducted - carryoverFromPrev;
+    // オーナー請求額（不足分）。手動で送金を減らした分も請求に積む（現挙動踏襲）。
+    // DB列 carryover_to_next を流用（意味は当月の請求額。翌月へは繰り越さない）。
+    const carryoverFromPrev = 0;
     const carryoverToNext = Math.max(0, -idealNet) + Math.max(0, idealNet - finalNet);
 
     const { data: remittance, error: remError } = await supabase

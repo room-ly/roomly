@@ -21,6 +21,21 @@ export async function GET(
       return NextResponse.json({ error: "送金データが見つかりません" }, { status: 404 });
     }
 
+    // 費用が家賃を超過した場合、オーナーへ請求する不足分とその入金先(会社の既定口座)
+    const ownerBill = Number((remittance as { carryover_to_next?: number }).carryover_to_next) || 0;
+    let companyBank: Record<string, string> | null = null;
+    if (ownerBill > 0) {
+      const { data: banks } = await supabase
+        .from("company_bank_accounts")
+        .select("*")
+        .order("is_default", { ascending: false })
+        .order("created_at")
+        .limit(1);
+      companyBank = (banks?.[0] as unknown as Record<string, string>) ?? null;
+    }
+    const acctType = (t: string | undefined) =>
+      t === "savings" ? "貯蓄" : t === "checking" ? "当座" : "普通";
+
     const month = escapeHtml(remittance.remittance_month?.slice(0, 7) ?? "");
     const owner = remittance.owner as Record<string, string> | null;
     const ownerName = escapeHtml(owner?.name ?? "—");
@@ -88,8 +103,30 @@ export async function GET(
         <td>送金額</td>
         <td class="text-right">&yen;${Number(remittance.net_amount).toLocaleString()}</td>
       </tr>
+      ${
+        ownerBill > 0
+          ? `<tr class="total-row">
+        <td class="negative">オーナーへ請求（不足分）</td>
+        <td class="text-right negative">&yen;${ownerBill.toLocaleString()}</td>
+      </tr>`
+          : ""
+      }
     </tbody>
   </table>
+  ${
+    ownerBill > 0
+      ? `<div style="border:1px solid #c0392b; border-radius:6px; padding:12px 16px; margin:16px 0;">
+    <p style="margin:0 0 6px; font-weight:600; color:#c0392b;">費用が家賃収入を超過したため、不足分 &yen;${ownerBill.toLocaleString()} をご入金ください</p>
+    ${
+      companyBank
+        ? `<p style="margin:0; font-size:13px;">入金先: ${escapeHtml(
+            `${companyBank.bank_name ?? ""} ${companyBank.branch_name ?? ""} ${acctType(companyBank.account_type)} ${companyBank.account_number ?? ""}（${companyBank.account_holder ?? ""}）`,
+          )}</p>`
+        : `<p style="margin:0; font-size:12px; color:#999;">※ 入金先口座が未登録です</p>`
+    }
+  </div>`
+      : ""
+  }
 
   <p style="color: #999; font-size: 11px; margin-top: 32px;">
     ステータス: ${statusText}

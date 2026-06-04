@@ -78,7 +78,7 @@ export default async function RemittancesPage() {
     };
   });
 
-  // 送金額合計は実際に送る金額（マイナスはゼロに丸める）。差分は未収金として翌月繰越の対象
+  // 送金額合計は実際に送る金額（マイナスはゼロに丸める）。不足分はオーナーへ請求
   const totalNet = ownersWithBreakdown.reduce((s: number, o: any) => s + Math.max(0, o.netAmount), 0);
   const totalShortfall = ownersWithBreakdown.reduce((s: number, o: any) => s + Math.max(0, -o.netAmount), 0);
   const totalRent = ownersWithBreakdown.reduce((s: number, o: any) => s + o.totalRent, 0);
@@ -122,7 +122,7 @@ export default async function RemittancesPage() {
             {owners.length}名に送金
             {totalShortfall > 0 && (
               <span style={{ color: "var(--warn)", marginLeft: 6 }}>
-                ／未収金 ¥{totalShortfall.toLocaleString()}（翌月繰越予定）
+                ／オーナー請求 ¥{totalShortfall.toLocaleString()}（不足分）
               </span>
             )}
           </span>
@@ -181,7 +181,7 @@ export default async function RemittancesPage() {
                       <td
                         className="num strong"
                         style={p.net < 0 ? { color: "var(--warn)" } : undefined}
-                        title={p.net < 0 ? "費用が家賃を超過しています。翌月に繰越されます" : undefined}
+                        title={p.net < 0 ? "費用が家賃収入を超過。不足分はオーナーへ請求します" : undefined}
                       >
                         ¥{p.net.toLocaleString()}
                       </td>
@@ -197,7 +197,7 @@ export default async function RemittancesPage() {
                     <td
                       className="num"
                       style={{ color: o.netAmount < 0 ? "var(--warn)" : "var(--accent-deep)", fontWeight: 600 }}
-                      title={o.netAmount < 0 ? "費用が家賃を超過。翌月繰越されます" : undefined}
+                      title={o.netAmount < 0 ? "費用が家賃収入を超過。不足分はオーナーへ請求します" : undefined}
                     >
                       ¥{o.netAmount.toLocaleString()}
                     </td>

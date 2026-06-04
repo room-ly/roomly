@@ -67,6 +67,27 @@ describe("calcRemittance", () => {
     expect(result.netAmount).toBe(0);
   });
 
+  it("費用が家賃収入を超過したら不足分はオーナー請求(翌月繰越にしない)", () => {
+    const input = {
+      ...baseInput,
+      // 家賃160000・手数料8000 → 残152000。費用200000で超過
+      expenses: [{ description: "大規模修繕", amount: 200000, propertyId: "prop-1" }],
+    };
+    const result = calcRemittance(input);
+    expect(result.netAmount).toBe(0);
+    expect(result.ownerBillAmount).toBe(200000 - (160000 - 8000)); // 48000
+  });
+
+  it("費用が収入内なら請求は0", () => {
+    const input = {
+      ...baseInput,
+      expenses: [{ description: "小修繕", amount: 10000, propertyId: "prop-1" }],
+    };
+    const result = calcRemittance(input);
+    expect(result.ownerBillAmount).toBe(0);
+    expect(result.netAmount).toBe(160000 - 8000 - 10000);
+  });
+
   it("明細アイテムに正しい情報が含まれる", () => {
     const result = calcRemittance(baseInput);
     const rentItems = result.items.filter((i) => i.itemType === "rent");

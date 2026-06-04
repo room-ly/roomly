@@ -102,18 +102,10 @@ export default function RemittancesPageClient({ owners, remittances, ownerSummar
                       {r.manual_override && <span style={{ fontSize: 10, color: "var(--warn)", marginLeft: 4 }}>手動</span>}
                       {Number(r.carryover_to_next) > 0 && (
                         <span
-                          title={`翌月繰越 ¥${Number(r.carryover_to_next).toLocaleString()}`}
+                          title={`オーナーへ請求（不足分）¥${Number(r.carryover_to_next).toLocaleString()}`}
                           style={{ fontSize: 10, color: "var(--warn)", marginLeft: 4 }}
                         >
-                          ▶¥{Number(r.carryover_to_next).toLocaleString()}
-                        </span>
-                      )}
-                      {Number(r.carryover_from_prev) > 0 && (
-                        <span
-                          title={`前月繰越 ¥${Number(r.carryover_from_prev).toLocaleString()} を控除済`}
-                          style={{ fontSize: 10, color: "var(--ink-3)", marginLeft: 4 }}
-                        >
-                          ◀¥{Number(r.carryover_from_prev).toLocaleString()}
+                          請求¥{Number(r.carryover_to_next).toLocaleString()}
                         </span>
                       )}
                     </td>
