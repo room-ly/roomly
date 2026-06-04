@@ -59,9 +59,11 @@ export const SEED_TENANTS: Seed<TenantInsert>[] = [
   { id: "e0000000-0000-0000-0000-000000000007", name: "加藤 誠",     name_kana: "カトウ マコト",     phone: "08023456789", email: "kato@example.com",      workplace: "銀行" },
   { id: "e0000000-0000-0000-0000-000000000008", name: "吉田 あかね", name_kana: "ヨシダ アカネ",     phone: "08034567890", email: "yoshida@example.com",   workplace: "IT企業" },
   { id: "e0000000-0000-0000-0000-000000000009", name: "松本 隆",     name_kana: "マツモト タカシ",   phone: "08045678901", email: "matsumoto@example.com", workplace: "教師" },
+  // 502号室を退去した入居者（退去後リフォームの敷金精算用）
+  { id: "e0000000-0000-0000-0000-000000000010", name: "斉藤 直樹",   name_kana: "サイトウ ナオキ",   phone: "08056789012", email: "saito@example.com",     workplace: "メーカー" },
 ];
 
-// 契約 9件
+// 契約 10件（うち1件は502号室の退去済み契約）
 export const SEED_CONTRACTS: Seed<ContractInsert>[] = [
   { id: "f0000000-0000-0000-0000-000000000001", unit_id: "d0000000-0000-0000-0000-000000000001", tenant_id: "e0000000-0000-0000-0000-000000000001", contract_type: "ordinary", start_date: "2024-04-01", end_date: "2026-03-31", rent:  85000, management_fee:  5000, status: "active", move_in_date: "2024-04-01" },
   { id: "f0000000-0000-0000-0000-000000000002", unit_id: "d0000000-0000-0000-0000-000000000002", tenant_id: "e0000000-0000-0000-0000-000000000002", contract_type: "fixed",    start_date: "2025-01-01", end_date: "2026-12-31", rent:  85000, management_fee:  5000, status: "active", move_in_date: "2025-01-01" },
@@ -72,6 +74,9 @@ export const SEED_CONTRACTS: Seed<ContractInsert>[] = [
   { id: "f0000000-0000-0000-0000-000000000007", unit_id: "d0000000-0000-0000-0000-000000000009", tenant_id: "e0000000-0000-0000-0000-000000000007", contract_type: "ordinary", start_date: "2023-04-01", end_date: "2025-03-31", rent:  65000, management_fee:  3000, status: "active", move_in_date: "2023-04-01" },
   { id: "f0000000-0000-0000-0000-000000000008", unit_id: "d0000000-0000-0000-0000-000000000011", tenant_id: "e0000000-0000-0000-0000-000000000008", contract_type: "fixed",    start_date: "2025-01-01", end_date: "2026-12-31", rent: 110000, management_fee:  8000, status: "active", move_in_date: "2025-01-01" },
   { id: "f0000000-0000-0000-0000-000000000009", unit_id: "d0000000-0000-0000-0000-000000000012", tenant_id: "e0000000-0000-0000-0000-000000000009", contract_type: "ordinary", start_date: "2024-08-01", end_date: "2026-07-31", rent: 200000, management_fee: 12000, status: "active", move_in_date: "2024-08-01" },
+  // 502号室（d...013, maintenance中）の退去済み契約。退去後リフォーム費の敷金精算に紐づける。
+  // 敷金は家賃2ヶ月分（¥400,000）。move_out_date は壁紙張替え経費より前。
+  { id: "f0000000-0000-0000-0000-000000000010", unit_id: "d0000000-0000-0000-0000-000000000013", tenant_id: "e0000000-0000-0000-0000-000000000010", contract_type: "ordinary", start_date: "2023-09-01", end_date: "2026-05-31", rent: 200000, management_fee: 12000, deposit: 400000, status: "terminated", move_in_date: "2023-09-01", move_out_date: "2026-05-15" },
 ];
 
 // 対応案件 5件（旧 maintenance_requests + inquiries を統合）

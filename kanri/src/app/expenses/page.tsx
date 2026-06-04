@@ -1,11 +1,7 @@
 import { Suspense } from "react";
 import {
   getExpenses,
-  getPropertiesForSelect,
-  getOwnersForSelect,
-  getPayeesForSelect,
-  getCasesForSelect,
-  getContractsForSelect,
+  getExpenseFormOptions,
   getCompany,
 } from "@/lib/queries";
 import { createClient, getCompanyId, getCurrentUserRole } from "@/lib/supabase-server";
@@ -33,17 +29,14 @@ export default async function ExpensesPage({
   const { page: pageStr, sort } = await searchParams;
   const page = Math.max(1, Number(pageStr) || 1);
   const sortValue = sort || "expense_date:desc";
-  const [{ data: expenses, total }, properties, owners, payees, cases, contracts, company, me] =
-    await Promise.all([
-      getExpenses(page, PAGE_SIZE, sortValue),
-      getPropertiesForSelect(),
-      getOwnersForSelect(),
-      getPayeesForSelect(),
-      getCasesForSelect(),
-      getContractsForSelect(),
-      getCompany(),
-      getCurrentUserRole(),
-    ]);
+  const [{ data: expenses, total }, formOptions, company, me] = await Promise.all([
+    getExpenses(page, PAGE_SIZE, sortValue),
+    getExpenseFormOptions(),
+    getCompany(),
+    getCurrentUserRole(),
+  ]);
+  const { properties, owners, payees, cases: caseOptions, contracts: contractOptions } =
+    formOptions;
   const approvalEnabled = company?.expense_approval_threshold != null;
   const canEditSettings = me?.role === "admin";
 
@@ -63,21 +56,6 @@ export default async function ExpensesPage({
       name: (u.name as string) ?? "",
     }));
   }
-
-  const caseOptions = (cases as any[]).map((c) => ({
-    id: c.id,
-    label: `${c.property?.name ?? ""} ${c.unit?.unit_number ?? ""} ${c.title}`.trim(),
-    property_id: c.property_id,
-  }));
-
-  const contractOptions = (contracts as any[]).map((c) => ({
-    id: c.id,
-    label: `${c.unit?.property?.name ?? ""} ${c.unit?.unit_number ?? ""} ${c.tenant?.name ?? ""}`.trim(),
-    unit_id: c.unit_id,
-    deposit: c.deposit_unit === "months"
-      ? Math.round(Number(c.deposit || 0) * Number(c.rent || 0))
-      : Number(c.deposit || 0),
-  }));
 
   return (
     <>

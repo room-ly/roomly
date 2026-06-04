@@ -45,9 +45,14 @@ export const ALLOCATION_METHOD_LABELS: Record<AllocationMethod, string> = {
   custom: "都度指定",
 };
 
+// UUIDの「形」(8-4-4-4-12 の16進)で検証する。Zod の .uuid() は RFC4122 の
+// バージョン/バリアントビットまで要求するため、デモの固定ID(c0000000-...)など
+// Postgres の uuid 型としては有効だが RFC 非準拠の値を弾いてしまう。
+// DB(uuid型)が受け付ける形式に合わせて緩める。
+const UUID_SHAPE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 const optionalUuid = z
   .string()
-  .uuid()
+  .regex(UUID_SHAPE, "Invalid UUID")
   .nullable()
   .optional()
   .or(z.literal("").transform(() => null));

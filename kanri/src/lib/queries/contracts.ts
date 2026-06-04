@@ -77,14 +77,21 @@ export async function getContractDetail(id: string) {
   };
 }
 
-// 契約セレクタ用（アクティブな契約のみ）
-export async function getContractsForSelect(unitId?: string | null) {
+// 契約セレクタ用。既定はアクティブな契約のみ。
+// includeTerminated=true で退去済み(terminated)も含める。退去後の原状回復費を
+// 退去者の敷金から精算するため、経費フォームではこれを使う。
+export async function getContractsForSelect(
+  unitId?: string | null,
+  opts?: { includeTerminated?: boolean },
+) {
   const supabase = await createClient();
   let q = supabase
     .from("contracts")
     .select("id, unit_id, deposit, deposit_unit, rent, status, tenant:tenants(name), unit:units(unit_number, property:properties(name))")
-    .eq("status", "active")
     .order("start_date", { ascending: false });
+  q = opts?.includeTerminated
+    ? q.in("status", ["active", "terminated"])
+    : q.eq("status", "active");
   if (unitId) q = q.eq("unit_id", unitId);
   const { data } = await q;
   return (data ?? []) as Row[];

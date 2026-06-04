@@ -1,4 +1,47 @@
 import { createClient, type Row } from "./_shared";
+import { getPropertiesForSelect } from "./properties";
+import { getOwnersForSelect } from "./owners";
+import { getPayeesForSelect } from "./payees";
+import { getCasesForSelect } from "./cases";
+import { getContractsForSelect } from "./contracts";
+
+/**
+ * 経費フォーム(ExpenseFormModal)に渡す選択肢を一括取得・整形する。
+ * 一覧ページ・詳細ページなど複数の入口があるので、ここに集約して
+ * 渡し忘れ(過去に詳細ページで contracts が未指定→契約候補が空になる事故)を防ぐ。
+ */
+export async function getExpenseFormOptions() {
+  const [properties, owners, payees, cases, contracts] = await Promise.all([
+    getPropertiesForSelect(),
+    getOwnersForSelect(),
+    getPayeesForSelect(),
+    getCasesForSelect(),
+    // 退去後の原状回復費を退去者の敷金から精算できるよう、退去済み契約も含める
+    getContractsForSelect(null, { includeTerminated: true }),
+  ]);
+
+  const caseOptions = (cases as Row[]).map((c) => ({
+    id: c.id as string,
+    label: `${c.property?.name ?? ""} ${c.unit?.unit_number ?? ""} ${c.title}`.trim(),
+    property_id: (c.property_id as string | null) ?? null,
+  }));
+
+  const contractOptions = (contracts as Row[]).map((c) => {
+    const base = `${c.unit?.property?.name ?? ""} ${c.unit?.unit_number ?? ""} ${c.tenant?.name ?? ""}`.trim();
+    return {
+      id: c.id as string,
+      // 退去済み契約は区別が付くようラベルに付記
+      label: c.status === "terminated" ? `${base}（退去済）` : base,
+      unit_id: (c.unit_id as string | null) ?? null,
+      deposit:
+        c.deposit_unit === "months"
+          ? Math.round(Number(c.deposit || 0) * Number(c.rent || 0))
+          : Number(c.deposit || 0),
+    };
+  });
+
+  return { properties, owners, payees, cases: caseOptions, contracts: contractOptions };
+}
 
 // 経費一覧（物件・部屋・オーナー付き）— ページネーション対応
 export async function getExpenses(page = 1, pageSize = 50, sort = "expense_date:desc"): Promise<{ data: Row[]; total: number }> {

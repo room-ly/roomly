@@ -350,12 +350,13 @@ export default async function ContractDetailPage({
               </div>
             </div>
           )}
-          {/* 敷金残高（敷金がある契約のみ） */}
+          {/* 敷金残高（敷金がある契約のみ）。契約詳細では取崩し/返金を手動記録できる */}
           {Number(contract.deposit) > 0 && (
             <DepositBalancePanel
               contractId={contract.id}
               initialDeposit={toJpy(contract.deposit, contract.deposit_unit, contract.rent)}
               transactions={depositTransactions as any[]}
+              allowManualEntry
             />
           )}
 
