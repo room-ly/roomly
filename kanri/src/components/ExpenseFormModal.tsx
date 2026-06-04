@@ -60,7 +60,7 @@ export default function ExpenseFormModal({
   owners,
   payees = [],
   cases = [],
-  // contracts は入居者負担廃止に伴い経費フォームでは未使用（型互換のため prop は残す）
+  contracts = [],
   editData,
 }: ExpenseFormModalProps) {
   const router = useRouter();
@@ -70,11 +70,10 @@ export default function ExpenseFormModal({
 
   const [amount, setAmount] = useState<number>(num(editData?.amount));
   const [ownerAmount, setOwnerAmount] = useState<number>(num(editData?.owner_amount));
-  // 入居者負担は経費フォームから廃止（敷金口座で精算）。既存値は自社負担に畳み込む。
-  const [tenantAmount, setTenantAmount] = useState<number>(0);
-  const [companyAmount, setCompanyAmount] = useState<number>(
-    num(editData?.company_amount) + num(editData?.tenant_amount),
-  );
+  const [tenantAmount, setTenantAmount] = useState<number>(num(editData?.tenant_amount));
+  const [companyAmount, setCompanyAmount] = useState<number>(num(editData?.company_amount));
+  // 支払者(立替の事実)。負担区分とは別軸。デフォルトは管理会社立替。
+  const [paidBy, setPaidBy] = useState<string>(editData?.paid_by || "company_advance");
 
   const [selectedPropertyId, setSelectedPropertyId] = useState(editData?.property_id || "");
   const [unitId] = useState(editData?.unit_id || "");
@@ -130,10 +129,9 @@ export default function ExpenseFormModal({
 
     setAmount(num(editData?.amount));
     setOwnerAmount(num(editData?.owner_amount));
-    // 入居者負担は経費フォームから廃止（敷金口座で精算）。
-    // 既存データに tenant_amount が残っていれば自社負担に畳み込み、合計を保つ。
-    setTenantAmount(0);
-    setCompanyAmount(num(editData?.company_amount) + num(editData?.tenant_amount));
+    setTenantAmount(num(editData?.tenant_amount));
+    setCompanyAmount(num(editData?.company_amount));
+    setPaidBy(editData?.paid_by || "company_advance");
     setSelectedPropertyId(editData?.property_id || "");
     setContractId(editData?.contract_id || "");
     setCaseId(editData?.case_id || "");
@@ -148,6 +146,10 @@ export default function ExpenseFormModal({
   }, [isOpen, editData]);
 
   const isEdit = !!editData;
+
+  const filteredContracts = unitId
+    ? contracts.filter((c) => c.unit_id === unitId)
+    : contracts;
 
   const filteredCases = selectedPropertyId
     ? cases.filter((c) => !c.property_id || c.property_id === selectedPropertyId)
@@ -230,6 +232,7 @@ export default function ExpenseFormModal({
     data.contract_id = contractId;
     data.case_id = caseId;
     data.tax_category = taxCategory;
+    data.paid_by = paidBy;
     data.payment_due_date = paymentDueDate;
     data.paid_at = paidAt;
     data.status = editData?.status || "draft";
@@ -380,10 +383,41 @@ export default function ExpenseFormModal({
             {errors.amount && <p className="text-danger text-sm mt-1">{errors.amount[0]}</p>}
           </div>
 
+          {/* ① 支払者（誰がまず業者に払うか＝立替の事実）。負担区分とは別軸 */}
+          <div>
+            <label className="text-sm font-medium text-ink-2 block mb-1">支払者</label>
+            <div className="flex rounded-lg border border-line overflow-hidden">
+              {(
+                [
+                  { value: "company_advance", label: "管理会社が立替" },
+                  { value: "owner_direct", label: "オーナーが直接支払い" },
+                ] as const
+              ).map((p) => (
+                <button
+                  type="button"
+                  key={p.value}
+                  onClick={() => setPaidBy(p.value)}
+                  className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                    paidBy === p.value
+                      ? "bg-accent text-white"
+                      : "bg-surface text-ink-3 hover:bg-bg-2"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-ink-3 mt-1">
+              業者へ実際に支払った相手です（お金の動き）。下の「負担区分」は最終的に誰のコストかの内訳で、意味が異なります。
+            </p>
+          </div>
+
           <SplitModeSection
             amount={amount}
             ownerAmount={ownerAmount}
             setOwnerAmount={setOwnerAmount}
+            tenantAmount={tenantAmount}
+            setTenantAmount={setTenantAmount}
             companyAmount={companyAmount}
             setCompanyAmount={setCompanyAmount}
             breakdownOk={breakdownOk}
@@ -417,6 +451,44 @@ export default function ExpenseFormModal({
               />
             </div>
           </div>
+
+          {/* ③ 入居者負担があるときの契約セレクタ（敷金充当先を特定） */}
+          {tenantAmount > 0 && (
+            <div>
+              <label className="text-sm font-medium text-ink-2 block mb-1">
+                敷金から充当する契約 <span className="text-danger">*</span>
+              </label>
+              {filteredContracts.length === 0 ? (
+                <div className="bg-warn-tint text-warn text-sm rounded-lg px-3 py-2">
+                  この{unitId ? "部屋" : "物件"}には選べる契約がないため、入居者負担を敷金から充当できません。
+                  入居者負担を0にするか、先に契約を登録してください。
+                </div>
+              ) : (
+                <>
+                  <select
+                    value={contractId}
+                    onChange={(e) => setContractId(e.target.value)}
+                    className="input"
+                  >
+                    <option value="">選択してください</option>
+                    {filteredContracts.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                        {c.deposit ? `（敷金 ¥${Number(c.deposit).toLocaleString()}）` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.contract_id ? (
+                    <p className="text-danger text-sm mt-1">{errors.contract_id[0]}</p>
+                  ) : (
+                    <p className="text-[11px] text-ink-3 mt-1">
+                      保存すると、入居者負担分がこの契約の敷金から自動で充当されます。
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
 
           {selectedPropertyId && (

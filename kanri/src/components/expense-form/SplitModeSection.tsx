@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 
-type Party = "owner" | "company";
+type Party = "owner" | "tenant" | "company";
 
-// 負担はオーナー/自社の2軸。入居者負担は敷金口座(契約)側で扱うため経費フォームには出さない。
+// 負担区分は「最終的に誰のコストか」の内訳。
+// オーナー=送金から控除 / 入居者=敷金から充当 / 自社=管理会社のコスト。
 const FIELDS: {
   key: Party;
   label: string;
@@ -12,6 +13,7 @@ const FIELDS: {
   color: string; // CSS変数(帯色・スライダーのアクセント色 共通)
 }[] = [
   { key: "owner", label: "オーナー負担", short: "オーナー", color: "var(--accent)" },
+  { key: "tenant", label: "入居者負担", short: "入居者", color: "var(--warn)" },
   { key: "company", label: "自社負担", short: "自社", color: "var(--info)" },
 ];
 
@@ -19,6 +21,8 @@ export default function SplitModeSection({
   amount,
   ownerAmount,
   setOwnerAmount,
+  tenantAmount,
+  setTenantAmount,
   companyAmount,
   setCompanyAmount,
   breakdownOk,
@@ -27,6 +31,8 @@ export default function SplitModeSection({
   amount: number;
   ownerAmount: number;
   setOwnerAmount: (v: number) => void;
+  tenantAmount: number;
+  setTenantAmount: (v: number) => void;
   companyAmount: number;
   setCompanyAmount: (v: number) => void;
   breakdownOk: boolean;
@@ -35,19 +41,23 @@ export default function SplitModeSection({
   // 金額入力 or 比率(%)入力の切替
   const [inputMode, setInputMode] = useState<"amount" | "ratio">("amount");
 
-  const valueOf = (key: Party) => (key === "owner" ? ownerAmount : companyAmount);
+  const valueOf = (key: Party) =>
+    key === "owner" ? ownerAmount : key === "tenant" ? tenantAmount : companyAmount;
+  const setterOf = (key: Party) =>
+    key === "owner" ? setOwnerAmount : key === "tenant" ? setTenantAmount : setCompanyAmount;
   const total = amount > 0 ? amount : 0;
 
   // そのボックスに金額を全額入れ、他を0にする
   const setFull = (key: Party) => {
     setOwnerAmount(key === "owner" ? total : 0);
+    setTenantAmount(key === "tenant" ? total : 0);
     setCompanyAmount(key === "company" ? total : 0);
   };
 
   // 1つの区分だけを更新する（他は動かさない）。合計が金額とズレたら下の表示が赤字で知らせる。
   const setOne = (key: Party, newVal: number) => {
     const v = Math.max(0, Math.round(newVal));
-    (key === "owner" ? setOwnerAmount : setCompanyAmount)(v);
+    setterOf(key)(v);
   };
 
   // 比率(%)入力 → その区分の金額だけを更新する。
@@ -172,7 +182,7 @@ export default function SplitModeSection({
         {!breakdownOk && " — 一致しません"}
       </p>
       <p className="text-[10px] text-ink-3 mt-1">
-        入居者負担分（退去時の原状回復費など）は契約の敷金から精算します。
+        負担区分は「最終的に誰のコストか」の内訳です。入居者負担を入力すると、対象契約の敷金から自動で充当されます。
       </p>
     </div>
   );
