@@ -30,13 +30,6 @@ export const TAX_CATEGORY_LABELS: Record<TaxCategory, string> = {
   non_taxable: "不課税",
 };
 
-// 支払者(立替の事実)。負担区分とは別軸。
-export const EXPENSE_PAYERS = ["company_advance", "owner_direct"] as const;
-export type ExpensePayer = (typeof EXPENSE_PAYERS)[number];
-export const EXPENSE_PAYER_LABELS: Record<ExpensePayer, string> = {
-  company_advance: "管理会社が立替",
-  owner_direct: "オーナーが直接支払い",
-};
 
 export const ALLOCATION_METHODS = [
   "equal_units",
@@ -106,7 +99,6 @@ export const expenseSchema = z
     tenant_amount: z.coerce.number().int().nonnegative().default(0),
     company_amount: z.coerce.number().int().nonnegative().default(0),
     status: z.enum(EXPENSE_STATUSES).default("draft"),
-    paid_by: z.enum(EXPENSE_PAYERS).default("company_advance"),
     tax_category: z.enum(TAX_CATEGORIES).default("taxable"),
     payment_due_date: z.string().nullable().optional().or(z.literal("").transform(() => null)),
     paid_at: z.string().nullable().optional().or(z.literal("").transform(() => null)),

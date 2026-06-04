@@ -69,7 +69,6 @@ export async function saveExpense(supabase: Client, params: SaveParams): Promise
     company_amount: input.company_amount,
     expense_date: input.expense_date,
     status: targetStatus,
-    paid_by: input.paid_by,
     tax_category: input.tax_category,
     payment_due_date: input.payment_due_date || null,
     paid_at: input.paid_at || null,

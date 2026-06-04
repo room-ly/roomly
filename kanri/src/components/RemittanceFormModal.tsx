@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { X, Loader2 } from "lucide-react";
 import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 
+function bankAccountTypeLabel(t: string | null | undefined): string {
+  return t === "savings" ? "貯蓄" : t === "checking" ? "当座" : "普通";
+}
+
 interface OwnerOption {
   id: string;
   name: string;
@@ -31,8 +35,24 @@ export default function RemittanceFormModal({
   const [calcResult, setCalcResult] = useState<Record<string, any> | null>(null);
   const [selectedOwnerId, setSelectedOwnerId] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
+  // オーナーへ請求する不足分の入金先（管理会社の既定口座）
+  const [companyBank, setCompanyBank] = useState<Record<string, any> | null>(null);
 
   const isEdit = !!editData;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    fetch("/api/bank-accounts")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((list) => {
+        if (!cancelled && Array.isArray(list) && list.length > 0) setCompanyBank(list[0]);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   const formRef = useRef<HTMLFormElement>(null);
   // 編集対象が切り替わった時のみフォーム状態をリセットする。
@@ -271,7 +291,7 @@ export default function RemittanceFormModal({
               </div>
               {Number(editData?.carryover_to_next) > 0 && (
                 <div className="flex justify-between text-warn">
-                  <span>翌月繰越（未収金）</span>
+                  <span>オーナーへ請求（不足分）</span>
                   <span className="tabular-nums">¥{Number(editData?.carryover_to_next).toLocaleString()}</span>
                 </div>
               )}
@@ -308,8 +328,17 @@ export default function RemittanceFormModal({
                 <span className="tabular-nums">¥{Number(calcResult.net_amount).toLocaleString()}</span>
               </div>
               {Number(calcResult.carryover_to_next) > 0 && (
-                <div className="flex justify-between text-warn text-xs mt-1 px-2 py-1 bg-warn-tint rounded">
-                  <span>※ 費用が家賃を超過。不足分 ¥{Number(calcResult.carryover_to_next).toLocaleString()} は翌月に繰越</span>
+                <div className="text-warn text-xs mt-1 px-2 py-1 bg-warn-tint rounded space-y-0.5">
+                  <div>
+                    ※ 費用が家賃収入を超過。不足分 ¥{Number(calcResult.carryover_to_next).toLocaleString()} はオーナーへ請求します
+                  </div>
+                  {companyBank && (
+                    <div className="text-ink-3">
+                      入金先: {companyBank.bank_name} {companyBank.branch_name}{" "}
+                      {bankAccountTypeLabel(companyBank.account_type)} {companyBank.account_number}（
+                      {companyBank.account_holder}）
+                    </div>
+                  )}
                 </div>
               )}
               {calcResult.property_breakdown?.length > 0 && (

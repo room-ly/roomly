@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Phone, Mail } from "lucide-react";
-import { getRemittanceDetail, getOwnersForSelect } from "@/lib/queries";
+import { getRemittanceDetail, getOwnersForSelect, getDefaultCompanyBankAccount } from "@/lib/queries";
 import { formatPhone } from "@/lib/phone";
 import StatusBadge from "@/components/StatusBadge";
 import RemittanceDetailClient from "@/components/RemittanceDetailClient";
@@ -12,20 +12,28 @@ const paymentMethodLabel: Record<string, string> = {
   cash: "現金",
 };
 
+const accountTypeLabel: Record<string, string> = {
+  savings: "貯蓄",
+  checking: "当座",
+  ordinary: "普通",
+};
+
 export default async function RemittanceDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [result, owners] = await Promise.all([
+  const [result, owners, companyBank] = await Promise.all([
     getRemittanceDetail(id),
     getOwnersForSelect(),
+    getDefaultCompanyBankAccount(),
   ]);
   if (!result) notFound();
 
   const { remittance, items } = result;
   const owner = remittance.owner;
+  const ownerBill = Number(remittance.carryover_to_next) || 0;
 
   return (
     <>
@@ -68,7 +76,52 @@ export default async function RemittanceDetailPage({
           <span className="sum-label mono">送金額</span>
           <span className="sum-value serif-i">¥{Number(remittance.net_amount).toLocaleString()}</span>
         </div>
+        {ownerBill > 0 && (
+          <div className="sum-card" style={{ borderLeft: "3px solid var(--warn)" }}>
+            <span className="sum-label mono">オーナー請求（不足分）</span>
+            <span className="sum-value serif-i" style={{ color: "var(--warn)" }}>
+              ¥{ownerBill.toLocaleString()}
+            </span>
+            <span className="sum-foot mono">費用が家賃収入を超過</span>
+          </div>
+        )}
       </div>
+
+      {/* オーナーからの入金先（費用が家賃を超過し、オーナーへ請求する場合） */}
+      {ownerBill > 0 && (
+        <div className="section" style={{ marginBottom: 24, borderLeft: "3px solid var(--warn)" }}>
+          <div className="section-head-bar">
+            <h2>オーナーへの請求</h2>
+            <span className="desc">不足分 ¥{ownerBill.toLocaleString()}</span>
+          </div>
+          <div className="section-body">
+            <p style={{ fontSize: 13, marginBottom: 12 }}>
+              当月は費用がオーナーの家賃収入を超過したため、不足分 ¥{ownerBill.toLocaleString()} をオーナーへ請求します。
+              下記の口座へのご入金を依頼してください。
+            </p>
+            {companyBank ? (
+              <div className="kv-grid">
+                <div className="field">
+                  <div className="field-label mono">入金先</div>
+                  <div className="field-value">
+                    {companyBank.bank_name} {companyBank.branch_name}{" "}
+                    {accountTypeLabel[companyBank.account_type as string] || "普通"}{" "}
+                    <span className="mono">{companyBank.account_number}</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <div className="field-label mono">口座名義</div>
+                  <div className="field-value">{companyBank.account_holder}</div>
+                </div>
+              </div>
+            ) : (
+              <p style={{ fontSize: 13, color: "var(--warn)" }}>
+                ※ 入金先口座が未登録です。設定で会社の振込先口座を登録してください。
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="detail-grid">
         <div className="detail-col-main">
