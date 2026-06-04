@@ -305,7 +305,7 @@ export default function ExpenseFormModal({
       <div className="bg-surface rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[15px] font-semibold">
-            {isEdit ? "経費を編集" : "経費を登録"}
+            {isEdit ? "費用を編集" : "費用を登録"}
           </h2>
           <button onClick={onClose} className="text-ink-3 hover:text-ink transition-colors">
             <X size={18} />

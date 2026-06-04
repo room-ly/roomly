@@ -59,7 +59,7 @@ export default async function RemittanceDetailPage({
           <span className="sum-value serif-i" style={{ color: "var(--danger)" }}>-¥{Number(remittance.management_fee_deducted).toLocaleString()}</span>
         </div>
         <div className="sum-card" style={{ borderLeft: "3px solid var(--warn)" }}>
-          <span className="sum-label mono">経費控除</span>
+          <span className="sum-label mono">費用控除</span>
           <span className="sum-value serif-i" style={{ color: "var(--warn)" }}>
             {Number(remittance.expense_deducted) > 0 ? `-¥${Number(remittance.expense_deducted).toLocaleString()}` : "¥0"}
           </span>

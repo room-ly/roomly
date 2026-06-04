@@ -187,7 +187,7 @@ function renderReportHtml(
       <span class="summary-value" style="color:#c53030">-${fmt(totals.managementFee)}</span>
     </div>
     <div class="summary-card">
-      <span class="summary-label">経費</span>
+      <span class="summary-label">費用</span>
       <span class="summary-value" style="color:#c05621">${totals.expenseTotal > 0 ? `-${fmt(totals.expenseTotal)}` : "—"}</span>
     </div>
     <div class="summary-card">
@@ -205,7 +205,7 @@ function renderReportHtml(
         <th style="text-align:center">稼働</th>
         <th style="text-align:right">家賃収入</th>
         <th style="text-align:right">管理手数料</th>
-        <th style="text-align:right">経費</th>
+        <th style="text-align:right">費用</th>
         <th style="text-align:right">差引額</th>
       </tr>
     </thead>

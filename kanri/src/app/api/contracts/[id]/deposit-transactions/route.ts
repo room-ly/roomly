@@ -109,7 +109,7 @@ export async function DELETE(
     }
     if (existing.expense_id || existing.billing_id) {
       return NextResponse.json(
-        { error: "経費・請求に紐づく記録は元の画面から操作してください" },
+        { error: "費用・請求に紐づく記録は元の画面から操作してください" },
         { status: 400 },
       );
     }

@@ -124,7 +124,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* 経費・送金サマリー */}
+      {/* 費用・送金サマリー */}
       <div className="cols-summary" style={{ marginBottom: 20 }}>
         <div className="sum-card sum-card-graph">
           <div className="sum-main">
@@ -138,9 +138,9 @@ export default async function DashboardPage() {
         </div>
         <div className="sum-card sum-card-graph">
           <div className="sum-main">
-            <span className="sum-label mono">今月の経費</span>
+            <span className="sum-label mono">今月の費用</span>
             <span className="sum-value" style={{ fontSize: 16 }}>
-              <Link href="/expenses" className="rlink">¥{s.monthly_expenses.toLocaleString()}</Link>
+              <Link href="/costs" className="rlink">¥{s.monthly_expenses.toLocaleString()}</Link>
             </span>
             <span className="sum-foot mono">直近{monthlyTrend.length}ヶ月の推移</span>
           </div>

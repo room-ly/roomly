@@ -196,7 +196,7 @@ export default function LoanDetailClient({ loan, repayments, cashflow }: Props) 
               </div>
             </div>
             <p className="text-[11px] text-ink-3 mt-3">
-              ※ 入居中区画の家賃合計と当月の返済予定から算出した参考値です。空室・滞納・その他経費は含みません。
+              ※ 入居中区画の家賃合計と当月の返済予定から算出した参考値です。空室・滞納・その他費用は含みません。
             </p>
           </>
         )}

@@ -34,11 +34,11 @@ export async function PUT(
       .eq("company_id", companyId)
       .single();
     if (!existing) {
-      return NextResponse.json({ error: "経費が見つかりません" }, { status: 404 });
+      return NextResponse.json({ error: "費用が見つかりません" }, { status: 404 });
     }
     if (IMMUTABLE_EXPENSE_STATUSES.includes(existing.status as never)) {
       return NextResponse.json(
-        { error: "承認済みの経費は編集できません" },
+        { error: "承認済みの費用は編集できません" },
         { status: 403 },
       );
     }
@@ -77,11 +77,11 @@ export async function DELETE(
       .eq("company_id", companyId)
       .single();
     if (!existing) {
-      return NextResponse.json({ error: "経費が見つかりません" }, { status: 404 });
+      return NextResponse.json({ error: "費用が見つかりません" }, { status: 404 });
     }
     if (IMMUTABLE_EXPENSE_STATUSES.includes(existing.status as never)) {
       return NextResponse.json(
-        { error: "承認済みの経費は削除できません" },
+        { error: "承認済みの費用は削除できません" },
         { status: 403 },
       );
     }
@@ -93,7 +93,7 @@ export async function DELETE(
       .eq("company_id", companyId);
 
     if (error) {
-      return NextResponse.json({ error: "経費の削除に失敗しました" }, { status: 500 });
+      return NextResponse.json({ error: "費用の削除に失敗しました" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

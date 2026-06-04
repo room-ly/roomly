@@ -25,7 +25,7 @@ export async function POST(
       .eq("id", id)
       .eq("company_id", company_id)
       .single();
-    if (!existing) return NextResponse.json({ error: "経費が見つかりません" }, { status: 404 });
+    if (!existing) return NextResponse.json({ error: "費用が見つかりません" }, { status: 404 });
     if (existing.status !== "draft") {
       return NextResponse.json({ error: "下書きのみ提出できます" }, { status: 400 });
     }
@@ -86,9 +86,9 @@ export async function POST(
       await createNotification({
         user_id: approverId,
         type: "warning",
-        title: "経費の承認依頼",
+        title: "費用の承認依頼",
         body: `${existing.description}（¥${Number(existing.amount).toLocaleString()}）の承認をお願いします`,
-        link: `/expenses/${id}`,
+        link: `/costs/${id}`,
       });
     }
 

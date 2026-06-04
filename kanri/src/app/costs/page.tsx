@@ -60,10 +60,10 @@ export default async function ExpensesPage({
   return (
     <>
       <PageHeader
-        eyebrow="Expenses"
-        title="経費"
+        eyebrow="Costs"
+        title="費用"
         em="管理"
-        description="物件経費・オーナー負担の管理。送金時にオーナー負担分が自動で控除されます。"
+        description="物件で発生した費用・オーナー負担の管理。送金時にオーナー負担分が自動で控除されます。"
         action={
           <ExpensesPageClient
             properties={properties}
@@ -77,8 +77,8 @@ export default async function ExpensesPage({
 
       {!approvalEnabled && (
         <FeatureOffCard
-          title="稟議（経費承認フロー）"
-          description="一定金額以上の経費を承認待ちにして、承認後に確定する運用ができます。"
+          title="稟議（費用承認フロー）"
+          description="一定金額以上の費用を承認待ちにして、承認後に確定する運用ができます。"
           canEnable={canEditSettings}
           disabledReason="※ 管理者のみオンにできます"
         >

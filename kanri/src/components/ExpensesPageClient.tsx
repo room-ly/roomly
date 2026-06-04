@@ -36,7 +36,7 @@ export default function ExpensesPageClient({
     <>
       <button className="btn btn-primary" onClick={() => setIsOpen(true)}>
         <Plus size={14} />
-        経費を登録
+        費用を登録
       </button>
       <ExpenseFormModal
         isOpen={isOpen}

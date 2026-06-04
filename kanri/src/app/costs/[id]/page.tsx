@@ -54,8 +54,8 @@ export default async function ExpenseDetailPage({
   return (
     <>
       <div className="detail-back">
-        <Link href="/expenses" className="rlink is-muted is-back">
-          ← 経費一覧に戻る
+        <Link href="/costs" className="rlink is-muted is-back">
+          ← 費用一覧に戻る
         </Link>
       </div>
 
@@ -172,7 +172,7 @@ export default async function ExpenseDetailPage({
             <div className="section-body">
               <div className="cfee-grid">
                 <div className="cfee-main">
-                  <div className="cfee-label mono">経費金額</div>
+                  <div className="cfee-label mono">費用金額</div>
                   <div className="cfee-value">¥{Number(expense.amount).toLocaleString()}</div>
                 </div>
               </div>
@@ -241,7 +241,7 @@ export default async function ExpenseDetailPage({
           {/* 詳細 */}
           <div className="section">
             <div className="section-head-bar">
-              <h2>経費情報</h2>
+              <h2>費用情報</h2>
             </div>
             <div className="section-body">
               <div className="kv-grid">
@@ -324,7 +324,7 @@ export default async function ExpenseDetailPage({
             <DocumentSection propertyId={expense.property.id} title="関連書類（レシート等）" />
           )}
 
-          <AuditLogSection table="expenses" recordId={expense.id} recordLabel="経費" />
+          <AuditLogSection table="expenses" recordId={expense.id} recordLabel="費用" />
         </div>
 
         <div className="detail-col-side">

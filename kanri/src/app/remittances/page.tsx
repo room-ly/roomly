@@ -109,7 +109,7 @@ export default async function RemittancesPage() {
           <span className="sum-foot mono">収入から控除</span>
         </div>
         <div className="sum-card">
-          <span className="sum-label mono">経費控除</span>
+          <span className="sum-label mono">費用控除</span>
           <span className="sum-value serif-i" style={{ color: "var(--warn)" }}>
             -¥{Object.values(ownerExpenses).reduce((s: number, v) => s + (v as number), 0).toLocaleString()}
           </span>
@@ -144,7 +144,7 @@ export default async function RemittancesPage() {
                 <th style={{ textAlign: "center" }}>入居/総戸</th>
                 <th style={{ textAlign: "right" }}>家賃収入</th>
                 <th style={{ textAlign: "right" }}>管理手数料</th>
-                <th style={{ textAlign: "right" }}>経費控除</th>
+                <th style={{ textAlign: "right" }}>費用控除</th>
                 <th style={{ textAlign: "right" }}>送金額</th>
               </tr>
             </thead>
@@ -181,7 +181,7 @@ export default async function RemittancesPage() {
                       <td
                         className="num strong"
                         style={p.net < 0 ? { color: "var(--warn)" } : undefined}
-                        title={p.net < 0 ? "経費が家賃を超過しています。翌月に繰越されます" : undefined}
+                        title={p.net < 0 ? "費用が家賃を超過しています。翌月に繰越されます" : undefined}
                       >
                         ¥{p.net.toLocaleString()}
                       </td>
@@ -197,7 +197,7 @@ export default async function RemittancesPage() {
                     <td
                       className="num"
                       style={{ color: o.netAmount < 0 ? "var(--warn)" : "var(--accent-deep)", fontWeight: 600 }}
-                      title={o.netAmount < 0 ? "経費が家賃を超過。翌月繰越されます" : undefined}
+                      title={o.netAmount < 0 ? "費用が家賃を超過。翌月繰越されます" : undefined}
                     >
                       ¥{o.netAmount.toLocaleString()}
                     </td>

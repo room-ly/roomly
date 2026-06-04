@@ -39,7 +39,7 @@ export default async function PaymentsPage() {
         eyebrow="Payments"
         title="支払い"
         em="一括出力"
-        description="オーナー送金・経費支払いを選択して全銀フォーマットCSVを出力します。"
+        description="オーナー送金・費用支払いを選択して全銀フォーマットCSVを出力します。"
       />
       <PaymentsPageClient remittances={remittances} expenses={expenses} />
     </>

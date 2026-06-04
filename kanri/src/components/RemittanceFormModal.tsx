@@ -254,7 +254,7 @@ export default function RemittanceFormModal({
                 <span className="text-danger tabular-nums">-¥{Number(editData?.management_fee_deducted).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-ink-3">経費控除</span>
+                <span className="text-ink-3">費用控除</span>
                 <span className="text-warn tabular-nums">
                   {Number(editData?.expense_deducted) > 0 ? `-¥${Number(editData?.expense_deducted).toLocaleString()}` : "—"}
                 </span>
@@ -292,7 +292,7 @@ export default function RemittanceFormModal({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-ink-3">経費控除（{calcResult.expense_count}件）</span>
+                <span className="text-ink-3">費用控除（{calcResult.expense_count}件）</span>
                 <span className="text-warn tabular-nums">
                   {Number(calcResult.expense_deducted) > 0 ? `-¥${Number(calcResult.expense_deducted).toLocaleString()}` : "¥0"}
                 </span>
@@ -309,7 +309,7 @@ export default function RemittanceFormModal({
               </div>
               {Number(calcResult.carryover_to_next) > 0 && (
                 <div className="flex justify-between text-warn text-xs mt-1 px-2 py-1 bg-warn-tint rounded">
-                  <span>※ 経費が家賃を超過。不足分 ¥{Number(calcResult.carryover_to_next).toLocaleString()} は翌月に繰越</span>
+                  <span>※ 費用が家賃を超過。不足分 ¥{Number(calcResult.carryover_to_next).toLocaleString()} は翌月に繰越</span>
                 </div>
               )}
               {calcResult.property_breakdown?.length > 0 && (

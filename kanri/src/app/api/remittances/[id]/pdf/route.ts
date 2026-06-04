@@ -81,7 +81,7 @@ export async function GET(
         <td class="text-right negative">-&yen;${Number(remittance.management_fee_deducted).toLocaleString()}</td>
       </tr>
       <tr>
-        <td>経費控除</td>
+        <td>費用控除</td>
         <td class="text-right negative">-&yen;${Number(remittance.expense_deducted).toLocaleString()}</td>
       </tr>
       <tr class="total-row">

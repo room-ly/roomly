@@ -97,7 +97,7 @@ export async function saveExpense(supabase: Client, params: SaveParams): Promise
       .eq("company_id", company_id)
       .select()
       .single();
-    if (error) return { error: "経費の更新に失敗しました", status: 500 };
+    if (error) return { error: "費用の更新に失敗しました", status: 500 };
     expenseRow = data as Record<string, unknown>;
 
     // 既存 allocations / deposit_transactions（charge for this expense）を一旦削除して再投入
@@ -113,7 +113,7 @@ export async function saveExpense(supabase: Client, params: SaveParams): Promise
       .insert(baseRecord as never)
       .select()
       .single();
-    if (error) return { error: "経費の登録に失敗しました", status: 500 };
+    if (error) return { error: "費用の登録に失敗しました", status: 500 };
     expenseRow = data as Record<string, unknown>;
   }
 

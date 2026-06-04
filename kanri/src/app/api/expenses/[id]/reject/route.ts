@@ -32,10 +32,10 @@ export async function POST(
       .eq("id", id)
       .eq("company_id", company_id)
       .single();
-    if (!existing) return NextResponse.json({ error: "経費が見つかりません" }, { status: 404 });
+    if (!existing) return NextResponse.json({ error: "費用が見つかりません" }, { status: 404 });
     if (existing.status !== "pending_approval") {
       return NextResponse.json(
-        { error: "承認待ち状態の経費のみ却下できます" },
+        { error: "承認待ち状態の費用のみ却下できます" },
         { status: 400 },
       );
     }
@@ -46,7 +46,7 @@ export async function POST(
     });
     if (approverId !== me.user_id) {
       return NextResponse.json(
-        { error: "この経費の承認者ではありません" },
+        { error: "この費用の承認者ではありません" },
         { status: 403 },
       );
     }
@@ -70,9 +70,9 @@ export async function POST(
       await createNotification({
         user_id: existing.submitted_by,
         type: "danger",
-        title: "経費が却下されました",
+        title: "費用が却下されました",
         body: `${existing.description}（¥${Number(existing.amount).toLocaleString()}）が却下されました。理由: ${parsed.data.rejected_reason}`,
-        link: `/expenses/${id}`,
+        link: `/costs/${id}`,
       });
     }
 

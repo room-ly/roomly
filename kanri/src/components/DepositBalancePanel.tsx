@@ -325,7 +325,7 @@ export default function DepositBalancePanel({
                 </select>
                 {manualReason === "restoration" && (
                   <p className="text-[10px] text-ink-3 mt-1">
-                    原状回復費は業者への支払いを経費としても記録すると、収支に正しく反映されます。
+                    原状回復費は業者への支払いを費用としても記録すると、収支に正しく反映されます。
                   </p>
                 )}
               </div>
