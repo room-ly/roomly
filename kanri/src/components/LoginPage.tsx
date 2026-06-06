@@ -181,18 +181,18 @@ export default function LoginPage() {
             </>
           ) : isDemo ? (
             <>
-              <div className="text-center mb-8">
+              <div className="text-center mb-6">
                 <h2 className="text-lg font-semibold text-ink">デモを体験する</h2>
-                <p className="text-[13px] text-ink-3 mt-1.5">サンプルデータ入りの管理画面をすぐに試せます</p>
+                <p className="text-[13px] text-ink-3 mt-1.5">サンプルデータ入りの管理画面を、いますぐ無料で試せます</p>
               </div>
 
               <div className="mb-6 p-4 rounded-lg bg-accent-tint border border-accent/20">
                 <p className="text-[13px] text-ink-2 leading-relaxed">
-                  会員登録は不要です。物件・入居者・契約・家賃管理など、すべての機能を自由に操作いただけます。
+                  物件・入居者・契約・家賃管理など、すべての機能を自由に操作いただけます。サンプルデータ入りなので、登録作業なしでそのまま使用感を確認できます。
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 {error && (
                   <div className="p-3 rounded-lg bg-danger-tint text-danger text-[13px]">
                     {error}
@@ -205,8 +205,13 @@ export default function LoginPage() {
                   className="w-full py-3 bg-accent text-white rounded-full font-medium text-[14px] transition-colors hover:bg-accent-deep disabled:opacity-70 inline-flex items-center justify-center gap-2"
                 >
                   {loading && <Loader2 size={16} className="animate-spin" />}
-                  {loading ? "起動中..." : "デモを開始する"}
+                  {loading ? "起動中..." : "無料でデモを開始"}
                 </button>
+
+                {/* ボタン直下に不安解消の3点を明示。広告流入は熱量が低く、料金・登録・解約の不安が離脱要因になりやすい */}
+                <p className="text-center text-[12px] text-ink-3">
+                  完全無料 ・ 登録不要 ・ クレジットカード不要
+                </p>
               </form>
 
               <div className="mt-6 text-center">
