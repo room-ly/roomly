@@ -32,7 +32,9 @@ export default function DemoNotice() {
           DEMO
         </span>
         <p className="flex-1 min-w-0">
-          ここはデモ環境です。物件・契約・入居者などを自由に作成・編集・削除して動作確認していただけます。データは定期的に初期状態にリセットされるため、操作内容は保存されません。
+          ここはデモ環境です。物件・契約・入居者などを自由に作成・編集・削除して動作確認していただけます。
+          <span className="font-medium text-ink">編集しても料金は一切かかりません。</span>
+          データは定期的に初期状態にリセットされるため、操作内容は保存されません。
         </p>
         <button
           type="button"

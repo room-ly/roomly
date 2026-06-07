@@ -135,6 +135,17 @@ export default function Home() {
             </a>
             <p className="text-[12px] text-rm-text-muted">会員登録不要・1分で起動・すべての機能を操作できます</p>
           </div>
+          <Reveal>
+            <div className="mx-auto mt-12 max-w-[44em] rounded-2xl border border-rm-border bg-rm-surface px-7 py-6">
+              <p className="text-[15px] leading-relaxed text-rm-text-secondary">
+                <strong className="text-rm-text">このデモは無料です。</strong>{" "}
+                導入を検討される方に、自社の業務がRoomlyで回るかをご自身で確かめていただくために用意しています。料金は一切かからず、登録も不要です。
+              </p>
+              <p className="mt-3 text-[15px] leading-relaxed text-rm-text-secondary">
+                派手な営業や商談に費用をかけるより、画面そのもので判断してもらうほうが誠実だと考えています。営業にかけるはずだったコストを開発に回し、製品を良くすることに集中する——それがRoomlyのやり方です。
+              </p>
+            </div>
+          </Reveal>
         </div>
       </section>
 
