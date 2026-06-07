@@ -114,6 +114,7 @@ export async function POST(request: NextRequest) {
       attribution_visitor_id: attribution.visitor_id ?? null,
       affiliate_code: attribution.affiliate_code ?? null,
       affiliate_id: affiliateId,
+      signup_path: attribution.signup_path ?? null,
     };
 
     const { data: company, error: companyError } = await admin
@@ -282,6 +283,7 @@ async function recordAttempt(
       utm_content: args.attribution.utm_content ?? null,
       gclid: args.attribution.gclid ?? null,
       ga_client_id: args.attribution.ga_client_id ?? null,
+      signup_path: args.attribution.signup_path ?? null,
     });
   } catch (e) {
     // 計測失敗は本処理を止めない

@@ -19,6 +19,7 @@ type Attribution = {
   ga_client_id?: string;
   affiliate_code?: string;
   visitor_id?: string;
+  signup_path?: string;
   captured_at?: string;
 };
 
@@ -27,7 +28,7 @@ const ATTRIBUTION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 // 初回着地時のUTM・referrerをlocalStorageに保持し、サインアップ時にAPIへ送る。
 // URLに新しいパラメータがあるときは既存localStorageを上書きする(最新流入を優先)。
-function captureAttribution(): Attribution | null {
+function resolveBaseAttribution(): Attribution | null {
   if (typeof window === "undefined") return null;
 
   const params = new URLSearchParams(window.location.search);
@@ -94,6 +95,20 @@ function captureAttribution(): Attribution | null {
   return hasAny ? fromUrl : null;
 }
 
+// アプリ内導線(?from=demo 等)を、元の広告流入(utm/gclid)を潰さずに合流させる。
+// これにより「Google広告→デモ→登録」を1レコードで追える。
+function captureAttribution(): Attribution | null {
+  if (typeof window === "undefined") return null;
+  const base = resolveBaseAttribution();
+
+  const fromRaw = new URLSearchParams(window.location.search).get("from");
+  const signupPath =
+    fromRaw && /^[a-z0-9_]{1,32}$/.test(fromRaw) ? fromRaw : undefined;
+  if (!signupPath) return base;
+
+  return { ...(base ?? {}), signup_path: signupPath };
+}
+
 type Gtag = (...args: unknown[]) => void;
 declare global {
   interface Window {
@@ -102,8 +117,11 @@ declare global {
 }
 
 // signup完了時にGA4へカスタムイベント送信（Google広告のCVはGA4経由で連携）
-function fireSignupConversion() {
-  window.gtag?.("event", "signup_complete", {});
+// signup_path（demo等）を付けることで、デモ経由のCVをGA4/Adsで分離計測できる。
+function fireSignupConversion(signupPath?: string | null) {
+  window.gtag?.("event", "signup_complete", {
+    ...(signupPath ? { signup_path: signupPath } : {}),
+  });
 }
 
 export default function SignupPage() {
@@ -154,8 +172,8 @@ export default function SignupPage() {
         return;
       }
 
-      // signup完了をGoogle広告コンバージョンとして送信
-      fireSignupConversion();
+      // signup完了をGoogle広告コンバージョンとして送信（導線も付与）
+      fireSignupConversion(attributionPayload.signup_path);
 
       if (data.requiresEmailConfirmation) {
         setSuccess(true);

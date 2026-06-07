@@ -20,6 +20,7 @@ export type Attribution = {
   ga_client_id?: string | null;
   affiliate_code?: string | null;
   visitor_id?: string | null;
+  signup_path?: string | null;
 };
 
 // Vercelの地理情報ヘッダはURLエンコードされている場合がある
@@ -73,5 +74,10 @@ export function normalizeAttribution(input: unknown): Attribution {
     ga_client_id: truncate(a.ga_client_id),
     affiliate_code: affiliateCode,
     visitor_id: truncate(a.visitor_id, 64),
+    // 既知の導線値のみ許可（任意文字列でDBを汚さない）
+    signup_path: ((): string | null => {
+      const v = truncate(a.signup_path, 32);
+      return v && /^[a-z0-9_]+$/.test(v) ? v : null;
+    })(),
   };
 }
