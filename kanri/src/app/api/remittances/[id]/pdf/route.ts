@@ -21,8 +21,16 @@ export async function GET(
       return NextResponse.json({ error: "送金データが見つかりません" }, { status: 404 });
     }
 
+    // 明細行（家賃・管理手数料・消費税・経費など）
+    const { data: items } = await supabase
+      .from("owner_remittance_items")
+      .select("item_type, description, amount")
+      .eq("remittance_id", id)
+      .order("created_at");
+
     // 費用が家賃を超過した場合、オーナーへ請求する不足分とその入金先(会社の既定口座)
-    const ownerBill = Number((remittance as { carryover_to_next?: number }).carryover_to_next) || 0;
+    const ownerBill = Number((remittance as { owner_bill_amount?: number }).owner_bill_amount) || 0;
+    const feeTax = Number((remittance as { management_fee_tax?: number }).management_fee_tax) || 0;
     let companyBank: Record<string, string> | null = null;
     if (ownerBill > 0) {
       const { data: banks } = await supabase
@@ -42,6 +50,26 @@ export async function GET(
     const bankInfo = escapeHtml(`${owner?.bank_name ?? ""} ${owner?.bank_branch ?? ""} ${owner?.bank_account_number ?? ""}`);
     const statusText = remittance.status === "sent" ? "送金済" : remittance.status === "confirmed" ? "確定" : "下書き";
     const sentDate = escapeHtml(remittance.sent_date ?? "");
+
+    const itemTypeLabel: Record<string, string> = {
+      rent: "家賃入金",
+      management_fee: "管理手数料（税抜）",
+      management_fee_tax: "管理手数料 消費税",
+      expense: "経費",
+      adjustment: "調整",
+    };
+    const itemRowsHtml = (items ?? [])
+      .map((it) => {
+        const amt = Number(it.amount) || 0;
+        const sign = amt < 0 ? "negative" : "";
+        const prefix = amt < 0 ? "-" : "";
+        return `<tr>
+        <td>${escapeHtml(itemTypeLabel[it.item_type] ?? it.item_type)}</td>
+        <td>${escapeHtml(it.description ?? "")}</td>
+        <td class="text-right ${sign}">${prefix}&yen;${Math.abs(amt).toLocaleString()}</td>
+      </tr>`;
+      })
+      .join("");
 
     const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -92,9 +120,17 @@ export async function GET(
         <td class="text-right">&yen;${Number(remittance.total_rent).toLocaleString()}</td>
       </tr>
       <tr>
-        <td>管理手数料控除</td>
+        <td>管理手数料（税抜）</td>
         <td class="text-right negative">-&yen;${Number(remittance.management_fee_deducted).toLocaleString()}</td>
       </tr>
+      ${
+        feeTax > 0
+          ? `<tr>
+        <td>消費税</td>
+        <td class="text-right negative">-&yen;${feeTax.toLocaleString()}</td>
+      </tr>`
+          : ""
+      }
       <tr>
         <td>費用控除</td>
         <td class="text-right negative">-&yen;${Number(remittance.expense_deducted).toLocaleString()}</td>
@@ -113,6 +149,23 @@ export async function GET(
       }
     </tbody>
   </table>
+  ${
+    itemRowsHtml
+      ? `<h2 style="font-size:14px; margin:24px 0 4px;">明細</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>区分</th>
+        <th>内容</th>
+        <th class="text-right">金額</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${itemRowsHtml}
+    </tbody>
+  </table>`
+      : ""
+  }
   ${
     ownerBill > 0
       ? `<div style="border:1px solid #c0392b; border-radius:6px; padding:12px 16px; margin:16px 0;">

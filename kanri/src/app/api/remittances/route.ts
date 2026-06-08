@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
-import { calcPropertyManagementFee } from "@/lib/remittance-calc";
+import { gatherAndBuildRemittance } from "@/lib/remittance-data";
 import type { TablesInsert } from "@/lib/database.types";
 
 // GET: 送金一覧
@@ -45,114 +45,107 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
+    const company_id = await getCompanyId();
 
-    // オーナー情報取得
-    const { data: owner } = await supabase
-      .from("owners")
-      .select("*")
-      .eq("id", owner_id)
-      .single();
+    // 送金計算（calc プレビューと同一ロジック。実入金ベース・外税・未精算経費）
+    const built = await gatherAndBuildRemittance(supabase, {
+      ownerId: owner_id,
+      month: remittance_month,
+      manualNetAmount: manual_net_amount,
+    });
+    if (!built.ok) {
+      return NextResponse.json({ error: built.error }, { status: built.status });
+    }
+    const r = built.data;
 
-    if (!owner) {
+    // 重複送金チェック（DB側 UNIQUE 制約と二重で守る）
+    const { data: existing } = await supabase
+      .from("owner_remittances")
+      .select("id")
+      .eq("company_id", company_id)
+      .eq("owner_id", owner_id)
+      .eq("remittance_month", remittance_month)
+      .maybeSingle();
+    if (existing) {
       return NextResponse.json(
-        { error: "オーナーが見つかりません" },
-        { status: 404 }
+        { error: "この月の送金は既に作成されています" },
+        { status: 409 }
       );
     }
 
-    // オーナーの物件・部屋を取得（手数料率は物件単位）
-    const { data: properties } = await supabase
-      .from("properties")
-      .select("id, name, management_fee_type, management_fee_rate, management_fee_amount, management_form, units(id, unit_number, rent, management_fee, status)")
-      .eq("owner_id", owner_id);
-
-    // 当月のアクティブ契約の家賃請求を取得（入金済み分のみ）
-    const monthStart = remittance_month; // YYYY-MM-01形式
-    const { data: billings } = await supabase
-      .from("rent_billings")
-      .select("*, contract:contracts(unit_id)")
-      .eq("billing_month", monthStart)
-      .eq("status", "paid");
-
-    // 当月の経費を取得（承認済みのみ、owner_amount で控除）
-    const monthDate = new Date(monthStart);
-    const nextMonth = new Date(monthDate);
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    const APPROVED_STATUSES = ["approved", "ordered", "completed", "paid"];
-    const { data: expenses } = await supabase
-      .from("expenses")
-      .select("*, allocations:expense_allocations(owner_amount, owner_id, unit_id, unit:units(property_id))")
-      .gt("owner_amount", 0)
-      .eq("owner_id", owner_id)
-      .in("status", APPROVED_STATUSES)
-      .gte("expense_date", monthStart)
-      .lt("expense_date", nextMonth.toISOString().slice(0, 10));
-
-    // 物件ごとに手数料を計算して合算
-    let totalRent = 0;
-    let managementFeeDeducted = 0;
-
-    for (const p of (properties ?? []) as Record<string, any>[]) {
-      const pUnitIds = ((p.units as any[]) ?? []).map((u: any) => u.id);
-      const pBillings = (billings ?? []).filter((b: any) => {
-        const contract = b.contract as Record<string, unknown> | null;
-        return contract && pUnitIds.includes(contract.unit_id);
-      });
-      const pRent = pBillings.reduce((s: number, b: any) => s + Number(b.total_amount), 0);
-      const pFee = calcPropertyManagementFee({
-        rent: pRent,
-        feeType: p.management_fee_type,
-        feeRate: p.management_fee_rate,
-        feeAmount: p.management_fee_amount,
-        managementForm: p.management_form,
-      });
-      totalRent += pRent;
-      managementFeeDeducted += pFee;
-    }
-
-    const expenseDeducted = (expenses ?? []).reduce(
-      (s: number, e: Record<string, unknown>) => s + Number((e as { owner_amount: number }).owner_amount ?? 0),
-      0
-    );
-
-    // 不足分（費用がオーナーの家賃収入を超過した分）は翌月繰越にせず、当月のオーナー請求とする。
-    // 空室が続くと繰越では永遠に回収できないため。前月繰越の控除は廃止。
-    const company_id = await getCompanyId();
     const payment_method = reqPaymentMethod || "transfer";
-    const isManual = manual_net_amount !== undefined && manual_net_amount !== null;
-    const idealNet = totalRent - managementFeeDeducted - expenseDeducted;
-    const autoNet = idealNet >= 0 ? idealNet : 0;
-    const finalNet = isManual ? Math.max(0, Number(manual_net_amount)) : autoNet;
-    // オーナー請求額（不足分）。手動で送金を減らした分も請求に積む（現挙動踏襲）。
-    // DB列 carryover_to_next を流用（意味は当月の請求額。翌月へは繰り越さない）。
-    const carryoverFromPrev = 0;
-    const carryoverToNext = Math.max(0, -idealNet) + Math.max(0, idealNet - finalNet);
 
     const { data: remittance, error: remError } = await supabase
       .from("owner_remittances")
       .insert({
         owner_id,
-        remittance_month: monthStart,
-        total_rent: totalRent,
-        management_fee_deducted: managementFeeDeducted,
-        expense_deducted: expenseDeducted,
-        carryover_from_prev: carryoverFromPrev,
-        carryover_to_next: carryoverToNext,
-        net_amount: finalNet,
+        remittance_month,
+        total_rent: r.totalRent,
+        management_fee_deducted: r.managementFeeDeducted,
+        management_fee_tax: r.managementFeeTax,
+        expense_deducted: r.expenseDeducted,
+        owner_bill_amount: r.ownerBillAmount,
+        net_amount: r.netAmount,
         status: "draft",
         payment_method,
-        manual_override: isManual,
-        manual_net_amount: isManual ? Number(manual_net_amount) : null,
+        manual_override: r.isManual,
+        manual_net_amount: r.isManual ? Number(manual_net_amount) : null,
         company_id,
       } as TablesInsert<"owner_remittances">)
       .select()
       .single();
 
-    if (remError) {
+    if (remError || !remittance) {
+      // UNIQUE 制約違反は重複として 409 を返す
+      if (remError?.code === "23505") {
+        return NextResponse.json(
+          { error: "この月の送金は既に作成されています" },
+          { status: 409 }
+        );
+      }
       return NextResponse.json(
         { error: "送金明細の作成に失敗しました" },
         { status: 500 }
       );
+    }
+
+    // 明細行を保存
+    if (r.items.length > 0) {
+      const itemRows: TablesInsert<"owner_remittance_items">[] = r.items.map((it) => ({
+        company_id,
+        remittance_id: remittance.id,
+        unit_id: it.unit_id,
+        item_type: it.item_type,
+        description: it.description,
+        amount: it.amount,
+      }));
+      const { error: itemError } = await supabase
+        .from("owner_remittance_items")
+        .insert(itemRows);
+      if (itemError) {
+        // 整合性のため送金を削除してロールバック（best-effort）
+        await supabase.from("owner_remittances").delete().eq("id", remittance.id);
+        return NextResponse.json(
+          { error: "送金明細の保存に失敗しました" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // 精算した経費に remittance_id を紐付け
+    if (r.settledExpenseIds.length > 0) {
+      const { error: expError } = await supabase
+        .from("expenses")
+        .update({ remittance_id: remittance.id })
+        .in("id", r.settledExpenseIds);
+      if (expError) {
+        // 経費紐付け失敗時も整合性のため送金を削除（明細は FK ON DELETE で消える）
+        await supabase.from("owner_remittances").delete().eq("id", remittance.id);
+        return NextResponse.json(
+          { error: "経費の精算紐付けに失敗しました" },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json(remittance, { status: 201 });

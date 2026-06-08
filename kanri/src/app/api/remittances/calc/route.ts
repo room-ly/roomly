@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
-import { calcPropertyManagementFee } from "@/lib/remittance-calc";
+import { gatherAndBuildRemittance } from "@/lib/remittance-data";
 
 // GET: 送金額のプレビュー計算（DBには保存しない）
 export async function GET(request: NextRequest) {
@@ -17,99 +17,41 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = await createClient();
+    const built = await gatherAndBuildRemittance(supabase, {
+      ownerId: owner_id,
+      month,
+    });
 
-    // オーナー情報取得
-    const { data: owner } = await supabase
-      .from("owners")
-      .select("*")
-      .eq("id", owner_id)
-      .single();
-
-    if (!owner) {
-      return NextResponse.json(
-        { error: "オーナーが見つかりません" },
-        { status: 404 }
-      );
+    if (!built.ok) {
+      return NextResponse.json({ error: built.error }, { status: built.status });
     }
 
-    // オーナーの物件・部屋を取得（手数料率は物件単位）
-    const { data: properties } = await supabase
-      .from("properties")
-      .select("id, name, management_fee_type, management_fee_rate, management_fee_amount, management_form, units(id, unit_number, rent, management_fee, status)")
-      .eq("owner_id", owner_id);
+    const r = built.data;
 
-    // 当月のアクティブ契約の家賃請求を取得（入金済み分のみ）
-    const monthStart = month; // YYYY-MM-01形式
-    const { data: billings } = await supabase
-      .from("rent_billings")
-      .select("*, contract:contracts(unit_id)")
-      .eq("billing_month", monthStart)
-      .eq("status", "paid");
-
-    // 当月の経費を取得（承認済みのみ、owner_amount で控除）
-    const monthDate = new Date(monthStart);
-    const nextMonth = new Date(monthDate);
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    const APPROVED_STATUSES = ["approved", "ordered", "completed", "paid"];
-    const { data: expenses } = await supabase
-      .from("expenses")
-      .select("*")
-      .gt("owner_amount", 0)
-      .eq("owner_id", owner_id)
-      .in("status", APPROVED_STATUSES)
-      .gte("expense_date", monthStart)
-      .lt("expense_date", nextMonth.toISOString().slice(0, 10));
-
-    // 物件ごとに手数料を計算して合算
-    let totalRent = 0;
-    let managementFeeDeducted = 0;
-    const propertyBreakdown: { name: string; rent: number; fee: number }[] = [];
-
-    for (const p of (properties ?? []) as Record<string, any>[]) {
-      const pUnitIds = ((p.units as any[]) ?? []).map((u: any) => u.id);
-      const pBillings = (billings ?? []).filter((b: any) => {
-        const contract = b.contract as Record<string, unknown> | null;
-        return contract && pUnitIds.includes(contract.unit_id);
-      });
-      const pRent = pBillings.reduce((s: number, b: any) => s + Number(b.total_amount), 0);
-      const pFee = calcPropertyManagementFee({
-        rent: pRent,
-        feeType: p.management_fee_type,
-        feeRate: p.management_fee_rate,
-        feeAmount: p.management_fee_amount,
-        managementForm: p.management_form,
-      });
-      totalRent += pRent;
-      managementFeeDeducted += pFee;
-      if (pRent > 0) {
-        propertyBreakdown.push({ name: p.name, rent: pRent, fee: pFee });
-      }
-    }
-
-    const expenseDeducted = (expenses ?? []).reduce(
-      (s: number, e: Record<string, unknown>) => s + Number((e as { owner_amount: number }).owner_amount ?? 0),
-      0
-    );
-
-    // 不足分（費用がオーナーの家賃収入を超過した分）は翌月繰越にせず、当月のオーナー請求とする。
-    // 空室が続くと繰越では永遠に回収できないため。
-    const provisional = totalRent - managementFeeDeducted - expenseDeducted;
-    const netAmount = provisional >= 0 ? provisional : 0;
-    // owner_bill_amount = オーナーへ請求する不足分。DB列は carryover_to_next を流用（意味は当月の請求額）。
-    const ownerBillAmount = provisional >= 0 ? 0 : -provisional;
+    // 物件別の家賃・手数料内訳（プレビュー表示用）
+    const propertyBreakdown = built.raw.properties
+      .map((p) => {
+        const rent = r.items
+          .filter((it) => it.item_type === "rent" && p.units.some((u) => u.id === it.unit_id))
+          .reduce((s, it) => s + it.amount, 0);
+        const fee = -r.items
+          .filter((it) => it.item_type === "management_fee" && it.description.includes(p.name))
+          .reduce((s, it) => s + it.amount, 0);
+        return { name: p.name, rent, fee };
+      })
+      .filter((b) => b.rent > 0);
 
     return NextResponse.json({
       owner_id,
-      remittance_month: monthStart,
-      total_rent: totalRent,
-      management_fee_deducted: managementFeeDeducted,
-      expense_deducted: expenseDeducted,
-      carryover_from_prev: 0,
-      carryover_to_next: ownerBillAmount,
-      owner_bill_amount: ownerBillAmount,
-      net_amount: netAmount,
+      remittance_month: month,
+      total_rent: r.totalRent,
+      management_fee_deducted: r.managementFeeDeducted,
+      management_fee_tax: r.managementFeeTax,
+      expense_deducted: r.expenseDeducted,
+      owner_bill_amount: r.ownerBillAmount,
+      net_amount: r.netAmount,
       property_breakdown: propertyBreakdown,
-      expense_count: (expenses ?? []).length,
+      expense_count: built.raw.expenses.length,
     });
   } catch {
     return NextResponse.json(

@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       affiliate_clicks: {
@@ -717,8 +742,10 @@ export type Database = {
           ga_client_id: string | null
           id: string
           is_demo: boolean
+          is_tax_invoice_issuer: boolean
           landing_path: string | null
           loan_feature_enabled: boolean
+          management_fee_tax_rate: number
           max_units: number
           name: string
           phone: string | null
@@ -726,6 +753,7 @@ export type Database = {
           postal_code: string | null
           referrer: string | null
           signup_gclid: string | null
+          signup_path: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_current_period_end: string | null
@@ -754,8 +782,10 @@ export type Database = {
           ga_client_id?: string | null
           id?: string
           is_demo?: boolean
+          is_tax_invoice_issuer?: boolean
           landing_path?: string | null
           loan_feature_enabled?: boolean
+          management_fee_tax_rate?: number
           max_units?: number
           name: string
           phone?: string | null
@@ -763,6 +793,7 @@ export type Database = {
           postal_code?: string | null
           referrer?: string | null
           signup_gclid?: string | null
+          signup_path?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_current_period_end?: string | null
@@ -791,8 +822,10 @@ export type Database = {
           ga_client_id?: string | null
           id?: string
           is_demo?: boolean
+          is_tax_invoice_issuer?: boolean
           landing_path?: string | null
           loan_feature_enabled?: boolean
+          management_fee_tax_rate?: number
           max_units?: number
           name?: string
           phone?: string | null
@@ -800,6 +833,7 @@ export type Database = {
           postal_code?: string | null
           referrer?: string | null
           signup_gclid?: string | null
+          signup_path?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_current_period_end?: string | null
@@ -1422,6 +1456,7 @@ export type Database = {
           payment_due_date: string | null
           property_id: string | null
           rejected_reason: string | null
+          remittance_id: string | null
           status: string
           submitted_at: string | null
           submitted_by: string | null
@@ -1453,6 +1488,7 @@ export type Database = {
           payment_due_date?: string | null
           property_id?: string | null
           rejected_reason?: string | null
+          remittance_id?: string | null
           status?: string
           submitted_at?: string | null
           submitted_by?: string | null
@@ -1484,6 +1520,7 @@ export type Database = {
           payment_due_date?: string | null
           property_id?: string | null
           rejected_reason?: string | null
+          remittance_id?: string | null
           status?: string
           submitted_at?: string | null
           submitted_by?: string | null
@@ -1541,6 +1578,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_remittance_id_fkey"
+            columns: ["remittance_id"]
+            isOneToOne: false
+            referencedRelation: "owner_remittances"
             referencedColumns: ["id"]
           },
           {
@@ -2058,7 +2102,7 @@ export type Database = {
           id: string
           item_type: string
           remittance_id: string
-          unit_id: string
+          unit_id: string | null
         }
         Insert: {
           amount: number
@@ -2068,7 +2112,7 @@ export type Database = {
           id?: string
           item_type: string
           remittance_id: string
-          unit_id: string
+          unit_id?: string | null
         }
         Update: {
           amount?: number
@@ -2078,7 +2122,7 @@ export type Database = {
           id?: string
           item_type?: string
           remittance_id?: string
-          unit_id?: string
+          unit_id?: string | null
         }
         Relationships: [
           {
@@ -2106,66 +2150,63 @@ export type Database = {
       }
       owner_remittances: {
         Row: {
-          carryover_from_prev: number
-          carryover_to_next: number
           company_id: string
           created_at: string
           expense_deducted: number
           id: string
           management_fee_deducted: number
+          management_fee_tax: number
           manual_net_amount: number | null
           manual_override: boolean
           net_amount: number
           notes: string | null
+          owner_bill_amount: number
           owner_id: string
           payment_method: string
           remittance_month: string
           sent_date: string | null
           status: string
           total_rent: number
-          transfer_date: string | null
           updated_at: string
         }
         Insert: {
-          carryover_from_prev?: number
-          carryover_to_next?: number
           company_id: string
           created_at?: string
           expense_deducted?: number
           id?: string
           management_fee_deducted?: number
+          management_fee_tax?: number
           manual_net_amount?: number | null
           manual_override?: boolean
           net_amount?: number
           notes?: string | null
+          owner_bill_amount?: number
           owner_id: string
           payment_method?: string
           remittance_month: string
           sent_date?: string | null
           status?: string
           total_rent?: number
-          transfer_date?: string | null
           updated_at?: string
         }
         Update: {
-          carryover_from_prev?: number
-          carryover_to_next?: number
           company_id?: string
           created_at?: string
           expense_deducted?: number
           id?: string
           management_fee_deducted?: number
+          management_fee_tax?: number
           manual_net_amount?: number | null
           manual_override?: boolean
           net_amount?: number
           notes?: string | null
+          owner_bill_amount?: number
           owner_id?: string
           payment_method?: string
           remittance_month?: string
           sent_date?: string | null
           status?: string
           total_rent?: number
-          transfer_date?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2772,6 +2813,7 @@ export type Database = {
           name: string | null
           referrer: string | null
           region: string | null
+          signup_path: string | null
           success: boolean
           user_agent: string | null
           utm_campaign: string | null
@@ -2797,6 +2839,7 @@ export type Database = {
           name?: string | null
           referrer?: string | null
           region?: string | null
+          signup_path?: string | null
           success?: boolean
           user_agent?: string | null
           utm_campaign?: string | null
@@ -2822,6 +2865,7 @@ export type Database = {
           name?: string | null
           referrer?: string | null
           region?: string | null
+          signup_path?: string | null
           success?: boolean
           user_agent?: string | null
           utm_campaign?: string | null
@@ -3524,6 +3568,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

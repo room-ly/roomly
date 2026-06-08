@@ -100,12 +100,12 @@ export default function RemittancesPageClient({ owners, remittances, ownerSummar
                     <td className="num strong" style={{ color: "var(--accent-deep)" }}>
                       ¥{Number(r.net_amount).toLocaleString()}
                       {r.manual_override && <span style={{ fontSize: 10, color: "var(--warn)", marginLeft: 4 }}>手動</span>}
-                      {Number(r.carryover_to_next) > 0 && (
+                      {Number(r.owner_bill_amount) > 0 && (
                         <span
-                          title={`オーナーへ請求（不足分）¥${Number(r.carryover_to_next).toLocaleString()}`}
+                          title={`オーナーへ請求（不足分）¥${Number(r.owner_bill_amount).toLocaleString()}`}
                           style={{ fontSize: 10, color: "var(--warn)", marginLeft: 4 }}
                         >
-                          請求¥{Number(r.carryover_to_next).toLocaleString()}
+                          請求¥{Number(r.owner_bill_amount).toLocaleString()}
                         </span>
                       )}
                     </td>

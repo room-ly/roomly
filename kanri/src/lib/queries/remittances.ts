@@ -5,7 +5,7 @@ export async function getRemittanceDetail(id: string) {
   const supabase = await createClient();
   const [{ data: remittance, error }, { data: items }] = await Promise.all([
     supabase.from("owner_remittances").select("*, owner:owners(id, name, phone, email, bank_name, bank_branch, bank_account_type, bank_account_holder)").eq("id", id).single(),
-    supabase.from("owner_remittance_items").select("*, property:properties(name), unit:units(unit_number)").eq("remittance_id", id).order("created_at"),
+    supabase.from("owner_remittance_items").select("*, unit:units(unit_number)").eq("remittance_id", id).order("created_at"),
   ]);
   if (error || !remittance) return null;
 

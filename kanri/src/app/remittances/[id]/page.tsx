@@ -18,6 +18,14 @@ const accountTypeLabel: Record<string, string> = {
   ordinary: "普通",
 };
 
+const itemTypeLabel: Record<string, string> = {
+  rent: "家賃入金",
+  management_fee: "管理手数料（税抜）",
+  management_fee_tax: "消費税",
+  expense: "経費",
+  adjustment: "調整",
+};
+
 export default async function RemittanceDetailPage({
   params,
 }: {
@@ -33,7 +41,8 @@ export default async function RemittanceDetailPage({
 
   const { remittance, items } = result;
   const owner = remittance.owner;
-  const ownerBill = Number(remittance.carryover_to_next) || 0;
+  const ownerBill = Number(remittance.owner_bill_amount) || 0;
+  const feeTax = Number(remittance.management_fee_tax) || 0;
 
   return (
     <>
@@ -63,9 +72,15 @@ export default async function RemittanceDetailPage({
           <span className="sum-value serif-i">¥{Number(remittance.total_rent).toLocaleString()}</span>
         </div>
         <div className="sum-card" style={{ borderLeft: "3px solid var(--danger)" }}>
-          <span className="sum-label mono">管理手数料</span>
+          <span className="sum-label mono">管理手数料（税抜）</span>
           <span className="sum-value serif-i" style={{ color: "var(--danger)" }}>-¥{Number(remittance.management_fee_deducted).toLocaleString()}</span>
         </div>
+        {feeTax > 0 && (
+          <div className="sum-card" style={{ borderLeft: "3px solid var(--danger)" }}>
+            <span className="sum-label mono">消費税</span>
+            <span className="sum-value serif-i" style={{ color: "var(--danger)" }}>-¥{feeTax.toLocaleString()}</span>
+          </div>
+        )}
         <div className="sum-card" style={{ borderLeft: "3px solid var(--warn)" }}>
           <span className="sum-label mono">費用控除</span>
           <span className="sum-value serif-i" style={{ color: "var(--warn)" }}>
@@ -142,10 +157,10 @@ export default async function RemittanceDetailPage({
                   <div className="field-label mono">状態</div>
                   <div className="field-value"><StatusBadge status={remittance.status} /></div>
                 </div>
-                {remittance.transfer_date && (
+                {remittance.sent_date && (
                   <div className="field">
-                    <div className="field-label mono">振込日</div>
-                    <div className="field-value field-plain mono">{remittance.transfer_date}</div>
+                    <div className="field-label mono">送金日</div>
+                    <div className="field-value field-plain mono">{remittance.sent_date}</div>
                   </div>
                 )}
                 {remittance.manual_override && (
@@ -164,34 +179,38 @@ export default async function RemittanceDetailPage({
             </div>
           </div>
 
-          {/* 物件別明細 */}
+          {/* 送金明細 */}
           {items.length > 0 && (
             <div className="section">
               <div className="section-head-bar">
-                <h2>物件別明細</h2>
+                <h2>送金明細</h2>
                 <span className="desc">{items.length}件</span>
               </div>
               <div className="section-body flush">
                 <table className="tbl">
                   <thead>
                     <tr>
-                      <th>物件</th>
+                      <th>区分</th>
                       <th>部屋</th>
-                      <th style={{ textAlign: "right" }}>家賃</th>
-                      <th style={{ textAlign: "right" }}>手数料</th>
-                      <th style={{ textAlign: "right" }}>差引額</th>
+                      <th>内容</th>
+                      <th style={{ textAlign: "right" }}>金額</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map((item: any) => (
-                      <tr key={item.id}>
-                        <td>{item.property?.name || "—"}</td>
-                        <td className="mono">{item.unit?.unit_number || "—"}</td>
-                        <td className="num">¥{Number(item.rent_amount || 0).toLocaleString()}</td>
-                        <td className="num" style={{ color: "var(--danger)" }}>-¥{Number(item.fee_amount || 0).toLocaleString()}</td>
-                        <td className="num" style={{ fontWeight: 500 }}>¥{Number(item.net_amount || 0).toLocaleString()}</td>
-                      </tr>
-                    ))}
+                    {items.map((item: any) => {
+                      const amt = Number(item.amount || 0);
+                      const negative = amt < 0;
+                      return (
+                        <tr key={item.id}>
+                          <td>{itemTypeLabel[item.item_type] || item.item_type}</td>
+                          <td className="mono">{item.unit?.unit_number || "—"}</td>
+                          <td>{item.description}</td>
+                          <td className="num" style={negative ? { color: "var(--danger)" } : { fontWeight: 500 }}>
+                            {negative ? "-" : ""}¥{Math.abs(amt).toLocaleString()}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

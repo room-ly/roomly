@@ -39,6 +39,10 @@ export default function RemittanceFormModal({
   const [companyBank, setCompanyBank] = useState<Record<string, any> | null>(null);
 
   const isEdit = !!editData;
+  // 確定済み（draft以外）は金額系を編集不可。sent はフォーム全体を編集不可にする。
+  const currentStatus = editData?.status ?? "draft";
+  const moneyLocked = isEdit && currentStatus !== "draft";
+  const fullyLocked = isEdit && currentStatus === "sent";
 
   useEffect(() => {
     if (!isOpen) return;
@@ -126,14 +130,17 @@ export default function RemittanceFormModal({
           status,
           payment_method: paymentMethod,
           notes: notes || null,
-          manual_override: manualOverride,
         };
-        if (manualOverride && manualNet) {
-          body.manual_net_amount = Number(manualNet);
-          body.net_amount = Number(manualNet);
-        } else {
-          body.manual_net_amount = null;
-          body.manual_override = false;
+        // draft のときだけ金額系（手動送金額）を送る。確定済みは金額変更不可（DBトリガでも拒否）。
+        if (!moneyLocked) {
+          body.manual_override = manualOverride;
+          if (manualOverride && manualNet) {
+            body.manual_net_amount = Number(manualNet);
+            body.net_amount = Number(manualNet);
+          } else {
+            body.manual_net_amount = null;
+            body.manual_override = false;
+          }
         }
         const res = await fetch(`/api/remittances/${editData!.id}`, {
           method: "PUT",
@@ -270,29 +277,29 @@ export default function RemittanceFormModal({
                 <span className="tabular-nums">¥{Number(editData?.total_rent).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-ink-3">管理手数料</span>
+                <span className="text-ink-3">管理手数料（税抜）</span>
                 <span className="text-danger tabular-nums">-¥{Number(editData?.management_fee_deducted).toLocaleString()}</span>
               </div>
+              {Number(editData?.management_fee_tax) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-ink-3">消費税</span>
+                  <span className="text-danger tabular-nums">-¥{Number(editData?.management_fee_tax).toLocaleString()}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-ink-3">費用控除</span>
                 <span className="text-warn tabular-nums">
                   {Number(editData?.expense_deducted) > 0 ? `-¥${Number(editData?.expense_deducted).toLocaleString()}` : "—"}
                 </span>
               </div>
-              {Number(editData?.carryover_from_prev) > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-ink-3">前月繰越（未収金）</span>
-                  <span className="text-warn tabular-nums">-¥{Number(editData?.carryover_from_prev).toLocaleString()}</span>
-                </div>
-              )}
               <div className="flex justify-between font-medium border-t border-line pt-1 mt-1">
                 <span>送金額</span>
                 <span className="tabular-nums">¥{Number(editData?.net_amount).toLocaleString()}</span>
               </div>
-              {Number(editData?.carryover_to_next) > 0 && (
+              {Number(editData?.owner_bill_amount) > 0 && (
                 <div className="flex justify-between text-warn">
                   <span>オーナーへ請求（不足分）</span>
-                  <span className="tabular-nums">¥{Number(editData?.carryover_to_next).toLocaleString()}</span>
+                  <span className="tabular-nums">¥{Number(editData?.owner_bill_amount).toLocaleString()}</span>
                 </div>
               )}
             </div>
@@ -306,31 +313,31 @@ export default function RemittanceFormModal({
                 <span className="tabular-nums">¥{Number(calcResult.total_rent).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-ink-3">管理手数料</span>
+                <span className="text-ink-3">管理手数料（税抜）</span>
                 <span className="text-danger tabular-nums">
                   {Number(calcResult.management_fee_deducted) > 0 ? `-¥${Number(calcResult.management_fee_deducted).toLocaleString()}` : "¥0"}
                 </span>
               </div>
+              {Number(calcResult.management_fee_tax) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-ink-3">消費税</span>
+                  <span className="text-danger tabular-nums">-¥{Number(calcResult.management_fee_tax).toLocaleString()}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-ink-3">費用控除（{calcResult.expense_count}件）</span>
                 <span className="text-warn tabular-nums">
                   {Number(calcResult.expense_deducted) > 0 ? `-¥${Number(calcResult.expense_deducted).toLocaleString()}` : "¥0"}
                 </span>
               </div>
-              {Number(calcResult.carryover_from_prev) > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-ink-3">前月繰越（未収金）</span>
-                  <span className="text-warn tabular-nums">-¥{Number(calcResult.carryover_from_prev).toLocaleString()}</span>
-                </div>
-              )}
               <div className="flex justify-between font-medium border-t border-line pt-1 mt-1">
                 <span>送金額</span>
                 <span className="tabular-nums">¥{Number(calcResult.net_amount).toLocaleString()}</span>
               </div>
-              {Number(calcResult.carryover_to_next) > 0 && (
+              {Number(calcResult.owner_bill_amount) > 0 && (
                 <div className="text-warn text-xs mt-1 px-2 py-1 bg-warn-tint rounded space-y-0.5">
                   <div>
-                    ※ 費用が家賃収入を超過。不足分 ¥{Number(calcResult.carryover_to_next).toLocaleString()} はオーナーへ請求します
+                    ※ 費用が家賃収入を超過。不足分 ¥{Number(calcResult.owner_bill_amount).toLocaleString()} はオーナーへ請求します
                   </div>
                   {companyBank && (
                     <div className="text-ink-3">
@@ -385,12 +392,21 @@ export default function RemittanceFormModal({
             )}
           </div>
 
+          {moneyLocked && (
+            <div className="bg-warn-tint text-warn text-xs rounded-lg px-3 py-2">
+              {fullyLocked
+                ? "送金済のため編集できません。状態を下書きに戻すと再編集できます。"
+                : "確定済みのため金額は変更できません。状態を下書きに戻すと金額を再計算・編集できます。"}
+            </div>
+          )}
+
           <div>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className={`flex items-center gap-2 ${moneyLocked ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
               <input
                 type="checkbox"
                 checked={manualOverride}
                 onChange={(e) => setManualOverride(e.target.checked)}
+                disabled={moneyLocked}
                 className="rounded border-line"
               />
               <span className="text-sm text-ink-2">送金額を手動で指定する</span>
@@ -406,7 +422,8 @@ export default function RemittanceFormModal({
                 name="manual_net_amount"
                 type="number"
                 defaultValue={editData?.manual_net_amount ?? ""}
-                className="input"
+                disabled={moneyLocked}
+                className="input disabled:opacity-50"
                 placeholder="例: 150000"
               />
             </div>

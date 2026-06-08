@@ -8,6 +8,12 @@ const ALLOWED_FIELDS = [
   "net_amount", "manual_override", "manual_net_amount",
 ] as const;
 
+// 金額系フィールド（status!='draft' のとき変更不可。DBトリガでも弾く）
+const MONEY_FIELDS = [
+  "total_rent", "management_fee_deducted", "expense_deducted",
+  "net_amount", "manual_override", "manual_net_amount",
+] as const;
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -29,6 +35,24 @@ export async function PUT(
       updateData.sent_date = new Date().toISOString().slice(0, 10);
     }
 
+    // 金額系フィールドを変更しようとしている場合、確定済み（status!='draft'）なら拒否。
+    // DBトリガ lock_sent_remittance でも弾くが、UX のため事前チェックする。
+    const touchesMoney = MONEY_FIELDS.some((k) => body[k] !== undefined);
+    if (touchesMoney) {
+      const { data: current } = await supabase
+        .from("owner_remittances")
+        .select("status")
+        .eq("id", id)
+        .eq("company_id", companyId)
+        .single();
+      if (current && current.status !== "draft") {
+        return NextResponse.json(
+          { error: "確定済みの送金は金額を変更できません" },
+          { status: 409 }
+        );
+      }
+    }
+
     const { data, error } = await supabase
       .from("owner_remittances")
       .update(updateData as TablesUpdate<"owner_remittances">)
@@ -38,6 +62,13 @@ export async function PUT(
       .single();
 
     if (error) {
+      // DBトリガ（金額ロック）が投げる check_violation(23514) を 409 に変換
+      if (error.code === "23514" || /確定済み/.test(error.message ?? "")) {
+        return NextResponse.json(
+          { error: "確定済みの送金は金額を変更できません" },
+          { status: 409 }
+        );
+      }
       return NextResponse.json(
         { error: "送金の更新に失敗しました" },
         { status: 500 }
