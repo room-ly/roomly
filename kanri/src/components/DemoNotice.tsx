@@ -26,21 +26,21 @@ export default function DemoNotice() {
   };
 
   return (
-    <div className="sticky top-0 z-40 border-b border-warning/30 bg-[#fdf6ec] px-5 py-2 text-[12.5px] text-ink-2 leading-relaxed">
+    <div className="sticky top-0 z-40 bg-accent px-5 py-2.5 text-[12.5px] text-white leading-relaxed shadow-sm">
       <div className="flex items-center gap-3">
-        <span className="font-mono text-[10px] tracking-wider px-1.5 py-0.5 rounded-full bg-bg border border-warning/40 text-warning shrink-0">
+        <span className="font-mono text-[10px] tracking-wider px-1.5 py-0.5 rounded-full bg-white/20 text-white shrink-0">
           DEMO
         </span>
-        <p className="flex-1 min-w-0">
+        <p className="flex-1 min-w-0 text-white/90">
           ここはデモ環境です。物件・契約・入居者などを自由に作成・編集・削除して動作確認していただけます。
-          <span className="font-medium text-ink">編集しても料金は一切かかりません。</span>
+          <span className="font-semibold text-white">編集しても料金は一切かかりません。</span>
           データは定期的に初期状態にリセットされるため、操作内容は保存されません。
         </p>
         <button
           type="button"
           onClick={handleSignup}
           disabled={leaving}
-          className="shrink-0 inline-flex items-center gap-1 rounded-md bg-accent px-3 py-1.5 text-[12px] font-medium text-white transition-colors hover:bg-primary disabled:opacity-60"
+          className="shrink-0 inline-flex items-center gap-1 rounded-md bg-white px-3 py-1.5 text-[12px] font-semibold text-accent transition-colors hover:bg-white/90 disabled:opacity-60"
         >
           {leaving ? "移動中…" : "無料で始める →"}
         </button>
