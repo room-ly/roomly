@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -11,23 +11,28 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const isDemo = searchParams.get("demo") === "1";
   const justInvited = searchParams.get("invited") === "1";
-  const [email, setEmail] = useState(isDemo ? "demo@roomly.jp" : "");
-  const [password, setPassword] = useState(isDemo ? "demo1234" : "");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState(
     justInvited ? "パスワードを設定しました。新しいパスワードでログインしてください。" : ""
   );
-  const [loading, setLoading] = useState(false);
+  // デモは中間確認画面を挟まず、着地と同時に自動ログインする。
+  // 「デモを試す」を押した時点で意思表示は済んでいるため、もう一度ボタンを
+  // 押させる確認画面が離脱要因になっていた（demo_click 27 → demo_login 7）。
+  // 自動失敗時のみ手動ボタンにフォールバックする。
+  const [loading, setLoading] = useState(isDemo);
   const [mfaStep, setMfaStep] = useState(false);
   const [mfaCode, setMfaCode] = useState("");
+  const demoAutoTried = useRef(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // email/password を引数で受け取れるようにし、自動ログインからも呼べるようにする
+  const runLogin = async (loginEmail: string, loginPassword: string) => {
     setError("");
     setLoading(true);
     try {
-      const result = await login(email, password);
+      const result = await login(loginEmail, loginPassword);
       if (result.error) {
         if (result.error.includes("上限に達しました")) {
           setError(result.error);
@@ -56,6 +61,20 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await runLogin(email, password);
+  };
+
+  // demo=1 で着地したら自動ログイン（確認画面を挟まない）
+  useEffect(() => {
+    if (isDemo && !demoAutoTried.current && !mfaStep) {
+      demoAutoTried.current = true;
+      void runLogin("demo@roomly.jp", "demo1234");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDemo]);
 
   const handleMfaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,47 +200,45 @@ export default function LoginPage() {
             </>
           ) : isDemo ? (
             <>
-              <div className="text-center mb-6">
-                <h2 className="text-lg font-semibold text-ink">デモを体験する</h2>
-                <p className="text-[13px] text-ink-3 mt-1.5">サンプルデータ入りの管理画面を、いますぐ無料で試せます</p>
-              </div>
+              {/* デモは自動ログイン。通常は読み込み表示のみ。
+                  失敗時のみ手動ボタンにフォールバックする */}
+              {error ? (
+                <>
+                  <div className="text-center mb-6">
+                    <h2 className="text-lg font-semibold text-ink">デモを体験する</h2>
+                    <p className="text-[13px] text-ink-3 mt-1.5">サンプルデータ入りの管理画面を、いますぐ無料で試せます</p>
+                  </div>
 
-              <div className="mb-6 p-4 rounded-lg bg-accent-tint border border-accent/20">
-                <p className="text-[13px] text-ink-2 leading-relaxed">
-                  物件・入居者・契約・家賃管理など、すべての機能を自由に操作いただけます。サンプルデータ入りなので、登録作業なしでそのまま使用感を確認できます。
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-3">
-                {error && (
-                  <div className="p-3 rounded-lg bg-danger-tint text-danger text-[13px]">
+                  <div className="p-3 rounded-lg bg-danger-tint text-danger text-[13px] mb-4">
                     {error}
                   </div>
-                )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 bg-accent text-white rounded-full font-medium text-[14px] transition-colors hover:bg-accent-deep disabled:opacity-70 inline-flex items-center justify-center gap-2"
-                >
-                  {loading && <Loader2 size={16} className="animate-spin" />}
-                  {loading ? "起動中..." : "無料でデモを開始"}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => runLogin("demo@roomly.jp", "demo1234")}
+                    disabled={loading}
+                    className="w-full py-3 bg-accent text-white rounded-full font-medium text-[14px] transition-colors hover:bg-accent-deep disabled:opacity-70 inline-flex items-center justify-center gap-2"
+                  >
+                    {loading && <Loader2 size={16} className="animate-spin" />}
+                    {loading ? "起動中..." : "もう一度デモを開始"}
+                  </button>
 
-                {/* ボタン直下に不安解消の3点を明示。広告流入は熱量が低く、料金・登録・解約の不安が離脱要因になりやすい */}
-                <p className="text-center text-[12px] text-ink-3">
-                  完全無料 ・ 登録不要 ・ クレジットカード不要
-                </p>
-              </form>
-
-              <div className="mt-6 text-center">
-                <a
-                  href="/login"
-                  className="text-[13px] text-ink-3 hover:text-accent transition-colors"
-                >
-                  既存アカウントでログイン
-                </a>
-              </div>
+                  <p className="text-center text-[12px] text-ink-3 mt-3">
+                    完全無料 ・ 登録不要 ・ クレジットカード不要
+                  </p>
+                </>
+              ) : (
+                <div className="text-center py-10">
+                  <Loader2 size={28} className="animate-spin text-accent mx-auto mb-5" />
+                  <h2 className="text-lg font-semibold text-ink">デモを起動しています…</h2>
+                  <p className="text-[13px] text-ink-3 mt-2">
+                    サンプルデータ入りの管理画面をご用意しています。
+                  </p>
+                  <p className="text-center text-[12px] text-ink-3 mt-5">
+                    完全無料 ・ 登録不要 ・ クレジットカード不要
+                  </p>
+                </div>
+              )}
             </>
           ) : (
             <>
