@@ -45,12 +45,17 @@ export default function LoginPage() {
         setLoading(false);
       } else {
         if (isDemo) {
+          // demo_clicks テーブルへ記録（広告流入の referrer/gclid を保存する用途。
+          // GA4 の demo_click とは別物で、ファネル分析の着地ログとして残す）
           navigator.sendBeacon("/api/demo-click");
-          // GA4カスタムイベント（Google広告のCVはここに切り替える）
+          // demo_login = 「実際にデモ環境へ入った」= 広告の真のコンバージョン。
+          // 自動ログイン化で中間画面が消え、HPの demo_click(リンク押下)と
+          // ほぼ同義になったが、読み込み中の離脱を捕捉するため demo_login を
+          // ゴール指標として一本化する。Google広告のキーイベントはこれを使う。
           (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag?.(
             "event",
             "demo_login",
-            { method: "password" }
+            { method: "auto" }
           );
         }
         router.push("/");
