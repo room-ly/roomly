@@ -291,7 +291,7 @@ export default function FeaturesPage() {
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full bg-rm-accent-deep px-[22px] text-[15px] font-medium text-white transition-colors hover:opacity-90">
-              デモを試す
+              会員登録不要でデモを試す
             </a>
             <a href="https://kanri.roomly.jp/signup" className="inline-flex h-12 items-center rounded-full border border-rm-border-strong px-[22px] text-[15px] font-medium text-rm-primary transition-colors hover:bg-rm-surface">
               無料で始める

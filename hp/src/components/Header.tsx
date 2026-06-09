@@ -66,7 +66,7 @@ export function Header() {
             href="https://kanri.roomly.jp/login?demo=1"
             className="inline-flex h-10 items-center rounded-full bg-rm-accent-deep px-[18px] text-[14px] font-medium text-white transition-colors hover:opacity-90"
           >
-            デモを試す
+            会員登録不要でデモを試す
           </a>
           <a
             href="https://kanri.roomly.jp/signup"
@@ -81,7 +81,7 @@ export function Header() {
             href="https://kanri.roomly.jp/login?demo=1"
             className="inline-flex h-9 items-center rounded-full bg-rm-accent-deep px-[14px] text-[13px] font-medium text-white"
           >
-            デモを試す
+            会員登録不要でデモを試す
           </a>
           <button
             onClick={toggleTheme}
@@ -117,7 +117,7 @@ export function Header() {
               href="https://kanri.roomly.jp/login?demo=1"
               className="flex-1 rounded-full bg-rm-accent-deep py-2.5 text-center text-[14px] font-medium text-white"
             >
-              デモを試す
+              会員登録不要でデモを試す
             </a>
             <a
               href="https://kanri.roomly.jp/signup"

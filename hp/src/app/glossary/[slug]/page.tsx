@@ -173,7 +173,7 @@ export default async function GlossaryTermPage({
                 href="https://kanri.roomly.jp/login?demo=1"
                 className="inline-flex h-11 items-center rounded-full bg-rm-bg px-[20px] text-[14px] font-medium text-rm-primary transition-colors hover:bg-rm-accent-tint"
               >
-                デモを試す
+                会員登録不要でデモを試す
               </a>
               <a
                 href="https://kanri.roomly.jp/signup"
