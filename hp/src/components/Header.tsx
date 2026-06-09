@@ -55,13 +55,6 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-2.5 sm:flex">
-          <button
-            onClick={toggleTheme}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rm-border-strong text-rm-text-secondary transition-colors hover:bg-rm-surface"
-            aria-label="テーマ切り替え"
-          >
-            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
           <a
             href="https://kanri.roomly.jp/login?demo=1"
             className="inline-flex h-10 items-center rounded-full bg-rm-accent-deep px-[18px] text-[14px] font-medium text-white transition-colors hover:opacity-90"
@@ -74,6 +67,13 @@ export function Header() {
           >
             無料で始める
           </a>
+          <button
+            onClick={toggleTheme}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rm-border-strong text-rm-text-secondary transition-colors hover:bg-rm-surface"
+            aria-label="テーマ切り替え"
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
         </div>
 
         <div className="flex items-center gap-2 sm:hidden">
