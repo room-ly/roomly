@@ -389,12 +389,184 @@ async function buildContractRenewalNotice() {
   console.log("✓ contract-renewal-notice-template.docx");
 }
 
+// ── 5. オーナー送金明細書 ─────────────────────────
+async function buildOwnerRemittanceStatement() {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "Roomly";
+  const ws = wb.addWorksheet("送金明細書");
+
+  ws.columns = [{ width: 26 }, { width: 16 }, { width: 16 }, { width: 28 }];
+
+  addTitle(ws, "オーナー様 送金明細書", 4);
+  ws.mergeCells(2, 1, 2, 4);
+  ws.getCell(2, 1).value = "対象月：　　　　年　　月分　／　オーナー名：　　　　　　　　様";
+  ws.getCell(2, 1).font = { size: 11, color: { argb: "FF4A5568" } };
+
+  // 入金（収入）ブロック
+  let r = 4;
+  ws.getCell(r, 1).value = "■ 入金（家賃・共益費など）";
+  ws.getCell(r, 1).font = { bold: true, size: 12, color: { argb: NAVY } };
+  r++;
+  const inHeader = r;
+  ws.getRow(inHeader).values = ["項目", "金額", "", "備考"];
+  styleHeaderRow(ws.getRow(inHeader));
+  const inRows = 6;
+  for (let i = 0; i < inRows; i++) ws.getCell(inHeader + 1 + i, 2).numFmt = '#,##0"円"';
+  applyBodyBorders(ws, inHeader + 1, inHeader + inRows, 4);
+  const inTotal = inHeader + inRows + 1;
+  ws.getCell(inTotal, 1).value = "入金合計";
+  ws.getCell(inTotal, 1).font = { bold: true };
+  ws.getCell(inTotal, 2).value = { formula: `SUM(B${inHeader + 1}:B${inHeader + inRows})` };
+  ws.getCell(inTotal, 2).numFmt = '#,##0"円"';
+  ws.getCell(inTotal, 2).font = { bold: true };
+  ws.getCell(inTotal, 1).border = thinBorder;
+  ws.getCell(inTotal, 2).border = thinBorder;
+
+  // 控除（支出）ブロック
+  r = inTotal + 2;
+  ws.getCell(r, 1).value = "■ 差引（管理手数料・修繕費など）";
+  ws.getCell(r, 1).font = { bold: true, size: 12, color: { argb: NAVY } };
+  r++;
+  const outHeader = r;
+  ws.getRow(outHeader).values = ["項目", "金額", "", "備考"];
+  styleHeaderRow(ws.getRow(outHeader));
+  const outRows = 6;
+  for (let i = 0; i < outRows; i++) ws.getCell(outHeader + 1 + i, 2).numFmt = '#,##0"円"';
+  applyBodyBorders(ws, outHeader + 1, outHeader + outRows, 4);
+  const outTotal = outHeader + outRows + 1;
+  ws.getCell(outTotal, 1).value = "差引合計";
+  ws.getCell(outTotal, 1).font = { bold: true };
+  ws.getCell(outTotal, 2).value = { formula: `SUM(B${outHeader + 1}:B${outHeader + outRows})` };
+  ws.getCell(outTotal, 2).numFmt = '#,##0"円"';
+  ws.getCell(outTotal, 2).font = { bold: true };
+  ws.getCell(outTotal, 1).border = thinBorder;
+  ws.getCell(outTotal, 2).border = thinBorder;
+
+  // 送金額
+  const remitRow = outTotal + 2;
+  ws.getCell(remitRow, 1).value = "お振込金額（入金合計 − 差引合計）";
+  ws.getCell(remitRow, 1).font = { bold: true, size: 12, color: { argb: NAVY } };
+  ws.getCell(remitRow, 2).value = { formula: `B${inTotal}-B${outTotal}` };
+  ws.getCell(remitRow, 2).numFmt = '#,##0"円"';
+  ws.getCell(remitRow, 2).font = { bold: true, size: 12, color: { argb: NAVY } };
+  for (const c of [1, 2]) {
+    ws.getCell(remitRow, c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: NAVY_LIGHT } };
+    ws.getCell(remitRow, c).border = thinBorder;
+  }
+  ws.mergeCells(remitRow + 2, 1, remitRow + 2, 4);
+  ws.getCell(remitRow + 2, 1).value = "お振込予定日：　　　　年　　月　　日　／　振込先：　　　　　　　　";
+  ws.getCell(remitRow + 2, 1).font = { size: 10, color: { argb: "FF4A5568" } };
+
+  addCredit(ws, remitRow + 4, 4);
+
+  await wb.xlsx.writeFile(join(OUT_DIR, "owner-remittance-statement-template.xlsx"));
+  console.log("✓ owner-remittance-statement-template.xlsx");
+}
+
+// ── 6. 家賃滞納 督促状（Word） ─────────────────────
+async function buildRentDemandLetter() {
+  const accent = "1A365D";
+  const gray = "718096";
+  const p = (children, opts = {}) =>
+    new Paragraph({ spacing: { after: 160 }, children, ...opts });
+  const run = (text, opts = {}) => new TextRun({ text, font: "Yu Gothic", size: 21, ...opts });
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: { page: { margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 } } },
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            spacing: { after: 80 },
+            children: [run("　　　　年　　月　　日", { color: gray })],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 320 },
+            heading: HeadingLevel.HEADING_1,
+            children: [run("家賃お支払いのお願い", { bold: true, size: 32, color: accent })],
+          }),
+          p([run("　　　　　　　　　　　様")]),
+          p([
+            run(
+              "平素より当物件をご利用いただきありがとうございます。さて、下記のとおり家賃のお支払いが確認できておりません。お忙しいところ恐れ入りますが、ご確認のうえ、お早めにお振込みくださいますようお願い申し上げます。"
+            ),
+          ]),
+          p([
+            run(
+              "本書面と行き違いでお支払いいただいている場合は、何卒ご容赦ください。",
+              { color: gray, size: 19 }
+            ),
+          ]),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 200, after: 160 },
+            children: [run("記", { bold: true })],
+          }),
+          ...[
+            ["物件名・部屋番号", "　"],
+            ["未払いの対象月", "　　　　年　　月分　（　　　　年　　月分まで）"],
+            ["未払い額（税込）", "　　　　　　円"],
+            ["お支払い期限", "　　　　年　　月　　日"],
+            ["お振込先", "　　　　銀行　　　　支店　普通　　　　　　　　　"],
+          ].map(
+            ([k, v]) =>
+              new Paragraph({
+                spacing: { after: 120 },
+                children: [run("● " + k + "：", { bold: true }), run(v)],
+              })
+          ),
+          new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            spacing: { before: 120, after: 200 },
+            children: [run("以上", { bold: true })],
+          }),
+          p([
+            run(
+              "ご事情によりお支払いが難しい場合は、今後のお支払いについてご相談させていただきますので、下記まで早めにご連絡ください。ご連絡なくお支払いがない場合、連帯保証人・保証会社へのご連絡など、次の手続きに進む場合がございます。"
+            ),
+          ]),
+          new Paragraph({
+            spacing: { before: 320 },
+            alignment: AlignmentType.RIGHT,
+            children: [run("管理会社名：　　　　　　　　　　", { color: accent })],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            children: [run("担当：　　　　　　　TEL：　　　　　　　　　", { color: accent })],
+          }),
+          new Paragraph({
+            spacing: { before: 400 },
+            alignment: AlignmentType.LEFT,
+            children: [
+              new TextRun({
+                text: "本テンプレートは Roomly（hp.roomly.jp）が無料提供しています。",
+                font: "Yu Gothic",
+                size: 16,
+                italics: true,
+                color: gray,
+              }),
+            ],
+          }),
+        ],
+      },
+    ],
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  await writeFile(join(OUT_DIR, "rent-demand-letter-template.docx"), buffer);
+  console.log("✓ rent-demand-letter-template.docx");
+}
+
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   await buildRentLedger();
   await buildMoveOutSettlement();
   await buildRestorationBurdenSheet();
   await buildContractRenewalNotice();
+  await buildOwnerRemittanceStatement();
+  await buildRentDemandLetter();
   console.log("\nすべてのテンプレートを生成しました → public/templates/");
 }
 

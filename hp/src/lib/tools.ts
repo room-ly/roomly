@@ -77,6 +77,22 @@ export const TEMPLATE_TOOLS: TemplateTool[] = [
     file: "contract-renewal-notice-template.docx",
     format: "Word",
   },
+  {
+    slug: "owner-remittance-statement-template",
+    title: "オーナー送金明細書テンプレート（Excel・無料）",
+    description:
+      "オーナーへの月次送金額を、入金（家賃・共益費）と差引（管理手数料・修繕費）から自動計算する送金明細書のExcelテンプレート。",
+    file: "owner-remittance-statement-template.xlsx",
+    format: "Excel",
+  },
+  {
+    slug: "rent-demand-letter-template",
+    title: "家賃督促状テンプレート（Word・無料）",
+    description:
+      "家賃滞納の入居者へ送る督促状（お支払いのお願い）のWord文書テンプレート。対象月・未払い額・支払い期限の記入欄つき。初回向けの穏当な文面です。",
+    file: "rent-demand-letter-template.docx",
+    format: "Word",
+  },
 ];
 
 export function getTemplateBySlug(slug: string): TemplateTool | undefined {
