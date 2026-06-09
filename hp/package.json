@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "gen:templates": "node scripts/generate-templates.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
@@ -28,8 +29,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "docx": "^9.7.1",
     "eslint": "^10",
     "eslint-config-next": "16.2.7",
+    "exceljs": "^4.4.0",
     "tailwindcss": "^4",
     "typescript": "^6"
   }

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getAllArticles } from "@/lib/media";
 import { getAllTerms } from "@/lib/glossary";
+import { getAllToolSlugs } from "@/lib/tools";
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://hp.roomly.jp";
   const posts = getAllArticles();
@@ -36,6 +37,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
   const featurePages = featureSlugs.map((slug) => ({
     url: `${baseUrl}/features/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
+
+  // /tools 配下（計算ツール + ダウンロードテンプレート）は lib/tools.ts から自動生成
+  const toolPages = getAllToolSlugs().map((slug) => ({
+    url: `${baseUrl}/tools/${slug}`,
     lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.8,
@@ -85,30 +94,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/tools/management-fee`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/tools/restoration-burden`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/tools/vacancy-loss`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/tools/self-vs-outsource`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
       url: `${baseUrl}/about`,
       lastModified: new Date(),
       changeFrequency: "monthly",
@@ -127,6 +112,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     },
     ...featurePages,
+    ...toolPages,
     ...columnPages,
     ...glossaryPages,
   ];
