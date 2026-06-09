@@ -131,7 +131,7 @@ export default function Home() {
           </Reveal>
           <div className="mt-12 flex flex-col items-center gap-3">
             <a href="https://kanri.roomly.jp/login?demo=1" className="inline-flex h-12 items-center rounded-full bg-rm-accent-deep px-[26px] text-[15px] font-medium text-white transition-colors hover:opacity-90">
-              いますぐデモを試す
+              会員登録不要でいますぐデモを試す
             </a>
             <p className="text-[12px] text-rm-text-muted">会員登録不要・1分で起動・すべての機能を操作できます</p>
           </div>
