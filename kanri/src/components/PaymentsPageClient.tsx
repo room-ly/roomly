@@ -228,7 +228,7 @@ export default function PaymentsPageClient({ remittances, expenses }: PaymentsPa
                   ? <CheckSquare size={16} />
                   : <Square size={16} />}
               </button>
-              <span className="text-sm font-semibold">費用支払い</span>
+              <span className="text-sm font-semibold">業者への費用支払い</span>
               <span className="text-xs text-ink-3">{selectedExpenseIds.size}/{expenses.length}件選択</span>
             </div>
           </div>
@@ -273,7 +273,8 @@ export default function PaymentsPageClient({ remittances, expenses }: PaymentsPa
       {remittances.length === 0 && expenses.length === 0 && (
         <div className="card p-10 text-center text-ink-3">
           出力対象の支払いデータがありません。<br />
-          費用に支払先を設定するか、送金を確定してください。
+          費用支払いに出すには、支払先を設定し・承認済みで・未払い（支払日が空）・「管理会社が支払う」の費用である必要があります。<br />
+          オーナー送金を出すには、送金を確定してください。
         </div>
       )}
 

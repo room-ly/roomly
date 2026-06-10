@@ -51,6 +51,8 @@ export async function POST(request: NextRequest) {
       label: string;
     }[] = [];
     const skipped: string[] = [];
+    // CSVに実際に含めた費用ID（口座不足でskipしたものは除く）。出力成功後に paid_at を記録する
+    const paidExpenseIds: string[] = [];
 
     // オーナー送金
     if (hasRemittances) {
@@ -109,6 +111,7 @@ export async function POST(request: NextRequest) {
           amount: Number(e.amount),
           label: `費用: ${e.description}`,
         });
+        paidExpenseIds.push(e.id as string);
       }
     }
 
@@ -135,6 +138,17 @@ export async function POST(request: NextRequest) {
       },
       transfers
     );
+
+    // CSVに含めた費用を「支払済み」にして二重振込を防ぐ。
+    // 既に paid_at が入っているもの（別経路で支払済み）は上書きしない。
+    if (paidExpenseIds.length > 0) {
+      await supabase
+        .from("expenses")
+        .update({ paid_at: transfer_date })
+        .in("id", paidExpenseIds)
+        .eq("company_id", company_id)
+        .is("paid_at", null);
+    }
 
     const headers = new Headers();
     headers.set("Content-Type", "application/octet-stream");
