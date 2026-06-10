@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import TemplatePage, { TemplateSection } from "../TemplatePage";
 import { getTemplateBySlug } from "@/lib/tools";
 
-const tool = getTemplateBySlug("key-receipt-template")!;
+const tool = getTemplateBySlug("key-receipt")!;
 
 export const metadata: Metadata = {
   title: "鍵預かり証テンプレート（Word・無料ダウンロード）",
   description:
     "内見・工事・退去立会いなどで鍵を預かる際に発行する鍵預かり証の無料Wordテンプレート。鍵の種類・本数・お預かり日・返却予定日・署名欄つきで、そのまま印刷して使えます。",
-  alternates: { canonical: `/tools/${tool.slug}` },
+  alternates: { canonical: `/templates/${tool.slug}` },
   openGraph: {
     title: "鍵預かり証テンプレート（Word・無料） | Roomly",
     description:
       "内見・工事・退去立会いなどで鍵を預かる際に発行する鍵預かり証の無料Wordテンプレート。",
     type: "website",
-    url: `https://hp.roomly.jp/tools/${tool.slug}`,
+    url: `https://hp.roomly.jp/templates/${tool.slug}`,
     siteName: "Roomly",
     locale: "ja_JP",
   },

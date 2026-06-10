@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import TemplatePage, { TemplateSection } from "../TemplatePage";
 import { getTemplateBySlug } from "@/lib/tools";
 
-const tool = getTemplateBySlug("contract-renewal-notice-template")!;
+const tool = getTemplateBySlug("contract-renewal-notice")!;
 
 export const metadata: Metadata = {
   title: "契約更新通知テンプレート（Word・無料ダウンロード）",
   description:
     "賃貸借契約の更新案内を入居者へ送るための無料Wordテンプレート。契約期間・更新後の家賃・更新料・返送期日の記入欄つきで、印刷・郵送にそのまま使えます。",
-  alternates: { canonical: `/tools/${tool.slug}` },
+  alternates: { canonical: `/templates/${tool.slug}` },
   openGraph: {
     title: "契約更新通知テンプレート（Word・無料） | Roomly",
     description:
       "賃貸借契約の更新案内を入居者へ送るための無料Wordテンプレート。契約期間・更新料・返送期日の記入欄つき。",
     type: "website",
-    url: `https://hp.roomly.jp/tools/${tool.slug}`,
+    url: `https://hp.roomly.jp/templates/${tool.slug}`,
     siteName: "Roomly",
     locale: "ja_JP",
   },

@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import TemplatePage, { TemplateSection } from "../TemplatePage";
 import { getTemplateBySlug } from "@/lib/tools";
 
-const tool = getTemplateBySlug("move-in-checklist-template")!;
+const tool = getTemplateBySlug("move-in-checklist")!;
 
 export const metadata: Metadata = {
   title: "入居時チェックリスト テンプレート（Excel・無料ダウンロード）",
   description:
     "入居時に部屋・設備の状態を場所ごとに点検し、既存の傷・汚れを記録する無料Excelテンプレート。退去時の原状回復トラブルを防ぐ証拠として使えます。署名欄つき。",
-  alternates: { canonical: `/tools/${tool.slug}` },
+  alternates: { canonical: `/templates/${tool.slug}` },
   openGraph: {
     title: "入居時チェックリスト テンプレート（Excel・無料） | Roomly",
     description:
       "入居時に部屋・設備の状態を場所ごとに点検し、既存の傷・汚れを記録する無料Excelテンプレート。",
     type: "website",
-    url: `https://hp.roomly.jp/tools/${tool.slug}`,
+    url: `https://hp.roomly.jp/templates/${tool.slug}`,
     siteName: "Roomly",
     locale: "ja_JP",
   },

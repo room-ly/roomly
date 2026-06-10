@@ -43,6 +43,7 @@ export function Footer() {
               <Link href="/column" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">コラム</Link>
               <Link href="/glossary" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">用語集</Link>
               <Link href="/tools" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">計算ツール</Link>
+              <Link href="/templates" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">テンプレート集</Link>
               <Link href="/faq" className="block text-[14px] text-rm-text-secondary hover:text-rm-primary transition-colors">よくある質問</Link>
             </div>
           </div>

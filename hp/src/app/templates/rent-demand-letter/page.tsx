@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import TemplatePage, { TemplateSection } from "../TemplatePage";
 import { getTemplateBySlug } from "@/lib/tools";
 
-const tool = getTemplateBySlug("rent-demand-letter-template")!;
+const tool = getTemplateBySlug("rent-demand-letter")!;
 
 export const metadata: Metadata = {
   title: "家賃督促状テンプレート（Word・無料ダウンロード）",
   description:
     "家賃滞納の入居者へ送る督促状（お支払いのお願い）の無料Wordテンプレート。対象月・未払い額・支払い期限の記入欄つき。初回向けの穏当な文面で、そのまま印刷・郵送できます。",
-  alternates: { canonical: `/tools/${tool.slug}` },
+  alternates: { canonical: `/templates/${tool.slug}` },
   openGraph: {
     title: "家賃督促状テンプレート（Word・無料） | Roomly",
     description:
       "家賃滞納の入居者へ送る督促状（お支払いのお願い）の無料Wordテンプレート。初回向けの穏当な文面。",
     type: "website",
-    url: `https://hp.roomly.jp/tools/${tool.slug}`,
+    url: `https://hp.roomly.jp/templates/${tool.slug}`,
     siteName: "Roomly",
     locale: "ja_JP",
   },

@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import TemplatePage, { TemplateSection } from "../TemplatePage";
 import { getTemplateBySlug } from "@/lib/tools";
 
-const tool = getTemplateBySlug("move-out-settlement-template")!;
+const tool = getTemplateBySlug("move-out-settlement")!;
 
 export const metadata: Metadata = {
   title: "退去精算書テンプレート（Excel・無料ダウンロード）",
   description:
     "敷金からの控除明細と返還額を自動計算する退去精算書（敷金精算書）の無料Excelテンプレート。国交省ガイドライン準拠の注記つきで、敷金トラブルを防ぐ書式です。",
-  alternates: { canonical: `/tools/${tool.slug}` },
+  alternates: { canonical: `/templates/${tool.slug}` },
   openGraph: {
     title: "退去精算書テンプレート（Excel・無料） | Roomly",
     description:
       "敷金からの控除明細と返還額を自動計算する退去精算書（敷金精算書）の無料Excelテンプレート。国交省ガイドライン準拠。",
     type: "website",
-    url: `https://hp.roomly.jp/tools/${tool.slug}`,
+    url: `https://hp.roomly.jp/templates/${tool.slug}`,
     siteName: "Roomly",
     locale: "ja_JP",
   },

@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import TemplatePage, { TemplateSection } from "../TemplatePage";
 import { getTemplateBySlug } from "@/lib/tools";
 
-const tool = getTemplateBySlug("owner-remittance-statement-template")!;
+const tool = getTemplateBySlug("owner-remittance-statement")!;
 
 export const metadata: Metadata = {
   title: "オーナー送金明細書テンプレート（Excel・無料ダウンロード）",
   description:
     "オーナーへの月次送金額を、家賃などの入金と管理手数料・修繕費などの差引から自動計算する送金明細書の無料Excelテンプレート。賃貸管理会社の月次精算にそのまま使えます。",
-  alternates: { canonical: `/tools/${tool.slug}` },
+  alternates: { canonical: `/templates/${tool.slug}` },
   openGraph: {
     title: "オーナー送金明細書テンプレート（Excel・無料） | Roomly",
     description:
       "オーナーへの月次送金額を入金と差引から自動計算する送金明細書の無料Excelテンプレート。",
     type: "website",
-    url: `https://hp.roomly.jp/tools/${tool.slug}`,
+    url: `https://hp.roomly.jp/templates/${tool.slug}`,
     siteName: "Roomly",
     locale: "ja_JP",
   },

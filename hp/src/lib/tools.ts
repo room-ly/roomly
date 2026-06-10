@@ -1,5 +1,5 @@
-// /tools 配下のツール・テンプレートを一元管理する定義。
-// tools一覧ページ・sitemap・各ページがここを参照する（slug追加漏れ防止）。
+// 計算ツール（/tools）とダウンロードテンプレート（/templates）を一元管理する定義。
+// 一覧ページ・sitemap・各ページ・301リダイレクトがここを参照する（slug追加漏れ防止）。
 
 export interface CalculatorTool {
   slug: string;
@@ -8,14 +8,15 @@ export interface CalculatorTool {
 }
 
 export interface TemplateTool {
-  slug: string; // /tools/{slug} のページ
+  slug: string; // /templates/{slug} のページ
+  oldSlug: string; // 旧 /tools/{oldSlug}（301リダイレクト元）
   title: string;
   description: string;
   file: string; // public/templates/ 配下のファイル名
   format: "Excel" | "Word";
 }
 
-// インタラクティブな計算ツール
+// インタラクティブな計算ツール（/tools 配下）
 export const CALCULATOR_TOOLS: CalculatorTool[] = [
   {
     slug: "management-fee",
@@ -43,10 +44,11 @@ export const CALCULATOR_TOOLS: CalculatorTool[] = [
   },
 ];
 
-// ダウンロードできるテンプレート（Excel / Word）
+// ダウンロードできるテンプレート（/templates 配下・Excel / Word）
 export const TEMPLATE_TOOLS: TemplateTool[] = [
   {
-    slug: "rent-ledger-template",
+    slug: "rent-ledger",
+    oldSlug: "rent-ledger-template",
     title: "家賃管理表テンプレート（Excel・無料）",
     description:
       "部屋ごとの家賃・管理費・入金状況を月次で管理できるExcelテンプレート。請求額・入金状態・合計を自動計算します。",
@@ -54,7 +56,8 @@ export const TEMPLATE_TOOLS: TemplateTool[] = [
     format: "Excel",
   },
   {
-    slug: "move-out-settlement-template",
+    slug: "move-out-settlement",
+    oldSlug: "move-out-settlement-template",
     title: "退去精算書テンプレート（Excel・無料）",
     description:
       "敷金からの控除明細と返還額を自動計算する退去精算書（敷金精算書）のExcelテンプレート。国交省ガイドライン準拠の注記つき。",
@@ -62,7 +65,8 @@ export const TEMPLATE_TOOLS: TemplateTool[] = [
     format: "Excel",
   },
   {
-    slug: "restoration-burden-template",
+    slug: "restoration-burden-sheet",
+    oldSlug: "restoration-burden-template",
     title: "原状回復 負担割合表テンプレート（Excel・無料）",
     description:
       "国交省ガイドラインの耐用年数早見表と、入居年数から入居者負担額を自動按分する計算表をまとめたExcelテンプレート。",
@@ -70,7 +74,8 @@ export const TEMPLATE_TOOLS: TemplateTool[] = [
     format: "Excel",
   },
   {
-    slug: "contract-renewal-notice-template",
+    slug: "contract-renewal-notice",
+    oldSlug: "contract-renewal-notice-template",
     title: "契約更新通知テンプレート（Word・無料）",
     description:
       "賃貸借契約の更新案内を入居者へ送るためのWord文書テンプレート。契約期間・更新料・返送期日の記入欄つきで、印刷・郵送にそのまま使えます。",
@@ -78,7 +83,8 @@ export const TEMPLATE_TOOLS: TemplateTool[] = [
     format: "Word",
   },
   {
-    slug: "owner-remittance-statement-template",
+    slug: "owner-remittance-statement",
+    oldSlug: "owner-remittance-statement-template",
     title: "オーナー送金明細書テンプレート（Excel・無料）",
     description:
       "オーナーへの月次送金額を、入金（家賃・共益費）と差引（管理手数料・修繕費）から自動計算する送金明細書のExcelテンプレート。",
@@ -86,7 +92,8 @@ export const TEMPLATE_TOOLS: TemplateTool[] = [
     format: "Excel",
   },
   {
-    slug: "rent-demand-letter-template",
+    slug: "rent-demand-letter",
+    oldSlug: "rent-demand-letter-template",
     title: "家賃督促状テンプレート（Word・無料）",
     description:
       "家賃滞納の入居者へ送る督促状（お支払いのお願い）のWord文書テンプレート。対象月・未払い額・支払い期限の記入欄つき。初回向けの穏当な文面です。",
@@ -94,7 +101,8 @@ export const TEMPLATE_TOOLS: TemplateTool[] = [
     format: "Word",
   },
   {
-    slug: "property-list-template",
+    slug: "property-list",
+    oldSlug: "property-list-template",
     title: "物件一覧表テンプレート（Excel・無料）",
     description:
       "物件・部屋ごとに間取り・家賃・入居状況・契約期間・オーナーをまとめて管理できるExcelテンプレート。合計戸数と家賃合計を自動集計します。",
@@ -102,7 +110,8 @@ export const TEMPLATE_TOOLS: TemplateTool[] = [
     format: "Excel",
   },
   {
-    slug: "move-in-checklist-template",
+    slug: "move-in-checklist",
+    oldSlug: "move-in-checklist-template",
     title: "入居時チェックリスト テンプレート（Excel・無料）",
     description:
       "入居時に部屋・設備の状態を場所ごとに点検し、既存の傷・汚れを記録するExcelテンプレート。退去時の原状回復トラブルを防ぐ証拠になります。",
@@ -110,7 +119,8 @@ export const TEMPLATE_TOOLS: TemplateTool[] = [
     format: "Excel",
   },
   {
-    slug: "key-receipt-template",
+    slug: "key-receipt",
+    oldSlug: "key-receipt-template",
     title: "鍵預かり証テンプレート（Word・無料）",
     description:
       "内見・工事・退去立会いなどで鍵を預かる際に発行する鍵預かり証のWord文書テンプレート。鍵の種類・本数・返却予定日・署名欄つき。",
@@ -123,10 +133,20 @@ export function getTemplateBySlug(slug: string): TemplateTool | undefined {
   return TEMPLATE_TOOLS.find((t) => t.slug === slug);
 }
 
-// sitemap用: /tools 配下の全slug
-export function getAllToolSlugs(): string[] {
-  return [
-    ...CALCULATOR_TOOLS.map((t) => t.slug),
-    ...TEMPLATE_TOOLS.map((t) => t.slug),
-  ];
+// sitemap用: /tools 配下の計算ツール全slug
+export function getCalculatorSlugs(): string[] {
+  return CALCULATOR_TOOLS.map((t) => t.slug);
+}
+
+// sitemap用: /templates 配下のテンプレート全slug
+export function getTemplateSlugs(): string[] {
+  return TEMPLATE_TOOLS.map((t) => t.slug);
+}
+
+// 旧 /tools/{oldSlug}-template → 新 /templates/{slug} の301リダイレクト定義
+export function getTemplateRedirects(): { source: string; destination: string }[] {
+  return TEMPLATE_TOOLS.map((t) => ({
+    source: `/tools/${t.oldSlug}`,
+    destination: `/templates/${t.slug}`,
+  }));
 }

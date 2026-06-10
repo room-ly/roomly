@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getAllArticles } from "@/lib/media";
 import { getAllTerms } from "@/lib/glossary";
-import { getAllToolSlugs } from "@/lib/tools";
+import { getCalculatorSlugs, getTemplateSlugs } from "@/lib/tools";
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://hp.roomly.jp";
   const posts = getAllArticles();
@@ -42,9 +42,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  // /tools 配下（計算ツール + ダウンロードテンプレート）は lib/tools.ts から自動生成
-  const toolPages = getAllToolSlugs().map((slug) => ({
+  // /tools 配下（計算ツール）は lib/tools.ts から自動生成
+  const toolPages = getCalculatorSlugs().map((slug) => ({
     url: `${baseUrl}/tools/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
+
+  // /templates 配下（ダウンロードテンプレート）は lib/tools.ts から自動生成
+  const templatePages = getTemplateSlugs().map((slug) => ({
+    url: `${baseUrl}/templates/${slug}`,
     lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.8,
@@ -94,6 +102,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/templates`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/about`,
       lastModified: new Date(),
       changeFrequency: "monthly",
@@ -113,6 +127,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     ...featurePages,
     ...toolPages,
+    ...templatePages,
     ...columnPages,
     ...glossaryPages,
   ];

@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import TemplatePage, { TemplateSection } from "../TemplatePage";
 import { getTemplateBySlug } from "@/lib/tools";
 
-const tool = getTemplateBySlug("restoration-burden-template")!;
+const tool = getTemplateBySlug("restoration-burden-sheet")!;
 
 export const metadata: Metadata = {
   title: "原状回復 負担割合表テンプレート（Excel・無料ダウンロード）",
   description:
     "国交省ガイドラインの耐用年数早見表と、入居年数から入居者負担額を自動按分する計算表をまとめた無料Excelテンプレート。退去時の原状回復費用の負担割合を明確にできます。",
-  alternates: { canonical: `/tools/${tool.slug}` },
+  alternates: { canonical: `/templates/${tool.slug}` },
   openGraph: {
     title: "原状回復 負担割合表テンプレート（Excel・無料） | Roomly",
     description:
       "国交省ガイドラインの耐用年数早見表と、入居年数から入居者負担額を自動按分する計算表をまとめた無料Excelテンプレート。",
     type: "website",
-    url: `https://hp.roomly.jp/tools/${tool.slug}`,
+    url: `https://hp.roomly.jp/templates/${tool.slug}`,
     siteName: "Roomly",
     locale: "ja_JP",
   },

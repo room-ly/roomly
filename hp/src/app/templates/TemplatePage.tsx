@@ -26,7 +26,7 @@ export default function TemplatePage({
   ctaHeading,
   ctaText,
 }: TemplatePageProps) {
-  const url = `https://hp.roomly.jp/tools/${tool.slug}`;
+  const url = `https://hp.roomly.jp/templates/${tool.slug}`;
   const fileUrl = `/templates/${tool.file}`;
 
   const breadcrumbJsonLd = {
@@ -34,7 +34,7 @@ export default function TemplatePage({
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "トップ", item: "https://hp.roomly.jp" },
-      { "@type": "ListItem", position: 2, name: "ツール・テンプレート", item: "https://hp.roomly.jp/tools" },
+      { "@type": "ListItem", position: 2, name: "テンプレート", item: "https://hp.roomly.jp/templates" },
       { "@type": "ListItem", position: 3, name: tool.title, item: url },
     ],
   };
@@ -51,7 +51,7 @@ export default function TemplatePage({
           <nav className="mb-8 text-[13px] text-rm-text-muted">
             <Link href="/" className="transition-colors hover:text-rm-accent-deep">トップ</Link>
             <span className="mx-2">/</span>
-            <Link href="/tools" className="transition-colors hover:text-rm-accent-deep">ツール・テンプレート</Link>
+            <Link href="/templates" className="transition-colors hover:text-rm-accent-deep">テンプレート</Link>
             <span className="mx-2">/</span>
             <span className="text-rm-text-secondary">{tool.title}</span>
           </nav>

@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import TemplatePage, { TemplateSection } from "../TemplatePage";
 import { getTemplateBySlug } from "@/lib/tools";
 
-const tool = getTemplateBySlug("property-list-template")!;
+const tool = getTemplateBySlug("property-list")!;
 
 export const metadata: Metadata = {
   title: "物件一覧表テンプレート（Excel・無料ダウンロード）",
   description:
     "物件・部屋ごとに間取り・家賃・入居状況・契約期間・オーナーをまとめて管理できる無料Excelテンプレート。合計戸数と家賃合計を自動集計。賃貸の物件管理にそのまま使えます。",
-  alternates: { canonical: `/tools/${tool.slug}` },
+  alternates: { canonical: `/templates/${tool.slug}` },
   openGraph: {
     title: "物件一覧表テンプレート（Excel・無料） | Roomly",
     description:
       "物件・部屋ごとに間取り・家賃・入居状況・契約期間・オーナーをまとめて管理できる無料Excelテンプレート。",
     type: "website",
-    url: `https://hp.roomly.jp/tools/${tool.slug}`,
+    url: `https://hp.roomly.jp/templates/${tool.slug}`,
     siteName: "Roomly",
     locale: "ja_JP",
   },

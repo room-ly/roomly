@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import TemplatePage, { TemplateSection } from "../TemplatePage";
 import { getTemplateBySlug } from "@/lib/tools";
 
-const tool = getTemplateBySlug("rent-ledger-template")!;
+const tool = getTemplateBySlug("rent-ledger")!;
 
 export const metadata: Metadata = {
   title: "家賃管理表テンプレート（Excel・無料ダウンロード）",
   description:
     "部屋ごとの家賃・管理費・入金状況を月次で管理できる無料Excelテンプレート。請求額・入金状態・合計を自動計算。賃貸の家賃管理表・物件管理表としてそのまま使えます。",
-  alternates: { canonical: `/tools/${tool.slug}` },
+  alternates: { canonical: `/templates/${tool.slug}` },
   openGraph: {
     title: "家賃管理表テンプレート（Excel・無料） | Roomly",
     description:
       "部屋ごとの家賃・管理費・入金状況を月次で管理できる無料Excelテンプレート。請求額・入金状態・合計を自動計算します。",
     type: "website",
-    url: `https://hp.roomly.jp/tools/${tool.slug}`,
+    url: `https://hp.roomly.jp/templates/${tool.slug}`,
     siteName: "Roomly",
     locale: "ja_JP",
   },
