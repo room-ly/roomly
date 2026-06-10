@@ -12,7 +12,9 @@ import DepositBalancePanel from "@/components/DepositBalancePanel";
 import {
   EXPENSE_STATUS_LABELS,
   TAX_CATEGORY_LABELS,
+  PAID_BY_LABELS,
   type ExpenseStatus,
+  type PaidBy,
   type TaxCategory,
 } from "@/lib/schemas-expense";
 
@@ -48,6 +50,7 @@ export default async function ExpenseDetailPage({
   const isApprover = !!approver && !!me && approver.id === me.user_id;
   const status = (expense.status as ExpenseStatus) || "draft";
   const taxCategory = (expense.tax_category as TaxCategory) || "taxable";
+  const paidBy = (expense.paid_by as PaidBy) || "company";
   const allocations = (expense.allocations ?? []) as any[];
   const depositTxs = (expense.deposit_transactions ?? []) as any[];
 
@@ -104,10 +107,13 @@ export default async function ExpenseDetailPage({
                 自社 ¥{Number(expense.company_amount).toLocaleString()}
               </span>
             )}
+            {paidBy === "owner_direct" && (
+              <span className="charge-tag">オーナー直接払い</span>
+            )}
           </div>
         </div>
         <div className="detail-header-actions" style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          {expense.payee?.id && (
+          {expense.payee?.id && expense.paid_by !== "owner_direct" && (
             <a
               href={`/api/expenses/${expense.id}/payment-instruction`}
               target="_blank"
@@ -272,6 +278,10 @@ export default async function ExpenseDetailPage({
                 <div className="field">
                   <div className="field-label mono">内容</div>
                   <div className="field-value field-plain">{expense.description}</div>
+                </div>
+                <div className="field">
+                  <div className="field-label mono">支払い方法</div>
+                  <div className="field-value field-plain">{PAID_BY_LABELS[paidBy]}</div>
                 </div>
                 {expense.payment_due_date && (
                   <div className="field">

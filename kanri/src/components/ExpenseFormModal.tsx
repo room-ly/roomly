@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { X, Loader2 } from "lucide-react";
 import {
   expenseSchema,
+  PAID_BY_OPTIONS,
+  PAID_BY_LABELS,
   type AllocationMethod,
+  type PaidBy,
   type TaxCategory,
 } from "@/lib/schemas-expense";
 import type { ZodError } from "zod";
@@ -82,6 +85,7 @@ export default function ExpenseFormModal({
   );
   const [paymentDueDate, setPaymentDueDate] = useState(editData?.payment_due_date || "");
   const [paidAt, setPaidAt] = useState(editData?.paid_at || "");
+  const [paidBy, setPaidBy] = useState<PaidBy>((editData?.paid_by as PaidBy) || "company");
 
   // 按分
   const propertyRow = useMemo(
@@ -135,6 +139,7 @@ export default function ExpenseFormModal({
     setTaxCategory((editData?.tax_category as TaxCategory) || "taxable");
     setPaymentDueDate(editData?.payment_due_date || "");
     setPaidAt(editData?.paid_at || "");
+    setPaidBy((editData?.paid_by as PaidBy) || "company");
     setAllocate((editData?.allocations?.length ?? 0) > 0);
     setAllocations((editData?.allocations as AllocationDraft[]) ?? []);
     setErrors({});
@@ -229,6 +234,7 @@ export default function ExpenseFormModal({
     data.contract_id = contractId;
     data.case_id = caseId;
     data.tax_category = taxCategory;
+    data.paid_by = paidBy;
     data.payment_due_date = paymentDueDate;
     data.paid_at = paidAt;
     data.status = editData?.status || "draft";
@@ -390,6 +396,27 @@ export default function ExpenseFormModal({
             breakdownOk={breakdownOk}
             sumBreakdown={sumBreakdown}
           />
+
+          {/* 一次支払者（最初に誰が業者へ払うか）。負担区分=最終負担とは別軸 */}
+          <div>
+            <label className="text-sm font-medium text-ink-2 block mb-1">支払い方法</label>
+            <select
+              value={paidBy}
+              onChange={(e) => setPaidBy(e.target.value as PaidBy)}
+              className="input"
+            >
+              {PAID_BY_OPTIONS.map((p) => (
+                <option key={p} value={p}>
+                  {PAID_BY_LABELS[p]}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-ink-3 mt-1">
+              {paidBy === "owner_direct"
+                ? "オーナーが業者へ直接支払うため、この費用はオーナー送金から差し引きません（記録のみ）。"
+                : "管理会社が業者へ支払います。オーナー負担分は送金から相殺し、不足分はオーナーへ請求します。"}
+            </p>
+          </div>
 
           {/* 物件・オーナー */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -21,6 +21,15 @@ export const EXPENSE_STATUS_LABELS: Record<ExpenseStatus, string> = {
   paid: "支払済",
 };
 
+// 一次支払者（最初に誰が業者へ払うか）。負担区分（最終負担）とは別軸。
+export const PAID_BY_OPTIONS = ["company", "owner_direct"] as const;
+export type PaidBy = (typeof PAID_BY_OPTIONS)[number];
+
+export const PAID_BY_LABELS: Record<PaidBy, string> = {
+  company: "管理会社が支払う（立替含む）",
+  owner_direct: "オーナーが直接支払う",
+};
+
 export const TAX_CATEGORIES = ["taxable", "tax_free", "non_taxable"] as const;
 export type TaxCategory = (typeof TAX_CATEGORIES)[number];
 
@@ -99,6 +108,7 @@ export const expenseSchema = z
     tenant_amount: z.coerce.number().int().nonnegative().default(0),
     company_amount: z.coerce.number().int().nonnegative().default(0),
     status: z.enum(EXPENSE_STATUSES).default("draft"),
+    paid_by: z.enum(PAID_BY_OPTIONS).default("company"),
     tax_category: z.enum(TAX_CATEGORIES).default("taxable"),
     payment_due_date: z.string().nullable().optional().or(z.literal("").transform(() => null)),
     paid_at: z.string().nullable().optional().or(z.literal("").transform(() => null)),

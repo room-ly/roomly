@@ -78,13 +78,16 @@ export async function gatherAndBuildRemittance(
     };
   });
 
-  // 未精算（remittance_id IS NULL）の承認済みオーナー負担経費
+  // 未精算（remittance_id IS NULL）の承認済みオーナー負担経費。
+  // paid_by='owner_direct'（オーナーが業者へ直接払った費用）は管理会社のキャッシュが
+  // 動いておらず回収不要なので、送金から差し引いてはいけない（二重取り防止）。集約段階で除外する。
   const { data: expensesRaw } = await supabase
     .from("expenses")
     .select("id, description, owner_amount, property_id, unit_id, status, remittance_id")
     .eq("owner_id", ownerId)
     .is("remittance_id", null)
     .gt("owner_amount", 0)
+    .neq("paid_by", "owner_direct")
     .in("status", APPROVED_EXPENSE_STATUSES);
 
   const expenses: RemitDbExpense[] = ((expensesRaw ?? []) as Record<string, unknown>[]).map((e) => ({

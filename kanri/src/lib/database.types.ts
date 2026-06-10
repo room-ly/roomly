@@ -1452,6 +1452,7 @@ export type Database = {
           owner_amount: number
           owner_id: string | null
           paid_at: string | null
+          paid_by: string
           payee_id: string | null
           payment_due_date: string | null
           property_id: string | null
@@ -1484,6 +1485,7 @@ export type Database = {
           owner_amount?: number
           owner_id?: string | null
           paid_at?: string | null
+          paid_by?: string
           payee_id?: string | null
           payment_due_date?: string | null
           property_id?: string | null
@@ -1516,6 +1518,7 @@ export type Database = {
           owner_amount?: number
           owner_id?: string | null
           paid_at?: string | null
+          paid_by?: string
           payee_id?: string | null
           payment_due_date?: string | null
           property_id?: string | null
