@@ -107,6 +107,26 @@ export default async function ExpenseDetailPage({
           </div>
         </div>
         <div className="detail-header-actions" style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {expense.payee?.id && (
+            <a
+              href={`/api/expenses/${expense.id}/payment-instruction`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary flex items-center gap-1.5 text-[13px]"
+            >
+              振込依頼書
+            </a>
+          )}
+          {Number(expense.tenant_amount) > 0 && expense.contract?.id && (
+            <a
+              href={`/api/expenses/${expense.id}/tenant-statement`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary flex items-center gap-1.5 text-[13px]"
+            >
+              敷金充当明細書
+            </a>
+          )}
           <ExpenseDetailClient
             expense={expense}
             properties={properties}
