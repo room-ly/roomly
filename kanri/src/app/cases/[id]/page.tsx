@@ -31,7 +31,7 @@ export default async function CaseDetailPage({
   ]);
   if (!result) notFound();
 
-  const { case: caseRow, logs } = result;
+  const { case: caseRow, logs, expenses } = result;
 
   return (
     <>
@@ -238,6 +238,32 @@ export default async function CaseDetailPage({
               </div>
             </div>
           </div>
+
+          {expenses.length > 0 && (
+            <div className="section">
+              <div className="section-head-bar">
+                <h2>関連費用</h2>
+                <span className="desc">{expenses.length}件</span>
+              </div>
+              <div className="section-body">
+                <div className="kv-list">
+                  {expenses.map((expense: any) => (
+                    <div key={expense.id} className="field">
+                      <div className="field-value" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                        <Link href={`/costs/${expense.id}`} className="rlink">
+                          {expense.title || "費用"}
+                        </Link>
+                        <span className="num" style={{ fontSize: 13, whiteSpace: "nowrap" }}>
+                          ¥{Number(expense.amount).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="field-label mono" style={{ marginTop: 2 }}>{expense.expense_date}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       </div>

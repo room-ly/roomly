@@ -18,13 +18,14 @@ export async function getCases(page = 1, pageSize = 50, sort = "reported_date:de
 // 対応案件詳細（物件・部屋・対応履歴付き）
 export async function getCaseDetail(id: string) {
   const supabase = await createClient();
-  const [{ data: caseRow, error }, { data: logs }] = await Promise.all([
+  const [{ data: caseRow, error }, { data: logs }, { data: expenses }] = await Promise.all([
     supabase.from("cases").select("*, property:properties(id, name, address, owner:owners(id, name, email)), unit:units(unit_number), tenant:tenants(id, name, phone, email)").eq("id", id).single(),
     supabase.from("case_logs").select("*").eq("case_id", id).order("logged_at", { ascending: false }),
+    supabase.from("expenses").select("id, title, amount, expense_date, status").eq("case_id", id).order("expense_date", { ascending: false }),
   ]);
   if (error || !caseRow) return null;
 
-  return { case: caseRow, logs: logs ?? [] };
+  return { case: caseRow, logs: logs ?? [], expenses: expenses ?? [] };
 }
 
 // 対応案件セレクタ用
