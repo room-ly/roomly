@@ -251,7 +251,7 @@ export default async function CaseDetailPage({
                     <div key={expense.id} className="field">
                       <div className="field-value" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                         <Link href={`/costs/${expense.id}`} className="rlink">
-                          {expense.title || "費用"}
+                          {expense.description || "費用"}
                         </Link>
                         <span className="num" style={{ fontSize: 13, whiteSpace: "nowrap" }}>
                           ¥{Number(expense.amount).toLocaleString()}

@@ -21,7 +21,7 @@ export async function getCaseDetail(id: string) {
   const [{ data: caseRow, error }, { data: logs }, { data: expenses }] = await Promise.all([
     supabase.from("cases").select("*, property:properties(id, name, address, owner:owners(id, name, email)), unit:units(unit_number), tenant:tenants(id, name, phone, email)").eq("id", id).single(),
     supabase.from("case_logs").select("*").eq("case_id", id).order("logged_at", { ascending: false }),
-    supabase.from("expenses").select("id, title, amount, expense_date, status").eq("case_id", id).order("expense_date", { ascending: false }),
+    supabase.from("expenses").select("id, description, amount, expense_date, status, category").eq("case_id", id).order("expense_date", { ascending: false }),
   ]);
   if (error || !caseRow) return null;
 
