@@ -559,6 +559,232 @@ async function buildRentDemandLetter() {
   console.log("✓ rent-demand-letter-template.docx");
 }
 
+// ── 7. 物件一覧表 ─────────────────────────────────
+async function buildPropertyList() {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "Roomly";
+  const ws = wb.addWorksheet("物件一覧表", {
+    views: [{ state: "frozen", ySplit: 3, xSplit: 1 }],
+  });
+
+  ws.columns = [
+    { width: 18 }, // 物件名
+    { width: 10 }, // 部屋番号
+    { width: 10 }, // 間取り
+    { width: 10 }, // 面積
+    { width: 12 }, // 家賃
+    { width: 10 }, // 管理費
+    { width: 10 }, // 状態
+    { width: 16 }, // 入居者名
+    { width: 12 }, // 契約開始
+    { width: 12 }, // 契約満了
+    { width: 14 }, // オーナー名
+    { width: 20 }, // 備考
+  ];
+
+  addTitle(ws, "物件一覧表", 12);
+
+  const headerRowIdx = 3;
+  const headers = [
+    "物件名", "部屋番号", "間取り", "面積(㎡)", "家賃", "管理費",
+    "状態", "入居者名", "契約開始", "契約満了", "オーナー名", "備考",
+  ];
+  ws.getRow(headerRowIdx).values = headers;
+  styleHeaderRow(ws.getRow(headerRowIdx));
+
+  const rows = 30;
+  for (let i = 0; i < rows; i++) {
+    const r = headerRowIdx + 1 + i;
+    for (const c of [5, 6]) ws.getCell(r, c).numFmt = '#,##0"円"';
+    for (const c of [9, 10]) ws.getCell(r, c).numFmt = "yyyy/m/d";
+  }
+  applyBodyBorders(ws, headerRowIdx + 1, headerRowIdx + rows, 12);
+
+  // 集計
+  const sumRow = headerRowIdx + rows + 1;
+  ws.getCell(sumRow, 1).value = "合計戸数 / 家賃合計";
+  ws.getCell(sumRow, 1).font = { bold: true };
+  ws.getCell(sumRow, 2).value = { formula: `COUNTA(B${headerRowIdx + 1}:B${headerRowIdx + rows})` };
+  ws.getCell(sumRow, 5).value = { formula: `SUM(E${headerRowIdx + 1}:E${headerRowIdx + rows})` };
+  ws.getCell(sumRow, 5).numFmt = '#,##0"円"';
+  for (const c of [1, 2, 5]) {
+    ws.getCell(sumRow, c).font = { bold: true };
+    ws.getCell(sumRow, c).border = thinBorder;
+  }
+
+  addCredit(ws, sumRow + 2, 12);
+
+  await wb.xlsx.writeFile(join(OUT_DIR, "property-list-template.xlsx"));
+  console.log("✓ property-list-template.xlsx");
+}
+
+// ── 8. 入居時設備チェックリスト ─────────────────────
+async function buildMoveInChecklist() {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "Roomly";
+  const ws = wb.addWorksheet("入居時チェックリスト");
+
+  ws.columns = [
+    { width: 14 }, // 場所
+    { width: 22 }, // チェック項目
+    { width: 12 }, // 状態
+    { width: 30 }, // 傷・汚れ等の記録
+  ];
+
+  addTitle(ws, "入居時 設備チェックリスト", 4);
+  ws.mergeCells(2, 1, 2, 4);
+  ws.getCell(2, 1).value = "物件名・部屋番号：　　　　　　　　／　入居者氏名：　　　　　　　　／　確認日：　　　　年　　月　　日";
+  ws.getCell(2, 1).font = { size: 10, color: { argb: "FF4A5568" } };
+
+  const headerRowIdx = 4;
+  ws.getRow(headerRowIdx).values = ["場所", "チェック項目", "状態", "傷・汚れ等の記録"];
+  styleHeaderRow(ws.getRow(headerRowIdx));
+
+  // 場所ごとのチェック項目
+  const items = [
+    ["玄関", "ドア・鍵・チャイム"],
+    ["玄関", "床・たたき"],
+    ["居室", "壁紙（クロス）"],
+    ["居室", "床・フローリング"],
+    ["居室", "建具・収納扉"],
+    ["居室", "照明・スイッチ・コンセント"],
+    ["居室", "窓・網戸・サッシ"],
+    ["キッチン", "流し台・コンロ・換気扇"],
+    ["キッチン", "給排水・水漏れ"],
+    ["浴室", "浴槽・シャワー・換気"],
+    ["トイレ", "便器・ウォシュレット・水漏れ"],
+    ["洗面所", "洗面台・水栓・鏡"],
+    ["設備", "エアコン・給湯器"],
+    ["設備", "インターホン・TV/ネット端子"],
+    ["バルコニー", "床・手すり・物干し"],
+    ["その他", ""],
+    ["その他", ""],
+  ];
+  items.forEach((row, i) => {
+    const r = headerRowIdx + 1 + i;
+    ws.getCell(r, 1).value = row[0];
+    ws.getCell(r, 2).value = row[1];
+    ws.getCell(r, 3).value = ""; // 良 / 要記録 を手入力
+  });
+  applyBodyBorders(ws, headerRowIdx + 1, headerRowIdx + items.length, 4);
+
+  const noteRow = headerRowIdx + items.length + 2;
+  ws.mergeCells(noteRow, 1, noteRow, 4);
+  ws.getCell(noteRow, 1).value =
+    "※ 入居時に気になる箇所（既存の傷・汚れ・不具合）は写真とあわせて記録し、入居者・管理会社の双方で控えておきます。退去時の原状回復で「もともとあった損耗」を区別する根拠になります。";
+  ws.getCell(noteRow, 1).font = { size: 9, color: { argb: "FF718096" } };
+  ws.getCell(noteRow, 1).alignment = { wrapText: true };
+  ws.getRow(noteRow).height = 40;
+
+  // 署名欄
+  const signRow = noteRow + 2;
+  ws.getCell(signRow, 1).value = "入居者署名：";
+  ws.getCell(signRow, 1).font = { bold: true };
+  ws.getCell(signRow, 3).value = "管理会社確認：";
+  ws.getCell(signRow, 3).font = { bold: true };
+
+  addCredit(ws, signRow + 2, 4);
+
+  await wb.xlsx.writeFile(join(OUT_DIR, "move-in-checklist-template.xlsx"));
+  console.log("✓ move-in-checklist-template.xlsx");
+}
+
+// ── 9. 鍵預かり証（Word） ─────────────────────────
+async function buildKeyReceipt() {
+  const accent = "1A365D";
+  const gray = "718096";
+  const run = (text, opts = {}) => new TextRun({ text, font: "Yu Gothic", size: 21, ...opts });
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: { page: { margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 } } },
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 320 },
+            heading: HeadingLevel.HEADING_1,
+            children: [run("鍵 預 か り 証", { bold: true, size: 32, color: accent })],
+          }),
+          new Paragraph({
+            spacing: { after: 240 },
+            children: [
+              run(
+                "下記のとおり、鍵をお預かりしましたことを証明します。"
+              ),
+            ],
+          }),
+          ...[
+            ["物件名・部屋番号", "　"],
+            ["お預かりした鍵の種類", "玄関　・　メールボックス　・　その他（　　　　　　）"],
+            ["本数", "　　　　本"],
+            ["お預かり日", "　　　　年　　月　　日"],
+            ["返却予定日", "　　　　年　　月　　日"],
+            ["お預かりの目的", "内見　・　工事/修繕　・　退去立会い　・　その他（　　　　）"],
+          ].map(
+            ([k, v]) =>
+              new Paragraph({
+                spacing: { after: 140 },
+                children: [run("● " + k + "：", { bold: true }), run(v)],
+              })
+          ),
+          new Paragraph({
+            spacing: { before: 200, after: 240 },
+            children: [
+              run(
+                "お預かりした鍵は、上記の目的の範囲で適切に管理し、返却予定日までにお返しします。紛失・破損があった場合は、誠意をもって対応いたします。",
+                { size: 19, color: gray }
+              ),
+            ],
+          }),
+          new Paragraph({
+            spacing: { before: 320, after: 80 },
+            alignment: AlignmentType.RIGHT,
+            children: [run("お預かりした者（管理会社）", { bold: true, color: accent })],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            spacing: { after: 60 },
+            children: [run("会社名：　　　　　　　　　　　　　")],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            spacing: { after: 60 },
+            children: [run("担当者：　　　　　　　　　　㊞")],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            spacing: { after: 200 },
+            children: [run("TEL：　　　　　　　　　　　　")],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            spacing: { after: 60 },
+            children: [run("お渡しいただいた方（署名）：　　　　　　　　　")],
+          }),
+          new Paragraph({
+            spacing: { before: 400 },
+            alignment: AlignmentType.LEFT,
+            children: [
+              new TextRun({
+                text: "本テンプレートは Roomly（hp.roomly.jp）が無料提供しています。",
+                font: "Yu Gothic",
+                size: 16,
+                italics: true,
+                color: gray,
+              }),
+            ],
+          }),
+        ],
+      },
+    ],
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  await writeFile(join(OUT_DIR, "key-receipt-template.docx"), buffer);
+  console.log("✓ key-receipt-template.docx");
+}
+
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   await buildRentLedger();
@@ -567,6 +793,9 @@ async function main() {
   await buildContractRenewalNotice();
   await buildOwnerRemittanceStatement();
   await buildRentDemandLetter();
+  await buildPropertyList();
+  await buildMoveInChecklist();
+  await buildKeyReceipt();
   console.log("\nすべてのテンプレートを生成しました → public/templates/");
 }
 

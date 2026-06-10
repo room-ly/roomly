@@ -93,6 +93,30 @@ export const TEMPLATE_TOOLS: TemplateTool[] = [
     file: "rent-demand-letter-template.docx",
     format: "Word",
   },
+  {
+    slug: "property-list-template",
+    title: "物件一覧表テンプレート（Excel・無料）",
+    description:
+      "物件・部屋ごとに間取り・家賃・入居状況・契約期間・オーナーをまとめて管理できるExcelテンプレート。合計戸数と家賃合計を自動集計します。",
+    file: "property-list-template.xlsx",
+    format: "Excel",
+  },
+  {
+    slug: "move-in-checklist-template",
+    title: "入居時チェックリスト テンプレート（Excel・無料）",
+    description:
+      "入居時に部屋・設備の状態を場所ごとに点検し、既存の傷・汚れを記録するExcelテンプレート。退去時の原状回復トラブルを防ぐ証拠になります。",
+    file: "move-in-checklist-template.xlsx",
+    format: "Excel",
+  },
+  {
+    slug: "key-receipt-template",
+    title: "鍵預かり証テンプレート（Word・無料）",
+    description:
+      "内見・工事・退去立会いなどで鍵を預かる際に発行する鍵預かり証のWord文書テンプレート。鍵の種類・本数・返却予定日・署名欄つき。",
+    file: "key-receipt-template.docx",
+    format: "Word",
+  },
 ];
 
 export function getTemplateBySlug(slug: string): TemplateTool | undefined {
