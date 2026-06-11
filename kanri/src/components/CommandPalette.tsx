@@ -16,12 +16,15 @@ const ALL_PAGES: SearchItem[] = [
   { kind: "page", label: "ダッシュボード", route: "/", sub: "Workspace", keywords: "ダッシュボード dashboard workspace" },
   { kind: "page", label: "物件", route: "/properties", sub: "Workspace", keywords: "物件 properties workspace" },
   { kind: "page", label: "入居者", route: "/tenants", sub: "Workspace", keywords: "入居者 tenants workspace" },
+  { kind: "page", label: "オーナー", route: "/owners", sub: "Workspace", keywords: "オーナー owners workspace" },
   { kind: "page", label: "契約", route: "/contracts", sub: "Workspace", keywords: "契約 contracts workspace" },
-  { kind: "page", label: "家賃", route: "/rent", sub: "Operations", keywords: "家賃 rent operations" },
   { kind: "page", label: "対応案件", route: "/cases", sub: "Operations", keywords: "対応案件 修繕 鍵 クレーム 騒音 質問 cases maintenance inquiries operations" },
+  { kind: "page", label: "家賃", route: "/rent", sub: "Operations", keywords: "家賃 rent operations" },
   { kind: "page", label: "費用", route: "/costs", sub: "Operations", keywords: "費用 経費 expenses costs operations" },
-  { kind: "page", label: "オーナー", route: "/owners", sub: "Finance", keywords: "オーナー owners finance" },
-  { kind: "page", label: "送金", route: "/remittances", sub: "Finance", keywords: "送金 remittances finance" },
+  { kind: "page", label: "月次精算", route: "/remittances", sub: "Operations", keywords: "月次精算 送金 remittances operations" },
+  { kind: "page", label: "振込", route: "/payments", sub: "Operations", keywords: "振込 支払い 全銀 payments operations" },
+  { kind: "page", label: "支払先", route: "/payees", sub: "Operations", keywords: "支払先 業者 payees operations" },
+  { kind: "page", label: "ローン", route: "/loans", sub: "Operations", keywords: "ローン 返済 loans operations" },
   { kind: "page", label: "設定", route: "/settings", sub: "System", keywords: "設定 settings system" },
 ];
 
