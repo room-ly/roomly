@@ -48,6 +48,21 @@ export function getRequestMeta(request: NextRequest): RequestMeta {
   };
 }
 
+// ローカル開発（Docker等）からのアクセスを本番分析から除外するための判定。
+// プライベート/ループバックIP、IPv4-mapped IPv6（::ffff:192.168.x.x）も拾う。
+export function isLocalIp(ip: string | null): boolean {
+  if (!ip) return false;
+  // ::ffff:192.168.65.1 のような IPv4-mapped IPv6 から素のIPv4を取り出す
+  const v4 = ip.replace(/^::ffff:/i, "");
+  if (v4 === "127.0.0.1" || v4 === "::1" || v4 === "0.0.0.0") return true;
+  if (/^10\./.test(v4)) return true;
+  if (/^192\.168\./.test(v4)) return true;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(v4)) return true; // 172.16.0.0/12
+  if (/^169\.254\./.test(v4)) return true; // link-local
+  if (/^(fc|fd)/i.test(ip)) return true; // IPv6 unique local
+  return false;
+}
+
 export function truncate(value: unknown, max = 255): string | null {
   if (typeof value !== "string") return null;
   if (value.length === 0) return null;

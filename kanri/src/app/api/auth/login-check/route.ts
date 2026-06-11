@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getRequestMeta, normalizeAttribution } from "@/lib/request-meta";
+import { getRequestMeta, normalizeAttribution, isLocalIp } from "@/lib/request-meta";
 
 const MAX_ATTEMPTS = 10;
 const LOCKOUT_MINUTES = 30;
@@ -45,6 +45,12 @@ export async function POST(request: NextRequest) {
     // 成功・失敗どちらも記録する。広告流入の検証に使うため成功も残す
     const meta = getRequestMeta(request);
     const attr = normalizeAttribution(attribution);
+
+    // ローカル開発（Dockerコンテナ等）からのログインは本番のファネル分析を汚すので記録しない。
+    // ::ffff:192.168.65.1 のような Docker 内部IPが該当。
+    if (isLocalIp(meta.ip_address)) {
+      return NextResponse.json({ ok: true, skipped: "local" });
+    }
 
     // 成功ログイン時のみ company_id / user_id を解決（失敗時はemail存在を漏らさないため引かない）
     let companyId: string | null = null;
