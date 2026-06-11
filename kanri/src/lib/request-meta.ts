@@ -63,6 +63,16 @@ export function isLocalIp(ip: string | null): boolean {
   return false;
 }
 
+// クローラ・ボットからのアクセスを本番分析から除外するための判定。
+// Googlebot/bingbot 等は user-agent にこれらのトークンを含む。
+const BOT_UA_RE =
+  /bot|spider|crawl|slurp|bingpreview|facebookexternalhit|embedly|quora|pinterest|whatsapp|telegrambot|headlesschrome|phantomjs|python-requests|curl\/|wget|go-http-client|axios\/|node-fetch/i;
+
+export function isBotUserAgent(ua: string | null): boolean {
+  if (!ua) return false;
+  return BOT_UA_RE.test(ua);
+}
+
 export function truncate(value: unknown, max = 255): string | null {
   if (typeof value !== "string") return null;
   if (value.length === 0) return null;
