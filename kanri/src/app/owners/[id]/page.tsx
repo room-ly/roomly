@@ -331,11 +331,11 @@ export default async function OwnerDetailPage({
             </div>
           </div>
 
-          {/* 送金履歴 */}
+          {/* 月次精算履歴（台帳→会計の導線。各行から月次精算の詳細へ） */}
           {remittances.length > 0 && (
             <div className="section">
               <div className="section-head-bar">
-                <h2>送金履歴</h2>
+                <h2>月次精算履歴</h2>
                 <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--ink-4)" }}>直近12ヶ月</span>
               </div>
               <div className="section-body flush">

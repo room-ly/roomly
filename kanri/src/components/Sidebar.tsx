@@ -40,6 +40,7 @@ const navGroups = [
       { href: "/", label: "ダッシュボード", icon: LayoutDashboard },
       { href: "/properties", label: "物件", icon: Building2 },
       { href: "/tenants", label: "入居者", icon: Users },
+      { href: "/owners", label: "オーナー", icon: UserCircle },
       { href: "/contracts", label: "契約", icon: FileText },
     ] as NavItem[],
   },
@@ -54,7 +55,6 @@ const navGroups = [
   {
     group: "Finance",
     items: [
-      { href: "/owners", label: "オーナー", icon: UserCircle },
       { href: "/remittances", label: "月次精算", icon: Send },
       { href: "/payments", label: "振込", icon: CreditCard },
       { href: "/payees", label: "支払先", icon: BookUser },
