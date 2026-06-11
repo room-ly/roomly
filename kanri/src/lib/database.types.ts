@@ -2410,6 +2410,146 @@ export type Database = {
           },
         ]
       }
+      payment_batch_items: {
+        Row: {
+          account_holder_kana: string
+          account_number: string
+          account_type: string
+          amount: number
+          bank_code: string
+          branch_code: string
+          company_id: string
+          created_at: string
+          expense_id: string | null
+          id: string
+          item_type: string
+          label: string | null
+          owner_remittance_id: string | null
+          payment_batch_id: string
+          recipient_name: string
+        }
+        Insert: {
+          account_holder_kana: string
+          account_number: string
+          account_type?: string
+          amount: number
+          bank_code: string
+          branch_code: string
+          company_id: string
+          created_at?: string
+          expense_id?: string | null
+          id?: string
+          item_type: string
+          label?: string | null
+          owner_remittance_id?: string | null
+          payment_batch_id: string
+          recipient_name: string
+        }
+        Update: {
+          account_holder_kana?: string
+          account_number?: string
+          account_type?: string
+          amount?: number
+          bank_code?: string
+          branch_code?: string
+          company_id?: string
+          created_at?: string
+          expense_id?: string | null
+          id?: string
+          item_type?: string
+          label?: string | null
+          owner_remittance_id?: string | null
+          payment_batch_id?: string
+          recipient_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_batch_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_batch_items_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_batch_items_owner_remittance_id_fkey"
+            columns: ["owner_remittance_id"]
+            isOneToOne: false
+            referencedRelation: "owner_remittances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_batch_items_payment_batch_id_fkey"
+            columns: ["payment_batch_id"]
+            isOneToOne: false
+            referencedRelation: "payment_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_batches: {
+        Row: {
+          batch_date: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          executed_at: string | null
+          id: string
+          notes: string | null
+          sender_account_id: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          batch_date: string
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          executed_at?: string | null
+          id?: string
+          notes?: string | null
+          sender_account_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          batch_date?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          executed_at?: string | null
+          id?: string
+          notes?: string | null
+          sender_account_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_batches_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_batches_sender_account_id_fkey"
+            columns: ["sender_account_id"]
+            isOneToOne: false
+            referencedRelation: "company_bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       properties: {
         Row: {
           address: string
