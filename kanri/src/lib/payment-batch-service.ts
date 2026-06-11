@@ -23,6 +23,7 @@ export interface BatchCandidateExpense {
   id: string;
   description: string;
   category: string;
+  payee_id: string | null;
   payee_name: string;
   expense_date: string;
   amount: number;
@@ -31,7 +32,8 @@ export interface BatchCandidateExpense {
   account_type: string;
   account_number: string;
   account_holder_kana: string;
-  has_bank: boolean;
+  has_payee: boolean; // 支払先が設定されているか
+  has_bank: boolean;  // 支払先に口座情報まで揃っているか（振込可能か）
 }
 
 // 既に draft バッチに入っている owner_remittance_id / expense_id を集める（二重計上防止）。
@@ -68,13 +70,14 @@ export async function getBatchCandidates(supabase: Client, company_id: string) {
       .eq("status", "confirmed")
       .order("remittance_month", { ascending: false })
       .limit(200),
+    // 支払先未設定の費用も「振込候補」に出す（その場で支払先を設定できるUIにするため）。
+    // payee_id IS NULL を弾かない。company/未払い/承認済みは維持。
     supabase
       .from("expenses")
       .select(
-        "id, expense_date, description, amount, category, payee:payees(name, bank_code, branch_code, account_type, account_number, account_holder_kana)",
+        "id, expense_date, description, amount, category, payee_id, payee:payees(name, bank_code, branch_code, account_type, account_number, account_holder_kana)",
       )
       .eq("company_id", company_id)
-      .not("payee_id", "is", null)
       .eq("paid_by", "company")
       .is("paid_at", null)
       .in("status", APPROVED_EXPENSE_STATUSES)
@@ -105,12 +108,14 @@ export async function getBatchCandidates(supabase: Client, company_id: string) {
     .filter((e) => !expenseIds.has(e.id as string))
     .map((e) => {
       const p = (e.payee as Record<string, string | null> | null) ?? {};
+      const has_payee = !!e.payee_id;
       const has_bank = !!(p.bank_code && p.branch_code && p.account_number && p.account_holder_kana);
       return {
         id: e.id as string,
         description: (e.description as string) ?? "",
         category: (e.category as string) ?? "other",
-        payee_name: p.name ?? "—",
+        payee_id: (e.payee_id as string) ?? null,
+        payee_name: p.name ?? "",
         expense_date: (e.expense_date as string) ?? "",
         amount: Number(e.amount) || 0,
         bank_code: p.bank_code ?? "",
@@ -118,6 +123,7 @@ export async function getBatchCandidates(supabase: Client, company_id: string) {
         account_type: p.account_type ?? "ordinary",
         account_number: p.account_number ?? "",
         account_holder_kana: p.account_holder_kana ?? "",
+        has_payee,
         has_bank,
       };
     });

@@ -10,13 +10,23 @@ const CATEGORY_LABEL: Record<string, string> = {
   tax: "税金", utility: "光熱費", other: "その他",
 };
 
+interface PayeeOption {
+  id: string;
+  name: string;
+  bank_code: string | null;
+  branch_code: string | null;
+  account_number: string | null;
+  account_holder_kana: string | null;
+}
+
 interface Props {
   remittances: BatchCandidateRemittance[];
   expenses: BatchCandidateExpense[];
   banks: Record<string, any>[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payees: PayeeOption[];
 }
 
-export default function NewBatchClient({ remittances, expenses, banks }: Props) {
+export default function NewBatchClient({ remittances, expenses, banks, payees }: Props) {
   const router = useRouter();
   const [batchDate, setBatchDate] = useState(new Date().toISOString().slice(0, 10));
   const [senderId, setSenderId] = useState(banks.find((b) => b.is_default)?.id ?? banks[0]?.id ?? "");
@@ -25,6 +35,34 @@ export default function NewBatchClient({ remittances, expenses, banks }: Props) 
   const [selExp, setSelExp] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [assigningId, setAssigningId] = useState<string | null>(null); // 支払先設定中の費用ID
+
+  const payeeHasBank = (p: PayeeOption | undefined) =>
+    !!(p && p.bank_code && p.branch_code && p.account_number && p.account_holder_kana);
+
+  // 行内で費用に支払先を設定する。設定後はサーバーから候補を取り直す（has_bank等を再評価）。
+  async function assignPayee(expenseId: string, payeeId: string) {
+    if (!payeeId) return;
+    setAssigningId(expenseId);
+    setError("");
+    try {
+      const res = await fetch(`/api/expenses/${expenseId}/payee`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payee_id: payeeId }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setError(err.error || "支払先の設定に失敗しました");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("支払先の設定に失敗しました");
+    } finally {
+      setAssigningId(null);
+    }
+  }
 
   const toggle = (set: Set<string>, setter: (s: Set<string>) => void, id: string) => {
     const next = new Set(set);
@@ -122,31 +160,73 @@ export default function NewBatchClient({ remittances, expenses, banks }: Props) 
           </div>
           <table className="w-full text-sm">
             <tbody className="divide-y divide-border">
-              {expenses.map((e) => (
-                <tr key={e.id} className={`hover:bg-surface-2 cursor-pointer ${!e.has_bank ? "opacity-50" : ""}`}
-                  onClick={() => e.has_bank && toggle(selExp, setSelExp, e.id)}>
-                  <td className="px-4 py-3 w-8">
-                    {selExp.has(e.id) ? <CheckSquare size={15} className="text-accent" /> : <Square size={15} className="text-ink-3" />}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="font-medium">{e.description}</span>
-                    <span className="text-xs text-ink-3 ml-2">{CATEGORY_LABEL[e.category] ?? e.category}</span>
-                  </td>
-                  <td className="px-4 py-3 text-ink-2">{e.payee_name}
-                    {!e.has_bank && <span className="text-xs text-danger ml-2">口座情報なし</span>}</td>
-                  <td className="px-4 py-3 text-ink-2">{e.expense_date}</td>
-                  <td className="px-4 py-3 text-right font-medium">¥{e.amount.toLocaleString()}</td>
-                </tr>
-              ))}
+              {expenses.map((e) => {
+                const checkable = e.has_bank;
+                return (
+                  <tr key={e.id} className={`${checkable ? "hover:bg-surface-2 cursor-pointer" : ""} ${!checkable ? "opacity-90" : ""}`}
+                    onClick={() => checkable && toggle(selExp, setSelExp, e.id)}>
+                    <td className="px-4 py-3 w-8">
+                      {checkable
+                        ? (selExp.has(e.id) ? <CheckSquare size={15} className="text-accent" /> : <Square size={15} className="text-ink-3" />)
+                        : <Square size={15} className="text-ink-4 opacity-40" />}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="font-medium">{e.description}</span>
+                      <span className="text-xs text-ink-3 ml-2">{CATEGORY_LABEL[e.category] ?? e.category}</span>
+                    </td>
+                    <td className="px-4 py-3 text-ink-2" onClick={(ev) => !checkable && ev.stopPropagation()}>
+                      {!e.has_payee ? (
+                        // 支払先未設定 → その場で選べる
+                        <div className="flex items-center gap-2">
+                          <select
+                            className="input py-1 text-[13px] max-w-[200px]"
+                            defaultValue=""
+                            disabled={assigningId === e.id}
+                            onChange={(ev) => assignPayee(e.id, ev.target.value)}
+                            onClick={(ev) => ev.stopPropagation()}
+                          >
+                            <option value="">支払先を選択…</option>
+                            {payees.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name}{payeeHasBank(p) ? "" : "（口座未登録）"}
+                              </option>
+                            ))}
+                          </select>
+                          {assigningId === e.id && <Loader2 size={13} className="animate-spin text-ink-3" />}
+                        </div>
+                      ) : (
+                        <>
+                          {e.payee_name}
+                          {!e.has_bank && (
+                            <span className="text-xs text-warning ml-2">
+                              口座情報なし（
+                              <a href="/payees" className="rlink" onClick={(ev) => ev.stopPropagation()}>支払先で登録</a>
+                              ）
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-ink-2">{e.expense_date}</td>
+                    <td className="px-4 py-3 text-right font-medium">¥{e.amount.toLocaleString()}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
+          {payees.length === 0 && expenses.some((e) => !e.has_payee) && (
+            <div className="px-4 py-2 text-xs text-ink-3 border-t border-border">
+              支払先がまだ登録されていません。<a href="/payees" className="rlink">支払先</a>を登録すると、ここで選べるようになります。
+            </div>
+          )}
         </div>
       )}
 
       {remittances.length === 0 && expenses.length === 0 && (
         <div className="card p-10 text-center text-ink-3">
           振込対象がありません。<br />
-          オーナー送金は「送金」画面で確定し、業者支払いは費用に支払先を設定してください。
+          オーナー送金は「月次精算」画面で確定すると、ここに表示されます。<br />
+          業者への支払いは、承認済み・未払いの費用がここに自動で表示されます。
         </div>
       )}
 
