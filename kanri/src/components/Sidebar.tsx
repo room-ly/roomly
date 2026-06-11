@@ -55,8 +55,8 @@ const navGroups = [
     group: "Finance",
     items: [
       { href: "/owners", label: "オーナー", icon: UserCircle },
-      { href: "/remittances", label: "送金", icon: Send },
-      { href: "/payments", label: "支払い出力", icon: CreditCard },
+      { href: "/remittances", label: "月次精算", icon: Send },
+      { href: "/payments", label: "振込", icon: CreditCard },
       { href: "/payees", label: "支払先", icon: BookUser },
       // ローンは拡張機能だが、メニューは常時表示する。
       // 機能OFFの会社は /loans を開くと FeatureOffCard が出てそこからONにできる（発見性確保）
