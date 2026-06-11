@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase-server";
 import { getCompanyId } from "@/lib/supabase-server";
 import PageHeader from "@/components/PageHeader";
 import PayeesPageClient from "@/components/PayeesPageClient";
+import PayeesTable from "@/components/PayeesTable";
 
 async function getPayees() {
   const supabase = await createClient();
@@ -25,8 +26,10 @@ export default async function PayeesPage() {
         title="支払先"
         em="マスタ"
         description="業者・保険会社など振込先の口座情報を管理。全銀CSV出力に使用します。"
-        action={<PayeesPageClient payees={payees} />}
+        action={<PayeesPageClient />}
       />
+
+      <PayeesTable payees={payees} />
     </>
   );
 }
