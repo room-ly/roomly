@@ -27,7 +27,7 @@ export default async function BatchDetailPage({
   return (
     <>
       <div className="detail-back">
-        <Link href="/payments" className="rlink is-muted is-back">← 振込一覧に戻る</Link>
+        <Link href="/payments" className="rlink is-muted is-back">← 振込に戻る</Link>
       </div>
 
       <div className="detail-header">
