@@ -26,6 +26,7 @@ export async function getBadgeCounts() {
       supabase
         .from("rent_billings")
         .select("id, total_amount, due_date, rent_payments(amount)")
+        .is("voided_at", null)
         .lt("due_date", todayStr),
       supabase
         .from("cases")
@@ -54,6 +55,7 @@ export async function getBadgeCounts() {
     .from("contracts")
     .select("id, move_out_requests(status)")
     .eq("status", "active")
+    .is("voided_at", null)
     .gte("end_date", today)
     .lte("end_date", alertDateStr);
 

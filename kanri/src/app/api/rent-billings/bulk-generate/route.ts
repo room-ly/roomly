@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
       .from("contracts")
       .select("id, rent, management_fee, end_date, renewal_effective_date, renewal_rent, renewal_management_fee, renewal_end_date")
       .eq("status", "active")
+      .is("voided_at", null)
       .eq("company_id", company_id);
 
     if (contractError) {

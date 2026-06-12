@@ -18,6 +18,7 @@ export async function getPropertyDetail(id: string) {
       .from("contracts")
       .select("id, unit_id, tenant:tenants(name)")
       .eq("status", "active")
+      .is("voided_at", null)
       .in("unit_id", unitIds);
     contracts = data ?? [];
   }
@@ -33,7 +34,7 @@ export async function getUnitDetail(unitId: string) {
 
   const [{ data: unit, error }, { data: contracts }, { data: cases }] = await Promise.all([
     supabase.from("units").select("*, property:properties(id, name, address, property_type, management_form, management_fee_type, management_fee_rate, management_fee_amount, owner:owners(id, name, phone, email))").eq("id", unitId).single(),
-    supabase.from("contracts").select("*, tenant:tenants(id, name, phone, email)").eq("unit_id", unitId).order("start_date", { ascending: false }),
+    supabase.from("contracts").select("*, tenant:tenants(id, name, phone, email)").eq("unit_id", unitId).is("voided_at", null).order("start_date", { ascending: false }),
     supabase.from("cases").select("*").eq("unit_id", unitId).order("reported_date", { ascending: false }).limit(5),
   ]);
   if (error || !unit) return null;

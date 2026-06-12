@@ -1,6 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient, getCompanyId, requirePermission } from "@/lib/supabase-server";
+import { createClient, getCompanyId, getCurrentUserRole, requirePermission } from "@/lib/supabase-server";
 import { contractSchema } from "@/lib/schemas";
+import { previewDeletion, deleteContractsCascade } from "@/lib/contract-deletion";
+
+// 削除前の依存件数プレビュー（確認モーダルで「請求6件・入金1件が消えます」を表示するため）
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const denied = await requirePermission("contracts:delete");
+    if (denied) return denied;
+    if (new URL(request.url).searchParams.get("preview") !== "1") {
+      return NextResponse.json({ error: "不正なリクエスト" }, { status: 400 });
+    }
+    const { id } = await params;
+    const companyId = await getCompanyId();
+    const preview = await previewDeletion([id], companyId);
+    if ("error" in preview) {
+      return NextResponse.json({ error: "件数の取得に失敗しました" }, { status: 500 });
+    }
+    return NextResponse.json(preview);
+  } catch {
+    return NextResponse.json({ error: "リクエストの処理に失敗しました" }, { status: 500 });
+  }
+}
 
 export async function PUT(
   request: NextRequest,
@@ -101,23 +125,27 @@ export async function DELETE(
     if (denied) return denied;
 
     const { id } = await params;
-    const supabase = await createClient();
     const companyId = await getCompanyId();
+    const current = await getCurrentUserRole();
+    if (!current) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
 
-    const { error } = await supabase
-      .from("contracts")
-      .delete()
-      .eq("id", id)
-      .eq("company_id", companyId);
+    // 入金履歴があれば論理削除、無ければ子→親の物理カスケード削除
+    const result = await deleteContractsCascade({
+      contractIds: [id],
+      companyId,
+      actorId: current.user_id,
+    });
 
-    if (error) {
+    if (!result.ok) {
       return NextResponse.json(
         { error: "契約の削除に失敗しました" },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, mode: result.mode });
   } catch {
     return NextResponse.json(
       { error: "リクエストの処理に失敗しました" },

@@ -36,6 +36,7 @@ export async function getDashboardData() {
     supabase
       .from("rent_billings")
       .select("id, billing_month, total_amount, due_date, status, contract:contracts(id, tenant:tenants(name)), rent_payments(amount)")
+      .is("voided_at", null)
       .lt("due_date", today)
       .neq("status", "exempt")
       .order("billing_month", { ascending: false }),
@@ -53,12 +54,14 @@ export async function getDashboardData() {
       .from("contracts")
       .select("id, end_date, contract_type, renewal_effective_date, renewal_rent, tenant:tenants(name), unit:units(unit_number, property_id, property:properties(name)), move_out_requests(id, status, desired_move_out_date)")
       .eq("status", "active")
+      .is("voided_at", null)
       .gte("end_date", today)
       .lte("end_date", inAlertDays),
     supabase
       .from("contracts")
       .select("id, tenant:tenants(name), unit:units(unit_number, property:properties(name)), move_out_requests!inner(id, status, desired_move_out_date)")
       .eq("status", "active")
+      .is("voided_at", null)
       .in("move_out_requests.status", ["pending", "approved"]),
     supabase
       .from("units")
@@ -67,6 +70,7 @@ export async function getDashboardData() {
     supabase
       .from("rent_billings")
       .select("total_amount, status, billing_month, rent_payments(amount)")
+      .is("voided_at", null)
       .neq("status", "exempt")
       .gte("billing_month", `${now.toISOString().slice(0, 7)}-01`)
       .lt("billing_month", `${new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().slice(0, 10)}`),
@@ -165,6 +169,7 @@ export async function getMonthlyTrend() {
     supabase
       .from("rent_billings")
       .select("billing_month, status, total_amount, rent_payments(amount)")
+      .is("voided_at", null)
       .neq("status", "exempt")
       .gte("billing_month", sixMonthsAgo.toISOString().slice(0, 10)),
     supabase

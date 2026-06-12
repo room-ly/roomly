@@ -36,6 +36,7 @@ export async function GET(
       supabase
         .from("rent_billings")
         .select("total_amount, status, contract:contracts(unit:units(id, unit_number, property_id))")
+        .is("voided_at", null)
         .gte("billing_month", monthStart)
         .lt("billing_month", monthEnd),
       supabase

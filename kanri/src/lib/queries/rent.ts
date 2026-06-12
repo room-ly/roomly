@@ -32,6 +32,7 @@ export async function getOverdueAging(): Promise<{
     .select(
       "id, due_date, total_amount, contract:contracts(tenant:tenants(name), unit:units(unit_number, property:properties(name))), rent_payments(amount)"
     )
+    .is("voided_at", null)
     .lt("due_date", todayStr);
 
   const result: { bucket30: AgingBucket; bucket60: AgingBucket; bucket90: AgingBucket } = {
@@ -91,7 +92,8 @@ export async function getRentBillings(
     .select(
       "*, contract:contracts(id, tenant:tenants(name, phone), unit:units(unit_number, property:properties(id, name))), rent_payments(payment_date, amount)",
       { count: "exact" }
-    );
+    )
+    .is("voided_at", null);
   if (billingMonth) {
     query = query.eq("billing_month", billingMonth);
   }
@@ -108,6 +110,7 @@ export async function getAvailableBillingMonths(): Promise<string[]> {
   const { data, error } = await supabase
     .from("rent_billings")
     .select("billing_month")
+    .is("voided_at", null)
     .order("billing_month", { ascending: false });
   if (error) throw error;
   const set = new Set<string>();
@@ -138,6 +141,7 @@ export async function getRentBillingDetail(id: string) {
       "id, billing_month, rent, management_fee, other_amount, other_description, total_amount, due_date, status, rent_payments(id, amount, payment_date, payment_method, notes)"
     )
     .eq("contract_id", contractId)
+    .is("voided_at", null)
     .order("billing_month", { ascending: false });
 
   return {

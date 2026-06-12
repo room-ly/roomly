@@ -13,10 +13,12 @@ export async function getTenantsWithInfo() {
       .select(
         "id, tenant_id, unit_id, rent, status, unit:units(unit_number, property:properties(name))"
       )
-      .eq("status", "active"),
+      .eq("status", "active")
+      .is("voided_at", null),
     supabase
       .from("rent_billings")
       .select("contract_id, total_amount, due_date, rent_payments(amount)")
+      .is("voided_at", null)
       .lt("due_date", today),
   ]);
 
@@ -43,7 +45,7 @@ export async function getTenantDetail(id: string) {
   const supabase = await createClient();
   const [{ data: tenant, error }, { data: contracts }] = await Promise.all([
     supabase.from("tenants").select("*").eq("id", id).single(),
-    supabase.from("contracts").select("*, unit:units(unit_number, property:properties(id, name))").eq("tenant_id", id).order("start_date", { ascending: false }),
+    supabase.from("contracts").select("*, unit:units(unit_number, property:properties(id, name))").eq("tenant_id", id).is("voided_at", null).order("start_date", { ascending: false }),
   ]);
   if (error || !tenant) return null;
 
@@ -57,7 +59,7 @@ export async function getTenantsForSelect(excludeContractId?: string) {
   const [{ data: tenants, error: tErr }, { data: activeContracts, error: cErr }] =
     await Promise.all([
       supabase.from("tenants").select("id, name").order("name"),
-      supabase.from("contracts").select("id, tenant_id").eq("status", "active"),
+      supabase.from("contracts").select("id, tenant_id").eq("status", "active").is("voided_at", null),
     ]);
   if (tErr) throw tErr;
   if (cErr) throw cErr;

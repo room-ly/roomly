@@ -26,8 +26,31 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteMsg, setDeleteMsg] = useState("削除内容を確認しています…");
   const canEdit = usePermission("contracts:edit");
   const canDelete = usePermission("contracts:delete");
+
+  // 削除ダイアログを開くと同時に、紐づく請求・入金の件数を取得して文面に反映する
+  async function openDelete() {
+    setDeleteMsg("削除内容を確認しています…");
+    setDeleteOpen(true);
+    try {
+      const res = await fetch(`/api/contracts/${contract.id}?preview=1`);
+      if (!res.ok) throw new Error();
+      const p = (await res.json()) as { billings: number; payments: number; mode: "void" | "physical" };
+      if (p.mode === "void") {
+        setDeleteMsg(
+          `この契約には入金/返金履歴が${p.payments}件あります。お金の記録のため、契約と請求${p.billings}件は「取り消し済み」として一覧から非表示にします（履歴はデータベースに残ります）。よろしいですか？`
+        );
+      } else {
+        setDeleteMsg(
+          `この契約と紐づく家賃請求${p.billings}件を完全に削除します。入金履歴はないため復元できません。よろしいですか？`
+        );
+      }
+    } catch {
+      setDeleteMsg("この契約を削除します。紐づく請求データも一緒に処理されます。よろしいですか？");
+    }
+  }
 
   const latestMoveOut = moveOutRequests?.[0];
   const editData = {
@@ -67,14 +90,14 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
           </button>
         )}
         {canDelete && (
-          <button onClick={() => setDeleteOpen(true)} className="p-2 rounded text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors">
+          <button onClick={openDelete} className="p-2 rounded text-ink-3 hover:text-danger hover:bg-danger-tint transition-colors">
             <Trash2 size={15} />
           </button>
         )}
       </div>
 
       <ContractFormModal key={modalOpen ? "open" : "closed"} isOpen={modalOpen} onClose={() => setModalOpen(false)} units={units} tenants={tenants} editData={editData} />
-      <ConfirmDialog isOpen={deleteOpen} title="契約を削除" message="この契約を削除しますか？関連する請求データは残りますが、契約情報は復元できません。" loading={deleting} onConfirm={handleDelete} onCancel={() => setDeleteOpen(false)} />
+      <ConfirmDialog isOpen={deleteOpen} title="契約を削除" message={deleteMsg} loading={deleting} onConfirm={handleDelete} onCancel={() => setDeleteOpen(false)} />
     </>
   );
 }

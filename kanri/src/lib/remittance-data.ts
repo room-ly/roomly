@@ -65,6 +65,7 @@ export async function gatherAndBuildRemittance(
   const { data: billingsRaw } = await supabase
     .from("rent_billings")
     .select("id, contract:contracts(unit_id), payments:rent_payments(amount)")
+    .is("voided_at", null)
     .eq("billing_month", month);
 
   const billings: RemitDbBilling[] = ((billingsRaw ?? []) as Record<string, unknown>[]).map((b) => {

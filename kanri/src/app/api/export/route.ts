@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
           .select(
             "*, contract:contracts(tenant:tenants(name), unit:units(unit_number, property:properties(name)))"
           )
+          .is("voided_at", null)
           .order("billing_month", { ascending: false });
         csv = generateCsv(data ?? [], [
           { key: "billing_month", label: "対象月" },

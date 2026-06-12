@@ -12,6 +12,7 @@ export async function getContracts(page = 1, pageSize = 50, sort = "start_date:d
       "*, tenant:tenants(name), unit:units(id, unit_number, property_id, property:properties(id, name)), move_out_requests(id, status, desired_move_out_date)",
       { count: "exact" }
     )
+    .is("voided_at", null) // 論理削除（取り消し）済みは一覧に出さない
     .order(sortCol, { ascending: sortDir === "asc" })
     .range(from, to);
   if (error) throw error;
@@ -42,6 +43,7 @@ export async function getContractDetail(id: string) {
       .from("rent_billings")
       .select("id, billing_month, total_amount, due_date, status, rent_payments(amount)")
       .eq("contract_id", id)
+      .is("voided_at", null)
       .order("billing_month", { ascending: false })
       .limit(12),
     supabase

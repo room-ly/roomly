@@ -43,7 +43,8 @@ async function processRentBillings(supabase: ReturnType<typeof createAdminClient
     .select(
       "id, company_id, start_date, end_date, move_out_date, rent, management_fee, closing_day, payment_due_day, payment_month_offset, renewal_effective_date, renewal_rent, renewal_management_fee, renewal_end_date"
     )
-    .eq("status", "active");
+    .eq("status", "active")
+    .is("voided_at", null);
 
   if (contractError) {
     throw new Error(`契約取得失敗: ${contractError.message}`);
