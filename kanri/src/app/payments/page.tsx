@@ -14,7 +14,7 @@ function resolveMonth(monthParam?: string): string {
 async function getData(month: string) {
   const supabase = await createClient();
   const company_id = await getCompanyId();
-  const [{ remittances, expenses }, unconfirmedOwners, { data: banks }, { data: payees }, { data: batches }] =
+  const [{ remittances, expenses }, { candidates: unconfirmedOwners, summary }, { data: banks }, { data: payees }, { data: batches }] =
     await Promise.all([
       getBatchCandidates(supabase, company_id),
       getUnconfirmedOwnerCandidates(supabase, company_id, month),
@@ -41,6 +41,7 @@ async function getData(month: string) {
     remittances,
     expenses,
     unconfirmedOwners,
+    summary,
     banks: (banks ?? []) as Record<string, any>[],
     payees: (payees ?? []) as Record<string, any>[],
     batches: (batches ?? []) as Record<string, any>[],
@@ -54,7 +55,7 @@ export default async function PaymentsPage({
 }) {
   const { month: monthParam } = await searchParams;
   const month = resolveMonth(monthParam);
-  const { remittances, expenses, unconfirmedOwners, banks, payees, batches } = await getData(month);
+  const { remittances, expenses, unconfirmedOwners, summary, banks, payees, batches } = await getData(month);
 
   return (
     <>
@@ -69,6 +70,7 @@ export default async function PaymentsPage({
         remittances={remittances}
         expenses={expenses}
         unconfirmedOwners={unconfirmedOwners}
+        summary={summary}
         month={month.slice(0, 7)}
         banks={banks}
         payees={payees as any}

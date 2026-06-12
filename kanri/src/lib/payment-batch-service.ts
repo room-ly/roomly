@@ -140,15 +140,24 @@ export interface UnconfirmedOwnerCandidate {
   has_bank: boolean;
 }
 
+// 対象月の精算進捗サマリー（締め作業の俯瞰用）。
+export interface MonthSettlementSummary {
+  total_owners: number;       // この月に送金対象（net>0）となるオーナー数
+  confirmed_owners: number;   // 確定済み（confirmed/sent）
+  unconfirmed_owners: number; // 未確定（未作成 or draft）
+  confirmed_amount: number;   // 確定済みオーナーの送金額合計
+  unconfirmed_amount: number; // 未確定オーナーの精算予定額合計
+}
+
 // 振込画面でその場で精算を確定できるよう、対象月にまだ confirmed になっていない
-// オーナーを計算プレビュー付きで返す。
-// - owner_remittance が未作成、または status='draft' のオーナーが対象
-// - 既に confirmed/sent のオーナーは getBatchCandidates 側に出るので除外
+// オーナーを計算プレビュー付きで返す。あわせて対象月全体の精算進捗サマリーも返す。
+// - owner_remittance が未作成、または status='draft' のオーナーが候補
+// - 既に confirmed/sent のオーナーは getBatchCandidates 側に出るので候補からは除外（サマリーには計上）
 export async function getUnconfirmedOwnerCandidates(
   supabase: Client,
   company_id: string,
   month: string, // YYYY-MM-01
-): Promise<UnconfirmedOwnerCandidate[]> {
+): Promise<{ candidates: UnconfirmedOwnerCandidate[]; summary: MonthSettlementSummary }> {
   const [{ data: ownersRaw }, { data: remitsRaw }] = await Promise.all([
     supabase
       .from("owners")
@@ -157,30 +166,43 @@ export async function getUnconfirmedOwnerCandidates(
       .order("name"),
     supabase
       .from("owner_remittances")
-      .select("id, owner_id, status")
+      .select("id, owner_id, status, net_amount")
       .eq("company_id", company_id)
       .eq("remittance_month", month),
   ]);
 
-  const remitByOwner = new Map<string, { id: string; status: string }>();
-  for (const r of (remitsRaw ?? []) as Record<string, string>[]) {
-    remitByOwner.set(r.owner_id, { id: r.id, status: r.status });
+  const remitByOwner = new Map<string, { id: string; status: string; net_amount: number }>();
+  for (const r of (remitsRaw ?? []) as Record<string, unknown>[]) {
+    remitByOwner.set(r.owner_id as string, {
+      id: r.id as string,
+      status: r.status as string,
+      net_amount: Number(r.net_amount) || 0,
+    });
   }
 
   const owners = (ownersRaw ?? []) as Record<string, string | null>[];
   const candidates: UnconfirmedOwnerCandidate[] = [];
+  let confirmed_owners = 0;
+  let confirmed_amount = 0;
 
   for (const o of owners) {
     const existing = remitByOwner.get(o.id as string);
-    // confirmed / sent は既に振込候補(getBatchCandidates)に出るのでスキップ
-    if (existing && existing.status !== "draft") continue;
+
+    // confirmed / sent は確定済み。サマリーに計上し、候補からはスキップ（getBatchCandidate側に出る）。
+    if (existing && existing.status !== "draft") {
+      if (existing.net_amount > 0) {
+        confirmed_owners += 1;
+        confirmed_amount += existing.net_amount;
+      }
+      continue;
+    }
 
     const built = await gatherAndBuildRemittance(supabase, {
       ownerId: o.id as string,
       month,
     });
     const net = built.ok ? built.data.netAmount : 0;
-    // 送金額ゼロ（家賃なし等）は振込対象にならないので候補から外す
+    // 送金額ゼロ（家賃なし等）は振込対象にならないので候補・サマリーから外す
     if (net <= 0) continue;
 
     const has_bank = !!(o.bank_code && o.bank_branch_code && o.bank_account_number && o.bank_account_holder);
@@ -194,7 +216,16 @@ export async function getUnconfirmedOwnerCandidates(
     });
   }
 
-  return candidates;
+  const unconfirmed_amount = candidates.reduce((s, c) => s + c.preview_net_amount, 0);
+  const summary: MonthSettlementSummary = {
+    total_owners: confirmed_owners + candidates.length,
+    confirmed_owners,
+    unconfirmed_owners: candidates.length,
+    confirmed_amount,
+    unconfirmed_amount,
+  };
+
+  return { candidates, summary };
 }
 
 type CreateBatchParams = {

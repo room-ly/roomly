@@ -7,6 +7,7 @@ import type {
   BatchCandidateRemittance,
   BatchCandidateExpense,
   UnconfirmedOwnerCandidate,
+  MonthSettlementSummary,
 } from "@/lib/payment-batch-service";
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -27,12 +28,13 @@ interface Props {
   remittances: BatchCandidateRemittance[];
   expenses: BatchCandidateExpense[];
   unconfirmedOwners: UnconfirmedOwnerCandidate[];
+  summary: MonthSettlementSummary;
   month: string; // YYYY-MM（対象月）
   banks: Record<string, any>[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   payees: PayeeOption[];
 }
 
-export default function NewBatchClient({ remittances, expenses, unconfirmedOwners, month, banks, payees }: Props) {
+export default function NewBatchClient({ remittances, expenses, unconfirmedOwners, summary, month, banks, payees }: Props) {
   const router = useRouter();
   const [batchDate, setBatchDate] = useState(new Date().toISOString().slice(0, 10));
   const [senderId, setSenderId] = useState(banks.find((b) => b.is_default)?.id ?? banks[0]?.id ?? "");
@@ -193,6 +195,37 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
           />
           <span className="text-xs text-ink-4">この月のオーナー精算を計算・確定して振込対象にします</span>
         </div>
+
+        {/* 対象月の精算進捗（締めの俯瞰） */}
+        {summary.total_owners > 0 && (
+          <div className="rounded-lg border border-border bg-surface-2 px-4 py-3">
+            <div className="flex items-center justify-between mb-2 text-[13px]">
+              <span className="font-medium">
+                {month} の精算進捗
+                <span className="text-ink-3 font-normal ml-2">
+                  {summary.confirmed_owners}/{summary.total_owners}名 確定
+                </span>
+              </span>
+              {summary.unconfirmed_owners > 0 ? (
+                <span className="text-warning">未確定 {summary.unconfirmed_owners}名</span>
+              ) : (
+                <span className="text-success">全オーナー確定済み</span>
+              )}
+            </div>
+            <div className="h-1.5 rounded-full bg-border overflow-hidden">
+              <div
+                className="h-full bg-accent transition-all"
+                style={{ width: `${Math.round((summary.confirmed_owners / summary.total_owners) * 100)}%` }}
+              />
+            </div>
+            <div className="flex gap-5 mt-2 text-xs text-ink-3">
+              <span>確定済み送金額 <span className="font-medium text-ink-2">¥{summary.confirmed_amount.toLocaleString()}</span></span>
+              {summary.unconfirmed_amount > 0 && (
+                <span>未確定の精算予定 <span className="font-medium text-ink-2">¥{summary.unconfirmed_amount.toLocaleString()}</span></span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 未確定のオーナー精算 — その場で計算・確定して振込候補に昇格させる */}
