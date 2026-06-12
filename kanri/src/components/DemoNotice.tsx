@@ -169,6 +169,9 @@ function ShareModal({ onClose }: { onClose: () => void }) {
         {sent ? (
           <div className="rounded-lg bg-success/10 p-4 text-[13px] text-success">
             送信しました。決済者の方にRoomlyのご案内メールが届きます。
+            <br />
+            ご共有いただきありがとうございます。
+
             <div className="mt-3">
               <button
                 type="button"
