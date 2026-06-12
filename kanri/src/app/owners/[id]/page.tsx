@@ -343,18 +343,30 @@ export default async function OwnerDetailPage({
                   <thead>
                     <tr>
                       <th>対象月</th>
+                      <th style={{ textAlign: "right" }}>家賃収入</th>
+                      <th style={{ textAlign: "right" }}>管理手数料</th>
+                      <th style={{ textAlign: "right" }}>費用控除</th>
                       <th style={{ textAlign: "right" }}>送金額</th>
                       <th>状態</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     {remittances.map((r: any) => (
                       <tr key={r.id} className="row-hover">
-                        <td>
-                          <Link href={`/remittances/${r.id}`} className="rlink">{r.remittance_month?.slice(0, 7)}</Link>
+                        <td className="mono">{r.remittance_month?.slice(0, 7)}</td>
+                        <td className="num">¥{Number(r.total_rent).toLocaleString()}</td>
+                        <td className="num" style={{ color: "var(--danger)" }}>-¥{Number(r.management_fee_deducted).toLocaleString()}</td>
+                        <td className="num" style={{ color: "var(--warn)" }}>
+                          {Number(r.expense_deducted) > 0 ? `-¥${Number(r.expense_deducted).toLocaleString()}` : "—"}
                         </td>
                         <td className="num" style={{ fontWeight: 500, color: "var(--accent)" }}>¥{Number(r.net_amount).toLocaleString()}</td>
                         <td><StatusBadge status={r.status} /></td>
+                        <td>
+                          <a href={`/api/remittances/${r.id}/pdf`} target="_blank" rel="noopener noreferrer" className="rlink" style={{ fontSize: 11 }}>
+                            PDF
+                          </a>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

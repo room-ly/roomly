@@ -19,8 +19,7 @@ const breadcrumbMap: Record<string, string> = {
   "/cases": "対応案件",
   "/costs": "費用",
   "/owners": "オーナー",
-  "/remittances": "送金",
-  "/payments": "支払い出力",
+  "/payments": "振込",
   "/payees": "支払先",
   "/settings": "設定",
 };

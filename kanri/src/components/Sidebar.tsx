@@ -13,7 +13,6 @@ import {
   Wrench,
   UserCircle,
   Receipt,
-  Send,
   Menu,
   X,
   LogOut,
@@ -46,13 +45,13 @@ const navGroups = [
   },
   {
     // 日々の業務とお金の処理をまとめる。項目数が増えたら会計系を別グループに分割する。
-    // 並びはお金の流れ順: 対応案件(現場) → 家賃(入金) → 費用 → 月次精算 → 振込 → 支払先 → ローン
+    // 並びはお金の流れ順: 対応案件(現場) → 家賃(入金) → 費用 → 振込 → 支払先 → ローン
+    // オーナー精算の計算・確定は「振込」画面に統合済み（旧「月次精算」メニューは廃止）
     group: "Operations",
     items: [
       { href: "/cases", label: "対応案件", icon: Wrench },
       { href: "/rent", label: "家賃", icon: Banknote },
       { href: "/costs", label: "費用", icon: Receipt },
-      { href: "/remittances", label: "月次精算", icon: Send },
       { href: "/payments", label: "振込", icon: CreditCard },
       { href: "/payees", label: "支払先", icon: BookUser },
       // ローンは拡張機能だが、メニューは常時表示する。

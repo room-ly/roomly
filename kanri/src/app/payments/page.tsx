@@ -1,15 +1,23 @@
 import Link from "next/link";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
 import PageHeader from "@/components/PageHeader";
-import { getBatchCandidates } from "@/lib/payment-batch-service";
+import { getBatchCandidates, getUnconfirmedOwnerCandidates } from "@/lib/payment-batch-service";
 import NewBatchClient from "@/components/NewBatchClient";
 
-async function getData() {
+// 対象月（YYYY-MM-01）。未指定なら当月。
+function resolveMonth(monthParam?: string): string {
+  if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) return `${monthParam}-01`;
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+}
+
+async function getData(month: string) {
   const supabase = await createClient();
   const company_id = await getCompanyId();
-  const [{ remittances, expenses }, { data: banks }, { data: payees }, { data: batches }] =
+  const [{ remittances, expenses }, unconfirmedOwners, { data: banks }, { data: payees }, { data: batches }] =
     await Promise.all([
       getBatchCandidates(supabase, company_id),
+      getUnconfirmedOwnerCandidates(supabase, company_id, month),
       supabase
         .from("company_bank_accounts")
         .select("id, label, account_holder, is_default")
@@ -32,14 +40,21 @@ async function getData() {
   return {
     remittances,
     expenses,
+    unconfirmedOwners,
     banks: (banks ?? []) as Record<string, any>[],
     payees: (payees ?? []) as Record<string, any>[],
     batches: (batches ?? []) as Record<string, any>[],
   };
 }
 
-export default async function PaymentsPage() {
-  const { remittances, expenses, banks, payees, batches } = await getData();
+export default async function PaymentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>;
+}) {
+  const { month: monthParam } = await searchParams;
+  const month = resolveMonth(monthParam);
+  const { remittances, expenses, unconfirmedOwners, banks, payees, batches } = await getData(month);
 
   return (
     <>
@@ -50,7 +65,14 @@ export default async function PaymentsPage() {
         description="オーナーへの送金と業者（修理会社等）への費用支払いから、振り込む対象を選んでバッチにまとめ、全銀CSVを出力します。支払先が未設定の費用は、その場で支払先を設定すると選べるようになります。"
       />
 
-      <NewBatchClient remittances={remittances} expenses={expenses} banks={banks} payees={payees as any} />
+      <NewBatchClient
+        remittances={remittances}
+        expenses={expenses}
+        unconfirmedOwners={unconfirmedOwners}
+        month={month.slice(0, 7)}
+        banks={banks}
+        payees={payees as any}
+      />
 
       {/* 過去の振込バッチ */}
       <div className="mt-10">

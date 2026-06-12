@@ -153,7 +153,7 @@ export default async function DashboardPage() {
         <div className="sum-card">
           <span className="sum-label mono">未送金</span>
           <span className="sum-value" style={{ fontSize: 16 }}>
-            <Link href="/remittances" className="rlink">
+            <Link href="/payments" className="rlink">
               {s.pending_remittances > 0 ? `${s.pending_remittances}件` : "—"}
             </Link>
           </span>

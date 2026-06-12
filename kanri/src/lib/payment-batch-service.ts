@@ -2,7 +2,7 @@
 // オーナー送金と業者への費用支払いを混在で1バッチにまとめる。
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
-import { APPROVED_EXPENSE_STATUSES } from "@/lib/remittance-data";
+import { APPROVED_EXPENSE_STATUSES, gatherAndBuildRemittance } from "@/lib/remittance-data";
 
 type Client = SupabaseClient<Database>;
 
@@ -129,6 +129,72 @@ export async function getBatchCandidates(supabase: Client, company_id: string) {
     });
 
   return { remittances, expenses };
+}
+
+export interface UnconfirmedOwnerCandidate {
+  owner_id: string;
+  owner_name: string;
+  remittance_month: string; // YYYY-MM
+  preview_net_amount: number;
+  existing_remittance_id: string | null; // 既に draft がある場合はその id
+  has_bank: boolean;
+}
+
+// 振込画面でその場で精算を確定できるよう、対象月にまだ confirmed になっていない
+// オーナーを計算プレビュー付きで返す。
+// - owner_remittance が未作成、または status='draft' のオーナーが対象
+// - 既に confirmed/sent のオーナーは getBatchCandidates 側に出るので除外
+export async function getUnconfirmedOwnerCandidates(
+  supabase: Client,
+  company_id: string,
+  month: string, // YYYY-MM-01
+): Promise<UnconfirmedOwnerCandidate[]> {
+  const [{ data: ownersRaw }, { data: remitsRaw }] = await Promise.all([
+    supabase
+      .from("owners")
+      .select("id, name, bank_code, bank_branch_code, bank_account_type, bank_account_number, bank_account_holder")
+      .eq("company_id", company_id)
+      .order("name"),
+    supabase
+      .from("owner_remittances")
+      .select("id, owner_id, status")
+      .eq("company_id", company_id)
+      .eq("remittance_month", month),
+  ]);
+
+  const remitByOwner = new Map<string, { id: string; status: string }>();
+  for (const r of (remitsRaw ?? []) as Record<string, string>[]) {
+    remitByOwner.set(r.owner_id, { id: r.id, status: r.status });
+  }
+
+  const owners = (ownersRaw ?? []) as Record<string, string | null>[];
+  const candidates: UnconfirmedOwnerCandidate[] = [];
+
+  for (const o of owners) {
+    const existing = remitByOwner.get(o.id as string);
+    // confirmed / sent は既に振込候補(getBatchCandidates)に出るのでスキップ
+    if (existing && existing.status !== "draft") continue;
+
+    const built = await gatherAndBuildRemittance(supabase, {
+      ownerId: o.id as string,
+      month,
+    });
+    const net = built.ok ? built.data.netAmount : 0;
+    // 送金額ゼロ（家賃なし等）は振込対象にならないので候補から外す
+    if (net <= 0) continue;
+
+    const has_bank = !!(o.bank_code && o.bank_branch_code && o.bank_account_number && o.bank_account_holder);
+    candidates.push({
+      owner_id: o.id as string,
+      owner_name: (o.name as string) ?? "—",
+      remittance_month: month.slice(0, 7),
+      preview_net_amount: net,
+      existing_remittance_id: existing?.id ?? null,
+      has_bank,
+    });
+  }
+
+  return candidates;
 }
 
 type CreateBatchParams = {

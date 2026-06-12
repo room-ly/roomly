@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckSquare, Square, Loader2 } from "lucide-react";
-import type { BatchCandidateRemittance, BatchCandidateExpense } from "@/lib/payment-batch-service";
+import type {
+  BatchCandidateRemittance,
+  BatchCandidateExpense,
+  UnconfirmedOwnerCandidate,
+} from "@/lib/payment-batch-service";
 
 const CATEGORY_LABEL: Record<string, string> = {
   repair: "修繕費", cleaning: "清掃費", insurance: "保険料",
@@ -22,11 +26,13 @@ interface PayeeOption {
 interface Props {
   remittances: BatchCandidateRemittance[];
   expenses: BatchCandidateExpense[];
+  unconfirmedOwners: UnconfirmedOwnerCandidate[];
+  month: string; // YYYY-MM（対象月）
   banks: Record<string, any>[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   payees: PayeeOption[];
 }
 
-export default function NewBatchClient({ remittances, expenses, banks, payees }: Props) {
+export default function NewBatchClient({ remittances, expenses, unconfirmedOwners, month, banks, payees }: Props) {
   const router = useRouter();
   const [batchDate, setBatchDate] = useState(new Date().toISOString().slice(0, 10));
   const [senderId, setSenderId] = useState(banks.find((b) => b.is_default)?.id ?? banks[0]?.id ?? "");
@@ -36,9 +42,61 @@ export default function NewBatchClient({ remittances, expenses, banks, payees }:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [assigningId, setAssigningId] = useState<string | null>(null); // 支払先設定中の費用ID
+  const [confirmingId, setConfirmingId] = useState<string | null>(null); // 精算確定中のオーナーID
 
   const payeeHasBank = (p: PayeeOption | undefined) =>
     !!(p && p.bank_code && p.branch_code && p.account_number && p.account_holder_kana);
+
+  // 対象月を切り替える（候補をサーバーから取り直す）
+  function changeMonth(nextMonth: string) {
+    router.push(`/payments?month=${nextMonth}`);
+  }
+
+  // 未確定オーナーの精算をその場で計算・確定する。
+  // POST /api/remittances（draft作成・計算はサーバー側）→ PUT /api/remittances/[id]（confirmed化）。
+  // 既に draft がある場合は POST をスキップして confirmed 化のみ行う。
+  async function confirmOwner(c: UnconfirmedOwnerCandidate) {
+    setConfirmingId(c.owner_id);
+    setError("");
+    try {
+      let remittanceId = c.existing_remittance_id;
+      if (!remittanceId) {
+        const res = await fetch("/api/remittances", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ owner_id: c.owner_id, remittance_month: `${month}-01` }),
+        });
+        if (res.ok) {
+          const created = await res.json();
+          remittanceId = created.id;
+        } else if (res.status === 409) {
+          // 既に作成済み（競合）。確定だけ進めたいが id 不明なので一旦リフレッシュして再試行を促す。
+          setError("この月の精算は既に作成済みです。画面を更新します。");
+          router.refresh();
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          setError(err.error || "精算の計算に失敗しました");
+          return;
+        }
+      }
+      const put = await fetch(`/api/remittances/${remittanceId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "confirmed" }),
+      });
+      if (!put.ok) {
+        const err = await put.json().catch(() => ({}));
+        setError(err.error || "精算の確定に失敗しました");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("精算の確定に失敗しました");
+    } finally {
+      setConfirmingId(null);
+    }
+  }
 
   // 行内で費用に支払先を設定する。設定後はサーバーから候補を取り直す（has_bank等を再評価）。
   async function assignPayee(expenseId: string, payeeId: string) {
@@ -125,7 +183,56 @@ export default function NewBatchClient({ remittances, expenses, banks, payees }:
             <input value={notes} onChange={(e) => setNotes(e.target.value)} className="input" placeholder="例: 6/11 第1回" />
           </div>
         </div>
+        <div className="flex items-center gap-2 pt-1">
+          <label className="text-xs text-ink-3">精算対象月</label>
+          <input
+            type="month"
+            value={month}
+            onChange={(e) => e.target.value && changeMonth(e.target.value)}
+            className="input py-1 text-[13px] max-w-[160px]"
+          />
+          <span className="text-xs text-ink-4">この月のオーナー精算を計算・確定して振込対象にします</span>
+        </div>
       </div>
+
+      {/* 未確定のオーナー精算 — その場で計算・確定して振込候補に昇格させる */}
+      {unconfirmedOwners.length > 0 && (
+        <div className="card overflow-hidden">
+          <div className="px-4 py-3 border-b border-border bg-surface-2 text-sm font-semibold">
+            未確定のオーナー精算
+            <span className="text-xs text-ink-3 font-normal ml-2">{month}・{unconfirmedOwners.length}名</span>
+          </div>
+          <table className="w-full text-sm">
+            <tbody className="divide-y divide-border">
+              {unconfirmedOwners.map((c) => (
+                <tr key={c.owner_id} className="hover:bg-surface-2">
+                  <td className="px-4 py-3 font-medium">
+                    {c.owner_name}
+                    {!c.has_bank && <span className="text-xs text-warning ml-2">口座情報なし</span>}
+                  </td>
+                  <td className="px-4 py-3 text-ink-2">{c.remittance_month}</td>
+                  <td className="px-4 py-3 text-right text-ink-2">
+                    精算予定 ¥{c.preview_net_amount.toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-right w-40">
+                    <button
+                      onClick={() => confirmOwner(c)}
+                      disabled={confirmingId === c.owner_id}
+                      className="btn btn-secondary text-[13px] py-1 disabled:opacity-50 inline-flex items-center gap-1.5"
+                    >
+                      {confirmingId === c.owner_id && <Loader2 size={13} className="animate-spin" />}
+                      {confirmingId === c.owner_id ? "確定中…" : "計算して確定"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="px-4 py-2 text-xs text-ink-3 border-t border-border">
+            「計算して確定」すると下の「オーナーへの送金」に表示され、振込対象に選べるようになります。
+          </div>
+        </div>
+      )}
 
       {/* オーナー送金 */}
       {remittances.length > 0 && (
@@ -222,10 +329,10 @@ export default function NewBatchClient({ remittances, expenses, banks, payees }:
         </div>
       )}
 
-      {remittances.length === 0 && expenses.length === 0 && (
+      {remittances.length === 0 && expenses.length === 0 && unconfirmedOwners.length === 0 && (
         <div className="card p-10 text-center text-ink-3">
           振込対象がありません。<br />
-          オーナー送金は「月次精算」画面で確定すると、ここに表示されます。<br />
+          オーナー送金は、上の「精算対象月」を選んで未確定の精算を「計算して確定」すると表示されます。<br />
           業者への支払いは、承認済み・未払いの費用がここに自動で表示されます。
         </div>
       )}
