@@ -61,6 +61,8 @@ export async function getUnitsForSelect() {
       tenant_id: active?.tenant_id || null,
       rent: u.rent,
       management_fee: u.management_fee,
+      // 有効な契約があれば入居中（=新規契約の選択肢から除外）
+      occupied: !!active,
     };
   });
 }

@@ -13,6 +13,7 @@ interface SelectOption {
   tenant_id?: string | null;
   rent?: number | null;
   management_fee?: number | null;
+  occupied?: boolean;
 }
 
 interface ContractFormModalProps {
@@ -168,7 +169,10 @@ export default function ContractFormModal({
                   </label>
                   <select name="unit_id" value={selectedUnitId} onChange={(e) => handleUnitChange(e.target.value)} className="input">
                     <option value="">選択してください</option>
-                    {units.map((u) => <option key={u.id} value={u.id}>{u.label}</option>)}
+                    {units
+                      // 空室のみ表示（編集中の契約が紐づく部屋は入居中でも残す）
+                      .filter((u) => !u.occupied || u.id === selectedUnitId)
+                      .map((u) => <option key={u.id} value={u.id}>{u.label}</option>)}
                   </select>
                   {errors.unit_id && <p className="text-danger text-sm mt-1">{errors.unit_id[0]}</p>}
                 </div>
