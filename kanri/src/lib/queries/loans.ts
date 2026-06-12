@@ -1,4 +1,4 @@
-import { createClient, type Row } from "./_shared";
+import { createClient, activeContractFees, type Row } from "./_shared";
 
 // ローン一覧（紐付け物件・オーナー付き）
 export async function getLoans() {
@@ -54,11 +54,12 @@ export async function getLoanCashflow(loanId: string, monthStart: string) {
   if (propertyIds.length > 0) {
     const { data: units } = await supabase
       .from("units")
-      .select("rent, status, property_id")
+      .select("rent, management_fee, status, property_id, contracts(rent, management_fee, status, voided_at)")
       .in("property_id", propertyIds)
       .eq("status", "occupied");
+    // 入居中の家賃は契約が正。アクティブ契約の rent を使う
     for (const u of units ?? []) {
-      monthlyRentIncome += Number(u.rent ?? 0);
+      monthlyRentIncome += activeContractFees(u).rent;
     }
   }
 

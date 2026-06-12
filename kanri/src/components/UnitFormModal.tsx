@@ -206,7 +206,7 @@ export default function UnitFormModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium text-ink-2 block mb-1">
-                賃料 <span className="text-danger">*</span>
+                募集賃料 <span className="text-danger">*</span>
               </label>
               <input
                 name="rent"
@@ -215,6 +215,7 @@ export default function UnitFormModal({
                 className="input"
                 placeholder="例: 80000"
               />
+              <p className="text-[11px] text-ink-4 mt-1">空室の募集条件です。入居中の実際の家賃は契約で管理します。</p>
               {errors.rent && (
                 <p className="text-danger text-sm mt-1">{errors.rent[0]}</p>
               )}

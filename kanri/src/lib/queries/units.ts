@@ -1,4 +1,4 @@
-import { createClient, applyUnitVisibility, getVisibleUnitIds, type Row } from "./_shared";
+import { createClient, applyUnitVisibility, getVisibleUnitIds, withEffectiveRent, type Row } from "./_shared";
 
 // 物件詳細（部屋一覧 + アクティブ契約付き）
 export async function getPropertyDetail(id: string) {
@@ -16,14 +16,18 @@ export async function getPropertyDetail(id: string) {
   if (unitIds.length > 0) {
     const { data } = await supabase
       .from("contracts")
-      .select("id, unit_id, tenant:tenants(name)")
+      .select("id, unit_id, rent, management_fee, status, voided_at, tenant:tenants(name)")
       .eq("status", "active")
       .is("voided_at", null)
       .in("unit_id", unitIds);
     contracts = data ?? [];
   }
 
-  const visibleUnits = applyUnitVisibility(units ?? [], visibleIds);
+  // 入居中の部屋は契約の家賃を実効家賃として部屋に反映する（空室はunits.rentのまま）
+  const unitsWithRent = (units ?? []).map((u: Row) =>
+    withEffectiveRent({ ...u, contracts: contracts.filter((c: Row) => c.unit_id === u.id) })
+  );
+  const visibleUnits = applyUnitVisibility(unitsWithRent, visibleIds);
 
   return { property, units: visibleUnits, contracts };
 }

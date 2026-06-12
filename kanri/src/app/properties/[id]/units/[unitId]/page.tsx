@@ -85,26 +85,41 @@ export default async function UnitDetailPage({
             </div>
           </div>
 
-          {/* 賃料・費用 */}
-          <div className="section">
-            <div className="section-head-bar"><h2>賃料・費用</h2></div>
-            <div className="section-body">
-              <div className="cfee-grid">
-                <div className="cfee-main">
-                  <div className="cfee-label mono">月額合計</div>
-                  <div className="cfee-value">¥{(Number(unit.rent) + Number(unit.management_fee)).toLocaleString()}</div>
-                </div>
-                <div className="cfee-item">
-                  <div className="cfee-label mono">賃料</div>
-                  <div className="cfee-sub num">¥{Number(unit.rent).toLocaleString()}</div>
-                </div>
-                <div className="cfee-item">
-                  <div className="cfee-label mono">管理費</div>
-                  <div className="cfee-sub num">¥{Number(unit.management_fee).toLocaleString()}</div>
+          {/* 賃料・費用
+              入居中の部屋は「契約」が家賃の正。アクティブ契約があればその金額を表示する。
+              空室（契約なし）の部屋は units.rent を「募集賃料」として表示する。 */}
+          {(() => {
+            const feeRent = activeContract ? Number(activeContract.rent) : Number(unit.rent);
+            const feeMgmt = activeContract ? Number(activeContract.management_fee) : Number(unit.management_fee);
+            const feeLabel = activeContract ? "賃料" : "募集賃料";
+            const sectionTitle = activeContract ? "賃料・費用" : "募集条件";
+            return (
+              <div className="section">
+                <div className="section-head-bar"><h2>{sectionTitle}</h2></div>
+                <div className="section-body">
+                  {activeContract && (
+                    <p style={{ fontSize: 11, color: "var(--ink-4)", margin: "0 0 10px" }}>
+                      入居中の家賃は<Link href={`/contracts/${activeContract.id}`} className="rlink">契約</Link>で管理します。
+                    </p>
+                  )}
+                  <div className="cfee-grid">
+                    <div className="cfee-main">
+                      <div className="cfee-label mono">月額合計</div>
+                      <div className="cfee-value">¥{(feeRent + feeMgmt).toLocaleString()}</div>
+                    </div>
+                    <div className="cfee-item">
+                      <div className="cfee-label mono">{feeLabel}</div>
+                      <div className="cfee-sub num">¥{feeRent.toLocaleString()}</div>
+                    </div>
+                    <div className="cfee-item">
+                      <div className="cfee-label mono">管理費</div>
+                      <div className="cfee-sub num">¥{feeMgmt.toLocaleString()}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* 設備・備考 */}
           {((unit.equipment && unit.equipment.length > 0) || unit.notes) && (
