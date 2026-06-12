@@ -6,12 +6,10 @@ import { useState } from "react";
 const DEMO_LOGIN_URL = "https://kanri.roomly.jp/login?demo=1&from=demo-share";
 const PRICING_URL = "https://hp.roomly.jp/pricing?from=demo-share";
 
-const COPY_TEXT = `賃貸管理SaaS「Roomly」を試してみました。物件・入居者・契約・家賃・修繕・オーナー送金まで一元管理できます。
-
-▼ デモを触ってみる（登録不要・無料）
+// 決済者に渡すURL。操作者が自分の言葉を添えて貼れるよう、URLのみ（ラベル付き2行）。
+const COPY_TEXT = `▼ デモ(登録不要)
 ${DEMO_LOGIN_URL}
-
-▼ 料金・お申し込み
+▼ 料金・詳細
 ${PRICING_URL}`;
 
 function gtagEvent(name: string) {
@@ -162,9 +160,11 @@ function ShareModal({ onClose }: { onClose: () => void }) {
             ×
           </button>
         </div>
-        <p className="mb-5 text-[12.5px] text-gray-500 leading-relaxed">
-          導入を検討してもらいたい方に、Roomlyのデモと料金をまとめてお送りできます。
-        </p>
+        {!sent && (
+          <p className="mb-5 text-[12.5px] text-gray-500 leading-relaxed">
+            導入を検討してもらいたい方に、Roomlyのデモと料金をまとめてお送りできます。
+          </p>
+        )}
 
         {sent ? (
           <div className="rounded-lg bg-success/10 p-4 text-[13px] text-success">
@@ -226,16 +226,16 @@ function ShareModal({ onClose }: { onClose: () => void }) {
               <span className="absolute left-0 top-1/2 h-px w-full bg-gray-200" />
             </div>
 
-            {/* ② 自分で送る（コピー） */}
+            {/* ② URLをコピーして自分で送る */}
             <button
               type="button"
               onClick={handleCopy}
               className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-[13px] font-semibold text-gray-700 transition-colors hover:bg-gray-50"
             >
-              {copied ? "コピーしました ✓" : "メール文面をコピーして自分で送る"}
+              {copied ? "コピーしました ✓" : "デモ・料金ページのURLをコピー"}
             </button>
             <p className="mt-1.5 text-[11px] text-gray-400 leading-relaxed">
-              LINEやSlack、ご自身のメールで送りたい場合に。
+              ご自身のメール・LINE・Slackに貼って、一言添えて送れます。
             </p>
           </>
         )}

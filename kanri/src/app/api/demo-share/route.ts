@@ -83,9 +83,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 名前があれば件名に差出担当者名を入れる（社内の誰からの共有か一目で分かる）
+    const subject = senderName
+      ? `【Roomly】${senderName}様より 賃貸管理SaaSのご共有 — デモをご覧いただけます`
+      : "【Roomly】賃貸管理SaaSのご共有 — デモをご覧いただけます";
+
     await sendEmail({
       to,
-      subject: "【Roomly】賃貸管理SaaSのご共有 — デモをご覧いただけます",
+      subject,
       html: buildHtml(senderName),
       from: FROM_ADDRESSES.system, // noreply@roomly.jp
       headers: { "Reply-To": "Roomly <contact@roomly.jp>" },
