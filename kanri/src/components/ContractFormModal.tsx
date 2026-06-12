@@ -10,6 +10,9 @@ import { dispatchAuditLogRefresh } from "@/lib/audit-events";
 interface SelectOption {
   id: string;
   label: string;
+  property_id?: string;
+  property_name?: string;
+  unit_number?: string;
   tenant_id?: string | null;
   rent?: number | null;
   management_fee?: number | null;
@@ -35,8 +38,30 @@ export default function ContractFormModal({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [apiError, setApiError] = useState("");
-  const [selectedUnitId, setSelectedUnitId] = useState(editData?.unit_id || editData?.unit?.id || "");
+  const initialUnitId = editData?.unit_id || editData?.unit?.id || "";
+  const [selectedUnitId, setSelectedUnitId] = useState(initialUnitId);
   const [selectedTenantId, setSelectedTenantId] = useState(editData?.tenant_id || editData?.tenant?.id || "");
+  // 二段階セレクト: まず物件を選び、その物件の空室だけを部屋セレクトに出す
+  const [selectedPropertyId, setSelectedPropertyId] = useState(
+    units.find((u) => u.id === initialUnitId)?.property_id || ""
+  );
+
+  // 物件一覧（重複排除）。物件名順に並べる
+  const propertyOptions = (() => {
+    const map = new Map<string, string>();
+    for (const u of units) {
+      if (u.property_id) map.set(u.property_id, u.property_name || "");
+    }
+    return Array.from(map, ([id, name]) => ({ id, name })).sort((a, b) =>
+      a.name.localeCompare(b.name, "ja")
+    );
+  })();
+
+  function handlePropertyChange(propertyId: string) {
+    setSelectedPropertyId(propertyId);
+    // 物件を変えたら部屋選択はリセット（前の物件の部屋が残らないように）
+    setSelectedUnitId("");
+  }
 
   function handleUnitChange(unitId: string) {
     setSelectedUnitId(unitId);
@@ -68,7 +93,9 @@ export default function ContractFormModal({
     if (lastTargetRef.current === target) return;
     lastTargetRef.current = target;
 
-    setSelectedUnitId(editData?.unit_id || editData?.unit?.id || "");
+    const unitId = editData?.unit_id || editData?.unit?.id || "";
+    setSelectedUnitId(unitId);
+    setSelectedPropertyId(units.find((u) => u.id === unitId)?.property_id || "");
     setSelectedTenantId(editData?.tenant_id || editData?.tenant?.id || "");
     setErrors({});
     setApiError("");
@@ -165,27 +192,36 @@ export default function ContractFormModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">
-                    部屋 <span className="text-danger">*</span>
+                    物件 <span className="text-danger">*</span>
                   </label>
-                  <select name="unit_id" value={selectedUnitId} onChange={(e) => handleUnitChange(e.target.value)} className="input">
+                  <select value={selectedPropertyId} onChange={(e) => handlePropertyChange(e.target.value)} className="input">
                     <option value="">選択してください</option>
-                    {units
-                      // 空室のみ表示（編集中の契約が紐づく部屋は入居中でも残す）
-                      .filter((u) => !u.occupied || u.id === selectedUnitId)
-                      .map((u) => <option key={u.id} value={u.id}>{u.label}</option>)}
+                    {propertyOptions.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
-                  {errors.unit_id && <p className="text-danger text-sm mt-1">{errors.unit_id[0]}</p>}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">
-                    入居者 <span className="text-danger">*</span>
+                    部屋 <span className="text-danger">*</span>
                   </label>
-                  <select name="tenant_id" value={selectedTenantId} onChange={(e) => setSelectedTenantId(e.target.value)} className="input">
-                    <option value="">選択してください</option>
-                    {tenants.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                  <select name="unit_id" value={selectedUnitId} onChange={(e) => handleUnitChange(e.target.value)} className="input" disabled={!selectedPropertyId}>
+                    <option value="">{selectedPropertyId ? "選択してください" : "先に物件を選択"}</option>
+                    {units
+                      // 選択中の物件 かつ 空室のみ（編集中の契約が紐づく部屋は入居中でも残す）
+                      .filter((u) => u.property_id === selectedPropertyId && (!u.occupied || u.id === selectedUnitId))
+                      .map((u) => <option key={u.id} value={u.id}>{u.unit_number}</option>)}
                   </select>
-                  {errors.tenant_id && <p className="text-danger text-sm mt-1">{errors.tenant_id[0]}</p>}
+                  {errors.unit_id && <p className="text-danger text-sm mt-1">{errors.unit_id[0]}</p>}
                 </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-ink-2 block mb-1">
+                  入居者 <span className="text-danger">*</span>
+                </label>
+                <select name="tenant_id" value={selectedTenantId} onChange={(e) => setSelectedTenantId(e.target.value)} className="input">
+                  <option value="">選択してください</option>
+                  {tenants.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                </select>
+                {errors.tenant_id && <p className="text-danger text-sm mt-1">{errors.tenant_id[0]}</p>}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>

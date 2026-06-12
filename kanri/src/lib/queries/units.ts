@@ -50,7 +50,7 @@ export async function getUnitsForSelect() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("units")
-    .select("id, unit_number, rent, management_fee, property:properties(name), contracts(tenant_id, status)")
+    .select("id, unit_number, property_id, rent, management_fee, property:properties(name), contracts(tenant_id, status)")
     .order("unit_number");
   if (error) throw error;
   return (data ?? []).map((u: Row) => {
@@ -58,6 +58,10 @@ export async function getUnitsForSelect() {
     return {
       id: u.id,
       label: `${u.property?.name || ""} ${u.unit_number}`,
+      // 二段階セレクト（物件 → 部屋）用
+      property_id: u.property_id,
+      property_name: u.property?.name || "",
+      unit_number: u.unit_number,
       tenant_id: active?.tenant_id || null,
       rent: u.rent,
       management_fee: u.management_fee,
