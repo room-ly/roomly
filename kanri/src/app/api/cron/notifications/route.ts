@@ -16,7 +16,7 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-// 滞納通知: due_date 超過かつ未払いの請求を派生で抽出し、本日未通知のものに送信
+// 滞納通知: due_date 超過かつ未払いの請求を派生で抽出し、未通知のものだけに一度きり送信
 async function processOverdue(supabase: ReturnType<typeof createAdminClient>) {
   const t = today();
   const { data: billings, error } = await supabase
@@ -34,8 +34,9 @@ async function processOverdue(supabase: ReturnType<typeof createAdminClient>) {
   let skipped = 0;
   for (const b of overdueBillings) {
     const row = b as Record<string, any>;
-    // 本日すでに通知済みならスキップ（毎日送らない）
-    if (row.overdue_notified_at === t) {
+    // 滞納通知は一度きり（滞納に転落した初日のみ）。すでに通知済みならスキップ。
+    // 毎日同じ請求を update し続けないための冪等化（監査ログ肥大の防止）。
+    if (row.overdue_notified_at) {
       skipped++;
       continue;
     }
