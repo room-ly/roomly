@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { createClient, getCompanyId } from "@/lib/supabase-server";
 import PageHeader from "@/components/PageHeader";
 import { getBatchCandidates, getUnconfirmedOwnerCandidates } from "@/lib/payment-batch-service";
 import NewBatchClient from "@/components/NewBatchClient";
+import PaymentHistoryTable from "@/components/PaymentHistoryTable";
 
 // 対象月（YYYY-MM-01）。未指定なら当月。
 function resolveMonth(monthParam?: string): string {
@@ -85,46 +85,7 @@ export default async function PaymentsPage({
           </div>
         </div>
 
-        {batches.length === 0 ? (
-          <div className="card p-8 text-center text-ink-3 text-sm">
-            まだ振込バッチはありません。上で対象を選んで作成すると、ここに履歴が残ります。
-          </div>
-        ) : (
-          <div className="card overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] text-sm">
-                <thead>
-                  <tr className="border-b border-border text-ink-3 text-xs">
-                    <th className="text-left px-4 py-3 font-medium">振込日</th>
-                    <th className="text-left px-4 py-3 font-medium">ステータス</th>
-                    <th className="text-right px-4 py-3 font-medium">合計金額</th>
-                    <th className="text-left px-4 py-3 font-medium">備考</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {batches.map((b) => (
-                    <tr key={b.id} className="hover:bg-surface-2 transition-colors">
-                      <td className="px-4 py-3">
-                        <Link href={`/payments/${b.id}`} className="rlink font-medium">
-                          {b.batch_date}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`charge-tag ${b.status === "executed" ? "accent" : ""}`}>
-                          {b.status === "executed" ? "振込実行済み" : "下書き"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium">
-                        ¥{Number(b.total_amount).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-ink-3">{b.notes ?? ""}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        <PaymentHistoryTable batches={batches} />
       </div>
     </>
   );
