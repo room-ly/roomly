@@ -55,11 +55,13 @@ export function activeContractFees(unit: Row): { rent: number; management_fee: n
   };
 }
 
-// 部屋オブジェクトの rent/management_fee を「実効家賃」（入居中=契約 / 空室=募集賃料）に差し替える。
+// 部屋オブジェクトの rent を「実効家賃」（入居中=契約 / 空室=募集賃料）に差し替える。
 // 既存の表示コンポーネントは unit.rent をそのまま参照しているので、値だけ正しくして無改修で済ませる。
+// 管理費（management_fee）は部屋の属性であり契約の二役対象ではないため、units.management_fee を維持する。
+// （契約側に上書きすると、部屋詳細・編集モーダルの units.management_fee と表示が食い違う）
 export function withEffectiveRent(unit: Row): Row {
   const fees = activeContractFees(unit);
-  return { ...unit, rent: fees.rent, management_fee: fees.management_fee };
+  return { ...unit, rent: fees.rent };
 }
 
 // 区画リストにvisibility情報を付与
