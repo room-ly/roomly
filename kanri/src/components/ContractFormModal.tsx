@@ -286,7 +286,7 @@ export default function ContractFormModal({
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink-2 block mb-1">管理費</label>
-                  <input name="management_fee" type="number" defaultValue={editData?.management_fee ?? "0"} className="input" placeholder="例: 5000" />
+                  <input name="management_fee" type="number" defaultValue={editData?.management_fee ?? ""} className="input" placeholder="例: 5000" />
                   {errors.management_fee && <p className="text-danger text-sm mt-1">{errors.management_fee[0]}</p>}
                 </div>
               </div>
