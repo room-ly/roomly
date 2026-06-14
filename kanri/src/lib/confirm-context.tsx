@@ -83,6 +83,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const promptResolveRef = useRef<((result: string | null) => void) | null>(null);
 
   const settle = useCallback((result: boolean) => {
+    console.log("[CONFIRM-DEBUG] settle called", { result, hasResolve: !!resolveRef.current, stack: new Error().stack });
     const resolve = resolveRef.current;
     resolveRef.current = null;
     setState(CLOSED);
@@ -97,6 +98,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const confirm = useCallback<ConfirmFn>((options) => {
+    console.log("[CONFIRM-DEBUG] confirm called", { title: options.title, stack: new Error().stack });
     return new Promise<boolean>((resolve) => {
       resolveRef.current = resolve;
       setState({
@@ -111,6 +113,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const notify = useCallback<NotifyFn>((options) => {
+    console.log("[CONFIRM-DEBUG] notify called", { title: options.title, hadPendingResolve: !!resolveRef.current, stack: new Error().stack });
     resolveRef.current = null;
     setState({
       isOpen: true,
