@@ -2,7 +2,13 @@
 // オーナー送金と業者への費用支払いを混在で1バッチにまとめる。
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
-import { APPROVED_EXPENSE_STATUSES, gatherAndBuildRemittance } from "@/lib/remittance-data";
+import { APPROVED_EXPENSE_STATUSES } from "@/lib/remittance-data";
+import {
+  buildRemittance,
+  type RemitDbProperty,
+  type RemitDbBilling,
+  type RemitDbExpense,
+} from "@/lib/remittance-calc";
 
 type Client = SupabaseClient<Database>;
 
@@ -158,7 +164,20 @@ export async function getUnconfirmedOwnerCandidates(
   company_id: string,
   month: string, // YYYY-MM-01
 ): Promise<{ candidates: UnconfirmedOwnerCandidate[]; summary: MonthSettlementSummary }> {
-  const [{ data: ownersRaw }, { data: remitsRaw }] = await Promise.all([
+  // 以前はオーナーごとに gatherAndBuildRemittance を直列 await で呼んでおり、
+  // 「全オーナー × 1人あたり5クエリ」を逐次実行して非常に遅かった。
+  // ここでは精算計算に必要なデータ（会社設定・全物件/部屋・当月請求/入金・未精算経費）を
+  // company 単位でまとめて1回ずつ取得し、オーナーごとにメモリ上で割り当てて buildRemittance を呼ぶ。
+  // buildRemittance は billings を unit_id キーで突き合わせるため、当月請求を全件渡しても
+  // 各オーナーの部屋に属する請求だけが計上され、従来と同一の結果になる。
+  const [
+    { data: ownersRaw },
+    { data: remitsRaw },
+    { data: company },
+    { data: propsRaw },
+    { data: billingsRaw },
+    { data: expensesRaw },
+  ] = await Promise.all([
     supabase
       .from("owners")
       .select("id, name, bank_code, bank_branch_code, bank_account_type, bank_account_number, bank_account_holder")
@@ -169,6 +188,30 @@ export async function getUnconfirmedOwnerCandidates(
       .select("id, owner_id, status, net_amount")
       .eq("company_id", company_id)
       .eq("remittance_month", month),
+    supabase
+      .from("companies")
+      .select("is_tax_invoice_issuer, management_fee_tax_rate")
+      .eq("id", company_id)
+      .maybeSingle(),
+    supabase
+      .from("properties")
+      .select("id, owner_id, name, management_fee_type, management_fee_rate, management_fee_amount, management_form, units(id, unit_number)")
+      .eq("company_id", company_id),
+    // 当月の家賃請求 + 各請求への実入金（partial 対応）。会社全体で1回だけ取得。
+    supabase
+      .from("rent_billings")
+      .select("id, contract:contracts(unit_id), payments:rent_payments(amount)")
+      .is("voided_at", null)
+      .eq("billing_month", month),
+    // 未精算・承認済み・オーナー負担(>0)・owner_direct 以外の経費。会社全体で1回取得しオーナー別に振り分ける。
+    supabase
+      .from("expenses")
+      .select("id, owner_id, description, owner_amount, property_id, unit_id, status, remittance_id, paid_by")
+      .eq("company_id", company_id)
+      .is("remittance_id", null)
+      .gt("owner_amount", 0)
+      .neq("paid_by", "owner_direct")
+      .in("status", APPROVED_EXPENSE_STATUSES),
   ]);
 
   const remitByOwner = new Map<string, { id: string; status: string; net_amount: number }>();
@@ -179,6 +222,56 @@ export async function getUnconfirmedOwnerCandidates(
       net_amount: Number(r.net_amount) || 0,
     });
   }
+
+  // 当月請求を unit_id 別の実入金額に正規化（gatherAndBuildRemittance と同じ整形）
+  const billings: RemitDbBilling[] = ((billingsRaw ?? []) as Record<string, unknown>[]).map((b) => {
+    const contract = b.contract as { unit_id?: string } | null;
+    const payments = (b.payments as { amount: number }[] | null) ?? [];
+    const paid = payments.reduce((s, p) => s + Number(p.amount || 0), 0);
+    return { id: b.id as string, unit_id: contract?.unit_id ?? null, paid_amount: paid };
+  });
+
+  const pushTo = <T>(map: Map<string, T[]>, key: string, value: T) => {
+    const arr = map.get(key);
+    if (arr) arr.push(value);
+    else map.set(key, [value]);
+  };
+
+  // 物件をオーナー別にグルーピング
+  const propsByOwner = new Map<string, RemitDbProperty[]>();
+  for (const p of (propsRaw ?? []) as Record<string, unknown>[]) {
+    const ownerId = p.owner_id as string | null;
+    if (!ownerId) continue;
+    pushTo(propsByOwner, ownerId, {
+      id: p.id as string,
+      name: p.name as string,
+      management_fee_type: (p.management_fee_type as string) ?? null,
+      management_fee_rate: (p.management_fee_rate as number) ?? null,
+      management_fee_amount: (p.management_fee_amount as number) ?? null,
+      management_form: (p.management_form as string) ?? null,
+      units: ((p.units as Record<string, unknown>[]) ?? []).map((u) => ({
+        id: u.id as string,
+        unit_number: (u.unit_number as string) ?? "",
+      })),
+    });
+  }
+
+  // 経費をオーナー別にグルーピング
+  const expensesByOwner = new Map<string, RemitDbExpense[]>();
+  for (const e of (expensesRaw ?? []) as Record<string, unknown>[]) {
+    const ownerId = e.owner_id as string | null;
+    if (!ownerId) continue;
+    pushTo(expensesByOwner, ownerId, {
+      id: e.id as string,
+      description: (e.description as string) ?? "経費",
+      owner_amount: Number(e.owner_amount || 0),
+      property_id: (e.property_id as string) ?? null,
+      unit_id: (e.unit_id as string) ?? null,
+    });
+  }
+
+  const isTaxInvoiceIssuer = (company as { is_tax_invoice_issuer?: boolean })?.is_tax_invoice_issuer ?? false;
+  const taxRate = (company as { management_fee_tax_rate?: number })?.management_fee_tax_rate ?? 0.1;
 
   const owners = (ownersRaw ?? []) as Record<string, string | null>[];
   const candidates: UnconfirmedOwnerCandidate[] = [];
@@ -197,11 +290,15 @@ export async function getUnconfirmedOwnerCandidates(
       continue;
     }
 
-    const built = await gatherAndBuildRemittance(supabase, {
-      ownerId: o.id as string,
-      month,
+    // 事前取得データをメモリ上で割り当てて試算（DBアクセスなし）
+    const result = buildRemittance({
+      properties: propsByOwner.get(o.id as string) ?? [],
+      billings,
+      expenses: expensesByOwner.get(o.id as string) ?? [],
+      isTaxInvoiceIssuer,
+      taxRate,
     });
-    const net = built.ok ? built.data.netAmount : 0;
+    const net = result.netAmount;
     // 送金額ゼロ（家賃なし等）は振込対象にならないので候補・サマリーから外す
     if (net <= 0) continue;
 
