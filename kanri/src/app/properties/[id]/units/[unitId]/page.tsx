@@ -87,10 +87,12 @@ export default async function UnitDetailPage({
 
           {/* 賃料・費用
               入居中の部屋は「契約」が家賃の正。アクティブ契約があればその金額を表示する。
-              空室（契約なし）の部屋は units.rent を「募集賃料」として表示する。 */}
+              空室（契約なし）の部屋は units.rent を「募集賃料」として表示する。
+              管理費は部屋（units）の属性なので、入居中でも常に units.management_fee を表示し、
+              編集モーダル（部屋を編集）の表示と一致させる。 */}
           {(() => {
             const feeRent = activeContract ? Number(activeContract.rent) : Number(unit.rent);
-            const feeMgmt = activeContract ? Number(activeContract.management_fee) : Number(unit.management_fee);
+            const feeMgmt = Number(unit.management_fee);
             const feeLabel = activeContract ? "賃料" : "募集賃料";
             const sectionTitle = activeContract ? "賃料・費用" : "募集条件";
             return (
