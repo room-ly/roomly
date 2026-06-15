@@ -11,6 +11,9 @@ export interface Article {
   category: string;
   tags: string[];
   content: string;
+  // 記事末CTAの文言バリエーション。テンプレ系記事は "template" を指定すると
+  // 「手作業のテンプレ運用 → Roomlyで自動化」に寄せた文言・導線を出す。
+  ctaVariant?: "default" | "template";
 }
 
 const CONTENT_DIR = path.join(process.cwd(), "content", "column");
@@ -49,6 +52,7 @@ function loadAllArticles(): Article[] {
       category: data.category || "",
       tags: data.tags || [],
       content,
+      ctaVariant: data.ctaVariant === "template" ? "template" : "default",
     };
   });
 }

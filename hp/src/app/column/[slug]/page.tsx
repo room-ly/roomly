@@ -177,13 +177,20 @@ export default async function BlogPostPage({
             />
           </div>
 
-          {/* CTA */}
-          <div className="mt-16 rounded-2xl bg-rm-primary p-8 text-center sm:p-12">
+          {/* CTA（テンプレ系記事は「手作業 → 自動化」に寄せた文言を出す） */}
+          <div
+            data-section="article-cta"
+            className="mt-16 rounded-2xl bg-rm-primary p-8 text-center sm:p-12"
+          >
             <h2 className="text-[18px] font-medium text-rm-bg sm:text-[20px]">
-              Roomlyで賃貸管理をもっとシンプルに
+              {article.ctaVariant === "template"
+                ? "そのテンプレ作業、Roomlyなら自動で終わります"
+                : "Roomlyで賃貸管理をもっとシンプルに"}
             </h2>
             <p className="mx-auto mt-3 max-w-md text-[14px] text-rm-bg/60">
-              10区画まで無料。クレジットカード不要で、今すぐ始められます。
+              {article.ctaVariant === "template"
+                ? "台帳・送金明細・精算書をExcelで毎月作り直す手間はもう不要。入力済みのデモ環境で、自動で帳票が出る様子をそのまま触って確かめられます。"
+                : "10区画まで無料。クレジットカード不要で、今すぐ始められます。"}
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <a
