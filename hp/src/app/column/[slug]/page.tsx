@@ -184,12 +184,12 @@ export default async function BlogPostPage({
           >
             <h2 className="text-[18px] font-medium text-rm-bg sm:text-[20px]">
               {article.ctaVariant === "template"
-                ? "そのテンプレ作業、Roomlyなら自動で終わります"
+                ? "そのテンプレ、毎月作り直さなくて済みます"
                 : "Roomlyで賃貸管理をもっとシンプルに"}
             </h2>
             <p className="mx-auto mt-3 max-w-md text-[14px] text-rm-bg/60">
               {article.ctaVariant === "template"
-                ? "台帳・送金明細・精算書をExcelで毎月作り直す手間はもう不要。入力済みのデモ環境で、自動で帳票が出る様子をそのまま触って確かめられます。"
+                ? "物件台帳の出力、オーナー送金明細や契約更新通知の作成まで、Roomlyなら登録済みのデータからそのまま作れます。入力済みのデモ環境で実際の操作をそのまま触って確かめられます。"
                 : "10区画まで無料。クレジットカード不要で、今すぐ始められます。"}
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
