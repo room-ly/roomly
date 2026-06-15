@@ -89,6 +89,11 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
             <FileText size={13} /> 退去届
           </a>
         )}
+        {(contract.status === "terminated" || contract.move_out_date) && (
+          <a href={`/api/contracts/${contract.id}/move-out-settlement`} target="_blank" rel="noopener noreferrer" className="btn btn-secondary flex items-center gap-1.5 text-[13px]" style={{ color: "var(--warn)" }}>
+            <FileText size={13} /> 退去精算書
+          </a>
+        )}
         {canEdit && (
           <button onClick={() => setModalOpen(true)} className="btn btn-secondary flex items-center gap-1.5 text-[13px]">
             <Pencil size={13} /> 編集
