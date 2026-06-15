@@ -32,6 +32,7 @@ export default function Page() {
       ]}
       ctaHeading="退去精算もRoomlyで一元管理"
       ctaText="入居時の写真・チェックシートから退去精算まで物件単位で記録。10区画まで無料。"
+      autoOutput="Roomlyなら、預り敷金と原状回復の借主負担を差引いた退去精算書を、"
     >
       <TemplateSection title="このテンプレートの構成">
         <p>

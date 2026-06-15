@@ -32,6 +32,7 @@ export default function Page() {
       ]}
       ctaHeading="家賃管理をExcelから卒業する"
       ctaText="入金消込・滞納アラート・督促履歴まで物件単位で自動化。10区画まで無料です。"
+      autoOutput="Roomlyなら、毎月の家賃請求・入金状況をまとめた家賃台帳をCSVで、"
     >
       <TemplateSection title="このテンプレートでできること">
         <p>

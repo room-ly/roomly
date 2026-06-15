@@ -32,6 +32,7 @@ export default function Page() {
       ]}
       ctaHeading="更新管理の抜け漏れをRoomlyで防ぐ"
       ctaText="契約満了日から逆算して更新案内のタイミングを自動でリマインド。10区画まで無料。"
+      autoOutput="Roomlyなら、契約内容と新しい更新条件を反映した契約更新通知書を、"
     >
       <TemplateSection title="記入する項目">
         <p>

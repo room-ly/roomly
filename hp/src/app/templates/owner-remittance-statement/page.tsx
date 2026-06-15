@@ -32,6 +32,7 @@ export default function Page() {
       ]}
       ctaHeading="オーナー送金もRoomlyで自動化"
       ctaText="家賃入金から管理手数料の差引まで自動集計し、送金明細をワンクリックで発行。10区画まで無料。"
+      autoOutput="Roomlyなら、家賃入金と管理手数料・経費を差引いた送金明細書を、"
     >
       <TemplateSection title="このテンプレートの構成">
         <p>

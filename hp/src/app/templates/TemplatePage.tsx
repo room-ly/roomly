@@ -15,6 +15,9 @@ interface TemplatePageProps {
   relatedColumns?: RelatedLink[];
   ctaHeading: string;
   ctaText: string;
+  // この帳票がkanriで自動出力できる場合に、DLボックス直下へ出す誘導文。
+  // 未実装の帳票には渡さない（誇大表現を避けるため、自動出力できるページにだけ設定する）。
+  autoOutput?: string;
 }
 
 export default function TemplatePage({
@@ -25,6 +28,7 @@ export default function TemplatePage({
   relatedColumns,
   ctaHeading,
   ctaText,
+  autoOutput,
 }: TemplatePageProps) {
   const url = `https://hp.roomly.jp/templates/${tool.slug}`;
   const fileUrl = `/templates/${tool.file}`;
@@ -79,6 +83,22 @@ export default function TemplatePage({
             >
               テンプレートをダウンロード
             </a>
+
+            {autoOutput && (
+              <div data-section="template-auto-output" className="mt-6 border-t border-rm-border pt-5">
+                <p className="text-[13px] leading-relaxed text-rm-text-secondary">
+                  <span className="font-medium text-rm-primary">毎月この書類を手で作っていませんか？</span>
+                  <br />
+                  {autoOutput}登録済みのデータからボタン1つで出力できるので、転記もコピペも不要です。
+                </p>
+                <a
+                  href="https://kanri.roomly.jp/login?demo=1"
+                  className="mt-3 inline-flex h-10 items-center rounded-full border border-rm-accent px-5 text-[13px] font-medium text-rm-accent-deep transition-colors hover:bg-rm-accent-tint"
+                >
+                  Roomlyの自動出力を試す（登録不要）
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="mt-12 space-y-12">{children}</div>

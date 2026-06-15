@@ -32,6 +32,7 @@ export default function Page() {
       ]}
       ctaHeading="物件台帳をRoomlyで一元化"
       ctaText="物件・部屋・契約・入金を1つのデータベースで管理。空室状況も自動で反映。10区画まで無料。"
+      autoOutput="Roomlyなら、登録した物件・部屋・入居状況を一覧にした物件台帳をCSVで、"
     >
       <TemplateSection title="家賃管理表との使い分け">
         <p>
