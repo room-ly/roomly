@@ -8,6 +8,8 @@ interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   loading?: boolean;
+  // loading中のボタン文言（省略時は「処理中...」）
+  loadingLabel?: string;
   // danger: 削除など破壊的操作（赤・警告アイコン） / neutral: 設定変更など（落ち着いた色・情報アイコン）
   variant?: "danger" | "neutral";
   // 通知用途（OKのみ）でキャンセルボタンを隠す
@@ -16,7 +18,7 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-export default function ConfirmDialog({ isOpen, title, message, confirmLabel = "削除する", loading, variant = "danger", hideCancel, onConfirm, onCancel }: ConfirmDialogProps) {
+export default function ConfirmDialog({ isOpen, title, message, confirmLabel = "削除する", loading, loadingLabel = "処理中...", variant = "danger", hideCancel, onConfirm, onCancel }: ConfirmDialogProps) {
   if (!isOpen) return null;
 
   const isNeutral = variant === "neutral";
@@ -28,7 +30,7 @@ export default function ConfirmDialog({ isOpen, title, message, confirmLabel = "
     : "bg-danger text-white rounded-lg px-4 py-2 text-sm hover:bg-danger/90 transition-colors disabled:opacity-50 disabled:cursor-wait flex items-center gap-1.5";
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={(e) => { if (e.target === e.currentTarget) { console.log("[CONFIRM-DEBUG] backdrop click -> onCancel"); onCancel(); } }}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && onCancel()}>
       <div className="bg-surface rounded-2xl shadow-xl max-w-sm w-full p-6">
         <div className="flex items-start gap-3 mb-4">
           <div className={`w-10 h-10 rounded-full ${iconWrapClass} flex items-center justify-center shrink-0`}>
@@ -45,9 +47,9 @@ export default function ConfirmDialog({ isOpen, title, message, confirmLabel = "
               キャンセル
             </button>
           )}
-          <button onClick={() => { console.log("[CONFIRM-DEBUG] confirm BUTTON clicked"); onConfirm(); }} disabled={loading} className={confirmBtnClass}>
+          <button onClick={onConfirm} disabled={loading} className={confirmBtnClass}>
             {loading && <Loader2 size={14} className="animate-spin" />}
-            {loading ? "処理中..." : confirmLabel}
+            {loading ? loadingLabel : confirmLabel}
           </button>
         </div>
       </div>

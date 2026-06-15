@@ -28,11 +28,7 @@ export default function UnitDetailClient({
   const canMoveOut = usePermission("contracts:edit");
 
   async function handleDelete() {
-    console.log("[CONFIRM-DEBUG] handleDelete: calling confirm");
-    const ok = await confirm({ title: "この部屋を削除しますか？", variant: "danger", confirmLabel: "削除する" });
-    console.log("[CONFIRM-DEBUG] handleDelete: confirm resolved", { ok });
-    if (!ok) return;
-    console.log("[CONFIRM-DEBUG] handleDelete: proceeding to DELETE fetch");
+    if (!(await confirm({ title: "この部屋を削除しますか？", variant: "danger", confirmLabel: "削除する" }))) return;
     setDeleting(true);
     const res = await fetch(`/api/units/${unit.id}`, { method: "DELETE" });
     if (res.ok) {

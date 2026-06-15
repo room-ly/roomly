@@ -26,6 +26,8 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // プレビュー取得中は確定ボタンを押せないようにする（取得完了前の誤クリック削除を防ぐ）
+  const [previewing, setPreviewing] = useState(false);
   const [deleteMsg, setDeleteMsg] = useState("削除内容を確認しています…");
   const canEdit = usePermission("contracts:edit");
   const canDelete = usePermission("contracts:delete");
@@ -33,6 +35,7 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
   // 削除ダイアログを開くと同時に、紐づく請求・入金の件数を取得して文面に反映する
   async function openDelete() {
     setDeleteMsg("削除内容を確認しています…");
+    setPreviewing(true);
     setDeleteOpen(true);
     try {
       const res = await fetch(`/api/contracts/${contract.id}?preview=1`);
@@ -49,6 +52,8 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
       }
     } catch {
       setDeleteMsg("この契約を削除します。紐づく請求データも一緒に処理されます。よろしいですか？");
+    } finally {
+      setPreviewing(false);
     }
   }
 
@@ -97,7 +102,7 @@ export default function ContractDetailClient({ contract, units, tenants, moveOut
       </div>
 
       <ContractFormModal key={modalOpen ? "open" : "closed"} isOpen={modalOpen} onClose={() => setModalOpen(false)} units={units} tenants={tenants} editData={editData} />
-      <ConfirmDialog isOpen={deleteOpen} title="契約を削除" message={deleteMsg} loading={deleting} onConfirm={handleDelete} onCancel={() => setDeleteOpen(false)} />
+      <ConfirmDialog isOpen={deleteOpen} title="契約を削除" message={deleteMsg} loading={deleting || previewing} loadingLabel={previewing ? "確認中..." : "処理中..."} onConfirm={handleDelete} onCancel={() => setDeleteOpen(false)} />
     </>
   );
 }
