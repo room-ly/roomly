@@ -35,5 +35,8 @@
     "tailwindcss": "^4",
     "typescript": "^6",
     "vitest": "^4.0.18"
+  },
+  "overrides": {
+    "protobufjs": "^7.6.5"
   }
 }
