@@ -41,6 +41,25 @@ export async function GET(
         .limit(1);
       companyBank = (banks?.[0] as unknown as Record<string, string>) ?? null;
     }
+    // 帳票ヘッダ用の自社情報（ロゴ・社名・住所・連絡先）と押印欄設定
+    const { data: company } = await supabase
+      .from("companies")
+      .select("name, postal_code, address, phone, logo_path, seal_column_enabled")
+      .single();
+    const co = (company ?? null) as Record<string, string | boolean | null> | null;
+    const logoPath = (co?.logo_path as string | null) ?? null;
+    const logoSrc = logoPath
+      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/company-logos/${logoPath}`
+      : null;
+    const sealEnabled = Boolean(co?.seal_column_enabled);
+    const coName = escapeHtml((co?.name as string | null) ?? "");
+    const coAddress = escapeHtml(
+      [(co?.postal_code as string | null) ? `〒${co?.postal_code}` : "", (co?.address as string | null) ?? ""]
+        .filter(Boolean)
+        .join(" "),
+    );
+    const coPhone = escapeHtml((co?.phone as string | null) ?? "");
+
     const acctType = (t: string | undefined) =>
       t === "savings" ? "貯蓄" : t === "checking" ? "当座" : "普通";
 
@@ -89,10 +108,28 @@ export async function GET(
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
     .info-block label { font-size: 11px; color: #999; display: block; margin-bottom: 2px; }
     .info-block p { margin: 0; font-size: 13px; }
+    .doc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 24px; }
+    .doc-header .company { text-align: right; font-size: 12px; color: #666; line-height: 1.6; }
+    .doc-header .company .company-name { font-size: 13px; color: #333; font-weight: 600; }
+    .doc-logo { max-height: 56px; max-width: 200px; object-fit: contain; }
+    .seal-area { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+    .seal-box { width: 64px; height: 64px; border: 1px solid #ccc; border-radius: 4px; display: flex; align-items: flex-start; justify-content: center; }
+    .seal-box span { font-size: 10px; color: #999; margin-top: 4px; }
     @media print { body { margin: 20px; } }
   </style>
 </head>
 <body>
+  <div class="doc-header">
+    <div>
+      ${logoSrc ? `<img class="doc-logo" src="${escapeHtml(logoSrc)}" alt="${coName}">` : ""}
+    </div>
+    <div class="company">
+      ${coName ? `<div class="company-name">${coName}</div>` : ""}
+      ${coAddress ? `<div>${coAddress}</div>` : ""}
+      ${coPhone ? `<div>TEL: ${coPhone}</div>` : ""}
+    </div>
+  </div>
+
   <h1>オーナー送金明細</h1>
   <p class="subtitle">${month} 分</p>
 
@@ -181,12 +218,25 @@ export async function GET(
       : ""
   }
 
+  ${
+    sealEnabled
+      ? `<div class="seal-area">
+    <div class="seal-box"><span>担当</span></div>
+    <div class="seal-box"><span>確認</span></div>
+    <div class="seal-box"><span>承認</span></div>
+  </div>`
+      : ""
+  }
+
   <p style="color: #999; font-size: 11px; margin-top: 32px;">
     ステータス: ${statusText}
     ${sentDate ? ` / 送金日: ${sentDate}` : ""}
   </p>
 
-  <script>window.print();</script>
+  <script>
+    // ロゴ画像の読み込み完了を待ってから印刷する（未待機だとロゴが欠けたPDFになる）
+    window.addEventListener("load", function () { window.print(); });
+  </script>
 </body>
 </html>`;
 

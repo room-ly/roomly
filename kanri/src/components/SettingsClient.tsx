@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { usePermission } from "@/lib/use-permission";
 import type { PlanInfo, PlanOption } from "./settings-client/constants";
 import CompanyBasicCard from "./settings-client/CompanyBasicCard";
+import CompanyLogoCard from "./settings-client/CompanyLogoCard";
 import EstateLicenseCard from "./settings-client/EstateLicenseCard";
 import PlanCard from "./settings-client/PlanCard";
 import NotificationCard from "./settings-client/NotificationCard";
@@ -136,6 +137,7 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
       estate_agent_license: fd.get("estate_agent_license"),
       default_approver_user_id: fd.get("default_approver_user_id"),
       expense_approval_threshold: fd.get("expense_approval_threshold"),
+      seal_column_enabled: fd.get("seal_column_enabled") === "on",
     };
 
     const res = await fetch("/api/settings", {
@@ -379,6 +381,7 @@ export default function SettingsClient({ company, users }: SettingsClientProps) 
           address={companyAddress}
           setAddress={setCompanyAddress}
         />
+        <CompanyLogoCard company={company} canEditSettings={canEditSettings} />
         <EstateLicenseCard company={company} />
         <PlanCard
           plans={plans}
