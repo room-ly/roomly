@@ -89,31 +89,35 @@ export default function CompanyLogoCard({
             disabled={!canEditSettings || uploading}
             className="hidden"
           />
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={!canEditSettings || uploading}
-              className="btn-secondary text-[13px] inline-flex items-center gap-1.5"
-            >
-              <Upload size={14} />
-              {uploading ? "アップロード中..." : preview ? "変更" : "アップロード"}
-            </button>
-            {preview && (
+          {canEditSettings && (
+            <div className="flex gap-2">
               <button
                 type="button"
-                onClick={handleDelete}
-                disabled={!canEditSettings || uploading}
-                className="btn-secondary text-[13px] inline-flex items-center gap-1.5 text-danger"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="btn-secondary text-[13px] inline-flex items-center gap-1.5"
               >
-                <Trash2 size={14} />
-                削除
+                <Upload size={14} />
+                {uploading ? "アップロード中..." : preview ? "変更" : "アップロード"}
               </button>
-            )}
-          </div>
-          <p className="text-[12px] text-ink-3 mt-2">
-            JPEG / PNG / WebP / SVG、2MBまで。横長（推奨 400×160px 程度）
-          </p>
+              {preview && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={uploading}
+                  className="btn-secondary text-[13px] inline-flex items-center gap-1.5 text-danger"
+                >
+                  <Trash2 size={14} />
+                  削除
+                </button>
+              )}
+            </div>
+          )}
+          {canEditSettings && (
+            <p className="text-[12px] text-ink-3 mt-2">
+              JPEG / PNG / WebP / SVG、2MBまで。横長（推奨 400×160px 程度）
+            </p>
+          )}
           {error && <p className="text-[12px] text-danger mt-1">{error}</p>}
         </div>
       </div>
