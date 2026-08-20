@@ -113,11 +113,11 @@ export default function CompanyLogoCard({
               )}
             </div>
           )}
-          {canEditSettings && (
-            <p className="text-[12px] text-ink-3 mt-2">
-              JPEG / PNG / WebP / SVG、2MBまで。横長（推奨 400×160px 程度）
-            </p>
-          )}
+          <p className="text-[12px] text-ink-3 mt-2">
+            {canEditSettings
+              ? "JPEG / PNG / WebP / SVG、2MBまで。横長（推奨 400×160px 程度）"
+              : "ロゴの登録・変更には管理者権限が必要です"}
+          </p>
           {error && <p className="text-[12px] text-danger mt-1">{error}</p>}
         </div>
       </div>
