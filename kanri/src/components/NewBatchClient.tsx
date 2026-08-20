@@ -45,6 +45,7 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
   const [error, setError] = useState("");
   const [assigningId, setAssigningId] = useState<string | null>(null); // 支払先設定中の費用ID
   const [confirmingId, setConfirmingId] = useState<string | null>(null); // 精算確定中のオーナーID
+  const [bulkLoading, setBulkLoading] = useState(false); // 一括生成中
 
   const payeeHasBank = (p: PayeeOption | undefined) =>
     !!(p && p.bank_code && p.branch_code && p.account_number && p.account_holder_kana);
@@ -52,6 +53,41 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
   // 対象月を切り替える（候補をサーバーから取り直す）
   function changeMonth(nextMonth: string) {
     router.push(`/payments?month=${nextMonth}`);
+  }
+
+  // 未確定オーナーの精算をまとめて計算・確定する。
+  // POST /api/remittances/bulk-generate（生成＋確定をサーバー側で一括処理）。
+  async function bulkGenerate() {
+    setBulkLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/remittances/bulk-generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ remittance_month: `${month}-01`, confirm: true }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(json.error || "一括生成に失敗しました");
+        return;
+      }
+      // 一部だけ失敗した場合は、成功分を残したまま失敗オーナー名を提示する
+      if (json.failed?.length > 0) {
+        const names = json.failed.map((f: { owner_name: string }) => f.owner_name).join("、");
+        setError(`${json.confirmed}件を確定しました。${json.failed.length}件は失敗しました（${names}）`);
+      } else {
+        // 口座情報が未登録のオーナーは確定できても振込対象に選べないため明示的に警告する
+        const noBank = unconfirmedOwners.filter((o) => !o.has_bank).map((o) => o.owner_name);
+        if (noBank.length > 0) {
+          setError(`${json.confirmed}件を確定しました。うち${noBank.length}件は口座情報が未登録のため振込対象に選べません（${noBank.join("、")}）`);
+        }
+      }
+      router.refresh();
+    } catch {
+      setError("一括生成に失敗しました");
+    } finally {
+      setBulkLoading(false);
+    }
   }
 
   // 未確定オーナーの精算をその場で計算・確定する。
@@ -231,9 +267,19 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
       {/* 未確定のオーナー精算 — その場で計算・確定して振込候補に昇格させる */}
       {unconfirmedOwners.length > 0 && (
         <div className="card overflow-hidden">
-          <div className="px-4 py-3 border-b border-border bg-surface-2 text-sm font-semibold">
-            未確定のオーナー精算
-            <span className="text-xs text-ink-3 font-normal ml-2">{month}・{unconfirmedOwners.length}名</span>
+          <div className="px-4 py-3 border-b border-border bg-surface-2 text-sm font-semibold flex items-center justify-between gap-3">
+            <div>
+              未確定のオーナー精算
+              <span className="text-xs text-ink-3 font-normal ml-2">{month}・{unconfirmedOwners.length}名</span>
+            </div>
+            <button
+              onClick={bulkGenerate}
+              disabled={bulkLoading || confirmingId !== null}
+              className="btn btn-primary text-[13px] py-1 disabled:opacity-50 inline-flex items-center gap-1.5 shrink-0"
+            >
+              {bulkLoading && <Loader2 size={13} className="animate-spin" />}
+              {bulkLoading ? "生成中…" : "送金一括生成"}
+            </button>
           </div>
           <table className="w-full text-sm">
             <tbody className="divide-y divide-border">
@@ -262,7 +308,7 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
             </tbody>
           </table>
           <div className="px-4 py-2 text-xs text-ink-3 border-t border-border">
-            「計算して確定」すると下の「オーナーへの送金」に表示され、振込対象に選べるようになります。
+            「計算して確定」または「送金一括生成」すると下の「オーナーへの送金」に表示され、振込対象に選べるようになります。
           </div>
         </div>
       )}
