@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CheckSquare, Square, Loader2 } from "lucide-react";
+import { CheckSquare, Square, Loader2, AlertCircle } from "lucide-react";
 import { detectBlockers } from "@/lib/batch-blockers";
 import type {
   BatchCandidateRemittance,
@@ -110,6 +110,7 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
     },
     month
   );
+  const hasMissing = blockers.some((b) => b.kind !== "pending");
 
   async function handleCreate() {
     if (count === 0) { setError("振込対象を1件以上選択してください"); return; }
@@ -332,16 +333,23 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
       <div className="card p-4 space-y-3">
         {/* 押せない理由はボタンの近くに集約する。利用者が最後に見るのはこのボタン。 */}
         {blockers.length > 0 && (
-          <div className="rounded-md border border-border bg-surface-2 px-4 py-3">
-            <div className="text-sm font-medium text-ink-2">
-              {blockers.length === 1
-                ? "振込データを作成するには、あと1つ必要です"
-                : `振込データを作成するには、あと${blockers.length}つ必要です`}
+          // 不備（missing）は赤で警告、操作待ち（pending）は通常の案内として出し分ける
+          <div
+            role={hasMissing ? "alert" : undefined}
+            className={hasMissing
+              ? "rounded-md border border-danger/40 bg-danger-tint px-4 py-3"
+              : "rounded-md border border-border bg-surface-2 px-4 py-3"}
+          >
+            <div className={hasMissing
+              ? "text-sm font-semibold text-danger flex items-center gap-1.5"
+              : "text-sm font-medium text-ink-2 flex items-center gap-1.5"}>
+              {hasMissing && <AlertCircle size={15} className="shrink-0" />}
+              {hasMissing ? "振込データを作成できません" : "振込対象を選んでください"}
             </div>
-            <ol className="mt-2 space-y-1.5">
+            <ul className="mt-2 space-y-1.5">
               {blockers.map((b, i) => (
                 <li key={i} className="text-[13px] text-ink-2 flex gap-2">
-                  <span className="text-ink-3 shrink-0">{i + 1}.</span>
+                  <span className={b.kind === "pending" ? "text-ink-3 shrink-0" : "text-danger shrink-0"}>・</span>
                   <span>
                     {b.label}
                     {b.link_text && (
@@ -354,7 +362,7 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
                   </span>
                 </li>
               ))}
-            </ol>
+            </ul>
           </div>
         )}
 

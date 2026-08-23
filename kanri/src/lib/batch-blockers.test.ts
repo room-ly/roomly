@@ -22,11 +22,13 @@ describe("detectBlockers", () => {
     const b = detectBlockers({ ...base, selected_count: 0 }, "2026-08");
     expect(b).toHaveLength(1);
     expect(b[0].label).toContain("チェックを入れて");
+    expect(b[0].kind).toBe("pending");
   });
 
   it("振込元口座がなければ設定画面へ誘導する", () => {
     const b = detectBlockers({ ...base, has_sender_account: false }, "2026-08");
     expect(b[0].href).toBe("/settings");
+    expect(b[0].kind).not.toBe("pending");
   });
 
   it("対象が皆無で入金もなければ家賃画面へ誘導する", () => {

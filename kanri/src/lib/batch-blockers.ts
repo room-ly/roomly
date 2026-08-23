@@ -21,6 +21,8 @@ export interface BlockerInput {
 export interface Blocker {
   // 画面に出す本文
   label: string;
+  // 未選択のような「操作待ち」は不備ではないので警告として扱わない
+  kind?: "missing" | "pending";
   // 誘導先。同一画面内で解決する場合は href を持たない
   href?: string;
   link_text?: string;
@@ -95,7 +97,7 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
 
   // 選択されていない＝操作待ち。上記の不足がない場合のみ出す。
   if (blockers.length === 0 && i.selected_count === 0) {
-    blockers.push({ label: "上の一覧で振込対象にチェックを入れてください" });
+    blockers.push({ label: "上の一覧で振込対象にチェックを入れてください", kind: "pending" });
   }
 
   return blockers;
