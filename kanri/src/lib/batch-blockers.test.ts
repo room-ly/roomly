@@ -9,11 +9,33 @@ const base: BlockerInput = {
   expenses_payee_no_bank: 0,
   month_paid_total: 500000,
   registered_owners: 2,
+  confirmed_owners: 0,
   has_sender_account: true,
   selected_count: 1,
 };
 
 describe("detectBlockers", () => {
+  // 実データで踏んだ不具合：入金があるのに「入金なし」と誤表示していた
+  it("入金があり確定済みなら、入金なしとは案内しない", () => {
+    const b = detectBlockers(
+      { ...base, owner_rows: 0, expense_rows: 3, month_paid_total: 919000,
+        confirmed_owners: 2, selected_count: 0 },
+      "2026-08"
+    );
+    expect(b.some((x) => x.label.includes("家賃入金が登録されていない"))).toBe(false);
+    expect(b.some((x) => x.label.includes("作成済みの振込データ"))).toBe(true);
+  });
+
+  it("対象皆無でも入金と確定があれば作成済みと案内する", () => {
+    const b = detectBlockers(
+      { ...base, owner_rows: 0, expense_rows: 0, month_paid_total: 919000,
+        confirmed_owners: 2, selected_count: 0 },
+      "2026-08"
+    );
+    expect(b[0].label).toContain("作成済みの振込データ");
+    expect(b[0].href).toBeUndefined();
+  });
+
   it("全て揃っていれば不足なし", () => {
     expect(detectBlockers(base, "2026-08")).toEqual([]);
   });

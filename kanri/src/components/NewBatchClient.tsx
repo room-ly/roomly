@@ -105,6 +105,7 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
       expenses_payee_no_bank: expenses.filter((e) => e.has_payee && !e.has_bank).length,
       month_paid_total: summary.month_paid_total,
       registered_owners: summary.registered_owners,
+      confirmed_owners: summary.confirmed_owners,
       has_sender_account: banks.length > 0,
       selected_count: count,
     },

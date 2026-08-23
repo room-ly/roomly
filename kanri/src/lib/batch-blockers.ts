@@ -12,6 +12,7 @@ export interface BlockerInput {
   // 送金額が出ない理由（オーナー行が0のとき）
   month_paid_total: number;
   registered_owners: number;
+  confirmed_owners: number; // 確定済み（＝既に別の振込データに含まれている可能性がある）
   // 振込元口座
   has_sender_account: boolean;
   // 選択状態
@@ -56,6 +57,12 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
         href: "/rent",
         link_text: "家賃画面で入金を登録する",
       });
+    } else if (i.confirmed_owners > 0) {
+      // 入金も確定もあるのに候補が空＝作成済みの振込データに含まれている
+      blockers.push({
+        label: `${month}のオーナー送金は、すでに作成済みの振込データに含まれています`,
+        link_text: "下の「過去の振込バッチ」から確認・CSV出力できます",
+      });
     } else {
       blockers.push({
         label: `${month}は送金額が0円以下のオーナーのみです（管理手数料・経費の差引が入金額を上回っています）`,
@@ -65,12 +72,19 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
     }
   } else {
     // 対象はあるが、選べない・選んでいないケース
-    if (i.owner_rows === 0 && i.month_paid_total === 0) {
-      blockers.push({
-        label: `${month}の家賃入金が登録されていないため、オーナーへの送金額を計算できません`,
-        href: "/rent",
-        link_text: "家賃画面で入金を登録する",
-      });
+    if (i.owner_rows === 0) {
+      if (i.month_paid_total === 0) {
+        blockers.push({
+          label: `${month}の家賃入金が登録されていないため、オーナーへの送金額を計算できません`,
+          href: "/rent",
+          link_text: "家賃画面で入金を登録する",
+        });
+      } else if (i.confirmed_owners > 0) {
+        blockers.push({
+          label: `${month}のオーナー送金は、すでに作成済みの振込データに含まれています`,
+          link_text: "下の「過去の振込バッチ」から確認・CSV出力できます",
+        });
+      }
     }
     if (i.owners_without_bank.length > 0) {
       blockers.push({
