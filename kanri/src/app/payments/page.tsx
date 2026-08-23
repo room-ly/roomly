@@ -61,9 +61,9 @@ export default async function PaymentsPage({
     <>
       <PageHeader
         eyebrow="Payments"
-        title="振込バッチを作成"
+        title="振込データを作成"
         em="対象を選択"
-        description="オーナーへの送金と業者（修理会社等）への費用支払いから、振り込む対象を選んでバッチにまとめ、全銀CSVを出力します。支払先が未設定の費用は、その場で支払先を設定すると選べるようになります。"
+        description="オーナーへの送金と業者（修理会社等）への費用支払いから、振り込む対象を選ぶと、全銀CSVを出力できる振込データが作られます。オーナー送金額の確定は自動で行われます。支払先が未設定の費用は、その場で支払先を設定すると選べるようになります。"
       />
 
       <NewBatchClient
