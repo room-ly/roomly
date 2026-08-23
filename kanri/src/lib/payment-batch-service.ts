@@ -153,6 +153,10 @@ export interface MonthSettlementSummary {
   unconfirmed_owners: number; // 未確定（未作成 or draft）
   confirmed_amount: number;   // 確定済みオーナーの送金額合計
   unconfirmed_amount: number; // 未確定オーナーの精算予定額合計
+  // 候補が0件のときに「なぜ出ないか」を画面で案内するための内訳。
+  registered_owners: number;  // 会社に登録されているオーナー総数
+  owners_without_net: number; // 送金額が0円以下のため候補外となったオーナー数
+  month_paid_total: number;   // 対象月の家賃入金合計（0なら入金未登録）
 }
 
 // 振込画面でその場で精算を確定できるよう、対象月にまだ confirmed になっていない
@@ -277,6 +281,7 @@ export async function getUnconfirmedOwnerCandidates(
   const candidates: UnconfirmedOwnerCandidate[] = [];
   let confirmed_owners = 0;
   let confirmed_amount = 0;
+  let owners_without_net = 0;
 
   for (const o of owners) {
     const existing = remitByOwner.get(o.id as string);
@@ -300,7 +305,10 @@ export async function getUnconfirmedOwnerCandidates(
     });
     const net = result.netAmount;
     // 送金額ゼロ（家賃なし等）は振込対象にならないので候補・サマリーから外す
-    if (net <= 0) continue;
+    if (net <= 0) {
+      owners_without_net += 1;
+      continue;
+    }
 
     const has_bank = !!(o.bank_code && o.bank_branch_code && o.bank_account_number && o.bank_account_holder);
     candidates.push({
@@ -320,6 +328,9 @@ export async function getUnconfirmedOwnerCandidates(
     unconfirmed_owners: candidates.length,
     confirmed_amount,
     unconfirmed_amount,
+    registered_owners: owners.length,
+    owners_without_net,
+    month_paid_total: billings.reduce((sum, b) => sum + b.paid_amount, 0),
   };
 
   return { candidates, summary };

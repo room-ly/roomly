@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckSquare, Square, Loader2 } from "lucide-react";
+import { describeNoCandidates } from "@/lib/bulk-remittance";
 import type {
   BatchCandidateRemittance,
   BatchCandidateExpense,
@@ -264,23 +265,36 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
         )}
       </div>
 
-      {/* 未確定のオーナー精算 — その場で計算・確定して振込候補に昇格させる */}
-      {unconfirmedOwners.length > 0 && (
-        <div className="card overflow-hidden">
-          <div className="px-4 py-3 border-b border-border bg-surface-2 text-sm font-semibold flex items-center justify-between gap-3">
-            <div>
-              未確定のオーナー精算
-              <span className="text-xs text-ink-3 font-normal ml-2">{month}・{unconfirmedOwners.length}名</span>
-            </div>
-            <button
-              onClick={bulkGenerate}
-              disabled={bulkLoading || confirmingId !== null}
-              className="btn btn-primary text-[13px] py-1 disabled:opacity-50 inline-flex items-center gap-1.5 shrink-0"
-            >
-              {bulkLoading && <Loader2 size={13} className="animate-spin" />}
-              {bulkLoading ? "生成中…" : "送金一括生成"}
-            </button>
+      {/* 未確定のオーナー精算 — その場で計算・確定して振込候補に昇格させる。
+          対象が0件でもカードごと消さず、理由を提示する（ボタンが見つからない問題の防止）。 */}
+      <div className="card overflow-hidden">
+        <div className="px-4 py-3 border-b border-border bg-surface-2 text-sm font-semibold flex items-center justify-between gap-3">
+          <div>
+            未確定のオーナー精算
+            <span className="text-xs text-ink-3 font-normal ml-2">{month}・{unconfirmedOwners.length}名</span>
           </div>
+          <button
+            onClick={bulkGenerate}
+            disabled={bulkLoading || confirmingId !== null || unconfirmedOwners.length === 0}
+            title={unconfirmedOwners.length === 0 ? "対象月に未確定のオーナー精算がありません" : undefined}
+            className="btn btn-primary text-[13px] py-1 disabled:opacity-50 inline-flex items-center gap-1.5 shrink-0"
+          >
+            {bulkLoading && <Loader2 size={13} className="animate-spin" />}
+            {bulkLoading ? "生成中…" : "送金一括生成"}
+          </button>
+        </div>
+        {unconfirmedOwners.length === 0 ? (
+          (() => {
+            const r = describeNoCandidates(summary, month);
+            return (
+              <div className="px-4 py-6 text-sm">
+                <div className="font-medium text-ink-2">{r.title}</div>
+                <div className="text-xs text-ink-3 mt-1.5 leading-relaxed">{r.hint}</div>
+              </div>
+            );
+          })()
+        ) : (
+        <>
           <table className="w-full text-sm">
             <tbody className="divide-y divide-border">
               {unconfirmedOwners.map((c) => (
@@ -310,8 +324,9 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
           <div className="px-4 py-2 text-xs text-ink-3 border-t border-border">
             「計算して確定」または「送金一括生成」すると下の「オーナーへの送金」に表示され、振込対象に選べるようになります。
           </div>
-        </div>
-      )}
+        </>
+        )}
+      </div>
 
       {/* オーナー送金 */}
       {remittances.length > 0 && (
