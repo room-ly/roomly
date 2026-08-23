@@ -9,9 +9,18 @@ function getResend() {
 }
 
 function getSupabase() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
+  // inquiries は luna hp のSupabaseに集約されている（comments API と同じ参照先）
+  const url = process.env.INQUIRY_SUPABASE_URL || process.env.SUPABASE_URL;
+  // anonキーは inquiries のRLSでINSERTを拒否されるため、service_role(secret)キーが必須
+  const key =
+    process.env.INQUIRY_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    console.error(
+      "[contact] INQUIRY_SUPABASE_URL / INQUIRY_SUPABASE_SERVICE_ROLE_KEY が未設定のため、問い合わせをDBに保存できません"
+    );
+    return null;
+  }
   return createClient(url, key);
 }
 
@@ -42,15 +51,20 @@ export async function POST(request: NextRequest) {
     // Supabase inquiriesテーブルに保存（設定されている場合のみ）
     const supabase = getSupabase();
     if (supabase) {
-      await supabase.from("inquiries").insert({
+      const { error: insertError } = await supabase.from("inquiries").insert({
         project: "roomly",
-        type: typeLabel,
+        type: type || "contact",
         name,
         email,
         company: company || null,
         message,
         status: "new",
+        metadata: { type_label: typeLabel },
       });
+      if (insertError) {
+        // メール送信は継続する。保存失敗を握り潰さずログに残す
+        console.error("[contact] inquiries への保存に失敗しました:", insertError);
+      }
     }
 
     // 自動返信 + CC で自分にも届く（1通で完結）
