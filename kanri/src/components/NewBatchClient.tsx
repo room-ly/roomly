@@ -80,6 +80,36 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
     }
   }
 
+  // 選択中の行は背景・左罫で明示する（チェックの有無だけでは判別しづらいため）
+  const rowClass = (selected: boolean, enabled: boolean) => {
+    const base = "cursor-pointer transition-colors";
+    if (!enabled) return `${base} opacity-50`;
+    return selected
+      ? `${base} bg-accent-tint shadow-[inset_3px_0_0_var(--accent)]`
+      : `${base} hover:bg-surface-2`;
+  };
+
+  // オーナー行の全選択／全解除（口座情報が揃っている行のみ対象）
+  const ownerSelectableCount =
+    remittances.filter((r) => r.has_bank).length + unconfirmedOwners.filter((o) => o.has_bank).length;
+  const ownerAllSelected =
+    ownerSelectableCount > 0 && selRem.size + selOwner.size === ownerSelectableCount;
+  function toggleAllOwners() {
+    if (ownerAllSelected) {
+      setSelRem(new Set());
+      setSelOwner(new Set());
+    } else {
+      setSelRem(new Set(remittances.filter((r) => r.has_bank).map((r) => r.id)));
+      setSelOwner(new Set(unconfirmedOwners.filter((o) => o.has_bank).map((o) => o.owner_id)));
+    }
+  }
+
+  const expenseSelectableCount = expenses.filter((e) => e.has_bank).length;
+  const expenseAllSelected = expenseSelectableCount > 0 && selExp.size === expenseSelectableCount;
+  function toggleAllExpenses() {
+    setSelExp(expenseAllSelected ? new Set() : new Set(expenses.filter((e) => e.has_bank).map((e) => e.id)));
+  }
+
   const toggle = (set: Set<string>, setter: (s: Set<string>) => void, id: string) => {
     const next = new Set(set);
     next.has(id) ? next.delete(id) : next.add(id);
@@ -216,11 +246,17 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
       {/* オーナーへの送金 — 確定済み・未確定を1つの表にまとめる。
           「確定」はCSVを出すための内部処理なので、利用者には見せない。 */}
       <div className="card overflow-hidden">
-        <div className="px-4 py-3 border-b border-border bg-surface-2 text-sm font-semibold">
+        <div className="px-4 py-3 border-b border-border bg-surface-2 text-sm font-semibold flex items-center gap-2">
           オーナーへの送金
           <span className="text-xs text-ink-3 font-normal ml-2">
             {month}・{selRem.size + selOwner.size}/{remittances.length + unconfirmedOwners.length}件選択
           </span>
+          {ownerSelectableCount > 0 && (
+            <button onClick={toggleAllOwners}
+              className="ml-auto text-xs rlink font-normal">
+              {ownerAllSelected ? "すべて解除" : "すべて選択"}
+            </button>
+          )}
         </div>
 
         {remittances.length + unconfirmedOwners.length === 0 ? (
@@ -232,28 +268,32 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
             <tbody className="divide-y divide-border">
               {/* 確定済みの送金 */}
               {remittances.map((r) => (
-                <tr key={r.id} className={`hover:bg-surface-2 cursor-pointer ${!r.has_bank ? "opacity-50" : ""}`}
+                <tr key={r.id} className={rowClass(selRem.has(r.id), r.has_bank)}
                   onClick={() => r.has_bank && toggle(selRem, setSelRem, r.id)}>
                   <td className="px-4 py-3 w-8">
-                    {selRem.has(r.id) ? <CheckSquare size={15} className="text-accent" /> : <Square size={15} className="text-ink-3" />}
+                    {selRem.has(r.id)
+                      ? <CheckSquare size={16} className="text-accent" strokeWidth={2.5} />
+                      : <Square size={16} className="text-ink-4" />}
                   </td>
-                  <td className="px-4 py-3 font-medium">{r.owner_name}
+                  <td className={`px-4 py-3 ${selRem.has(r.id) ? "font-semibold" : "font-medium"}`}>{r.owner_name}
                     {!r.has_bank && <span className="text-xs text-danger ml-2">口座情報なし</span>}</td>
                   <td className="px-4 py-3 text-ink-2">{r.remittance_month}</td>
-                  <td className="px-4 py-3 text-right font-medium">¥{r.amount.toLocaleString()}</td>
+                  <td className={`px-4 py-3 text-right ${selRem.has(r.id) ? "font-semibold text-accent" : "font-medium"}`}>¥{r.amount.toLocaleString()}</td>
                 </tr>
               ))}
               {/* 未確定の精算（選ぶと振込データ作成時に自動で確定される） */}
               {unconfirmedOwners.map((o) => (
-                <tr key={o.owner_id} className={`hover:bg-surface-2 cursor-pointer ${!o.has_bank ? "opacity-50" : ""}`}
+                <tr key={o.owner_id} className={rowClass(selOwner.has(o.owner_id), o.has_bank)}
                   onClick={() => o.has_bank && toggle(selOwner, setSelOwner, o.owner_id)}>
                   <td className="px-4 py-3 w-8">
-                    {selOwner.has(o.owner_id) ? <CheckSquare size={15} className="text-accent" /> : <Square size={15} className="text-ink-3" />}
+                    {selOwner.has(o.owner_id)
+                      ? <CheckSquare size={16} className="text-accent" strokeWidth={2.5} />
+                      : <Square size={16} className="text-ink-4" />}
                   </td>
-                  <td className="px-4 py-3 font-medium">{o.owner_name}
+                  <td className={`px-4 py-3 ${selOwner.has(o.owner_id) ? "font-semibold" : "font-medium"}`}>{o.owner_name}
                     {!o.has_bank && <span className="text-xs text-danger ml-2">口座情報なし</span>}</td>
                   <td className="px-4 py-3 text-ink-2">{o.remittance_month}</td>
-                  <td className="px-4 py-3 text-right font-medium">¥{o.preview_net_amount.toLocaleString()}</td>
+                  <td className={`px-4 py-3 text-right ${selOwner.has(o.owner_id) ? "font-semibold text-accent" : "font-medium"}`}>¥{o.preview_net_amount.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -264,23 +304,30 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
       {/* 業者への費用支払い */}
       {expenses.length > 0 && (
         <div className="card overflow-hidden">
-          <div className="px-4 py-3 border-b border-border bg-surface-2 text-sm font-semibold">
+          <div className="px-4 py-3 border-b border-border bg-surface-2 text-sm font-semibold flex items-center gap-2">
             業者への費用支払い <span className="text-xs text-ink-3 font-normal">{selExp.size}/{expenses.length}件選択</span>
+            {expenseSelectableCount > 0 && (
+              <button onClick={toggleAllExpenses} className="ml-auto text-xs rlink font-normal">
+                {expenseAllSelected ? "すべて解除" : "すべて選択"}
+              </button>
+            )}
           </div>
           <table className="w-full text-sm">
             <tbody className="divide-y divide-border">
               {expenses.map((e) => {
                 const checkable = e.has_bank;
                 return (
-                  <tr key={e.id} className={`${checkable ? "hover:bg-surface-2 cursor-pointer" : ""} ${!checkable ? "opacity-90" : ""}`}
+                  <tr key={e.id} className={checkable ? rowClass(selExp.has(e.id), true) : "opacity-90"}
                     onClick={() => checkable && toggle(selExp, setSelExp, e.id)}>
                     <td className="px-4 py-3 w-8">
                       {checkable
-                        ? (selExp.has(e.id) ? <CheckSquare size={15} className="text-accent" /> : <Square size={15} className="text-ink-3" />)
-                        : <Square size={15} className="text-ink-4 opacity-40" />}
+                        ? (selExp.has(e.id)
+                            ? <CheckSquare size={16} className="text-accent" strokeWidth={2.5} />
+                            : <Square size={16} className="text-ink-4" />)
+                        : <Square size={16} className="text-ink-4 opacity-40" />}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-medium">{e.description}</span>
+                      <span className={selExp.has(e.id) ? "font-semibold" : "font-medium"}>{e.description}</span>
                       <span className="text-xs text-ink-3 ml-2">{CATEGORY_LABEL[e.category] ?? e.category}</span>
                     </td>
                     <td className="px-4 py-3 text-ink-2" onClick={(ev) => !checkable && ev.stopPropagation()}>
@@ -317,7 +364,7 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
                       )}
                     </td>
                     <td className="px-4 py-3 text-ink-2">{e.expense_date}</td>
-                    <td className="px-4 py-3 text-right font-medium">¥{e.amount.toLocaleString()}</td>
+                    <td className={`px-4 py-3 text-right ${selExp.has(e.id) ? "font-semibold text-accent" : "font-medium"}`}>¥{e.amount.toLocaleString()}</td>
                   </tr>
                 );
               })}
