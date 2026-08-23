@@ -13,7 +13,7 @@ export async function GET(
 
     const { data: remittance, error } = await supabase
       .from("owner_remittances")
-      .select("*, owner:owners(name, email, bank_name, bank_branch, bank_account_number, bank_account_holder)")
+      .select("*, owner:owners(name, email, bank_name, bank_branch, bank_account_number, bank_account_holder, bank_account_holder_kana)")
       .eq("id", id)
       .single();
 

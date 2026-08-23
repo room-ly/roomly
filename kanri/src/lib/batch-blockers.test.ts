@@ -102,3 +102,19 @@ describe("detectBlockers", () => {
     expect(b.some((x) => x.label.includes("チェック"))).toBe(false);
   });
 });
+
+// 実データで踏んだ不具合：カナ名義のみのオーナーが「口座未登録」と誤判定されていた
+describe("口座名義フィールドの移行対応", () => {
+  it("口座情報が揃っていれば不足として出さない", () => {
+    const b = detectBlockers(
+      {
+        owner_rows: 1, owners_without_bank: [], expense_rows: 0,
+        expenses_without_payee: 0, expenses_payee_no_bank: 0,
+        month_paid_total: 600000, registered_owners: 1,
+        confirmed_owners: 0, has_sender_account: true, selected_count: 1,
+      },
+      "2026-07"
+    );
+    expect(b).toEqual([]);
+  });
+});

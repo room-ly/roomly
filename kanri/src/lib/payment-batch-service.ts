@@ -70,7 +70,7 @@ export async function getBatchCandidates(supabase: Client, company_id: string) {
     supabase
       .from("owner_remittances")
       .select(
-        "id, remittance_month, net_amount, owner:owners(name, bank_code, bank_branch_code, bank_account_type, bank_account_number, bank_account_holder)",
+        "id, remittance_month, net_amount, owner:owners(name, bank_code, bank_branch_code, bank_account_type, bank_account_number, bank_account_holder, bank_account_holder_kana)",
       )
       .eq("company_id", company_id)
       .eq("status", "confirmed")
@@ -95,7 +95,9 @@ export async function getBatchCandidates(supabase: Client, company_id: string) {
     .filter((r) => !remittanceIds.has(r.id as string))
     .map((r) => {
       const o = (r.owner as Record<string, string | null> | null) ?? {};
-      const has_bank = !!(o.bank_code && o.bank_branch_code && o.bank_account_number && o.bank_account_holder);
+      // 名義はカナが正（全銀CSVはカナ）。旧データは bank_account_holder に入っているため両対応。
+      const holderKana = o.bank_account_holder_kana || o.bank_account_holder;
+      const has_bank = !!(o.bank_code && o.bank_branch_code && o.bank_account_number && holderKana);
       return {
         id: r.id as string,
         owner_name: o.name ?? "—",
@@ -105,7 +107,7 @@ export async function getBatchCandidates(supabase: Client, company_id: string) {
         branch_code: o.bank_branch_code ?? "",
         account_type: o.bank_account_type ?? "ordinary",
         account_number: o.bank_account_number ?? "",
-        account_holder_kana: o.bank_account_holder ?? "",
+        account_holder_kana: holderKana ?? "",
         has_bank,
       };
     });
@@ -184,7 +186,7 @@ export async function getUnconfirmedOwnerCandidates(
   ] = await Promise.all([
     supabase
       .from("owners")
-      .select("id, name, bank_code, bank_branch_code, bank_account_type, bank_account_number, bank_account_holder")
+      .select("id, name, bank_code, bank_branch_code, bank_account_type, bank_account_number, bank_account_holder, bank_account_holder_kana")
       .eq("company_id", company_id)
       .order("name"),
     supabase
@@ -310,7 +312,7 @@ export async function getUnconfirmedOwnerCandidates(
       continue;
     }
 
-    const has_bank = !!(o.bank_code && o.bank_branch_code && o.bank_account_number && o.bank_account_holder);
+    const has_bank = !!(o.bank_code && o.bank_branch_code && o.bank_account_number && (o.bank_account_holder_kana || o.bank_account_holder));
     candidates.push({
       owner_id: o.id as string,
       owner_name: (o.name as string) ?? "—",
