@@ -36,7 +36,7 @@ describe("detectBlockers", () => {
       { ...base, owner_rows: 0, expense_rows: 0, month_paid_total: 0, selected_count: 0 },
       "2026-08"
     );
-    expect(b[0].label).toContain("家賃入金が登録されていません");
+    expect(b[0].label).toContain("家賃入金が登録されていないため");
     expect(b[0].href).toBe("/rent");
   });
 

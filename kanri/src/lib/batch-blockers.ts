@@ -52,13 +52,13 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
       });
     } else if (i.month_paid_total === 0) {
       blockers.push({
-        label: `${month}の家賃入金が登録されていません`,
+        label: `${month}の家賃入金が登録されていないため、オーナーへの送金額を計算できません`,
         href: "/rent",
         link_text: "家賃画面で入金を登録する",
       });
     } else {
       blockers.push({
-        label: `${month}は送金対象のオーナーがいません`,
+        label: `${month}は送金額が0円以下のオーナーのみです（管理手数料・経費の差引が入金額を上回っています）`,
         href: "/rent",
         link_text: "家賃画面で入金状況を確認する",
       });
@@ -67,7 +67,7 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
     // 対象はあるが、選べない・選んでいないケース
     if (i.owner_rows === 0 && i.month_paid_total === 0) {
       blockers.push({
-        label: `${month}の家賃入金が登録されていません（オーナーへの送金は対象外）`,
+        label: `${month}の家賃入金が登録されていないため、オーナーへの送金額を計算できません`,
         href: "/rent",
         link_text: "家賃画面で入金を登録する",
       });
