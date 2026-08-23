@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CheckSquare, Square, Loader2 } from "lucide-react";
-import { describeNoCandidates } from "@/lib/bulk-remittance";
+import { detectBlockers } from "@/lib/batch-blockers";
 import type {
   BatchCandidateRemittance,
   BatchCandidateExpense,
@@ -91,6 +91,25 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
     unconfirmedOwners.filter((o) => selOwner.has(o.owner_id)).reduce((s, o) => s + o.preview_net_amount, 0) +
     expenses.filter((e) => selExp.has(e.id)).reduce((s, e) => s + e.amount, 0);
   const count = selRem.size + selOwner.size + selExp.size;
+
+  // 作成できない原因をまとめて算出し、ボタン付近に提示する
+  const blockers = detectBlockers(
+    {
+      owner_rows: remittances.length + unconfirmedOwners.length,
+      owners_without_bank: [
+        ...remittances.filter((r) => !r.has_bank).map((r) => r.owner_name),
+        ...unconfirmedOwners.filter((o) => !o.has_bank).map((o) => o.owner_name),
+      ],
+      expense_rows: expenses.length,
+      expenses_without_payee: expenses.filter((e) => !e.has_payee).length,
+      expenses_payee_no_bank: expenses.filter((e) => e.has_payee && !e.has_bank).length,
+      month_paid_total: summary.month_paid_total,
+      registered_owners: summary.registered_owners,
+      has_sender_account: banks.length > 0,
+      selected_count: count,
+    },
+    month
+  );
 
   async function handleCreate() {
     if (count === 0) { setError("振込対象を1件以上選択してください"); return; }
@@ -203,18 +222,9 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
         </div>
 
         {remittances.length + unconfirmedOwners.length === 0 ? (
-          (() => {
-            const r = describeNoCandidates(summary, month);
-            return (
-              <div className="px-4 py-6 text-sm">
-                <div className="font-medium text-ink-2">{r.title}</div>
-                <div className="text-xs text-ink-3 mt-1.5 leading-relaxed">{r.hint}</div>
-                <Link href="/rent" className="rlink text-xs inline-block mt-2">
-                  家賃画面で入金を登録する →
-                </Link>
-              </div>
-            );
-          })()
+          <div className="px-4 py-5 text-[13px] text-ink-3">
+            対象のオーナーがいません。理由と対処は下にまとめて表示しています。
+          </div>
         ) : (
           <table className="w-full text-sm">
             <tbody className="divide-y divide-border">
@@ -319,27 +329,49 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
         </div>
       )}
 
-      {remittances.length === 0 && expenses.length === 0 && unconfirmedOwners.length === 0 && (
-        <div className="card p-10 text-center text-ink-3">
-          振込対象がありません。<br />
-          オーナー送金は、上の「精算対象月」を選んで未確定の精算を「計算して確定」すると表示されます。<br />
-          業者への支払いは、承認済み・未払いの費用がここに自動で表示されます。
-        </div>
-      )}
+      <div className="card p-4 space-y-3">
+        {/* 押せない理由はボタンの近くに集約する。利用者が最後に見るのはこのボタン。 */}
+        {blockers.length > 0 && (
+          <div className="rounded-md border border-border bg-surface-2 px-4 py-3">
+            <div className="text-sm font-medium text-ink-2">
+              {blockers.length === 1
+                ? "振込データを作成するには、あと1つ必要です"
+                : `振込データを作成するには、あと${blockers.length}つ必要です`}
+            </div>
+            <ol className="mt-2 space-y-1.5">
+              {blockers.map((b, i) => (
+                <li key={i} className="text-[13px] text-ink-2 flex gap-2">
+                  <span className="text-ink-3 shrink-0">{i + 1}.</span>
+                  <span>
+                    {b.label}
+                    {b.link_text && (
+                      b.href ? (
+                        <Link href={b.href} className="rlink ml-2">{b.link_text} →</Link>
+                      ) : (
+                        <span className="text-ink-3 ml-2">{b.link_text}</span>
+                      )
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
 
-      <div className="card p-4 flex items-center justify-between gap-4">
-        <div className="text-sm text-ink-2">
-          {count > 0 ? (
-            <><span className="font-semibold">{count}件</span> 選択中 / 合計 <span className="font-semibold">¥{total.toLocaleString()}</span></>
-          ) : <span className="text-ink-3">振込対象を選択してください</span>}
-        </div>
-        <div className="space-y-1 text-right">
-          {error && <p className="text-danger text-sm">{error}</p>}
-          <button onClick={handleCreate} disabled={loading || count === 0}
-            className="btn btn-primary disabled:opacity-50 flex items-center gap-2">
-            {loading && <Loader2 size={14} className="animate-spin" />}
-            {loading ? "作成中…" : "振込データを作成"}
-          </button>
+        <div className="flex items-center justify-between gap-4">
+          <div className="text-sm text-ink-2">
+            {count > 0 ? (
+              <><span className="font-semibold">{count}件</span> 選択中 / 合計 <span className="font-semibold">¥{total.toLocaleString()}</span></>
+            ) : <span className="text-ink-3">振込対象を選択してください</span>}
+          </div>
+          <div className="space-y-1 text-right">
+            {error && <p className="text-danger text-sm">{error}</p>}
+            <button onClick={handleCreate} disabled={loading || count === 0}
+              className="btn btn-primary disabled:opacity-50 flex items-center gap-2">
+              {loading && <Loader2 size={14} className="animate-spin" />}
+              {loading ? "作成中…" : "振込データを作成"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

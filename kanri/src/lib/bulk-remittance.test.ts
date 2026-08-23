@@ -3,7 +3,6 @@ import {
   planBulkGeneration,
   ownersMissingBank,
   buildBulkNotificationTitle,
-  describeNoCandidates,
   type BulkTarget,
 } from "./bulk-remittance";
 
@@ -70,30 +69,5 @@ describe("buildBulkNotificationTitle", () => {
       failed: [{ owner_id: "x", owner_name: "失敗太郎", reason: "err" }],
     });
     expect(title).toBe("オーナー送金一括生成: 2026-08分 3件生成・3件確定・1件失敗");
-  });
-});
-
-describe("describeNoCandidates", () => {
-  const base = { registered_owners: 3, owners_without_net: 0, confirmed_owners: 0, month_paid_total: 0 };
-
-  it("オーナー未登録が最優先で案内される", () => {
-    const r = describeNoCandidates({ ...base, registered_owners: 0 }, "2026-08");
-    expect(r.title).toBe("オーナーが登録されていません");
-  });
-
-  it("全員確定済みなら完了として案内する", () => {
-    const r = describeNoCandidates({ ...base, confirmed_owners: 3, month_paid_total: 500000 }, "2026-08");
-    expect(r.title).toContain("すべて確定済み");
-  });
-
-  it("当月入金ゼロなら家賃入金の登録を促す（今回の問い合わせケース）", () => {
-    const r = describeNoCandidates(base, "2026-08");
-    expect(r.title).toBe("2026-08の家賃入金が登録されていません");
-    expect(r.hint).toContain("「家賃」画面");
-  });
-
-  it("入金はあるが精算額が0円以下なら差引超過を案内する", () => {
-    const r = describeNoCandidates({ ...base, owners_without_net: 2, month_paid_total: 300000 }, "2026-08");
-    expect(r.hint).toContain("差引額");
   });
 });
