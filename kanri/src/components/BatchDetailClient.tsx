@@ -60,6 +60,9 @@ export default function BatchDetailClient({ batchId, batchDate, status, itemCoun
         notify({ title: err.error || "実行に失敗しました" });
         return;
       }
+      // 実行済みにしたらこのバッチでの作業は完了。一覧に戻して次の作業へ移れるようにする。
+      notify({ title: "振込実行済みにしました" });
+      router.push("/payments");
       router.refresh();
     } finally {
       setExecLoading(false);
