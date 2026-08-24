@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CheckSquare, Square, Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import SelectBox from "./SelectBox";
 import { detectBlockers, hasBlockingIssue } from "@/lib/batch-blockers";
 import type {
   BatchCandidateRemittance,
@@ -82,8 +83,9 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
 
   // 選択中の行は背景・左罫で明示する（チェックの有無だけでは判別しづらいため）
   const rowClass = (selected: boolean, enabled: boolean) => {
+    // 選択不可の行はカーソルも変えて「押しても反応しない」ことを伝える
+    if (!enabled) return "cursor-not-allowed bg-surface-2/60 text-ink-3";
     const base = "cursor-pointer transition-colors";
-    if (!enabled) return `${base} opacity-50`;
     return selected
       ? `${base} bg-accent-tint shadow-[inset_3px_0_0_var(--accent)]`
       : `${base} hover:bg-surface-2`;
@@ -271,9 +273,7 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
                 <tr key={r.id} className={rowClass(selRem.has(r.id), r.has_bank)}
                   onClick={() => r.has_bank && toggle(selRem, setSelRem, r.id)}>
                   <td className="px-4 py-3 w-8">
-                    {selRem.has(r.id)
-                      ? <CheckSquare size={16} className="text-accent" strokeWidth={2.5} />
-                      : <Square size={16} className="text-ink-4" />}
+                    <SelectBox checked={selRem.has(r.id)} disabled={!r.has_bank} />
                   </td>
                   <td className={`px-4 py-3 ${selRem.has(r.id) ? "font-semibold" : "font-medium"}`}>{r.owner_name}
                     {!r.has_bank && <span className="text-xs text-danger ml-2">口座情報なし</span>}</td>
@@ -286,9 +286,7 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
                 <tr key={o.owner_id} className={rowClass(selOwner.has(o.owner_id), o.has_bank)}
                   onClick={() => o.has_bank && toggle(selOwner, setSelOwner, o.owner_id)}>
                   <td className="px-4 py-3 w-8">
-                    {selOwner.has(o.owner_id)
-                      ? <CheckSquare size={16} className="text-accent" strokeWidth={2.5} />
-                      : <Square size={16} className="text-ink-4" />}
+                    <SelectBox checked={selOwner.has(o.owner_id)} disabled={!o.has_bank} />
                   </td>
                   <td className={`px-4 py-3 ${selOwner.has(o.owner_id) ? "font-semibold" : "font-medium"}`}>{o.owner_name}
                     {!o.has_bank && <span className="text-xs text-danger ml-2">口座情報なし</span>}</td>
@@ -317,14 +315,10 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
               {expenses.map((e) => {
                 const checkable = e.has_bank;
                 return (
-                  <tr key={e.id} className={checkable ? rowClass(selExp.has(e.id), true) : "opacity-90"}
+                  <tr key={e.id} className={rowClass(selExp.has(e.id), checkable)}
                     onClick={() => checkable && toggle(selExp, setSelExp, e.id)}>
                     <td className="px-4 py-3 w-8">
-                      {checkable
-                        ? (selExp.has(e.id)
-                            ? <CheckSquare size={16} className="text-accent" strokeWidth={2.5} />
-                            : <Square size={16} className="text-ink-4" />)
-                        : <Square size={16} className="text-ink-4 opacity-40" />}
+                      <SelectBox checked={selExp.has(e.id)} disabled={!checkable} />
                     </td>
                     <td className="px-4 py-3">
                       <span className={selExp.has(e.id) ? "font-semibold" : "font-medium"}>{e.description}</span>
