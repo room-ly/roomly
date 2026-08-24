@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CheckSquare, Square, Loader2, AlertCircle } from "lucide-react";
-import { detectBlockers } from "@/lib/batch-blockers";
+import { detectBlockers, hasBlockingIssue } from "@/lib/batch-blockers";
 import type {
   BatchCandidateRemittance,
   BatchCandidateExpense,
@@ -141,7 +141,7 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
     },
     month
   );
-  const hasMissing = blockers.some((b) => b.kind !== "pending");
+  const hasMissing = hasBlockingIssue(blockers);
 
   async function handleCreate() {
     if (count === 0) { setError("振込対象を1件以上選択してください"); return; }
@@ -392,12 +392,16 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
               ? "text-sm font-semibold text-danger flex items-center gap-1.5"
               : "text-sm font-medium text-ink-2 flex items-center gap-1.5"}>
               {hasMissing && <AlertCircle size={15} className="shrink-0" />}
-              {hasMissing ? "振込データを作成できません" : "振込対象を選んでください"}
+              {hasMissing
+                ? "振込データを作成できません"
+                : count > 0
+                  ? "補足"
+                  : "振込対象を選んでください"}
             </div>
             <ul className="mt-2 space-y-1.5">
               {blockers.map((b, i) => (
                 <li key={i} className="text-[13px] text-ink-2 flex gap-2">
-                  <span className={b.kind === "pending" ? "text-ink-3 shrink-0" : "text-danger shrink-0"}>・</span>
+                  <span className={b.kind === "info" || b.kind === "pending" ? "text-ink-3 shrink-0" : "text-danger shrink-0"}>・</span>
                   <span>
                     {b.label}
                     {b.link_text && (

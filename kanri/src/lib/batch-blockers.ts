@@ -22,8 +22,8 @@ export interface BlockerInput {
 export interface Blocker {
   // 画面に出す本文
   label: string;
-  // 未選択のような「操作待ち」は不備ではないので警告として扱わない
-  kind?: "missing" | "pending";
+  // missing: 作成を妨げる不備 / info: 作成はできるが知らせたい状況 / pending: 操作待ち
+  kind?: "missing" | "info" | "pending";
   // 誘導先。同一画面内で解決する場合は href を持たない
   href?: string;
   link_text?: string;
@@ -60,6 +60,7 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
     } else if (i.confirmed_owners > 0) {
       // 入金も確定もあるのに候補が空＝作成済みの振込データに含まれている
       blockers.push({
+        kind: "info",
         label: `${month}のオーナー送金は、すでに作成済みの振込データに含まれています`,
         link_text: "下の「過去の振込バッチ」から確認・CSV出力できます",
       });
@@ -75,12 +76,14 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
     if (i.owner_rows === 0) {
       if (i.month_paid_total === 0) {
         blockers.push({
+          kind: "info",
           label: `${month}の家賃入金が登録されていないため、オーナーへの送金額を計算できません`,
           href: "/rent",
           link_text: "家賃画面で入金を登録する",
         });
       } else if (i.confirmed_owners > 0) {
         blockers.push({
+          kind: "info",
           label: `${month}のオーナー送金は、すでに作成済みの振込データに含まれています`,
           link_text: "下の「過去の振込バッチ」から確認・CSV出力できます",
         });
@@ -88,6 +91,7 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
     }
     if (i.owners_without_bank.length > 0) {
       blockers.push({
+        kind: "info",
         label: `口座情報が未登録のオーナーがいます（${i.owners_without_bank.join("、")}）`,
         href: "/owners",
         link_text: "オーナー画面で口座情報を登録する",
@@ -95,6 +99,7 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
     }
     if (i.expenses_without_payee > 0) {
       blockers.push({
+        kind: "info",
         label: `支払先が未設定の費用が${i.expenses_without_payee}件あります`,
         link_text: "この画面の「業者への費用支払い」で設定できます",
       });
@@ -102,6 +107,7 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
     // 支払先は選ばれているが口座情報が足りないケースは、支払先マスタ側の修正が必要
     if (i.expenses_payee_no_bank > 0) {
       blockers.push({
+        kind: "info",
         label: `支払先の口座情報が未登録の費用が${i.expenses_payee_no_bank}件あります`,
         href: "/payees",
         link_text: "支払先画面で口座情報を登録する",
@@ -109,10 +115,16 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
     }
   }
 
-  // 選択されていない＝操作待ち。上記の不足がない場合のみ出す。
-  if (blockers.length === 0 && i.selected_count === 0) {
+  // 選択されていない＝操作待ち。作成を妨げる不備がない場合のみ出す（info は妨げない）。
+  const hasMissing = blockers.some((b) => b.kind !== "info" && b.kind !== "pending");
+  if (!hasMissing && i.selected_count === 0) {
     blockers.push({ label: "上の一覧で振込対象にチェックを入れてください", kind: "pending" });
   }
 
   return blockers;
+}
+
+// 作成を妨げる不備があるか（ボタンの無効化・警告表示の判定に使う）
+export function hasBlockingIssue(blockers: Blocker[]): boolean {
+  return blockers.some((b) => b.kind !== "info" && b.kind !== "pending");
 }

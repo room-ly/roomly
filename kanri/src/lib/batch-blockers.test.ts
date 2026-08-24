@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { detectBlockers, type BlockerInput } from "./batch-blockers";
+import { detectBlockers, hasBlockingIssue, type BlockerInput } from "./batch-blockers";
 
 const base: BlockerInput = {
   owner_rows: 2,
@@ -116,5 +116,36 @@ describe("口座名義フィールドの移行対応", () => {
       "2026-07"
     );
     expect(b).toEqual([]);
+  });
+});
+
+// 実データで踏んだ不具合：業者支払いは作成できるのに「作成できません」と赤表示していた
+describe("作成を妨げる不備と補足情報の区別", () => {
+  const withExpense: BlockerInput = {
+    owner_rows: 0, owners_without_bank: [], expense_rows: 1,
+    expenses_without_payee: 0, expenses_payee_no_bank: 0,
+    month_paid_total: 600000, registered_owners: 1,
+    confirmed_owners: 1, has_sender_account: true, selected_count: 1,
+  };
+
+  it("オーナー送金が作成済みでも、業者支払いが選べれば作成を妨げない", () => {
+    const b = detectBlockers(withExpense, "2026-07");
+    expect(b.some((x) => x.label.includes("作成済みの振込データ"))).toBe(true);
+    expect(hasBlockingIssue(b)).toBe(false);
+  });
+
+  it("家賃入金なしでも業者支払いだけなら作成できる", () => {
+    const b = detectBlockers({ ...withExpense, month_paid_total: 0, confirmed_owners: 0 }, "2026-07");
+    expect(hasBlockingIssue(b)).toBe(false);
+  });
+
+  it("振込元口座の未登録は作成を妨げる", () => {
+    const b = detectBlockers({ ...withExpense, has_sender_account: false }, "2026-07");
+    expect(hasBlockingIssue(b)).toBe(true);
+  });
+
+  it("補足があっても未選択なら選択を促す", () => {
+    const b = detectBlockers({ ...withExpense, selected_count: 0 }, "2026-07");
+    expect(b.some((x) => x.kind === "pending")).toBe(true);
   });
 });
