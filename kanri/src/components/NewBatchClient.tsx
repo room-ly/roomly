@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import SelectBox from "./SelectBox";
-import { detectBlockers, hasBlockingIssue } from "@/lib/batch-blockers";
+import { detectBlockers, hasBlockingIssue, isAllDone } from "@/lib/batch-blockers";
 import type {
   BatchCandidateRemittance,
   BatchCandidateExpense,
@@ -140,10 +140,12 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
       confirmed_owners: summary.confirmed_owners,
       has_sender_account: banks.length > 0,
       selected_count: count,
+      selectable_count: ownerSelectableCount + expenseSelectableCount,
     },
     month
   );
   const hasMissing = hasBlockingIssue(blockers);
+  const allDone = isAllDone(blockers);
 
   async function handleCreate() {
     if (count === 0) { setError("振込対象を1件以上選択してください"); return; }
@@ -384,18 +386,23 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
           >
             <div className={hasMissing
               ? "text-sm font-semibold text-danger flex items-center gap-1.5"
-              : "text-sm font-medium text-ink-2 flex items-center gap-1.5"}>
+              : allDone
+                ? "text-sm font-semibold text-accent flex items-center gap-1.5"
+                : "text-sm font-medium text-ink-2 flex items-center gap-1.5"}>
               {hasMissing && <AlertCircle size={15} className="shrink-0" />}
+              {allDone && <CheckCircle2 size={15} className="shrink-0" />}
               {hasMissing
                 ? "振込データを作成できません"
-                : count > 0
-                  ? "補足"
-                  : "振込対象を選んでください"}
+                : allDone
+                  ? "この月の振込作業は完了しています"
+                  : count > 0
+                    ? "補足"
+                    : "振込対象を選んでください"}
             </div>
             <ul className="mt-2 space-y-1.5">
               {blockers.map((b, i) => (
                 <li key={i} className="text-[13px] text-ink-2 flex gap-2">
-                  <span className={b.kind === "info" || b.kind === "pending" ? "text-ink-3 shrink-0" : "text-danger shrink-0"}>・</span>
+                  <span className={b.kind === "missing" || b.kind === undefined ? "text-danger shrink-0" : "text-ink-3 shrink-0"}>・</span>
                   <span>
                     {b.label}
                     {b.link_text && (

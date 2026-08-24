@@ -17,13 +17,14 @@ export interface BlockerInput {
   has_sender_account: boolean;
   // 選択状態
   selected_count: number;
+  selectable_count: number; // いま選べる行数（0なら選ぶものが残っていない）
 }
 
 export interface Blocker {
   // 画面に出す本文
   label: string;
-  // missing: 作成を妨げる不備 / info: 作成はできるが知らせたい状況 / pending: 操作待ち
-  kind?: "missing" | "info" | "pending";
+  // missing: 作成を妨げる不備 / info: 補足 / pending: 操作待ち / done: この月の作業は完了
+  kind?: "missing" | "info" | "pending" | "done";
   // 誘導先。同一画面内で解決する場合は href を持たない
   href?: string;
   link_text?: string;
@@ -118,7 +119,16 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
   // 選択されていない＝操作待ち。作成を妨げる不備がない場合のみ出す（info は妨げない）。
   const hasMissing = blockers.some((b) => b.kind !== "info" && b.kind !== "pending");
   if (!hasMissing && i.selected_count === 0) {
-    blockers.push({ label: "上の一覧で振込対象にチェックを入れてください", kind: "pending" });
+    if (i.selectable_count > 0) {
+      blockers.push({ label: "上の一覧で振込対象にチェックを入れてください", kind: "pending" });
+    } else {
+      // 選べる行が残っていない＝この月の振込対象はすべて処理済み
+      blockers.push({
+        kind: "done",
+        label: `${month}の振込対象はすべて処理済みです`,
+        link_text: "新たに対象が増えたら、ここに表示されます",
+      });
+    }
   }
 
   return blockers;
@@ -126,5 +136,10 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
 
 // 作成を妨げる不備があるか（ボタンの無効化・警告表示の判定に使う）
 export function hasBlockingIssue(blockers: Blocker[]): boolean {
-  return blockers.some((b) => b.kind !== "info" && b.kind !== "pending");
+  return blockers.some((b) => b.kind !== "info" && b.kind !== "pending" && b.kind !== "done");
+}
+
+// この月にやることが残っていないか（完了メッセージの表示判定）
+export function isAllDone(blockers: Blocker[]): boolean {
+  return blockers.some((b) => b.kind === "done");
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { detectBlockers, hasBlockingIssue, type BlockerInput } from "./batch-blockers";
+import { detectBlockers, hasBlockingIssue, isAllDone, type BlockerInput } from "./batch-blockers";
 
 const base: BlockerInput = {
   owner_rows: 2,
@@ -12,6 +12,7 @@ const base: BlockerInput = {
   confirmed_owners: 0,
   has_sender_account: true,
   selected_count: 1,
+  selectable_count: 5,
 };
 
 describe("detectBlockers", () => {
@@ -111,7 +112,7 @@ describe("口座名義フィールドの移行対応", () => {
         owner_rows: 1, owners_without_bank: [], expense_rows: 0,
         expenses_without_payee: 0, expenses_payee_no_bank: 0,
         month_paid_total: 600000, registered_owners: 1,
-        confirmed_owners: 0, has_sender_account: true, selected_count: 1,
+        confirmed_owners: 0, has_sender_account: true, selected_count: 1, selectable_count: 5,
       },
       "2026-07"
     );
@@ -125,7 +126,7 @@ describe("作成を妨げる不備と補足情報の区別", () => {
     owner_rows: 0, owners_without_bank: [], expense_rows: 1,
     expenses_without_payee: 0, expenses_payee_no_bank: 0,
     month_paid_total: 600000, registered_owners: 1,
-    confirmed_owners: 1, has_sender_account: true, selected_count: 1,
+    confirmed_owners: 1, has_sender_account: true, selected_count: 1, selectable_count: 5,
   };
 
   it("オーナー送金が作成済みでも、業者支払いが選べれば作成を妨げない", () => {
@@ -147,5 +148,32 @@ describe("作成を妨げる不備と補足情報の区別", () => {
   it("補足があっても未選択なら選択を促す", () => {
     const b = detectBlockers({ ...withExpense, selected_count: 0 }, "2026-07");
     expect(b.some((x) => x.kind === "pending")).toBe(true);
+  });
+});
+
+// 実データで踏んだ不具合：選べる行が0でも「上の一覧でチェックを入れてください」と出ていた
+describe("選ぶものが残っていない場合", () => {
+  const done: BlockerInput = {
+    owner_rows: 0, owners_without_bank: [], expense_rows: 0,
+    expenses_without_payee: 0, expenses_payee_no_bank: 0,
+    month_paid_total: 600000, registered_owners: 1,
+    confirmed_owners: 1, has_sender_account: true,
+    selected_count: 0, selectable_count: 0,
+  };
+
+  it("選択を促さず、完了として伝える", () => {
+    const b = detectBlockers(done, "2026-07");
+    expect(b.some((x) => x.label.includes("チェックを入れて"))).toBe(false);
+    expect(isAllDone(b)).toBe(true);
+  });
+
+  it("完了は不備ではないので赤警告にしない", () => {
+    expect(hasBlockingIssue(detectBlockers(done, "2026-07"))).toBe(false);
+  });
+
+  it("選べる行が残っていれば従来どおり選択を促す", () => {
+    const b = detectBlockers({ ...done, selectable_count: 2, expense_rows: 2 }, "2026-07");
+    expect(b.some((x) => x.kind === "pending")).toBe(true);
+    expect(isAllDone(b)).toBe(false);
   });
 });
