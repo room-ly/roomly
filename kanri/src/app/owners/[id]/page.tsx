@@ -331,14 +331,19 @@ export default async function OwnerDetailPage({
             </div>
           </div>
 
-          {/* 月次精算履歴（台帳→会計の導線。各行から月次精算の詳細へ） */}
-          {remittances.length > 0 && (
-            <div className="section">
-              <div className="section-head-bar">
-                <h2>月次精算履歴</h2>
-                <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--ink-4)" }}>直近12ヶ月</span>
-              </div>
-              <div className="section-body flush">
+          {/* 月次精算履歴（台帳→会計の導線。各行から月次精算の詳細へ）。
+              0件でもセクションごと消さない（存在しないと機能自体が無いように見えるため）。 */}
+          <div className="section">
+            <div className="section-head-bar">
+              <h2>月次精算履歴</h2>
+              <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--ink-4)" }}>直近12ヶ月</span>
+            </div>
+            <div className="section-body flush">
+              {remittances.length === 0 ? (
+                <p style={{ fontSize: 12, color: "var(--ink-4)", textAlign: "center", padding: "16px 0" }}>
+                  まだ精算がありません。「振込」画面で振込データを作成すると、ここに履歴が表示されます。
+                </p>
+              ) : (
                 <table className="tbl">
                   <thead>
                     <tr>
@@ -371,9 +376,9 @@ export default async function OwnerDetailPage({
                     ))}
                   </tbody>
                 </table>
-              </div>
+              )}
             </div>
-          )}
+          </div>
 
         </div>
       </div>
