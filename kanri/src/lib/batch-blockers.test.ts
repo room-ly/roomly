@@ -72,30 +72,28 @@ describe("detectBlockers", () => {
     expect(b[0].href).toBe("/owners");
   });
 
-  it("支払先未設定は同一画面で解決するのでhrefを持たない", () => {
+  it("支払先未設定は下部に出さない（該当欄の直上に表示するため）", () => {
     const b = detectBlockers({ ...base, expenses_without_payee: 2 }, "2026-08");
-    const e = b.find((x) => x.label.includes("支払先"));
-    expect(e?.label).toContain("2件");
-    expect(e?.href).toBeUndefined();
+    expect(b.some((x) => x.label.includes("支払先"))).toBe(false);
   });
 
-  it("口座未登録のオーナー名を列挙する", () => {
+  it("オーナーの口座未登録も下部に出さない（該当欄の直上に表示するため）", () => {
     const b = detectBlockers({ ...base, owners_without_bank: ["田中 太郎"] }, "2026-08");
-    expect(b[0].label).toContain("田中 太郎");
-    expect(b[0].href).toBe("/owners");
+    expect(b.some((x) => x.label.includes("田中 太郎"))).toBe(false);
   });
 
-  it("支払先はあるが口座情報がない場合は支払先画面へ誘導する", () => {
+  it("支払先の口座不足も下部に出さない", () => {
     const b = detectBlockers({ ...base, expenses_payee_no_bank: 1 }, "2026-08");
-    expect(b[0].href).toBe("/payees");
+    expect(b.some((x) => x.href === "/payees")).toBe(false);
   });
 
-  it("不足が複数あれば全て列挙する", () => {
+  it("下部には全体に関わる不備だけを出す（行単位の理由は各欄へ）", () => {
     const b = detectBlockers(
       { ...base, has_sender_account: false, expenses_without_payee: 1, owners_without_bank: ["鈴木"] },
       "2026-08"
     );
-    expect(b.length).toBe(3);
+    expect(b).toHaveLength(1);
+    expect(b[0].href).toBe("/settings");
   });
 
   it("不足がある場合は「チェックを入れて」を出さない（原因を優先）", () => {

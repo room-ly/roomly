@@ -94,6 +94,11 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
   // オーナー行の全選択／全解除（口座情報が揃っている行のみ対象）
   const ownerSelectableCount =
     remittances.filter((r) => r.has_bank).length + unconfirmedOwners.filter((o) => o.has_bank).length;
+  const ownerRowsTotal = remittances.length + unconfirmedOwners.length;
+  const ownersWithoutBank = [
+    ...remittances.filter((r) => !r.has_bank).map((r) => r.owner_name),
+    ...unconfirmedOwners.filter((o) => !o.has_bank).map((o) => o.owner_name),
+  ];
   const ownerAllSelected =
     ownerSelectableCount > 0 && selRem.size + selOwner.size === ownerSelectableCount;
   function toggleAllOwners() {
@@ -263,6 +268,16 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
           )}
         </div>
 
+        {/* 選べない行がある理由は、その行の並びの直上に置く */}
+        {ownerRowsTotal > 0 && ownerSelectableCount < ownerRowsTotal && (
+          <div className="px-4 py-2.5 bg-warn-tint border-b border-border text-[13px] text-ink-2 flex items-start gap-2">
+            <AlertCircle size={14} className="text-warn shrink-0 mt-0.5" />
+            <span>
+              グレーの{ownerRowsTotal - ownerSelectableCount}件は<strong className="font-semibold">口座情報が未登録</strong>のため選べません（{ownersWithoutBank.join("、")}）。
+              <Link href="/owners" className="rlink ml-1">オーナー画面で登録する →</Link>
+            </span>
+          </div>
+        )}
         {remittances.length + unconfirmedOwners.length === 0 ? (
           <div className="px-4 py-5 text-[13px] text-ink-3">
             対象のオーナーがいません。理由と対処は下にまとめて表示しています。
@@ -312,6 +327,16 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
               </button>
             )}
           </div>
+          {/* 選べない行がある理由は、その行の並びの直上に置く（離れた場所だと関連が伝わらない） */}
+          {expenseSelectableCount < expenses.length && (
+            <div className="px-4 py-2.5 bg-warn-tint border-b border-border text-[13px] text-ink-2 flex items-start gap-2">
+              <AlertCircle size={14} className="text-warn shrink-0 mt-0.5" />
+              <span>
+                グレーの{expenses.length - expenseSelectableCount}件は<strong className="font-semibold">支払先の口座情報が未登録</strong>のため選べません。
+                <Link href="/payees" className="rlink ml-1">支払先画面で登録する →</Link>
+              </span>
+            </div>
+          )}
           <table className="w-full text-sm">
             <tbody className="divide-y divide-border">
               {expenses.map((e) => {
@@ -350,7 +375,7 @@ export default function NewBatchClient({ remittances, expenses, unconfirmedOwner
                         <>
                           {e.payee_name}
                           {!e.has_bank && (
-                            <span className="text-xs text-warning ml-2">
+                            <span className="text-xs text-warn ml-2">
                               口座情報なし（
                               <a href="/payees" className="rlink" onClick={(ev) => ev.stopPropagation()}>支払先で登録</a>
                               ）

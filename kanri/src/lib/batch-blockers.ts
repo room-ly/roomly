@@ -90,30 +90,9 @@ export function detectBlockers(i: BlockerInput, month: string): Blocker[] {
         });
       }
     }
-    if (i.owners_without_bank.length > 0) {
-      blockers.push({
-        kind: "info",
-        label: `口座情報が未登録のオーナーがいます（${i.owners_without_bank.join("、")}）`,
-        href: "/owners",
-        link_text: "オーナー画面で口座情報を登録する",
-      });
-    }
-    if (i.expenses_without_payee > 0) {
-      blockers.push({
-        kind: "info",
-        label: `支払先が未設定の費用が${i.expenses_without_payee}件あります`,
-        link_text: "この画面の「業者への費用支払い」で設定できます",
-      });
-    }
-    // 支払先は選ばれているが口座情報が足りないケースは、支払先マスタ側の修正が必要
-    if (i.expenses_payee_no_bank > 0) {
-      blockers.push({
-        kind: "info",
-        label: `支払先の口座情報が未登録の費用が${i.expenses_payee_no_bank}件あります`,
-        href: "/payees",
-        link_text: "支払先画面で口座情報を登録する",
-      });
-    }
+    // オーナーが選べない理由も「オーナーへの送金」欄の直上に表示する
+    // 費用が選べない理由は「業者への費用支払い」欄の直上に表示するため、ここには出さない
+    // （行から離れた場所に出すと、どの行の話か伝わらない）
   }
 
   // 選択されていない＝操作待ち。作成を妨げる不備がない場合のみ出す（info は妨げない）。
