@@ -285,52 +285,6 @@ export default async function OwnerDetailPage({
             </div>
           )}
 
-          <AuditLogSection table="owners" recordId={owner.id} recordLabel="オーナー" />
-        </div>
-
-        {/* サイドカラム */}
-        <div className="detail-col-side">
-          {/* 所有物件 */}
-          <div className="section">
-            <div className="section-head-bar">
-              <h2>所有物件</h2>
-              <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--ink-4)" }}>{ownerProps.length}件</span>
-            </div>
-            <div className="section-body flush">
-              {ownerProps.length === 0 ? (
-                <p style={{ fontSize: 12, color: "var(--ink-4)", textAlign: "center", padding: "16px 0" }}>物件がありません</p>
-              ) : (
-                <table className="tbl">
-                  <thead>
-                    <tr>
-                      <th>物件名</th>
-                      <th style={{ textAlign: "center" }}>戸数</th>
-                      <th style={{ textAlign: "center" }}>入居</th>
-                      <th style={{ textAlign: "right" }}>家賃合計</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ownerProps.map((p: any) => {
-                      const pUnits = p.units || [];
-                      const pOccupied = pUnits.filter((u: any) => u.status === "occupied");
-                      const pRent = pOccupied.reduce((s: number, u: any) => s + Number(u.rent), 0);
-                      return (
-                        <tr key={p.id} className="row-hover">
-                          <td>
-                            <Link href={`/properties/${p.id}`} className="rlink">{p.name}</Link>
-                          </td>
-                          <td className="num" style={{ textAlign: "center" }}>{pUnits.length}</td>
-                          <td className="num" style={{ textAlign: "center", color: "var(--accent-deep)" }}>{pOccupied.length}</td>
-                          <td className="num">¥{pRent.toLocaleString()}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-
           {/* 月次精算履歴（台帳→会計の導線。各行から月次精算の詳細へ）。
               0件でもセクションごと消さない（存在しないと機能自体が無いように見えるため）。 */}
           <div className="section">
@@ -379,6 +333,53 @@ export default async function OwnerDetailPage({
               )}
             </div>
           </div>
+
+          <AuditLogSection table="owners" recordId={owner.id} recordLabel="オーナー" />
+        </div>
+
+        {/* サイドカラム */}
+        <div className="detail-col-side">
+          {/* 所有物件 */}
+          <div className="section">
+            <div className="section-head-bar">
+              <h2>所有物件</h2>
+              <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--ink-4)" }}>{ownerProps.length}件</span>
+            </div>
+            <div className="section-body flush">
+              {ownerProps.length === 0 ? (
+                <p style={{ fontSize: 12, color: "var(--ink-4)", textAlign: "center", padding: "16px 0" }}>物件がありません</p>
+              ) : (
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>物件名</th>
+                      <th style={{ textAlign: "center" }}>戸数</th>
+                      <th style={{ textAlign: "center" }}>入居</th>
+                      <th style={{ textAlign: "right" }}>家賃合計</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ownerProps.map((p: any) => {
+                      const pUnits = p.units || [];
+                      const pOccupied = pUnits.filter((u: any) => u.status === "occupied");
+                      const pRent = pOccupied.reduce((s: number, u: any) => s + Number(u.rent), 0);
+                      return (
+                        <tr key={p.id} className="row-hover">
+                          <td>
+                            <Link href={`/properties/${p.id}`} className="rlink">{p.name}</Link>
+                          </td>
+                          <td className="num" style={{ textAlign: "center" }}>{pUnits.length}</td>
+                          <td className="num" style={{ textAlign: "center", color: "var(--accent-deep)" }}>{pOccupied.length}</td>
+                          <td className="num">¥{pRent.toLocaleString()}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
 
         </div>
       </div>
